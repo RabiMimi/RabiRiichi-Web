@@ -67,7 +67,7 @@ export function StringToTiles(str: string): Tile[] {
       tile.suit = suit;
     }
   }
-  if (tiles.E().any((t) => t.suit === TileSuit.Invalid)) {
+  if (tiles.E.any((t) => t.suit === TileSuit.Invalid)) {
     throw new Error(`Some tile suits not provided in ${str}`);
   }
   return tiles;
