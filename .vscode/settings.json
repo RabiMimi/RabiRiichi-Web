@@ -1,0 +1,8 @@
+{
+  "cSpell.words": [
+    "browserslist",
+    "eqeqeq"
+  ],
+  "editor.formatOnType": true,
+  "eslint.codeActionsOnSave.mode": "all"
+}
