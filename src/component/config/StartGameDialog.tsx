@@ -11,7 +11,9 @@ import {
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { RiichiClient } from '../../communication/riichi-client';
 import { IServerInfo, ServerList } from '../../resource/server-list';
+import { Sleep } from '../../util/timer';
 import { IObserve } from '../interface';
 
 class StartGameData {
@@ -20,9 +22,14 @@ class StartGameData {
   public serverRoom = '';
   public serverRoomErrorText = '';
   public open = true;
+  public isConnecting = false;
+
+  public onFinish: (client: RiichiClient) => void;
+  public client: RiichiClient | undefined;
 
   public constructor() {
     makeAutoObservable(this);
+    this.onFinish = () => undefined;
   }
 
   public setServerAddress(value: string): void {
@@ -33,6 +40,10 @@ class StartGameData {
   public setServerRoom(value: string): void {
     this.serverRoom = value;
     this.serverRoomErrorText = '';
+  }
+
+  public setIsConnecting(value: boolean): void {
+    this.isConnecting = value;
   }
 
   public validate(): boolean {
@@ -46,6 +57,23 @@ class StartGameData {
       isValid = false;
     }
     return isValid;
+  }
+
+  public async connect(): Promise<void> {
+    this.setIsConnecting(true);
+    const client = new RiichiClient(this.serverAddress);
+    if (await client.verifyServer()) {
+      this.client = client;
+      this.close();
+    } else {
+      this.serverAddressErrorText = 'Cannot connect to server.';
+    }
+    this.setIsConnecting(false);
+  }
+
+  public close() {
+    this.open = false;
+    void Sleep(200).then(() => this.onFinish(this.client!));
   }
 }
 
@@ -62,6 +90,7 @@ function StartGameDialog({ data }: IObserve<StartGameData>) {
           onInputChange={(_e, v) => data.setServerAddress(v)}
           inputValue={data.serverAddress}
           fullWidth
+          readOnly={data.isConnecting}
           getOptionLabel={(option) => option.address}
           renderOption={(props, option) => {
             const name = (option as IServerInfo).name;
@@ -84,6 +113,9 @@ function StartGameDialog({ data }: IObserve<StartGameData>) {
           )}
         />
         <TextField
+          InputProps={{
+            readOnly: data.isConnecting,
+          }}
           error={roomError !== ''}
           helperText={roomError}
           margin="dense"
@@ -97,9 +129,10 @@ function StartGameDialog({ data }: IObserve<StartGameData>) {
       </DialogContent>
       <DialogActions>
         <Button
+          disabled={data.isConnecting}
           onClick={() => {
             if (data.validate()) {
-              console.log('OK');
+              void data.connect();
             }
           }}
         >

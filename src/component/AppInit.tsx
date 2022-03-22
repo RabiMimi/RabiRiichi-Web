@@ -3,7 +3,7 @@ import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { TileImage } from '../resource';
-import { sleep } from '../util/timer';
+import { Sleep } from '../util/timer';
 import { IObserve } from './interface';
 
 class AppInitWorker {
@@ -11,11 +11,6 @@ class AppInitWorker {
   public currentWorkerIndex = 0;
   public totalWorkerCount = this.initList.length;
   public onFinish: () => void;
-
-  public async delayFinish(): Promise<void> {
-    await sleep(200);
-    this.onFinish();
-  }
 
   public constructor() {
     this.onFinish = () => undefined;
@@ -41,7 +36,7 @@ class AppInitWorker {
     if (!this.isFinished) {
       this.currentWorkerIndex++;
       if (this.isFinished) {
-        void this.delayFinish();
+        void Sleep(200).then(() => this.onFinish());
       }
     }
   }

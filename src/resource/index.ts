@@ -1,7 +1,7 @@
 import { IInit } from '../init.interface';
 import { TileSuit, TileSuitToString } from '../riichi/tile';
 import { EnumValues } from '../util/enum';
-import { sleep } from '../util/timer';
+import { Sleep } from '../util/timer';
 import back from './img/tile/back.png';
 
 class TileImageManager implements IInit {
@@ -25,7 +25,7 @@ class TileImageManager implements IInit {
         this.imageDict[key] = await import(`./img/tile/${key}.png`);
       }
     }
-    await sleep(1000);
+    await Sleep(1000);
   }
 }
 

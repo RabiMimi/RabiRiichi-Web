@@ -30,5 +30,6 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-unused-vars': [2, { 'args': 'all', 'argsIgnorePattern': '^_' }],
     '@typescript-eslint/explicit-member-accessibility': 'warn',
+    '@typescript-eslint/no-non-null-assertion': 'off'
   },
 };
