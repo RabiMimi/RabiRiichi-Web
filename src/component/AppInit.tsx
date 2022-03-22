@@ -1,14 +1,24 @@
 import { Backdrop, CircularProgress, Stack, Typography } from '@mui/material';
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
 import { TileImage } from '../resource';
+import { sleep } from '../util/timer';
+import { IObserve } from './interface';
 
 class AppInitWorker {
-  private readonly initList = [TileImage, TileImage, TileImage];
+  private readonly initList = [TileImage];
   public currentWorkerIndex = 0;
   public totalWorkerCount = this.initList.length;
+  public onFinish: () => void;
+
+  public async delayFinish(): Promise<void> {
+    await sleep(200);
+    this.onFinish();
+  }
 
   public constructor() {
+    this.onFinish = () => undefined;
     makeAutoObservable(this);
   }
 
@@ -30,6 +40,9 @@ class AppInitWorker {
   public nextWorker(): void {
     if (!this.isFinished) {
       this.currentWorkerIndex++;
+      if (this.isFinished) {
+        void this.delayFinish();
+      }
     }
   }
 
@@ -42,28 +55,32 @@ class AppInitWorker {
   }
 }
 
-interface AppInitProps {
-  worker: AppInitWorker;
+interface AppInitProps extends IObserve<AppInitWorker> {
+  onFinish: () => void;
 }
 
-function AppInit({ worker }: AppInitProps) {
+function AppInit({ data, onFinish }: AppInitProps) {
+  useEffect(() => {
+    data.onFinish = onFinish;
+  }, [onFinish]);
+
   return (
     <Backdrop
       sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-      open={!worker.isFinished}
+      open={!data.isFinished}
     >
       <Stack direction="column" alignItems="center" spacing={2}>
         <CircularProgress
-          value={worker.progress * 100}
+          value={data.progress * 100}
           variant="determinate"
           color="primary"
         />
         <Typography>
-          {worker.isFinished
+          {data.isFinished
             ? 'Finished!'
-            : `Init ${worker.currentWorker}... (${
-                worker.currentWorkerIndex + 1
-              } / ${worker.totalWorkerCount})`}
+            : `Init ${data.currentWorker}... (${
+                data.currentWorkerIndex + 1
+              } / ${data.totalWorkerCount})`}
         </Typography>
       </Stack>
     </Backdrop>
