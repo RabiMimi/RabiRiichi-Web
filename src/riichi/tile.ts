@@ -23,12 +23,33 @@ export function ToTileSuit(c: string): TileSuit {
   }
 }
 
+export function TileSuitToString(suit: TileSuit): string {
+  switch (suit) {
+    case TileSuit.M:
+      return 'm';
+    case TileSuit.P:
+      return 'p';
+    case TileSuit.S:
+      return 's';
+    case TileSuit.Z:
+      return 'z';
+    default:
+      return '?';
+  }
+}
+
 export class Tile {
-  constructor(
+  public constructor(
     public num: number,
     public suit: TileSuit,
     public akadora: boolean,
   ) {}
+
+  public toString(): string {
+    return `${this.akadora ? 'r' : ''}${this.num}${TileSuitToString(
+      this.suit,
+    )}`;
+  }
 }
 
 export function StringToTiles(str: string): Tile[] {
