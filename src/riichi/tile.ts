@@ -1,3 +1,4 @@
+import { TileImage } from '../resource';
 import { IsDigit } from '../util/char';
 
 export enum TileSuit {
@@ -49,6 +50,10 @@ export class Tile {
     return `${this.akadora ? 'r' : ''}${this.num}${TileSuitToString(
       this.suit,
     )}`;
+  }
+
+  public get image(): string {
+    return TileImage.getImage(this.toString());
   }
 }
 
