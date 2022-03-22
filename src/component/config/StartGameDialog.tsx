@@ -2,11 +2,14 @@ import {
   Autocomplete,
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Stack,
   TextField,
+  Typography,
 } from '@mui/material';
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
@@ -81,7 +84,7 @@ function StartGameDialog({ data }: IObserve<StartGameData>) {
   const addressError = data.serverAddressErrorText;
   const roomError = data.serverRoomErrorText;
   return (
-    <Dialog open={data.open}>
+    <Dialog open={data.open} maxWidth="xs" fullWidth>
       <DialogTitle>Start Game</DialogTitle>
       <DialogContent>
         <Autocomplete
@@ -93,10 +96,13 @@ function StartGameDialog({ data }: IObserve<StartGameData>) {
           readOnly={data.isConnecting}
           getOptionLabel={(option) => option.address}
           renderOption={(props, option) => {
-            const name = (option as IServerInfo).name;
+            const info = option as IServerInfo;
             return (
               <Box component="li" {...props}>
-                {name}
+                <Stack spacing={1} direction="row">
+                  <Chip label={info.name} variant="outlined" size="small" />
+                  <Typography>{info.address}</Typography>
+                </Stack>
               </Box>
             );
           }}

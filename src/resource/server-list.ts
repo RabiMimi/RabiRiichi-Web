@@ -5,7 +5,7 @@ export interface IServerInfo {
 
 export const ServerList: IServerInfo[] = [
   {
-    name: 'Dev Localhost',
+    name: 'Localhost',
     address: 'localhost:4333',
   },
   {
