@@ -1,4 +1,6 @@
 import {
+  Autocomplete,
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -9,6 +11,7 @@ import {
 import { makeAutoObservable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { IServerInfo, ServerList } from '../../resource/server-list';
 import { IObserve } from '../interface';
 
 class StartGameData {
@@ -39,7 +42,7 @@ class StartGameData {
       isValid = false;
     }
     if (!this.serverRoom.match(/^\d+$/)) {
-      this.serverRoomErrorText = 'Invalid server room.';
+      this.serverRoomErrorText = 'Invalid room number.';
       isValid = false;
     }
     return isValid;
@@ -53,16 +56,32 @@ function StartGameDialog({ data }: IObserve<StartGameData>) {
     <Dialog open={data.open}>
       <DialogTitle>Start Game</DialogTitle>
       <DialogContent>
-        <TextField
-          autoFocus
-          error={addressError !== ''}
-          helperText={addressError}
-          margin="dense"
-          label="Server Address"
-          value={data.serverAddress}
-          onChange={(e) => data.setServerAddress(e.target.value)}
+        <Autocomplete
+          freeSolo
+          options={ServerList}
+          onInputChange={(_e, v) => data.setServerAddress(v)}
+          inputValue={data.serverAddress}
           fullWidth
-          variant="standard"
+          getOptionLabel={(option) => option.address}
+          renderOption={(props, option) => {
+            const name = (option as IServerInfo).name;
+            return (
+              <Box component="li" {...props}>
+                {name}
+              </Box>
+            );
+          }}
+          renderInput={(params) => (
+            <TextField
+              autoFocus
+              error={addressError !== ''}
+              helperText={addressError}
+              margin="dense"
+              variant="standard"
+              label="Server Address"
+              {...params}
+            />
+          )}
         />
         <TextField
           error={roomError !== ''}
