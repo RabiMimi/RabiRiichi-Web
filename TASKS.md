@@ -121,13 +121,13 @@ Mark progress by checking the box and noting the PR/commit.
 
 ## Phase 4 — UI (React DOM, Majsoul-like; manual visual verification)
 
-- [ ] **T16. Connect / login screen (`ui/`).**
+- [x] **T16. Connect / login screen (`ui/`).**
   - Server address (default `ws://localhost:5150`) + nickname; calls
     `createUser`/`connect`. Validate `ws://`/`wss://`.
-- [ ] **T17. Lobby + create/join room (`ui/`).**
+- [x] **T17. Lobby + create/join room (`ui/`).**
   - Create Room → show 4-digit number to share. Join Room → 4-digit entry
     (1000–9999) → `joinRoom`. Error toasts for NotFound/Unavailable.
-- [ ] **T18. Room screen (`ui/`).**
+- [x] **T18. Room screen (`ui/`).**
   - Player list with rabbit-girl avatars + Ready/Cancel toggle; auto-transition
     to table when the game starts.
 

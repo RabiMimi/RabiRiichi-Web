@@ -1,0 +1,248 @@
+/* General UI styles for RabiRiichi DOM overlays */
+
+.ui-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(20, 20, 20, 0.85);
+  color: #f0f0f0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.ui-card {
+  background-color: #2a2a2a;
+  border: 2px solid #444;
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.ui-title {
+  margin: 0 0 4px 0;
+  font-size: 2.5rem;
+  color: #ff9900;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.ui-subtitle {
+  margin: 0 0 24px 0;
+  font-size: 1rem;
+  color: #aaa;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.ui-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: #ccc;
+  font-weight: 600;
+}
+
+.form-group input {
+  background-color: #1a1a1a;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #ff9900;
+}
+
+.form-group input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-error {
+  background-color: rgba(255, 0, 0, 0.15);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  color: #ff6666;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.ui-button {
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
+}
+
+.ui-button:active {
+  transform: scale(0.98);
+}
+
+.ui-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary-button {
+  background-color: #ff9900;
+  color: #111;
+}
+
+.primary-button:hover:not(:disabled) {
+  background-color: #ffaa22;
+}
+
+.secondary-button {
+  background-color: #444;
+  color: #eee;
+  border: 1px solid #555;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background-color: #555;
+}
+
+/* Lobby Screen styles */
+.lobby-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.join-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #444;
+  padding-top: 16px;
+  margin-top: 8px;
+}
+
+/* Room Screen styles */
+.room-info {
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.room-id-highlight {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ff9900;
+  display: block;
+  margin-top: 8px;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  background-color: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 12px;
+  gap: 12px;
+  transition: border-color 0.2s;
+}
+
+.player-card.is-me {
+  border-color: #ff9900;
+  background-color: #22201b;
+}
+
+.player-avatar-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #333;
+  border: 2px solid #555;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #ff9900;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.player-details {
+  flex-grow: 1;
+}
+
+.player-name {
+  font-weight: bold;
+  font-size: 1.05rem;
+}
+
+.player-seat {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+.player-status-badge {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background-color: #333;
+  color: #aaa;
+}
+
+.player-status-badge.ready {
+  background-color: rgba(0, 255, 0, 0.15);
+  color: #00ff00;
+  border: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.player-status-badge.waiting {
+  background-color: rgba(255, 255, 0, 0.05);
+  color: #ffcc00;
+  border: 1px solid rgba(255, 255, 0, 0.2);
+}
+
+.room-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.room-actions button {
+  flex: 1;
+}
