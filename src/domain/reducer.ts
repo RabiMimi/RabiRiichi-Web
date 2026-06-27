@@ -736,7 +736,10 @@ function handleStopGame(state: RoomModel, _ev: IStopGameEventMsg): RoomModel {
   };
 }
 
-const KNOWN_EVENTS = new Set([
+// Event variants that applyEvent recognizes (either handled or explicitly
+// ignored). Used by applyEvent to warn on gaps, and by tests to assert the
+// recorded game contains no silently-dropped variant.
+export const KNOWN_EVENTS = new Set([
   'beginGameEvent',
   'dealHandEvent',
   'drawTileEvent',

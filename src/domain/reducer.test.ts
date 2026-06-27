@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { hydrateFromGameState, applyEvent, applyRoomState } from './reducer';
+import {
+  hydrateFromGameState,
+  applyEvent,
+  applyRoomState,
+  KNOWN_EVENTS,
+} from './reducer';
 import type { RoomModel } from './model';
+import { GameLogMsg } from '../proto';
+import type { IEventMsg } from '../proto';
 import {
   UserStatus,
   FuritenType,
@@ -921,5 +928,72 @@ describe('Reducer - Room State', () => {
     expect(nextState?.players[0]?.nickname).toBe('AliceUpdated');
     expect(nextState?.players[0]?.gameState).not.toBeNull();
     expect(nextState?.players[0]?.gameState?.points).toBe(25000);
+  });
+});
+
+describe('Reducer - Replay coverage (F3)', () => {
+  // Returns the active oneof variant keys of an event message (usually one).
+  function eventVariantKeys(event: IEventMsg): string[] {
+    return Object.keys(event).filter(
+      (k) =>
+        !k.startsWith('$') &&
+        event[k as keyof IEventMsg] !== null &&
+        event[k as keyof IEventMsg] !== undefined,
+    );
+  }
+
+  async function loadReplayEvents(): Promise<IEventMsg[]> {
+    const { default: replayData } =
+      await import('../dev/fixtures/full_game.json');
+    const logMsg = GameLogMsg.fromObject(replayData);
+    const events: IEventMsg[] = [];
+    for (const playerLog of logMsg.playerLogs) {
+      for (const log of playerLog.logs ?? []) {
+        if (log.event) {
+          events.push(log.event);
+        }
+      }
+    }
+    return events;
+  }
+
+  it('recorded game contains no event variant unknown to applyEvent', async () => {
+    const events = await loadReplayEvents();
+    expect(events.length).toBeGreaterThan(0);
+
+    const seenVariants = new Set<string>();
+    for (const event of events) {
+      for (const key of eventVariantKeys(event)) {
+        seenVariants.add(key);
+      }
+    }
+
+    const unknownVariants = [...seenVariants].filter(
+      (v) => !KNOWN_EVENTS.has(v),
+    );
+    expect(unknownVariants).toEqual([]);
+  });
+
+  it('applies the full recorded game without throwing', async () => {
+    const events = await loadReplayEvents();
+
+    let state: RoomModel = {
+      id: 1,
+      config: { playerCount: 4 },
+      info: null,
+      players: [0, 1, 2, 3].map((seat) => ({
+        id: seat,
+        nickname: `Player ${seat}`,
+        status: UserStatus.USER_STATUS_PLAYING,
+        seat,
+        gameState: null,
+      })),
+    };
+
+    expect(() => {
+      for (const event of events) {
+        state = applyEvent(state, event);
+      }
+    }).not.toThrow();
   });
 });

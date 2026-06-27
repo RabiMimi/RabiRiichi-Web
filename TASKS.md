@@ -193,18 +193,22 @@ These are non-blocking gaps found during review of T4–T9. Tests pass and
 point-conservation holds across the full recorded game, but address these before
 or during the rendering phase:
 
-- [ ] **F1. `addKanEvent` (kakan) is not handled** in `applyEvent`
-      (`reducer.ts`). The recorded fixture contains 8 such events; they are
-      currently dropped, so a kakan (adding a tile to an existing pon) will not
-      update the called-meld view. Add a `handleAddKan` and a unit test.
-- [ ] **F2. `ryuukyokuEvent` ignores its own `score_change`.** Scores currently
-      stay correct only because the server also emits `applyScoreEvent`; if a
-      ryuukyoku ever carries transfers solely in `RyuukyokuEventMsg`, points
-      would desync. Process `ryuukyokuEvent.score_change` (or confirm via the
-      server that it is always mirrored by `applyScoreEvent`) and add a test.
-- [ ] **F3. Strengthen the replay test** to assert no known event variant is
-      silently dropped (e.g. count handled vs. present event types), so gaps like
-      F1 fail loudly in future.
+- [x] **F1. Kakan is handled.** The server sends `kanEvent{kanSource=KAKAN}`
+      first (which `handleKan` already applies: pon → kan, remove the incoming
+      tile), then a redundant `addKanEvent` for the same kakan. `applyEvent`
+      treats `addKanEvent` as a no-op to avoid double-applying the mutation
+      (mirrors the Cocos reference). Covered by a `kanEvent → addKanEvent`
+      regression test.
+- [x] **F2. `ryuukyokuEvent.score_change` is intentionally ignored.** Confirmed
+      against the server (`RyuukyokuListener` always queues an `ApplyScoreEvent`
+      sharing the same `ScoreTransferList`, and `ApplyScoreListener` is the only
+      thing that mutates points). `handleRyuukyoku` only seeds empty agari
+      deltas for the draw result panel; transfers come from `applyScoreEvent`.
+- [x] **F3. Replay coverage test added.** A test parses the recorded
+      `full_game.json` and asserts every event variant present is in
+      `KNOWN_EVENTS` (so a future unhandled variant fails loudly), plus a test
+      that applies the entire recorded game through `applyEvent` without
+      throwing. `applyEvent` also warns on unknown variants in dev builds.
 
 ## Suggested delegation grouping (for parallel agents)
 
