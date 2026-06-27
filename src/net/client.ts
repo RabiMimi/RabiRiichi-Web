@@ -11,7 +11,12 @@ import type {
 import type { PlayerModel, RoomModel } from '../domain/model';
 import { MessagePump } from './messagePump';
 import { applyEvent, applyRoomState } from '../domain/reducer';
-import { type MappedInquiry, mapInquiry } from '../domain/inquiry';
+import {
+  type MappedInquiry,
+  mapInquiry,
+  type ActionOption,
+  encodeInquiryResponse,
+} from '../domain/inquiry';
 import {
   updateRoom as sendUpdateRoom,
   respondInquiry as sendRespondInquiry,
@@ -49,6 +54,7 @@ export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 export interface ActiveInquiry {
   messageId: number;
   mapped: MappedInquiry;
+  original: ISinglePlayerInquiryMsg;
 }
 
 export class RabiRiichiClient {
@@ -64,6 +70,9 @@ export class RabiRiichiClient {
   public connectionStatus: ConnectionStatus = 'disconnected';
   public currentInquiry: ActiveInquiry | null = null;
   public readonly onChange = new RabiEvent<void>();
+
+  public isRiichiSelectMode = false;
+  public pendingActionOption: ActionOption | null = null;
 
   // Backdoor for development and testing helpers (e.g. replay driver, test mocks)
   public readonly dev = {
@@ -226,6 +235,8 @@ export class RabiRiichiClient {
       const playerId = gameEvent.endInquiryEvent.playerId;
       if (this.selfSeat !== undefined && playerId === this.selfSeat) {
         this.currentInquiry = null;
+        this.isRiichiSelectMode = false;
+        this.pendingActionOption = null;
       }
     }
     this.onChange.emit();
@@ -235,9 +246,12 @@ export class RabiRiichiClient {
     inquiry: ISinglePlayerInquiryMsg,
     respondTo: number,
   ): void {
+    this.isRiichiSelectMode = false;
+    this.pendingActionOption = null;
     this.currentInquiry = {
       messageId: respondTo,
       mapped: mapInquiry(inquiry),
+      original: inquiry,
     };
     this.logger.info(`Received inquiry ${respondTo}`);
     this.onChange.emit();
@@ -291,6 +305,33 @@ export class RabiRiichiClient {
     sendUpdateRoom(client, userStatus);
   }
 
+  public setRiichiSelectMode(active: boolean): void {
+    this.isRiichiSelectMode = active;
+    this.onChange.emit();
+  }
+
+  public setPendingActionOption(option: ActionOption | null): void {
+    this.pendingActionOption = option;
+    this.onChange.emit();
+  }
+
+  public async submitInquiryResponse(
+    action: ActionOption,
+    choice?: number,
+  ): Promise<void> {
+    if (!this.currentInquiry) return;
+    const responseDto = encodeInquiryResponse(
+      this.currentInquiry.original,
+      action,
+      choice,
+    );
+    await this.respondInquiry(
+      this.currentInquiry.messageId,
+      responseDto.index,
+      responseDto.response,
+    );
+  }
+
   public async respondInquiry(
     respondTo: number,
     index: number,
@@ -301,6 +342,8 @@ export class RabiRiichiClient {
     sendRespondInquiry(client, respondTo, index, responseJson);
     if (this.currentInquiry?.messageId === respondTo) {
       this.currentInquiry = null;
+      this.isRiichiSelectMode = false;
+      this.pendingActionOption = null;
       this.onChange.emit();
     }
   }
@@ -314,6 +357,8 @@ export class RabiRiichiClient {
     this.self = null;
     this.room = null;
     this.currentInquiry = null;
+    this.isRiichiSelectMode = false;
+    this.pendingActionOption = null;
     this.setConnectionStatus('disconnected');
   }
 }

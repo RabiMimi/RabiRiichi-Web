@@ -6,6 +6,7 @@ import type { RoomModel, PlayerModel } from '../domain/model';
 import { MockWebSocket } from '../transport/mockWebSocket';
 import { ClientMessageDto, ServerMessageDto } from '../proto';
 import type { IServerMessageDto } from '../proto';
+import type { ActionOption } from '../domain/inquiry';
 
 describe('RabiRiichi Store', () => {
   beforeEach(() => {
@@ -43,6 +44,8 @@ describe('RabiRiichi Store', () => {
       self: null,
       room: null,
       currentInquiry: null,
+      isRiichiSelectMode: false,
+      pendingActionOption: null,
     });
   });
 
@@ -142,6 +145,7 @@ describe('RabiRiichi Store', () => {
       mapped: {
         buttons: [],
       },
+      original: {},
     };
     rabiriichi.currentInquiry = mockInquiry;
     rabiriichi.onChange.emit();
@@ -149,6 +153,33 @@ describe('RabiRiichi Store', () => {
     const snapshot2 = testStore.getSnapshot();
     expect(snapshot2).not.toBe(snapshot1);
     expect(snapshot2.currentInquiry).toBe(mockInquiry);
+  });
+
+  it('should return new snapshot when isRiichiSelectMode changes', () => {
+    const snapshot1 = testStore.getSnapshot();
+
+    rabiriichi.isRiichiSelectMode = true;
+    rabiriichi.onChange.emit();
+
+    const snapshot2 = testStore.getSnapshot();
+    expect(snapshot2).not.toBe(snapshot1);
+    expect(snapshot2.isRiichiSelectMode).toBe(true);
+  });
+
+  it('should return new snapshot when pendingActionOption changes', () => {
+    const snapshot1 = testStore.getSnapshot();
+
+    const mockOption = {
+      type: 'skip',
+      label: 'Skip',
+      actionIndex: 0,
+    } as ActionOption;
+    rabiriichi.pendingActionOption = mockOption;
+    rabiriichi.onChange.emit();
+
+    const snapshot2 = testStore.getSnapshot();
+    expect(snapshot2).not.toBe(snapshot1);
+    expect(snapshot2.pendingActionOption).toBe(mockOption);
   });
 
   it('should return new room reference when real event is processed by reducer', async () => {

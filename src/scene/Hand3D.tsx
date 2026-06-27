@@ -37,6 +37,7 @@ export function Hand3D({
             tile={tileStr}
             displayState="hand"
             position={[x, 0, 0]}
+            traceId={tileMsg.traceId ?? undefined}
           />
         );
       })}
@@ -56,6 +57,7 @@ export function Hand3D({
               tile={tileStr}
               displayState="hand"
               position={[x, 0, 0]}
+              traceId={pendingTile.traceId ?? undefined}
             />
           );
         })()}

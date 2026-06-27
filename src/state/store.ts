@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { rabiriichi } from '../net/client';
 import type { ConnectionStatus, ActiveInquiry } from '../net/client';
 import type { PlayerModel, RoomModel } from '../domain/model';
+import type { ActionOption } from '../domain/inquiry';
 
 // Note: GameState is folded into RoomModel (specifically via RoomModel.info and players[].gameState)
 export interface RabiRiichiState {
@@ -9,6 +10,8 @@ export interface RabiRiichiState {
   self: PlayerModel | null;
   room: RoomModel | null;
   currentInquiry: ActiveInquiry | null;
+  isRiichiSelectMode: boolean;
+  pendingActionOption: ActionOption | null;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -23,13 +26,17 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot?.connectionStatus !== rabiriichi.connectionStatus ||
     lastSnapshot.self !== rabiriichi.self ||
     lastSnapshot.room !== rabiriichi.room ||
-    lastSnapshot.currentInquiry !== rabiriichi.currentInquiry
+    lastSnapshot.currentInquiry !== rabiriichi.currentInquiry ||
+    lastSnapshot.isRiichiSelectMode !== rabiriichi.isRiichiSelectMode ||
+    lastSnapshot.pendingActionOption !== rabiriichi.pendingActionOption
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
       self: rabiriichi.self,
       room: rabiriichi.room,
       currentInquiry: rabiriichi.currentInquiry,
+      isRiichiSelectMode: rabiriichi.isRiichiSelectMode,
+      pendingActionOption: rabiriichi.pendingActionOption,
     };
   }
   return lastSnapshot;
@@ -39,6 +46,8 @@ const getConnectionStatus = () => rabiriichi.connectionStatus;
 const getSelf = () => rabiriichi.self;
 const getRoom = () => rabiriichi.room;
 const getCurrentInquiry = () => rabiriichi.currentInquiry;
+const getIsRiichiSelectMode = () => rabiriichi.isRiichiSelectMode;
+const getPendingActionOption = () => rabiriichi.pendingActionOption;
 
 export function useRabiRiichiState(): RabiRiichiState {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -62,6 +71,22 @@ export function useRoom(): RoomModel | null {
 
 export function useCurrentInquiry(): ActiveInquiry | null {
   return useSyncExternalStore(subscribe, getCurrentInquiry, getCurrentInquiry);
+}
+
+export function useIsRiichiSelectMode(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    getIsRiichiSelectMode,
+    getIsRiichiSelectMode,
+  );
+}
+
+export function usePendingActionOption(): ActionOption | null {
+  return useSyncExternalStore(
+    subscribe,
+    getPendingActionOption,
+    getPendingActionOption,
+  );
 }
 
 function resetForTest(): void {

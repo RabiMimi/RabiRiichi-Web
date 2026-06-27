@@ -1,8 +1,14 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useGLTF, useTexture } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TILE_MODEL_PATH, getTileTexturePath } from './assets';
+import { useCurrentInquiry, useIsRiichiSelectMode } from '../state/store';
+import { rabiriichi } from '../net/client';
+import type { ActionOption } from '../domain/inquiry';
+import { Logger } from '../lib/logger';
+
+const logger = new Logger('Tile3D');
 
 export type TileDisplayState = 'hand' | 'face' | 'back' | 'sideways';
 
@@ -38,6 +44,7 @@ interface Tile3DProps {
   displayState?: TileDisplayState;
   position?: [number, number, number];
   onClick?: () => void;
+  traceId?: number | undefined;
 }
 
 export function Tile3D({
@@ -45,7 +52,41 @@ export function Tile3D({
   displayState = 'face',
   position = [0, 0, 0],
   onClick,
+  traceId,
 }: Tile3DProps): React.JSX.Element {
+  const currentInquiry = useCurrentInquiry();
+  const isRiichiSelectMode = useIsRiichiSelectMode();
+  const [isHovered, setIsHovered] = useState(false);
+
+  const { isPlayable, activeActionOption } = useMemo(() => {
+    let playable = false;
+    let activeOpt: ActionOption | null = null;
+
+    if (currentInquiry?.mapped && traceId !== undefined) {
+      const mapped = currentInquiry.mapped;
+      if (isRiichiSelectMode) {
+        const riichiOpt = mapped.buttons.find((b) => b.type === 'riichi');
+        if (
+          riichiOpt &&
+          'legalTiles' in riichiOpt &&
+          riichiOpt.legalTiles.includes(traceId)
+        ) {
+          playable = true;
+          activeOpt = riichiOpt;
+        }
+      } else if (mapped.playTile?.legalTiles.includes(traceId)) {
+        playable = true;
+        activeOpt = {
+          type: 'play-tile',
+          label: '打',
+          actionIndex: mapped.playTile.actionIndex,
+          legalTiles: mapped.playTile.legalTiles,
+        };
+      }
+    }
+
+    return { isPlayable: playable, activeActionOption: activeOpt };
+  }, [currentInquiry, isRiichiSelectMode, traceId]);
   // Load the shared GLTF model (cached by drei)
   const { scene } = useGLTF(TILE_MODEL_PATH);
 
@@ -134,11 +175,33 @@ export function Tile3D({
 
   // Set targets on prop changes (depend on numeric array elements to avoid ref comparison triggers)
   useEffect(() => {
-    targetPos.set(posX, posY + yOffset, posZ);
+    let finalY = posY + yOffset;
+    if (isPlayable) {
+      finalY += 0.03; // Lift slightly if playable
+      if (isHovered) {
+        finalY += 0.04; // Lift more if hovered
+      }
+    }
+    targetPos.set(posX, finalY, posZ);
     targetRot.setFromEuler(new THREE.Euler(rotX, rotY, rotZ));
-  }, [posX, posY, posZ, rotX, rotY, rotZ, yOffset, targetPos, targetRot]);
+  }, [
+    posX,
+    posY,
+    posZ,
+    rotX,
+    rotY,
+    rotZ,
+    yOffset,
+    targetPos,
+    targetRot,
+    isPlayable,
+    isHovered,
+  ]);
 
   const isFirstFrame = useRef(true);
+
+  const prevPlayable = useRef(false);
+  const prevHovered = useRef(false);
 
   // Animate position and rotation towards targets
   useFrame((_, delta) => {
@@ -152,6 +215,34 @@ export function Tile3D({
 
       ref.current.position.lerp(targetPos, factor);
       ref.current.quaternion.slerp(targetRot, factor);
+
+      // Emissive glow for playable tiles (only update on state changes to avoid per-frame traversal)
+      if (
+        prevPlayable.current !== isPlayable ||
+        prevHovered.current !== isHovered
+      ) {
+        prevPlayable.current = isPlayable;
+        prevHovered.current = isHovered;
+        ref.current.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            const childMat = child.material as
+              | THREE.Material
+              | THREE.Material[];
+            const mats = Array.isArray(childMat) ? childMat : [childMat];
+            mats.forEach((mat) => {
+              if (mat instanceof THREE.MeshStandardMaterial) {
+                if (isPlayable && isHovered) {
+                  mat.emissive.setHex(0x333311); // Soft yellow glow
+                } else if (isPlayable) {
+                  mat.emissive.setHex(0x111111); // Faint glow
+                } else {
+                  mat.emissive.setHex(0x000000);
+                }
+              }
+            });
+          }
+        });
+      }
     }
   });
 
@@ -160,9 +251,32 @@ export function Tile3D({
       ref={ref}
       object={clone}
       scale={[0.18, 0.24, 0.14]}
-      onClick={(e: ThreeEvent<MouseEvent>) => {
-        if (onClick) {
+      onPointerOver={(e: ThreeEvent<PointerEvent>) => {
+        if (isPlayable) {
           e.stopPropagation();
+          setIsHovered(true);
+        }
+      }}
+      onPointerOut={(e: ThreeEvent<PointerEvent>) => {
+        if (isPlayable) {
+          e.stopPropagation();
+          setIsHovered(false);
+        }
+      }}
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        if (
+          isPlayable &&
+          traceId !== undefined &&
+          currentInquiry &&
+          activeActionOption
+        ) {
+          try {
+            void rabiriichi.submitInquiryResponse(activeActionOption, traceId);
+          } catch (err) {
+            logger.error('Failed to submit tile discard choice:', err);
+          }
+        } else if (onClick) {
           onClick();
         }
       }}

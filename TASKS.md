@@ -160,14 +160,14 @@ Mark progress by checking the box and noting the PR/commit.
 
 ## Phase 6 — Interaction & result
 
-- [ ] **T24. Inquiry HUD (`ui/` + `scene/`).**
+- [x] **T24. Inquiry HUD (`ui/` + `scene/`).**
   - Majsoul-style action buttons (Chii/Pon/Kan/Riichi/Ron/Tsumo/Skip/Ryuukyoku)
     - sub-option selection; click-to-discard hand tiles with legal-option
       highlighting. On choice, call `respondInquiry`.
   - Logic (which options, what response) is already tested in T9; this task is
     wiring + visuals.
 
-- [ ] **T25. Round/result + game-end panels (`ui/`).**
+- [x] **T25. Round/result + game-end panels (`ui/`).**
   - Agari/ryuukyoku panel: yaku list, fu/han, score deltas, rabbit-girl art;
     next-round advance. Final standings on game end.
 

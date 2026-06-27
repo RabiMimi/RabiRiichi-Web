@@ -246,3 +246,450 @@
 .room-actions button {
   flex: 1;
 }
+
+/* Action HUD overlay styles */
+.action-hud-container {
+  position: absolute;
+  bottom: 150px; /* Positioned above the local player's hand */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+.action-hud-buttons {
+  display: flex;
+  gap: 16px;
+  background-color: rgba(10, 10, 10, 0.8);
+  padding: 8px 20px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(255, 204, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  align-items: center;
+}
+
+.hud-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+  padding: 8px 20px;
+  cursor: pointer;
+  border-radius: 20px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  transition: all 0.15s ease-out;
+}
+
+.hud-btn:hover {
+  transform: scale(1.1);
+  text-shadow: 0 0 8px #ffcc00;
+}
+
+.hud-btn:active {
+  transform: scale(0.95);
+}
+
+/* Action buttons colors */
+.hud-btn-chii {
+  color: #66ccff;
+}
+.hud-btn-pon {
+  color: #ffaa44;
+}
+.hud-btn-kan {
+  color: #ff66cc;
+}
+.hud-btn-riichi {
+  color: #ffcc00;
+}
+.hud-btn-agari {
+  color: #ff3333;
+  font-size: 1.5rem;
+  animation: hud-agari-pulse 1.5s infinite;
+}
+.hud-btn-skip {
+  color: #cccccc;
+}
+.hud-btn-ryuukyoku {
+  color: #aaaaaa;
+}
+
+@keyframes hud-agari-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+    text-shadow: 0 0 12px #ff3333;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Sub-options panel */
+.action-hud-sub-options {
+  background-color: rgba(20, 20, 20, 0.95);
+  border: 1.5px solid rgba(255, 204, 0, 0.4);
+  border-radius: 12px;
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+}
+
+.sub-options-title {
+  color: #aaa;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.sub-options-list {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.hud-sub-option-btn {
+  background-color: #222;
+  border: 1.5px solid #ffcc00;
+  border-radius: 6px;
+  color: #fff;
+  padding: 8px 16px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hud-sub-option-btn:hover {
+  background-color: #ffcc00;
+  color: #000;
+}
+
+.hud-cancel-btn {
+  background-color: #441111;
+  border: 1.5px solid #772222;
+  border-radius: 6px;
+  color: #ff9999;
+  padding: 8px 16px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hud-cancel-btn:hover {
+  background-color: #662222;
+  color: #fff;
+}
+
+/* Riichi select mode overlay */
+.action-hud-message {
+  color: #ffcc00;
+  font-size: 1.15rem;
+  font-weight: bold;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  margin-bottom: 8px;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 6px 16px;
+  border-radius: 15px;
+}
+
+/* Game Play HUD overlay styles */
+.game-play-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Let clicks pass through to 3D canvas unless clicking buttons */
+  z-index: 40;
+}
+
+.scoreboard {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.score-card {
+  background-color: rgba(20, 20, 20, 0.85);
+  border: 1.5px solid #444;
+  border-radius: 8px;
+  padding: 8px 16px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease-out;
+  color: #fff;
+}
+
+.score-card.active-turn {
+  border-color: #ffcc00;
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+}
+
+.score-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+
+.player-nickname {
+  font-weight: bold;
+}
+
+.player-pos-label {
+  color: #aaa;
+  font-size: 0.75rem;
+}
+
+.player-points {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #ff9900;
+  text-align: right;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Result Panel overlay styles */
+.result-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(10, 10, 10, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 120;
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  backdrop-filter: blur(8px);
+}
+
+.result-panel {
+  background-color: #1e1e1e;
+  border: 2px solid #ffcc00;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 700px;
+  padding: 30px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.result-title {
+  font-size: 2.2rem;
+  color: #ffcc00;
+  text-align: center;
+  margin: 0;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  letter-spacing: 4px;
+}
+
+.result-mimi-art {
+  position: absolute;
+  top: -40px;
+  right: -45px;
+  width: 180px;
+  height: 180px;
+  opacity: 0.25;
+  transform: rotate(15deg);
+  pointer-events: none;
+}
+
+.result-winners-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.winner-details-card {
+  background-color: #2b2b2b;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.winner-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.winner-badge {
+  background-color: #ff3333;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.winner-name {
+  font-size: 1.15rem;
+  font-weight: bold;
+}
+
+.winner-summary {
+  margin-left: auto;
+  font-weight: bold;
+  color: #ffcc00;
+  font-size: 1.1rem;
+}
+
+.winner-hand-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  background-color: #1a1a1a;
+  padding: 8px;
+  border-radius: 6px;
+  align-items: center;
+}
+
+.result-tile-img {
+  width: 32px;
+  height: 42px;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.winning-tile-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  border-left: 1.5px solid #444;
+  padding-left: 12px;
+}
+
+.winning-tile-label {
+  font-size: 0.85rem;
+  color: #aaa;
+  font-weight: bold;
+}
+
+.result-tile-img.winning-tile {
+  border: 1.5px solid #ffcc00;
+}
+
+.yaku-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.yaku-item {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dotted #444;
+  padding-bottom: 2px;
+}
+
+.yaku-name {
+  color: #ddd;
+}
+
+.yaku-val {
+  color: #ffaa44;
+  font-weight: bold;
+}
+
+/* Score Changes table */
+.result-score-changes {
+  background-color: #252525;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.result-score-changes h3 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  color: #aaa;
+  font-weight: bold;
+}
+
+.score-changes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.score-change-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.05rem;
+}
+
+.score-change-row .player-name {
+  font-weight: bold;
+  min-width: 120px;
+}
+
+.points-transition {
+  color: #888;
+  font-size: 0.95rem;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.points-delta {
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.15rem;
+  min-width: 80px;
+  text-align: right;
+}
+
+.points-delta.plus {
+  color: #00ff00;
+}
+
+.points-delta.minus {
+  color: #ff3333;
+}
+
+.points-delta.zero {
+  color: #888;
+}
+
+.result-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.result-actions button {
+  min-width: 180px;
+}

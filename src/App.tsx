@@ -7,6 +7,8 @@ import { useConnectionStatus, useSelf, useRoom } from './state/store';
 import { ConnectScreen } from './ui/ConnectScreen';
 import { LobbyScreen } from './ui/LobbyScreen';
 import { RoomScreen } from './ui/RoomScreen';
+import { GamePlayHUD } from './ui/GamePlayHUD';
+import { ResultPanel } from './ui/ResultPanel';
 import './App.css';
 
 function App(): React.JSX.Element {
@@ -37,7 +39,12 @@ function App(): React.JSX.Element {
     if (!room.info) {
       return <RoomScreen />;
     }
-    return null;
+    return (
+      <>
+        <GamePlayHUD />
+        <ResultPanel />
+      </>
+    );
   };
 
   return (

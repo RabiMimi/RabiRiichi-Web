@@ -10,7 +10,8 @@ import {
 import { RabiRiichiClient, initRabiRiichi, rabiriichi } from './client';
 import { MockWebSocket } from '../transport/mockWebSocket';
 import { ClientMessageDto, ServerMessageDto, UserStatus } from '../proto';
-import type { IServerMessageDto } from '../proto';
+import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
+import { mapInquiry } from '../domain/inquiry';
 
 describe('RabiRiichiClient', () => {
   let mockLocalStorage: Record<string, string>;
@@ -548,6 +549,53 @@ describe('RabiRiichiClient', () => {
     expect(msg.respondTo).toBe(42);
     expect(msg.clientMsg?.inquiryMsg?.index).toBe(1);
     expect(msg.clientMsg?.inquiryMsg?.response).toBe('"0"');
+
+    client.close();
+    vi.useRealTimers();
+  });
+
+  it('should submit inquiry response and reset interaction states', async () => {
+    vi.useFakeTimers();
+    const client = new RabiRiichiClient();
+    const mockWS = await setupConnectedClient(client);
+
+    const mockInquiryMsg: ISinglePlayerInquiryMsg = {
+      actions: [
+        {
+          skipAction: {},
+        },
+      ],
+    };
+
+    client.currentInquiry = {
+      messageId: 42,
+      mapped: mapInquiry(mockInquiryMsg),
+      original: mockInquiryMsg,
+    };
+
+    // Pre-set some interaction flags
+    client.isRiichiSelectMode = true;
+    client.pendingActionOption = {
+      type: 'skip',
+      label: 'Skip',
+      actionIndex: 0,
+    };
+
+    const skipOption = client.currentInquiry.mapped.buttons[0]!;
+    await client.submitInquiryResponse(skipOption);
+
+    // Assert wire message sent
+    expect(mockWS.send).toHaveBeenCalledTimes(1);
+    const msgBytes = mockWS.send.mock.calls[0]![0];
+    const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+    expect(msg.respondTo).toBe(42);
+    expect(msg.clientMsg?.inquiryMsg?.index).toBe(0);
+    expect(msg.clientMsg?.inquiryMsg?.response).toBe('{}');
+
+    // Assert states reset
+    expect(client.currentInquiry).toBeNull();
+    expect(client.isRiichiSelectMode).toBe(false);
+    expect(client.pendingActionOption).toBeNull();
 
     client.close();
     vi.useRealTimers();
