@@ -83,7 +83,7 @@ export function TableCenter(): React.JSX.Element | null {
       </mesh>
 
       {/* Active player turn indicator (small white dot from box_color_white texture scaled to z=0.56) */}
-      <group rotation={[0, -activeRotation, 0]}>
+      <group rotation={[0, activeRotation, 0]}>
         <mesh
           position={[0, 0.002, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
@@ -172,7 +172,7 @@ export function TableCenter(): React.JSX.Element | null {
         const isRiichi = !!p.gameState && p.gameState.riichiTileId > 0;
 
         return (
-          <group key={p.id} rotation={[0, -rotY, 0]}>
+          <group key={p.id} rotation={[0, rotY, 0]}>
             {/* Score Text (centered horizontally, pushed inwards to avoid lines) */}
             <DreiText
               position={[0, 0.004, 0.32]}
