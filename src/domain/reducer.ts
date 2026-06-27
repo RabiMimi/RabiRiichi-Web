@@ -18,6 +18,7 @@ import type {
   IGameTileMsg,
   IAgariEventMsg,
   IApplyScoreEventMsg,
+  IRyuukyokuEventMsg,
   IConcludeGameEventMsg,
   INextGameEventMsg,
   IStopGameEventMsg,
@@ -735,6 +736,59 @@ function handleStopGame(state: RoomModel, _ev: IStopGameEventMsg): RoomModel {
   };
 }
 
+const KNOWN_EVENTS = new Set([
+  'beginGameEvent',
+  'dealHandEvent',
+  'drawTileEvent',
+  'addTileEvent',
+  'discardTileEvent',
+  'claimTileEvent',
+  'kanEvent',
+  'addKanEvent',
+  'nextPlayerEvent',
+  'increaseJunEvent',
+  'revealDoraEvent',
+  'setRiichiEvent',
+  'setFuritenEvent',
+  'dealerFirstTurnEvent',
+  'agariEvent',
+  'applyScoreEvent',
+  'concludeGameEvent',
+  'nextGameEvent',
+  'stopGameEvent',
+  'syncGameStateEvent',
+  'ryuukyokuEvent',
+  'endInquiryEvent',
+  // Explicitly ignored events
+  'setMenzenEvent',
+  'lateClaimTileEvent',
+  'setIppatsuEvent',
+]);
+
+function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
+  // Initialize agari delta state to trigger Draw result panel.
+  // The actual points and delta values are updated by the subsequent applyScoreEvent.
+  const updatedPlayers = state.players.map((p): PlayerModel => {
+    if (!p.gameState) return p;
+
+    return {
+      ...p,
+      gameState: {
+        ...p.gameState,
+        agari: {
+          gainPoints: 0,
+          losePoints: 0,
+        },
+      },
+    };
+  });
+
+  return {
+    ...state,
+    players: updatedPlayers,
+  };
+}
+
 function handleSyncGameState(
   state: RoomModel,
   ev: ISyncGameStateEventMsg,
@@ -744,6 +798,22 @@ function handleSyncGameState(
 }
 
 export function applyEvent(state: RoomModel, eventMsg: IEventMsg): RoomModel {
+  // Warn on unhandled event variants to catch gaps early (F3)
+  if (import.meta.env.DEV) {
+    const activeKeys = Object.keys(eventMsg).filter(
+      (k) =>
+        !k.startsWith('$') &&
+        k !== 'other' &&
+        eventMsg[k as keyof IEventMsg] !== null &&
+        eventMsg[k as keyof IEventMsg] !== undefined,
+    );
+    for (const key of activeKeys) {
+      if (!KNOWN_EVENTS.has(key)) {
+        console.warn(`[Reducer] Received unhandled event variant: ${key}`);
+      }
+    }
+  }
+
   if (eventMsg.beginGameEvent) {
     return handleBeginGame(state, eventMsg.beginGameEvent);
   }
@@ -764,6 +834,9 @@ export function applyEvent(state: RoomModel, eventMsg: IEventMsg): RoomModel {
   }
   if (eventMsg.kanEvent) {
     return handleKan(state, eventMsg.kanEvent);
+  }
+  if (eventMsg.addKanEvent) {
+    return state;
   }
   if (eventMsg.nextPlayerEvent) {
     return handleNextPlayer(state, eventMsg.nextPlayerEvent);
@@ -802,7 +875,7 @@ export function applyEvent(state: RoomModel, eventMsg: IEventMsg): RoomModel {
     return handleSyncGameState(state, eventMsg.syncGameStateEvent);
   }
   if (eventMsg.ryuukyokuEvent) {
-    return state;
+    return handleRyuukyoku(state, eventMsg.ryuukyokuEvent);
   }
   if (eventMsg.endInquiryEvent) {
     return state;

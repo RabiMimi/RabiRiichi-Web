@@ -776,6 +776,91 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.round).toBe(2);
     expect(nextState.info?.remainingTiles).toBe(70);
   });
+
+  it('should ignore addKanEvent (Kakan) when preceded by kanEvent (Kakan)', () => {
+    const state = createInitializedRoom();
+    // Player 0 already has a Pon of 1m
+    setCalled(state, 0, [
+      {
+        tiles: [
+          { traceId: 10, tile: 17 },
+          { traceId: 11, tile: 17 },
+          { traceId: 99, tile: 17, discardInfo: { from: 1 } },
+        ],
+      },
+    ]);
+    // And has the fourth 1m in hand (pending)
+    setPendingTile(state, 0, { traceId: 12, tile: 17 });
+
+    const kanEventMsg = {
+      kanEvent: {
+        playerId: 0,
+        kan: {
+          tiles: [
+            { traceId: 10, tile: 17 },
+            { traceId: 11, tile: 17 },
+            { traceId: 99, tile: 17, discardInfo: { from: 1 } },
+            { traceId: 12, tile: 17 },
+          ],
+        },
+        incoming: { traceId: 12, tile: 17 },
+        kanSource: TileSource.TILE_SOURCE_KAKAN,
+      },
+    };
+
+    const addKanEventMsg = {
+      addKanEvent: {
+        playerId: 0,
+        kan: {
+          tiles: [
+            { traceId: 10, tile: 17 },
+            { traceId: 11, tile: 17 },
+            { traceId: 99, tile: 17, discardInfo: { from: 1 } },
+            { traceId: 12, tile: 17 },
+          ],
+        },
+        incoming: { traceId: 12, tile: 17 },
+        kanSource: TileSource.TILE_SOURCE_KAKAN,
+      },
+    };
+
+    // Apply kanEvent first (does the actual mutation)
+    const stateAfterKan = applyEvent(state, kanEventMsg);
+
+    const p0AfterKan = stateAfterKan.players.find((p) => p.seat === 0);
+    expect(p0AfterKan?.gameState?.hand.pendingTile).toBeNull();
+    expect(p0AfterKan?.gameState?.hand.called).toHaveLength(1);
+    expect(p0AfterKan?.gameState?.hand.called[0]?.tiles).toHaveLength(4);
+
+    // Apply addKanEvent (should be a clean no-op)
+    const finalState = applyEvent(stateAfterKan, addKanEventMsg);
+
+    const p0Final = finalState.players.find((p) => p.seat === 0);
+    // Should preserve the exact state after kanEvent (no extra tiles removed)
+    expect(p0Final?.gameState?.hand.pendingTile).toBeNull();
+    expect(p0Final?.gameState?.hand.called).toHaveLength(1);
+    expect(p0Final?.gameState?.hand.called[0]?.tiles).toHaveLength(4);
+    expect(p0Final?.gameState?.hand.called[0]?.tiles?.[3]?.traceId).toBe(12);
+  });
+
+  it('should handle ryuukyokuEvent by setting empty agari results', () => {
+    const state = createInitializedRoom();
+
+    const eventMsg = {
+      ryuukyokuEvent: {
+        scoreChange: [],
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+
+    for (const p of nextState.players) {
+      expect(p.gameState?.agari).not.toBeNull();
+      expect(p.gameState?.agari?.gainPoints).toBe(0);
+      expect(p.gameState?.agari?.losePoints).toBe(0);
+      expect(p.gameState?.agari?.scores).toBeUndefined();
+    }
+  });
 });
 
 describe('Reducer - Room State', () => {
