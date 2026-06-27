@@ -21,11 +21,11 @@ a 3D browser game on top of the open-source gRPC server implementation.
 The requirement was a code-first 3D engine that does **not** depend on a
 dedicated editor (unlike Cocos Creator, Unity, or Godot). Candidates:
 
-| Engine          | Editor required | Notes                                                              |
-| --------------- | --------------- | ----------------------------------------------------------------- |
-| **three.js**    | No              | Largest ecosystem, code-first, first-class React integration.     |
-| Babylon.js      | No              | More batteries-included (physics, GUI), heavier, smaller R-ecos.  |
-| PlayCanvas      | Optional/Yes    | Engine is code-first but the product is editor-centric.           |
+| Engine       | Editor required | Notes                                                            |
+| ------------ | --------------- | ---------------------------------------------------------------- |
+| **three.js** | No              | Largest ecosystem, code-first, first-class React integration.    |
+| Babylon.js   | No              | More batteries-included (physics, GUI), heavier, smaller R-ecos. |
+| PlayCanvas   | Optional/Yes    | Engine is code-first but the product is editor-centric.          |
 
 **three.js** was chosen for its maturity, ecosystem size, and the excellent
 `react-three-fiber` renderer, which lets us express the 3D scene declaratively
@@ -46,18 +46,18 @@ npm run dev
 
 ## Scripts
 
-| Script                  | Description                                          |
-| ----------------------- | ---------------------------------------------------- |
-| `npm run dev`           | Start the Vite dev server with HMR.                  |
-| `npm run build`         | Type-check and produce a production build in `dist`. |
-| `npm run preview`       | Preview the production build locally.                |
-| `npm run lint`          | Run ESLint (type-aware).                             |
-| `npm run lint:fix`      | Run ESLint and auto-fix where possible.              |
-| `npm run format`        | Format the codebase with Prettier.                   |
-| `npm run format:check`  | Check formatting without writing.                    |
-| `npm run typecheck`     | Run the TypeScript compiler without emitting.        |
-| `npm run proto:update`  | Fetch the latest proto files (git submodule).        |
-| `npm run proto:gen`     | Generate TS bindings into `src/generated`.           |
+| Script                 | Description                                          |
+| ---------------------- | ---------------------------------------------------- |
+| `npm run dev`          | Start the Vite dev server with HMR.                  |
+| `npm run build`        | Type-check and produce a production build in `dist`. |
+| `npm run preview`      | Preview the production build locally.                |
+| `npm run lint`         | Run ESLint (type-aware).                             |
+| `npm run lint:fix`     | Run ESLint and auto-fix where possible.              |
+| `npm run format`       | Format the codebase with Prettier.                   |
+| `npm run format:check` | Check formatting without writing.                    |
+| `npm run typecheck`    | Run the TypeScript compiler without emitting.        |
+| `npm run proto:update` | Fetch the latest proto files (git submodule).        |
+| `npm run proto:gen`    | Generate TS bindings into `src/generated`.           |
 
 ## Protos
 
