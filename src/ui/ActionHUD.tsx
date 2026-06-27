@@ -1,27 +1,27 @@
 import React from 'react';
-import {
-  useCurrentInquiry,
-  useIsRiichiSelectMode,
-  usePendingActionOption,
-} from '../state/store';
+import { useCurrentInquiry, useIsRiichiSelectMode } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Logger } from '../lib/logger';
-import { type ActionOption } from '../domain/inquiry';
+import { type ActionOption, type InquiryOptionType } from '../domain/inquiry';
 import { Tile } from '../domain/tile';
+import { getTileTexturePath } from '../scene/assets';
 
 const logger = new Logger('ActionHUD');
+
+interface FlattenedOption {
+  key: string;
+  label: string;
+  type: InquiryOptionType;
+  tiles?: { traceId: number; tile: number }[];
+  onClick: () => void;
+}
 
 export function ActionHUD(): React.JSX.Element | null {
   const currentInquiry = useCurrentInquiry();
   const isRiichiSelectMode = useIsRiichiSelectMode();
-  const pendingActionOption = usePendingActionOption();
 
   const setIsRiichiSelectMode = (active: boolean) => {
     rabiriichi.setRiichiSelectMode(active);
-  };
-
-  const setPendingActionOption = (option: ActionOption | null) => {
-    rabiriichi.setPendingActionOption(option);
   };
 
   const submitAction = async (action: ActionOption, choice?: number) => {
@@ -37,47 +37,6 @@ export function ActionHUD(): React.JSX.Element | null {
   }
 
   const { buttons } = currentInquiry.mapped;
-
-  // Render sub-options (e.g. multi-combinations for Chii, Pon, Kan)
-  const renderSubOptions = () => {
-    if (!pendingActionOption || !('tileGroups' in pendingActionOption)) {
-      return null;
-    }
-
-    const { tileGroups } = pendingActionOption;
-
-    return (
-      <div className="action-hud-sub-options">
-        <div className="sub-options-title">选择组合 / Select Combo:</div>
-        <div className="sub-options-list">
-          {tileGroups.map((group) => {
-            // Render the tiles in the group, e.g. "7s 8s"
-            const label = group.tiles
-              .map((t) => Tile.fromByte(t.tile).toString())
-              .join(' ');
-
-            return (
-              <button
-                key={group.index}
-                className="hud-sub-option-btn"
-                onClick={() => {
-                  void submitAction(pendingActionOption, group.index);
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-          <button
-            className="hud-cancel-btn"
-            onClick={() => setPendingActionOption(null)}
-          >
-            取消 / Cancel
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   // If selecting a tile to discard for Riichi
   if (isRiichiSelectMode) {
@@ -101,50 +60,72 @@ export function ActionHUD(): React.JSX.Element | null {
     return null;
   }
 
+  // Flatten options: map Pon/Chi/Kan options with multiple tile groups into distinct clickable options
+  const flatOptions: FlattenedOption[] = [];
+
+  buttons.forEach((btn) => {
+    if (
+      (btn.type === 'chii' || btn.type === 'pon' || btn.type === 'kan') &&
+      'tileGroups' in btn
+    ) {
+      btn.tileGroups.forEach((group) => {
+        flatOptions.push({
+          key: `${btn.type}-${btn.actionIndex}-${group.index}`,
+          label: btn.label,
+          type: btn.type,
+          tiles: group.tiles,
+          onClick: () => void submitAction(btn, group.index),
+        });
+      });
+    } else {
+      flatOptions.push({
+        key: `${btn.type}-${btn.actionIndex}`,
+        label: btn.label,
+        type: btn.type,
+        onClick: () => {
+          if (btn.type === 'riichi') {
+            setIsRiichiSelectMode(true);
+          } else {
+            void submitAction(btn);
+          }
+        },
+      });
+    }
+  });
+
   return (
     <div className="action-hud-container">
-      {/* Combination overlay if open */}
-      {renderSubOptions()}
-
-      {/* Main HUD buttons row */}
-      {!pendingActionOption && (
-        <div className="action-hud-buttons">
-          {buttons.map((btn) => {
-            const handleButtonClick = () => {
-              if (
-                (btn.type === 'chii' ||
-                  btn.type === 'pon' ||
-                  btn.type === 'kan') &&
-                'tileGroups' in btn
-              ) {
-                const firstGroup = btn.tileGroups[0];
-                if (btn.tileGroups.length === 1 && firstGroup) {
-                  // Auto-submit if there's only a single combo option
-                  void submitAction(btn, firstGroup.index);
-                } else {
-                  // Show the choices menu
-                  setPendingActionOption(btn);
-                }
-              } else if (btn.type === 'riichi') {
-                setIsRiichiSelectMode(true);
-              } else {
-                // Skip, Agari (Ron/Tsumo), Ryuukyoku have no options, submit immediately
-                void submitAction(btn);
-              }
-            };
-
-            return (
-              <button
-                key={btn.actionIndex}
-                className={`hud-btn hud-btn-${btn.type}`}
-                onClick={handleButtonClick}
-              >
-                {btn.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <div className="action-hud-buttons">
+        {flatOptions.map((opt) => (
+          <button
+            key={opt.key}
+            className={`hud-btn hud-btn-${opt.type}`}
+            onClick={opt.onClick}
+          >
+            {opt.tiles ? (
+              <div className="hud-tile-group">
+                <span className="hud-group-type-label">{opt.label}</span>
+                <div className="hud-group-tiles">
+                  {opt.tiles.map((t, idx) => {
+                    const tileStr = Tile.fromByte(t.tile).toString();
+                    const imgSrc = getTileTexturePath(tileStr);
+                    return (
+                      <img
+                        key={idx}
+                        src={imgSrc}
+                        alt={tileStr}
+                        className="hud-tile-img"
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              opt.label
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
