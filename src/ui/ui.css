@@ -723,3 +723,43 @@
   pointer-events: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
+
+/* Dora panel */
+.dora-panel {
+  position: absolute;
+  top: 90px; /* Positioned below settings-panel */
+  left: 20px;
+  background-color: rgba(20, 20, 20, 0.85);
+  border: 1.5px solid #444;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #fff;
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  min-width: 160px;
+}
+
+.dora-panel-title {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #ffcc00;
+  letter-spacing: 2px;
+}
+
+.dora-tiles-row {
+  display: flex;
+  gap: 4px;
+}
+
+.dora-tile-img {
+  width: 28px;
+  height: 38px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  object-fit: cover;
+  background-color: #f7f4eb;
+}

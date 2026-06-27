@@ -2,6 +2,41 @@ import React from 'react';
 import { useRoom, useSelf, useAnimationSpeed } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { rabiriichi } from '../net/client';
+import { Tile } from '../domain/tile';
+import { getTileTexturePath } from '../scene/assets';
+
+function DoraPanel(): React.JSX.Element | null {
+  const room = useRoom();
+  if (!room?.info) return null;
+
+  const { doras } = room.info;
+
+  return (
+    <div className="dora-panel">
+      <div className="dora-panel-title">宝牌 / DORA</div>
+      <div className="dora-tiles-row">
+        {Array.from({ length: 5 }).map((_, idx) => {
+          const doraTileMsg = doras && idx < doras.length ? doras[idx] : null;
+          let imgSrc = '/assets/hand_tiles/back.jpg';
+
+          if (doraTileMsg && doraTileMsg.tile) {
+            const tileStr = Tile.fromByte(doraTileMsg.tile).toString();
+            imgSrc = getTileTexturePath(tileStr);
+          }
+
+          return (
+            <img
+              key={idx}
+              src={imgSrc}
+              alt={doraTileMsg ? 'Dora' : 'Locked'}
+              className="dora-tile-img"
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function GamePlayHUD(): React.JSX.Element | null {
   const room = useRoom();
@@ -55,6 +90,9 @@ export function GamePlayHUD(): React.JSX.Element | null {
           <option value="8">x8.0</option>
         </select>
       </div>
+
+      {/* Dora Panel */}
+      <DoraPanel />
 
       {/* 2D Action HUD overlay buttons */}
       <ActionHUD />
