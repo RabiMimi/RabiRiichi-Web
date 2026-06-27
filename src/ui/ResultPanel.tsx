@@ -99,6 +99,7 @@ export function ResultPanel(): React.JSX.Element | null {
     }
 
     const handTiles = player.gameState?.hand.freeTiles ?? [];
+    const calledMelds = player.gameState?.hand.called ?? [];
 
     return (
       <div key={player.id} className="winner-details-card">
@@ -110,17 +111,19 @@ export function ResultPanel(): React.JSX.Element | null {
 
         {/* Display final sorted hand tiles */}
         <div className="winner-hand-tiles">
-          {handTiles.map((tileMsg, idx) => {
-            const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-            return (
-              <img
-                key={tileMsg.traceId ?? idx}
-                src={getTileTexturePath(tileStr)}
-                alt={tileStr}
-                className="result-tile-img"
-              />
-            );
-          })}
+          <div className="closed-hand-tiles">
+            {handTiles.map((tileMsg, idx) => {
+              const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+              return (
+                <img
+                  key={tileMsg.traceId ?? idx}
+                  src={getTileTexturePath(tileStr)}
+                  alt={tileStr}
+                  className="result-tile-img"
+                />
+              );
+            })}
+          </div>
           {/* Winning tile */}
           {agari.incoming && (
             <div className="winning-tile-group">
@@ -134,6 +137,25 @@ export function ResultPanel(): React.JSX.Element | null {
               />
             </div>
           )}
+          {/* Called melds */}
+          {calledMelds.map((meld, meldIdx) => {
+            const tiles = meld.tiles ?? [];
+            return (
+              <div key={meldIdx} className="result-meld-group">
+                {tiles.map((tile, tileIdx) => {
+                  const tileStr = Tile.fromByte(tile.tile ?? 0).toString();
+                  return (
+                    <img
+                      key={tile.traceId ?? tileIdx}
+                      src={getTileTexturePath(tileStr)}
+                      alt={tileStr}
+                      className="result-tile-img"
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
 
         {/* List of Yaku */}
