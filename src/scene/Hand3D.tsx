@@ -2,23 +2,26 @@ import React from 'react';
 import type { IGameTileMsg } from '../proto';
 import { Tile3D } from './Tile3D';
 import { Tile } from '../domain/tile';
+import { getSafeKey, getSafeTraceId } from './assets';
 
 interface Hand3DProps {
   tiles: IGameTileMsg[];
   pendingTile: IGameTileMsg | null;
   isLocal: boolean;
+  shiftX?: number;
 }
 
 export function Hand3D({
   tiles,
   pendingTile,
   isLocal,
+  shiftX = 0,
 }: Hand3DProps): React.JSX.Element {
   const spacing = 0.19; // Tile width (0.18) + small gap
   const k = tiles.length;
 
   return (
-    <group>
+    <group position={[shiftX, 0, 0]}>
       {/* Free tiles in hand */}
       {tiles.map((tileMsg, idx) => {
         // Center the hand at X = 0
@@ -33,11 +36,11 @@ export function Hand3D({
 
         return (
           <Tile3D
-            key={tileMsg.traceId ?? idx}
+            key={getSafeKey(tileMsg.traceId, idx)}
             tile={tileStr}
-            displayState="hand"
+            displayState={isLocal ? 'hand' : 'opponent-hand'}
             position={[x, 0, 0]}
-            traceId={tileMsg.traceId ?? undefined}
+            traceId={getSafeTraceId(tileMsg.traceId)}
           />
         );
       })}
@@ -53,11 +56,11 @@ export function Hand3D({
 
           return (
             <Tile3D
-              key={pendingTile.traceId ?? 'pending'}
+              key={getSafeKey(pendingTile.traceId, 'pending')}
               tile={tileStr}
-              displayState="hand"
+              displayState={isLocal ? 'hand' : 'opponent-hand'}
               position={[x, 0, 0]}
-              traceId={pendingTile.traceId ?? undefined}
+              traceId={getSafeTraceId(pendingTile.traceId)}
             />
           );
         })()}

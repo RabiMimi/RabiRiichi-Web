@@ -46,6 +46,8 @@ describe('RabiRiichi Store', () => {
       currentInquiry: null,
       isRiichiSelectMode: false,
       pendingActionOption: null,
+      animationSpeed: 1.0,
+      isWaitingForProceed: false,
     });
   });
 

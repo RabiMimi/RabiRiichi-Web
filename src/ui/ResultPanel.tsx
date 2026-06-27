@@ -1,48 +1,86 @@
 import React from 'react';
-import { useRoom, useCurrentInquiry } from '../state/store';
+import {
+  useRoom,
+  useCurrentInquiry,
+  useIsWaitingForProceed,
+} from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
 import { getTileTexturePath, MIMI_PATH } from '../scene/assets';
 import { type ActionOption } from '../domain/inquiry';
 import { ScoringType } from '../proto';
 import { Logger } from '../lib/logger';
+import { proceedReplay } from '../dev/replayDriver';
 
 const logger = new Logger('ResultPanel');
 
 export function ResultPanel(): React.JSX.Element | null {
   const room = useRoom();
   const currentInquiry = useCurrentInquiry();
+  const isWaitingForProceed = useIsWaitingForProceed();
 
-  const submitAction = async (action: ActionOption, choice?: number) => {
-    try {
-      await rabiriichi.submitInquiryResponse(action, choice);
-    } catch (err) {
-      logger.error('Failed to submit proceed/confirm action:', err);
-    }
-  };
+  const [secondsLeft, setSecondsLeft] = React.useState<number>(8);
 
-  if (!room) return null;
-
-  // Filter players who have an active agari/result state populated
-  const playersWithResult = room.players.filter((p) => p.gameState?.agari);
-  if (playersWithResult.length === 0) {
-    return null;
-  }
-
-  // Find if there is a winner (i.e. someone who won the round, scores is populated)
-  const winner = room.players.find((p) => p.gameState?.agari?.scores != null);
-  const isDraw = !winner;
-
-  // Locate proceed action from current inquiry if present
-  const proceedAction = currentInquiry?.mapped.buttons.find(
-    (b) => b.type === 'skip' || b.type === 'ryuukyoku',
+  const submitAction = React.useCallback(
+    async (action: ActionOption, choice?: number) => {
+      try {
+        await rabiriichi.submitInquiryResponse(action, choice);
+      } catch (err) {
+        logger.error('Failed to submit proceed/confirm action:', err);
+      }
+    },
+    [],
   );
 
-  const handleProceed = () => {
+  const playersWithResult = React.useMemo(() => {
+    return room ? room.players.filter((p) => p.gameState?.agari) : [];
+  }, [room]);
+
+  const winner = React.useMemo(() => {
+    return room
+      ? room.players.find((p) => p.gameState?.agari?.scores != null)
+      : undefined;
+  }, [room]);
+
+  const isDraw = !winner;
+
+  const proceedAction = React.useMemo(() => {
+    return currentInquiry?.mapped.buttons.find(
+      (b) => b.type === 'skip' || b.type === 'ryuukyoku',
+    );
+  }, [currentInquiry]);
+
+  const canProceed = proceedAction != null || isWaitingForProceed;
+
+  const handleProceed = React.useCallback(() => {
     if (proceedAction) {
       void submitAction(proceedAction);
+    } else if (isWaitingForProceed) {
+      proceedReplay();
     }
-  };
+  }, [proceedAction, isWaitingForProceed, submitAction]);
+
+  React.useEffect(() => {
+    if (!canProceed) return;
+
+    const intervalId = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(intervalId);
+          handleProceed();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+      setSecondsLeft(8);
+    };
+  }, [canProceed, handleProceed]);
+
+  if (!room || playersWithResult.length === 0) return null;
 
   const renderWinnerDetails = (player: (typeof room.players)[0]) => {
     const agari = player.gameState?.agari;
@@ -176,9 +214,11 @@ export function ResultPanel(): React.JSX.Element | null {
           <button
             className="ui-button primary-button"
             onClick={handleProceed}
-            disabled={!proceedAction}
+            disabled={!canProceed}
           >
-            {proceedAction ? '确定 / Confirm' : '等待下一局... / Waiting...'}
+            {canProceed
+              ? `确定 / Confirm (${secondsLeft}s)`
+              : '等待下一局... / Waiting...'}
           </button>
         </div>
       </div>

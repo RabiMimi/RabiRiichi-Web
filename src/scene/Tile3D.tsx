@@ -2,15 +2,28 @@ import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useGLTF, useTexture } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
-import { TILE_MODEL_PATH, getTileTexturePath } from './assets';
-import { useCurrentInquiry, useIsRiichiSelectMode } from '../state/store';
+import {
+  TILE_MODEL_PATH,
+  getTileTexturePath,
+  VALID_TILE_STRINGS,
+} from './assets';
+import {
+  useCurrentInquiry,
+  useIsRiichiSelectMode,
+  useAnimationSpeed,
+} from '../state/store';
 import { rabiriichi } from '../net/client';
 import type { ActionOption } from '../domain/inquiry';
 import { Logger } from '../lib/logger';
 
 const logger = new Logger('Tile3D');
 
-export type TileDisplayState = 'hand' | 'face' | 'back' | 'sideways';
+export type TileDisplayState =
+  | 'hand'
+  | 'opponent-hand'
+  | 'face'
+  | 'back'
+  | 'sideways';
 
 function createMappedMaterial(
   mat: THREE.Material,
@@ -56,6 +69,7 @@ export function Tile3D({
 }: Tile3DProps): React.JSX.Element {
   const currentInquiry = useCurrentInquiry();
   const isRiichiSelectMode = useIsRiichiSelectMode();
+  const animationSpeed = useAnimationSpeed();
   const [isHovered, setIsHovered] = useState(false);
 
   const { isPlayable, activeActionOption } = useMemo(() => {
@@ -101,6 +115,7 @@ export function Tile3D({
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.magFilter = THREE.LinearFilter;
+    tex.flipY = false;
     tex.needsUpdate = true;
     return tex;
   }, [texture]);
@@ -140,23 +155,28 @@ export function Tile3D({
     switch (displayState) {
       case 'hand':
         // Upright in hand, facing the player (rotated 180 around Y)
-        // and tilted slightly back (e.g. -12 degrees = -0.2 rad) for visibility
-        rot = [-0.2, Math.PI, 0];
+        // and tilted back more to face the camera directly (like a 2D hand)
+        rot = [-0.65, Math.PI, 0];
+        yOff = 0.05;
+        break;
+      case 'opponent-hand':
+        // Upright in opponent's hand, facing them (no tilt relative to their seat)
+        rot = [0, Math.PI, 0];
         yOff = 0.12;
         break;
       case 'face':
         // Lying flat on the table, face up
-        rot = [-Math.PI / 2, 0, 0];
+        rot = [-Math.PI / 2, Math.PI, 0];
         yOff = 0.07;
         break;
       case 'back':
         // Lying flat on the table, face down
-        rot = [Math.PI / 2, 0, 0];
+        rot = [Math.PI / 2, Math.PI, 0];
         yOff = 0.07;
         break;
       case 'sideways':
         // Lying flat, face up, rotated 90 degrees CCW
-        rot = [-Math.PI / 2, -Math.PI / 2, 0];
+        rot = [-Math.PI / 2, Math.PI, Math.PI / 2];
         yOff = 0.07;
         break;
     }
@@ -206,11 +226,11 @@ export function Tile3D({
   // Animate position and rotation towards targets
   useFrame((_, delta) => {
     if (ref.current) {
-      // 0.15 is the lerp speed. Adjust this to speed up/slow down the slide.
       // We make it frame-rate independent by incorporating delta:
       // lerpFactor = 1 - Math.exp(-speed * delta)
-      const speed = 10; // units per second-ish
-      const factor = isFirstFrame.current ? 1 : 1 - Math.exp(-speed * delta);
+      const factor = isFirstFrame.current
+        ? 1
+        : 1 - Math.exp(-12 * animationSpeed * delta);
       isFirstFrame.current = false;
 
       ref.current.position.lerp(targetPos, factor);
@@ -286,3 +306,11 @@ export function Tile3D({
 
 // Pre-load the GLTF to avoid pop-in
 useGLTF.preload(TILE_MODEL_PATH);
+
+// Pre-load all tile face textures to prevent Suspense flashes at runtime
+VALID_TILE_STRINGS.forEach((tileStr) => {
+  useTexture.preload(getTileTexturePath(tileStr));
+});
+useTexture.preload(getTileTexturePath('back'));
+useTexture.preload(getTileTexturePath('front'));
+useTexture.preload(getTileTexturePath('blank'));

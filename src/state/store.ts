@@ -12,6 +12,8 @@ export interface RabiRiichiState {
   currentInquiry: ActiveInquiry | null;
   isRiichiSelectMode: boolean;
   pendingActionOption: ActionOption | null;
+  animationSpeed: number;
+  isWaitingForProceed: boolean;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -28,7 +30,9 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.room !== rabiriichi.room ||
     lastSnapshot.currentInquiry !== rabiriichi.currentInquiry ||
     lastSnapshot.isRiichiSelectMode !== rabiriichi.isRiichiSelectMode ||
-    lastSnapshot.pendingActionOption !== rabiriichi.pendingActionOption
+    lastSnapshot.pendingActionOption !== rabiriichi.pendingActionOption ||
+    lastSnapshot.animationSpeed !== rabiriichi.animationSpeed ||
+    lastSnapshot.isWaitingForProceed !== rabiriichi.isWaitingForProceed
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -37,6 +41,8 @@ function getSnapshot(): RabiRiichiState {
       currentInquiry: rabiriichi.currentInquiry,
       isRiichiSelectMode: rabiriichi.isRiichiSelectMode,
       pendingActionOption: rabiriichi.pendingActionOption,
+      animationSpeed: rabiriichi.animationSpeed,
+      isWaitingForProceed: rabiriichi.isWaitingForProceed,
     };
   }
   return lastSnapshot;
@@ -48,9 +54,23 @@ const getRoom = () => rabiriichi.room;
 const getCurrentInquiry = () => rabiriichi.currentInquiry;
 const getIsRiichiSelectMode = () => rabiriichi.isRiichiSelectMode;
 const getPendingActionOption = () => rabiriichi.pendingActionOption;
+const getAnimationSpeed = () => rabiriichi.animationSpeed;
+const getIsWaitingForProceed = () => rabiriichi.isWaitingForProceed;
 
 export function useRabiRiichiState(): RabiRiichiState {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+export function useAnimationSpeed(): number {
+  return useSyncExternalStore(subscribe, getAnimationSpeed, getAnimationSpeed);
+}
+
+export function useIsWaitingForProceed(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    getIsWaitingForProceed,
+    getIsWaitingForProceed,
+  );
 }
 
 export function useConnectionStatus(): ConnectionStatus {
@@ -101,5 +121,6 @@ export const testStore = {
   getSelf,
   getRoom,
   getCurrentInquiry,
+  getIsWaitingForProceed,
   reset: resetForTest,
 };

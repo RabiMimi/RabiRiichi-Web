@@ -18,15 +18,28 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    let active = true;
+    let stopReplayFn: (() => void) | null = null;
+
     if (params.get('replay') === '1') {
       import('./dev/replayDriver')
-        .then(({ startReplay }) => {
-          void startReplay();
+        .then(({ startReplay, stopReplay }) => {
+          if (active) {
+            stopReplayFn = stopReplay;
+            void startReplay();
+          }
         })
         .catch(console.error);
     } else {
       void initRabiRiichi();
     }
+
+    return () => {
+      active = false;
+      if (stopReplayFn) {
+        stopReplayFn();
+      }
+    };
   }, []);
 
   const renderUI = () => {

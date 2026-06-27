@@ -1,4 +1,6 @@
 import type { Tile } from '../domain/tile';
+import { TileSource } from '../proto';
+import type { IMenLikeMsg } from '../proto';
 
 export const TILE_MODEL_PATH = '/assets/tile.glb';
 export const TABLE_DIFFUSE_PATH = '/assets/table_diffuse.jpg';
@@ -82,4 +84,81 @@ export function getTileTexturePath(tile: string | Tile | null): string {
  */
 export function getTableMidTexturePath(textureName: string): string {
   return `/assets/table_mid/${textureName}.png`;
+}
+
+/**
+ * Returns a valid traceId (number) or undefined if the traceId is falsy, nullish, or 0.
+ * Useful for filtering out protobuf default 0 values for hidden opponent tiles.
+ */
+export function getSafeTraceId(
+  traceId: number | null | undefined,
+): number | undefined {
+  if (traceId === undefined || traceId === null || traceId === 0) {
+    return undefined;
+  }
+  return traceId;
+}
+
+/**
+ * Returns a unique key for rendering React elements, falling back if traceId is 0 or nullish.
+ */
+export function getSafeKey(
+  traceId: number | null | undefined,
+  fallback: string | number,
+): string | number {
+  return getSafeTraceId(traceId) ?? fallback;
+}
+
+/**
+ * Calculates the left-most coordinate boundary of a player's called meld groups.
+ */
+export function getMeldsLeftEdge(called: IMenLikeMsg[], seat: number): number {
+  const startX = 2.3;
+  if (called.length === 0) return startX;
+
+  const W_NORMAL = 0.18;
+  const W_SIDEWAYS = 0.24;
+  const gap = 0.005;
+  const meldGap = 0.08;
+
+  let currentMeldRightX = startX;
+
+  for (const meld of called) {
+    const tiles = meld.tiles ?? [];
+    if (tiles.length === 0) continue;
+
+    // Determine if Ankan (Closed Kan)
+    // Closed kan tiles all have source TILE_SOURCE_ANKAN.
+    const isAnkan =
+      tiles.length === 4 &&
+      tiles.every((t) => t.source === TileSource.TILE_SOURCE_ANKAN);
+
+    let meldWidth: number;
+    if (isAnkan) {
+      meldWidth = 4 * W_NORMAL + 3 * gap;
+    } else {
+      const calledTile = tiles.find(
+        (t) => t.discardInfo && t.discardInfo.from !== seat,
+      );
+      const isKakan =
+        tiles.length === 4 &&
+        tiles.some((t) => t.formTime !== tiles[0]?.formTime);
+
+      if (isKakan) {
+        // Kakan behaves horizontally like Pon (1 sideways, 2 normal, 4th stacked on top)
+        meldWidth = W_SIDEWAYS + 2 * W_NORMAL + 2 * gap;
+      } else {
+        const sidewaysCount = calledTile ? 1 : 0;
+        const normalCount = tiles.length - sidewaysCount;
+        meldWidth =
+          sidewaysCount * W_SIDEWAYS +
+          normalCount * W_NORMAL +
+          (tiles.length - 1) * gap;
+      }
+    }
+
+    currentMeldRightX = currentMeldRightX - meldWidth - meldGap;
+  }
+
+  return currentMeldRightX + meldGap;
 }

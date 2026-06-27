@@ -23,7 +23,7 @@ export function SeatAnchor({
   // - local +X pointing to the right of the player
   // - local -X pointing to the left of the player
   return (
-    <group position={[x, 0, z]} rotation={[0, -rotation, 0]}>
+    <group position={[x, 0, z]} rotation={[0, rotation, 0]}>
       {children}
     </group>
   );

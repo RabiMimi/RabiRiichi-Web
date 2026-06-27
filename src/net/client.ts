@@ -73,6 +73,13 @@ export class RabiRiichiClient {
 
   public isRiichiSelectMode = false;
   public pendingActionOption: ActionOption | null = null;
+  public animationSpeed = 1.0;
+  public isWaitingForProceed = false;
+
+  public setAnimationSpeed(speed: number): void {
+    this.animationSpeed = speed;
+    this.onChange.emit();
+  }
 
   // Backdoor for development and testing helpers (e.g. replay driver, test mocks)
   public readonly dev = {
@@ -87,6 +94,10 @@ export class RabiRiichiClient {
       this.onChange.emit();
     },
     handleGameEvent: (eventMsg: IEventMsg) => this.handleGameEvent(eventMsg),
+    setWaitingForProceed: (waiting: boolean) => {
+      this.isWaitingForProceed = waiting;
+      this.onChange.emit();
+    },
   };
 
   public constructor() {

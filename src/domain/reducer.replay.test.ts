@@ -29,6 +29,13 @@ describe('Reducer Integration - Replay Log', () => {
         stateBeforeStop = state;
       }
       state = applyEvent(state, eventMsg);
+      for (const p of state.players) {
+        if (p.gameState) {
+          const freeCount = p.gameState.hand.freeTiles.length;
+          const pendingCount = p.gameState.hand.pendingTile ? 1 : 0;
+          expect(freeCount + pendingCount).toBeLessThanOrEqual(14);
+        }
+      }
     }
 
     // Verify final state (concluded)
@@ -74,6 +81,13 @@ describe('Reducer Integration - Replay Log', () => {
           stateBeforeStop = state;
         }
         state = applyEvent(state, eventMsg);
+        for (const p of state.players) {
+          if (p.gameState) {
+            const freeCount = p.gameState.hand.freeTiles.length;
+            const pendingCount = p.gameState.hand.pendingTile ? 1 : 0;
+            expect(freeCount + pendingCount).toBeLessThanOrEqual(14);
+          }
+        }
       }
 
       // Verify that we successfully captured active state and points are conserved

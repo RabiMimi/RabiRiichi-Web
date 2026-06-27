@@ -545,12 +545,19 @@ function handleDealerFirstTurn(
 ): RoomModel {
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (p.seat !== ev.playerId || !p.gameState) return p;
+
+    let freeTiles = p.gameState.hand.freeTiles;
+    if (ev.incoming) {
+      freeTiles = freeTiles.filter((t) => t.traceId !== ev.incoming?.traceId);
+    }
+
     return {
       ...p,
       gameState: {
         ...p.gameState,
         hand: {
           ...p.gameState.hand,
+          freeTiles: sortGameTiles(freeTiles),
           pendingTile: ev.incoming ?? null,
         },
       },
