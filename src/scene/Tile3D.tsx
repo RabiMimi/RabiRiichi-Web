@@ -175,7 +175,7 @@ export function Tile3D({
         // Upright in hand, facing the player (rotated 180 around Y)
         // and tilted back more to face the camera directly (like a 2D hand)
         rot = [-0.65, Math.PI, 0];
-        yOff = 0.05;
+        yOff = 0.14;
         break;
       case 'opponent-hand':
         // Upright in opponent's hand, facing them (no tilt relative to their seat)
