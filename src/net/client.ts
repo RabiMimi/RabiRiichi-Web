@@ -1,11 +1,11 @@
 import { Logger, NetworkError, AuthError, RabiEvent } from '../lib';
 import { RabiSocket } from '../transport/rabiSocket';
 import { createUser, getUserInfo, createRoom, joinRoom } from './requests';
+import { UserStatus } from '../proto';
 import type {
   IUserInfoResponse,
   IEventMsg,
   IServerRoomStateMsg,
-  UserStatus,
   ISinglePlayerInquiryMsg,
 } from '../proto';
 import type { PlayerModel, RoomModel } from '../domain/model';
@@ -185,6 +185,8 @@ export class RabiRiichiClient {
     };
     if (userInfo.room) {
       this.handleRoomState(userInfo.room);
+    } else {
+      this.room = null;
     }
     this.onChange.emit();
   }
@@ -235,8 +237,7 @@ export class RabiRiichiClient {
     this.self = {
       id: resp.id ?? -1,
       nickname: nickname,
-      status: 1, // USER_STATUS_IN_ROOM? Or just registered. Cocos doesn't set status here, but wait.
-      // Cocos: this.self.id = resp.id; this.self.nickname = nickname; this.accessToken = resp.accessToken;
+      status: UserStatus.USER_STATUS_NONE,
       gameState: null,
     };
     this.accessToken = resp.accessToken ?? null;
@@ -295,6 +296,10 @@ export class RabiRiichiClient {
       this._ws.close();
       this._ws = null;
     }
+    this.self = null;
+    this.room = null;
+    this.currentInquiry = null;
+    this.setConnectionStatus('disconnected');
   }
 }
 

@@ -40,8 +40,31 @@ export function RoomScreen(): React.JSX.Element | null {
     void handleToggleReady();
   };
 
-  const handleLeaveRoom = () => {
-    rabiriichi.close();
+  const handleLeaveRoom = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await rabiriichi.updateRoom(UserStatus.USER_STATUS_NONE);
+      for (let i = 0; i < 5; i++) {
+        await rabiriichi.refreshMyInfo();
+        if (rabiriichi.self?.status === UserStatus.USER_STATUS_NONE) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      if (rabiriichi.self?.status !== UserStatus.USER_STATUS_NONE) {
+        throw new Error('Failed to leave room (timeout)');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to leave room');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onLeaveRoom = () => {
+    void handleLeaveRoom();
   };
 
   // Helper to render a placeholder avatar or initials
@@ -105,7 +128,7 @@ export function RoomScreen(): React.JSX.Element | null {
           </button>
 
           <button
-            onClick={handleLeaveRoom}
+            onClick={onLeaveRoom}
             className="ui-button secondary-button"
             disabled={isLoading}
           >
