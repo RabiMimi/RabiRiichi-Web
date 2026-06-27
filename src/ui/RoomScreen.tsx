@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { rabiriichi } from '../net/client';
 import { useRoom, useSelf } from '../state/store';
 import { UserStatus } from '../proto';
+import { pollUntil } from '../lib';
 import './ui.css';
 
 export function RoomScreen(): React.JSX.Element | null {
@@ -45,15 +46,16 @@ export function RoomScreen(): React.JSX.Element | null {
     setIsLoading(true);
     try {
       await rabiriichi.updateRoom(UserStatus.USER_STATUS_NONE);
-      for (let i = 0; i < 5; i++) {
-        await rabiriichi.refreshMyInfo();
-        if (rabiriichi.self?.status === UserStatus.USER_STATUS_NONE) {
-          break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
 
-      if (rabiriichi.self?.status !== UserStatus.USER_STATUS_NONE) {
+      const success = await pollUntil(
+        async () => {
+          await rabiriichi.refreshMyInfo();
+          return rabiriichi.self?.status === UserStatus.USER_STATUS_NONE;
+        },
+        { tries: 30, delayMs: 1000 },
+      );
+
+      if (!success) {
         throw new Error('Failed to leave room (timeout)');
       }
     } catch (err) {

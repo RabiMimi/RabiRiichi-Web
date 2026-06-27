@@ -23,3 +23,25 @@ export function waitTimeout<T>(
       });
   });
 }
+export interface PollOptions {
+  tries?: number;
+  delayMs?: number;
+}
+
+export async function pollUntil(
+  fn: () => Promise<boolean> | boolean,
+  options: PollOptions = {},
+): Promise<boolean> {
+  const tries = options.tries ?? 30;
+  const delayMs = options.delayMs ?? 1000;
+
+  for (let i = 0; i < tries; i++) {
+    if (await fn()) {
+      return true;
+    }
+    if (i < tries - 1) {
+      await sleep(delayMs);
+    }
+  }
+  return false;
+}
