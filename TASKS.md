@@ -113,7 +113,7 @@ Mark progress by checking the box and noting the PR/commit.
 
 ## Phase 3 — React state bridge
 
-- [ ] **T15. State store (`state/`).**
+- [x] **T15. State store (`state/`).**
   - A minimal store (Context + `useSyncExternalStore`, or add `zustand`) holding
     connection status, current room, current `GameState`, and current inquiry
     options. Reducer output flows in; React reads slices via hooks.

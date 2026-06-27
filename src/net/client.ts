@@ -1,4 +1,4 @@
-import { Logger, NetworkError, AuthError } from '../lib';
+import { Logger, NetworkError, AuthError, RabiEvent } from '../lib';
 import { RabiSocket } from '../transport/rabiSocket';
 import { createUser, getUserInfo, createRoom, joinRoom } from './requests';
 import type {
@@ -6,10 +6,12 @@ import type {
   IEventMsg,
   IServerRoomStateMsg,
   UserStatus,
+  ISinglePlayerInquiryMsg,
 } from '../proto';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import { MessagePump } from './messagePump';
 import { applyEvent, applyRoomState } from '../domain/reducer';
+import { type MappedInquiry, mapInquiry } from '../domain/inquiry';
 import {
   updateRoom as sendUpdateRoom,
   respondInquiry as sendRespondInquiry,
@@ -42,6 +44,13 @@ function getUserWSUrl(baseUrl: string): string {
   }
 }
 
+export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+
+export interface ActiveInquiry {
+  messageId: number;
+  mapped: MappedInquiry;
+}
+
 export class RabiRiichiClient {
   private readonly logger = new Logger('RabiRiichiClient');
   private readonly messagePump = new MessagePump();
@@ -52,13 +61,24 @@ export class RabiRiichiClient {
   public room: RoomModel | null = null;
   private _ws: RabiSocket | null = null;
 
+  public connectionStatus: ConnectionStatus = 'disconnected';
+  public currentInquiry: ActiveInquiry | null = null;
+  public readonly onChange = new RabiEvent<void>();
+
   public constructor() {
     this.messagePump.subscribeRoomState(this.handleRoomState.bind(this));
     this.messagePump.subscribeGameEvent(this.handleGameEvent.bind(this));
+    this.messagePump.subscribeInquiry(this.handleInquiry.bind(this));
   }
 
   public get ws(): RabiSocket | null {
     return this._ws;
+  }
+
+  public get selfSeat(): number | undefined {
+    if (!this.room || !this.self) return undefined;
+    const me = this.room.players.find((p) => p.id === this.self?.id);
+    return me?.seat;
   }
 
   public async connect(url: string, accessToken?: string): Promise<void> {
@@ -66,7 +86,14 @@ export class RabiRiichiClient {
     this.accessToken = accessToken ?? null;
     this.self = null;
     this.room = null;
-    await this.connectWS();
+    this.currentInquiry = null;
+    this.setConnectionStatus('connecting');
+    try {
+      await this.connectWS();
+    } catch (e) {
+      this.setConnectionStatus('disconnected');
+      throw e;
+    }
   }
 
   private storeCredentials(): void {
@@ -77,6 +104,13 @@ export class RabiRiichiClient {
     }
   }
 
+  private setConnectionStatus(newStatus: typeof this.connectionStatus): void {
+    if (this.connectionStatus !== newStatus) {
+      this.connectionStatus = newStatus;
+      this.onChange.emit();
+    }
+  }
+
   private async connectWS(): Promise<void> {
     if (!this.wsurl) {
       throw new NetworkError('No WS URL configured');
@@ -84,13 +118,27 @@ export class RabiRiichiClient {
     if (this._ws) {
       this._ws.close();
     }
+    this.setConnectionStatus('connecting');
     this._ws = this.accessToken
       ? new RabiSocket(getUserWSUrl(this.wsurl), this.accessToken)
       : new RabiSocket(getPublicWSUrl(this.wsurl));
 
-    await this._ws.handShake(this.updateUserInfo.bind(this));
-    this.messagePump.attach(this._ws);
-    this.storeCredentials();
+    try {
+      await this._ws.handShake(this.updateUserInfo.bind(this));
+      this.messagePump.attach(this._ws);
+      this.storeCredentials();
+      this.setConnectionStatus('connected');
+
+      const ws = this._ws;
+      void ws.waitClose.then(() => {
+        if (this._ws === ws) {
+          this.setConnectionStatus('disconnected');
+        }
+      });
+    } catch (e) {
+      this.setConnectionStatus('disconnected');
+      throw e;
+    }
   }
 
   public async getWSClient(needAuth = false): Promise<RabiSocket> {
@@ -138,11 +186,13 @@ export class RabiRiichiClient {
     if (userInfo.room) {
       this.handleRoomState(userInfo.room);
     }
+    this.onChange.emit();
   }
 
   private handleRoomState(roomState: IServerRoomStateMsg): void {
     this.room = applyRoomState(this.room, roomState);
     this.logger.info(`Room state updated: ${this.room?.id}`);
+    this.onChange.emit();
   }
 
   private handleGameEvent(gameEvent: IEventMsg): void {
@@ -154,6 +204,26 @@ export class RabiRiichiClient {
     this.logger.info(
       `Game event applied. Current player: ${this.room.info?.currentPlayer}`,
     );
+
+    if (gameEvent.endInquiryEvent) {
+      const playerId = gameEvent.endInquiryEvent.playerId;
+      if (this.selfSeat !== undefined && playerId === this.selfSeat) {
+        this.currentInquiry = null;
+      }
+    }
+    this.onChange.emit();
+  }
+
+  private handleInquiry(
+    inquiry: ISinglePlayerInquiryMsg,
+    respondTo: number,
+  ): void {
+    this.currentInquiry = {
+      messageId: respondTo,
+      mapped: mapInquiry(inquiry),
+    };
+    this.logger.info(`Received inquiry ${respondTo}`);
+    this.onChange.emit();
   }
 
   public async registerUser(nickname: string): Promise<void> {
@@ -213,6 +283,10 @@ export class RabiRiichiClient {
     this.logger.info(`Responding to inquiry ${respondTo} with option ${index}`);
     const client = await this.getWSClient(true);
     sendRespondInquiry(client, respondTo, index, responseJson);
+    if (this.currentInquiry?.messageId === respondTo) {
+      this.currentInquiry = null;
+      this.onChange.emit();
+    }
   }
 
   public close(): void {
