@@ -571,7 +571,10 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
     const agariInfo = ev.agariInfos?.find((info) => info.playerId === p.seat);
     if (!agariInfo) return p;
 
-    const freeTiles = agariInfo.freeTiles ?? [];
+    const freeTiles =
+      agariInfo.freeTiles && agariInfo.freeTiles.length > 0
+        ? agariInfo.freeTiles
+        : p.gameState.hand.freeTiles;
 
     const agariState: PlayerAgariState = {
       scores: agariInfo.scores ?? null,

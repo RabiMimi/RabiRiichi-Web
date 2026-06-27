@@ -33,7 +33,7 @@ export function Hand3D({
 
         return (
           <Tile3D
-            key={tileMsg.traceId}
+            key={tileMsg.traceId ?? idx}
             tile={tileStr}
             displayState="hand"
             position={[x, 0, 0]}
@@ -53,7 +53,7 @@ export function Hand3D({
 
           return (
             <Tile3D
-              key={pendingTile.traceId}
+              key={pendingTile.traceId ?? 'pending'}
               tile={tileStr}
               displayState="hand"
               position={[x, 0, 0]}

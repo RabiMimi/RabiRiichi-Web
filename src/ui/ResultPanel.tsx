@@ -29,10 +29,8 @@ export function ResultPanel(): React.JSX.Element | null {
     return null;
   }
 
-  // Find if there is a winner (i.e. someone who won points, delta > 0)
-  const winner = room.players.find(
-    (p) => (p.gameState?.agari?.gainPoints ?? 0) > 0,
-  );
+  // Find if there is a winner (i.e. someone who won the round, scores is populated)
+  const winner = room.players.find((p) => p.gameState?.agari?.scores != null);
   const isDraw = !winner;
 
   // Locate proceed action from current inquiry if present
@@ -166,7 +164,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
         <div className="result-winners-container">
           {playersWithResult
-            .filter((p) => (p.gameState?.agari?.gainPoints ?? 0) > 0)
+            .filter((p) => p.gameState?.agari?.scores != null)
             .map((w) => renderWinnerDetails(w))}
         </div>
 

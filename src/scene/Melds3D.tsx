@@ -19,10 +19,10 @@ export function Melds3D({ called }: Melds3DProps): React.JSX.Element {
   return (
     <group>
       {called.map((meld, meldIdx) => {
-        // Melds tiles are usually IGameTileMsg
+        const meldKey = meld.tiles?.[0]?.traceId ?? meldIdx;
         return (
-          <group key={meldIdx}>
-            {meld.tiles?.map((tileMsg) => {
+          <group key={meldKey}>
+            {meld.tiles?.map((tileMsg, tileIdx) => {
               const x = startX - flatIndex * spacingX;
               flatIndex++;
 
@@ -32,7 +32,7 @@ export function Melds3D({ called }: Melds3DProps): React.JSX.Element {
 
               return (
                 <Tile3D
-                  key={tileMsg.traceId}
+                  key={tileMsg.traceId ?? `${meldKey}_${tileIdx}`}
                   tile={tileStr}
                   displayState="face"
                   position={[x, 0, 0]}

@@ -37,7 +37,7 @@ export function River3D({
 
         return (
           <Tile3D
-            key={tileMsg.traceId}
+            key={tileMsg.traceId ?? idx}
             tile={tileStr}
             displayState={isRiichi ? 'sideways' : 'face'}
             position={[x, 0, z]}
