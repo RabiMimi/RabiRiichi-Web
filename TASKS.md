@@ -16,7 +16,7 @@ Mark progress by checking the box and noting the PR/commit.
 
 ## Phase 0 — Foundations
 
-- [ ] **T1. Tooling: Vitest + proto generation.**
+- [x] **T1. Tooling: Vitest + proto generation.**
   - Add `vitest` (+ `@vitest/coverage-v8` optional) as dev deps; add `"test":
 "vitest run"` and `"test:watch": "vitest"` scripts; minimal `vitest.config.ts`
     (jsdom not required for domain tests).
@@ -27,14 +27,14 @@ Mark progress by checking the box and noting the PR/commit.
     message (e.g. `ClientMessageDto`) to prove the toolchain.
   - _Validates:_ `npm run test` runs and passes.
 
-- [ ] **T2. Generic utilities (`src/lib/`).**
+- [x] **T2. Generic utilities (`src/lib/`).**
   - `Deferred<T>` (promise + resolve/reject), `Logger`, `assert`, small
     collection/string helpers as needed. Each with focused unit tests.
   - No dependencies on other layers.
 
 ## Phase 1 — Domain core (pure, fully unit-tested)
 
-- [ ] **T3. Tile model (`domain/tile.ts`).**
+- [x] **T3. Tile model (`domain/tile.ts`).**
   - Port Cocos `Rabi/Tile.ts` (DESIGN §3.1): `TileSuit`, `Tile`, `fromByte`,
     `toByte`, `fromString`, `toString`, `compareTo`.
   - _Tests (required):_ byte round-trip for all suits/ranks, red-five (`0p`/`r5m`),

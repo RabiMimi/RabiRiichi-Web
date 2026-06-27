@@ -25,6 +25,19 @@ PBTS="${BIN_DIR}/pbts"
 [ -x "${PBJS}" ] || PBJS="pbjs"
 [ -x "${PBTS}" ] || PBTS="pbts"
 
+# Find all proto files and sort them so that files containing enums are processed last.
+# This workarounds a pbts bug where JSDoc parsing stops after encountering an enum.
+ALL_PROTOS=$(find "${PROTO_DIR}" -iname "*.proto")
+ENUM_PROTOS=""
+NO_ENUM_PROTOS=""
+for f in ${ALL_PROTOS}; do
+  if grep -q "enum " "$f"; then
+    ENUM_PROTOS="${ENUM_PROTOS} $f"
+  else
+    NO_ENUM_PROTOS="${NO_ENUM_PROTOS} $f"
+  fi
+done
+
 "${PBJS}" \
   -t static-module \
   --force-number \
@@ -32,7 +45,7 @@ PBTS="${BIN_DIR}/pbts"
   -r rabiriichi \
   -p "${PROTO_DIR}" \
   -o "${OUT_DIR}/protos.js" \
-  $(find "${PROTO_DIR}" -iname "*.proto")
+  ${NO_ENUM_PROTOS} ${ENUM_PROTOS}
 
 "${PBTS}" -o "${OUT_DIR}/protos.d.ts" "${OUT_DIR}/protos.js"
 
