@@ -178,7 +178,7 @@ Mark progress by checking the box and noting the PR/commit.
     ready, play to a result. Fix any integration gaps. Server edits only if
     unavoidable (AGENTS §6).
 
-- [ ] **T27. Local multiplayer testing instructions.**
+- [x] **T27. Local multiplayer testing instructions.**
   - Add a `TESTING.md` (and link from `README.md`) describing exactly how to run
     the server locally (`dotnet run` in `../RabiRiichi/RabiRiichi.Server`,
     `JWT_SECRET` env, port 5150), run the web client (`npm run dev`), and play a

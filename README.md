@@ -94,3 +94,7 @@ plus a set of practical rules, including:
 
 Formatting is owned by Prettier; `eslint-config-prettier` disables any
 conflicting stylistic ESLint rules.
+
+## Testing
+
+For details on local multiplayer testing and using the offline replay viewer, see [TESTING.md](./TESTING.md).
