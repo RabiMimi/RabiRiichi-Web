@@ -40,18 +40,18 @@ Mark progress by checking the box and noting the PR/commit.
   - _Tests (required):_ byte round-trip for all suits/ranks, red-five (`0p`/`r5m`),
     honors `1z`..`7z`, sorting.
 
-- [ ] **T4. View-model types (`domain/model.ts`).**
+- [x] **T4. View-model types (`domain/model.ts`).**
   - `RoomModel`, `PlayerModel`, `GameInfo`, `PlayerGameState` (DESIGN §3.2) with
     seat helpers (`nextSeat`/`prevSeat`/`playerBySeat`/`playerById`).
   - _Tests:_ seat math for 2- and 4-player configs.
 
-- [ ] **T5. Reducer — full-state hydration (`domain/reducer.ts`, part 1).**
+- [x] **T5. Reducer — full-state hydration (`domain/reducer.ts`, part 1).**
   - `hydrateFromGameState(GameStateMsg): GameState` — build the whole view-model
     from a sync snapshot (hands, called, discards, riichi, furiten, doras,
     points, current player). Reference Cocos `SyncGameStateEventHandler`.
   - _Tests:_ hydrate from a snapshot extracted from the recorded fixture.
 
-- [ ] **T6. Reducer — incremental events (`domain/reducer.ts`, part 2).**
+- [x] **T6. Reducer — incremental events (`domain/reducer.ts`, part 2).**
   - `applyEvent(state, EventMsg): GameState` for the core gameplay events:
     begin-game, deal-hand, draw-tile, discard-tile, claim-tile (chii/pon),
     kan/add-kan, next-player, increase-jun, reveal-dora, set-riichi,
@@ -59,12 +59,12 @@ Mark progress by checking the box and noting the PR/commit.
   - Keep updates immutable; track tiles by `traceId`.
   - _Tests (required):_ per-event unit tests with minimal hand-built events.
 
-- [ ] **T7. Reducer — scoring/end events.**
+- [x] **T7. Reducer — scoring/end events.**
   - agari, apply-score, ryuukyoku, conclude-game, next-game, stop-game,
     end-inquiry. Compute per-player score deltas for the result panel.
   - _Tests:_ agari & ryuukyoku score transfers; next-game advances round/honba.
 
-- [ ] **T8. Replay fixture + reducer integration test (`dev/` + `domain/`).**
+- [x] **T8. Replay fixture + reducer integration test (`dev/` + `domain/`).**
   - Copy `../RabiRiichi-Cocos/assets/DevData/full_game.json` to
     `src/dev/fixtures/full_game.json`. Add `dev/replay.ts` that parses
     `GameLogMsg` and yields ordered messages (events + inquiries) for one seat.
@@ -73,7 +73,7 @@ Mark progress by checking the box and noting the PR/commit.
     (e.g. tile counts conserved, final scores present, no unknown event hit the
     `other`/`Any` fallback unexpectedly).
 
-- [ ] **T9. Inquiry mapping (`domain/inquiry.ts`).**
+- [x] **T9. Inquiry mapping (`domain/inquiry.ts`).**
   - `toOptions(SinglePlayerInquiryMsg)` → UI-agnostic option tree (DESIGN §3.4);
     `encodeInquiryResponse(...)` → `{ index, response }` with correct JSON
     (`"0"` / `"[0]"` / `"{}"`). Reference Cocos `InquiryHandlers.ts`.
@@ -186,6 +186,25 @@ Mark progress by checking the box and noting the PR/commit.
     offline replay mode (`?replay=1`).
 
 ---
+
+## Known gaps / follow-ups (from Phase 1 review)
+
+These are non-blocking gaps found during review of T4–T9. Tests pass and
+point-conservation holds across the full recorded game, but address these before
+or during the rendering phase:
+
+- [ ] **F1. `addKanEvent` (kakan) is not handled** in `applyEvent`
+      (`reducer.ts`). The recorded fixture contains 8 such events; they are
+      currently dropped, so a kakan (adding a tile to an existing pon) will not
+      update the called-meld view. Add a `handleAddKan` and a unit test.
+- [ ] **F2. `ryuukyokuEvent` ignores its own `score_change`.** Scores currently
+      stay correct only because the server also emits `applyScoreEvent`; if a
+      ryuukyoku ever carries transfers solely in `RyuukyokuEventMsg`, points
+      would desync. Process `ryuukyokuEvent.score_change` (or confirm via the
+      server that it is always mirrored by `applyScoreEvent`) and add a test.
+- [ ] **F3. Strengthen the replay test** to assert no known event variant is
+      silently dropped (e.g. count handled vs. present event types), so gaps like
+      F1 fail loudly in future.
 
 ## Suggested delegation grouping (for parallel agents)
 

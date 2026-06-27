@@ -11,6 +11,36 @@ import {
   FuritenType,
   ScoringType,
   GameStateMsg,
+  GameConfigMsg,
+  ScoreStorageMsg,
+  ServerRoomStateMsg,
+  ServerPlayerStateMsg,
+  PlayerStateMsg,
+  PlayerHandStateMsg,
+  WallStateMsg,
+  MenLikeMsg,
+  BeginGameEventMsg,
+  DealHandEventMsg,
+  DrawTileEventMsg,
+  DiscardTileEventMsg,
+  ClaimTileEventMsg,
+  KanEventMsg,
+  NextPlayerEventMsg,
+  IncreaseJunEventMsg,
+  RevealDoraEventMsg,
+  SetRiichiEventMsg,
+  SetFuritenEventMsg,
+  AddKanEventMsg,
+  DealerFirstTurnEventMsg,
+  AddTileEventMsg,
+  AgariEventMsg,
+  ApplyScoreEventMsg,
+  ConcludeGameEventMsg,
+  NextGameEventMsg,
+  RyuukyokuEventMsg,
+  StopGameEventMsg,
+  SyncGameStateEventMsg,
+  SinglePlayerInquiryMsg,
 } from '../generated/protos.js';
 
 export {
@@ -26,6 +56,36 @@ export {
   FuritenType,
   ScoringType,
   GameStateMsg,
+  GameConfigMsg,
+  ScoreStorageMsg,
+  ServerRoomStateMsg,
+  ServerPlayerStateMsg,
+  PlayerStateMsg,
+  PlayerHandStateMsg,
+  WallStateMsg,
+  MenLikeMsg,
+  BeginGameEventMsg,
+  DealHandEventMsg,
+  DrawTileEventMsg,
+  DiscardTileEventMsg,
+  ClaimTileEventMsg,
+  KanEventMsg,
+  NextPlayerEventMsg,
+  IncreaseJunEventMsg,
+  RevealDoraEventMsg,
+  SetRiichiEventMsg,
+  SetFuritenEventMsg,
+  AddKanEventMsg,
+  DealerFirstTurnEventMsg,
+  AddTileEventMsg,
+  AgariEventMsg,
+  ApplyScoreEventMsg,
+  ConcludeGameEventMsg,
+  NextGameEventMsg,
+  RyuukyokuEventMsg,
+  StopGameEventMsg,
+  SyncGameStateEventMsg,
+  SinglePlayerInquiryMsg,
 };
 
 export type IEventMsg = EventMsg.$Properties;
@@ -35,3 +95,33 @@ export type IServerErrorResponse = ServerErrorResponse.$Properties;
 export type IGameTileMsg = GameTileMsg.$Properties;
 export type IGameLogMsg = GameLogMsg.$Properties;
 export type IGameStateMsg = GameStateMsg.$Properties;
+export type IGameConfigMsg = GameConfigMsg.$Properties;
+export type IScoreStorageMsg = ScoreStorageMsg.$Properties;
+export type IServerRoomStateMsg = ServerRoomStateMsg.$Properties;
+export type IServerPlayerStateMsg = ServerPlayerStateMsg.$Properties;
+export type IPlayerStateMsg = PlayerStateMsg.$Properties;
+export type IPlayerHandStateMsg = PlayerHandStateMsg.$Properties;
+export type IWallStateMsg = WallStateMsg.$Properties;
+export type IMenLikeMsg = MenLikeMsg.$Properties;
+export type IBeginGameEventMsg = BeginGameEventMsg.$Properties;
+export type IDealHandEventMsg = DealHandEventMsg.$Properties;
+export type IDrawTileEventMsg = DrawTileEventMsg.$Properties;
+export type IDiscardTileEventMsg = DiscardTileEventMsg.$Properties;
+export type IClaimTileEventMsg = ClaimTileEventMsg.$Properties;
+export type IKanEventMsg = KanEventMsg.$Properties;
+export type INextPlayerEventMsg = NextPlayerEventMsg.$Properties;
+export type IIncreaseJunEventMsg = IncreaseJunEventMsg.$Properties;
+export type IRevealDoraEventMsg = RevealDoraEventMsg.$Properties;
+export type ISetRiichiEventMsg = SetRiichiEventMsg.$Properties;
+export type ISetFuritenEventMsg = SetFuritenEventMsg.$Properties;
+export type IAddKanEventMsg = AddKanEventMsg.$Properties;
+export type IDealerFirstTurnEventMsg = DealerFirstTurnEventMsg.$Properties;
+export type IAddTileEventMsg = AddTileEventMsg.$Properties;
+export type IAgariEventMsg = AgariEventMsg.$Properties;
+export type IApplyScoreEventMsg = ApplyScoreEventMsg.$Properties;
+export type IConcludeGameEventMsg = ConcludeGameEventMsg.$Properties;
+export type INextGameEventMsg = NextGameEventMsg.$Properties;
+export type IRyuukyokuEventMsg = RyuukyokuEventMsg.$Properties;
+export type IStopGameEventMsg = StopGameEventMsg.$Properties;
+export type ISyncGameStateEventMsg = SyncGameStateEventMsg.$Properties;
+export type ISinglePlayerInquiryMsg = SinglePlayerInquiryMsg.$Properties;

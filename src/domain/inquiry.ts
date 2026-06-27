@@ -1,0 +1,221 @@
+import { AgariType } from '../proto/index.js';
+import type {
+  ISinglePlayerInquiryMsg,
+  IMenLikeMsg,
+  IGameTileMsg,
+} from '../proto/index.js';
+
+export type InquiryOptionType =
+  | 'skip'
+  | 'agari'
+  | 'chii'
+  | 'pon'
+  | 'kan'
+  | 'riichi'
+  | 'play-tile'
+  | 'ryuukyoku';
+
+export interface TileGroupOption {
+  index: number; // Index in the action's tileGroups array
+  tiles: { traceId: number; tile: number }[]; // Tiles in the group
+}
+
+export type ActionOption =
+  | {
+      type: 'skip' | 'ryuukyoku';
+      label: string; // "跳过" or "流局"
+      actionIndex: number;
+    }
+  | {
+      type: 'agari';
+      label: string; // "和" or "自摸"
+      actionIndex: number;
+      incomingTileId: number | null;
+    }
+  | {
+      type: 'chii' | 'pon' | 'kan';
+      label: string; // "吃", "碰", "杠"
+      actionIndex: number;
+      tileGroups: TileGroupOption[];
+    }
+  | {
+      type: 'riichi';
+      label: string; // "立直"
+      actionIndex: number;
+      legalTiles: number[]; // Trace IDs of tiles that can be discarded
+    }
+  | {
+      type: 'play-tile';
+      label: string; // "打"
+      actionIndex: number;
+      legalTiles: number[]; // Trace IDs of tiles that can be discarded
+    };
+
+export interface MappedInquiry {
+  // Option buttons to display (Skip, Chii, Pon, Kan, Riichi, Ron, Tsumo, Ryuukyoku)
+  buttons: ActionOption[];
+
+  // Normal tile discard option (if present). Not shown as button.
+  playTile?: {
+    actionIndex: number;
+    legalTiles: number[];
+  };
+}
+
+/**
+ * Maps a SinglePlayerInquiryMsg from the server into a clean structured ActionOption tree for UI presentation.
+ */
+export function mapInquiry(inq: ISinglePlayerInquiryMsg): MappedInquiry {
+  const buttons: ActionOption[] = [];
+  let playTile: { actionIndex: number; legalTiles: number[] } | undefined;
+
+  const actions = inq.actions ?? [];
+  for (let i = 0; i < actions.length; i++) {
+    const action = actions[i];
+    if (!action) continue;
+    if (action.skipAction) {
+      buttons.push({
+        type: 'skip',
+        label: '跳过',
+        actionIndex: i,
+      });
+    } else if (action.ryuukyokuAction) {
+      buttons.push({
+        type: 'ryuukyoku',
+        label: '流局',
+        actionIndex: i,
+      });
+    } else if (action.agariAction) {
+      const type = action.agariAction.type;
+      const label = type === AgariType.AGARI_TYPE_TSUMO ? '自摸' : '和';
+      buttons.push({
+        type: 'agari',
+        label,
+        actionIndex: i,
+        incomingTileId: action.agariAction.incoming?.traceId ?? null,
+      });
+    } else if (action.chiiAction) {
+      const groups = action.chiiAction.tileGroups ?? [];
+      buttons.push({
+        type: 'chii',
+        label: '吃',
+        actionIndex: i,
+        tileGroups: groups.map((g: IMenLikeMsg, idx: number) => ({
+          index: idx,
+          tiles: (g.tiles ?? []).map((t: IGameTileMsg) => ({
+            traceId: t.traceId ?? 0,
+            tile: t.tile ?? 0,
+          })),
+        })),
+      });
+    } else if (action.ponAction) {
+      const groups = action.ponAction.tileGroups ?? [];
+      buttons.push({
+        type: 'pon',
+        label: '碰',
+        actionIndex: i,
+        tileGroups: groups.map((g: IMenLikeMsg, idx: number) => ({
+          index: idx,
+          tiles: (g.tiles ?? []).map((t: IGameTileMsg) => ({
+            traceId: t.traceId ?? 0,
+            tile: t.tile ?? 0,
+          })),
+        })),
+      });
+    } else if (action.kanAction) {
+      const groups = action.kanAction.tileGroups ?? [];
+      buttons.push({
+        type: 'kan',
+        label: '杠',
+        actionIndex: i,
+        tileGroups: groups.map((g: IMenLikeMsg, idx: number) => ({
+          index: idx,
+          tiles: (g.tiles ?? []).map((t: IGameTileMsg) => ({
+            traceId: t.traceId ?? 0,
+            tile: t.tile ?? 0,
+          })),
+        })),
+      });
+    } else if (action.riichiAction) {
+      const tiles = action.riichiAction.tiles ?? [];
+      buttons.push({
+        type: 'riichi',
+        label: '立直',
+        actionIndex: i,
+        legalTiles: tiles.map((t: IGameTileMsg) => t.traceId ?? 0),
+      });
+    } else if (action.playTileAction) {
+      const tiles = action.playTileAction.tiles ?? [];
+      playTile = {
+        actionIndex: i,
+        legalTiles: tiles.map((t: IGameTileMsg) => t.traceId ?? 0),
+      };
+    }
+  }
+
+  return {
+    buttons,
+    ...(playTile ? { playTile } : {}),
+  };
+}
+
+/**
+ * Encodes the user's selected choice for an action into the { index, response } structure for the server.
+ *
+ * @param inq The original inquiry message
+ * @param action The ActionOption they clicked or activated
+ * @param choice The sub-choice value:
+ *   - For 'chii' | 'pon' | 'kan': the selected TileGroupOption index (number)
+ *   - For 'riichi' | 'play-tile': the traceId of the selected tile (number)
+ *   - For 'agari' | 'ryuukyoku' | 'skip': omitted or null
+ */
+export function encodeInquiryResponse(
+  inq: ISinglePlayerInquiryMsg,
+  action: ActionOption,
+  choice?: number,
+): { index: number; response: string } {
+  const index = action.actionIndex;
+  const targetAction = inq.actions?.[index];
+
+  if (!targetAction) {
+    throw new Error(`Invalid actionIndex ${index} for inquiry`);
+  }
+
+  let responseStr = '{}';
+
+  if (
+    action.type === 'chii' ||
+    action.type === 'pon' ||
+    action.type === 'kan'
+  ) {
+    if (choice === undefined) {
+      throw new Error(`Choice group index required for ${action.type}`);
+    }
+    responseStr = JSON.stringify(choice);
+  } else if (action.type === 'riichi') {
+    if (choice === undefined) {
+      throw new Error(`Choice tile traceId required for riichi`);
+    }
+    const tiles = targetAction.riichiAction?.tiles ?? [];
+    const idx = tiles.findIndex((t: IGameTileMsg) => t.traceId === choice);
+    if (idx === -1) {
+      throw new Error(`Tile traceId ${choice} not in riichi options`);
+    }
+    responseStr = JSON.stringify(idx);
+  } else if (action.type === 'play-tile') {
+    if (choice === undefined) {
+      throw new Error(`Choice tile traceId required for play-tile`);
+    }
+    const tiles = targetAction.playTileAction?.tiles ?? [];
+    const idx = tiles.findIndex((t: IGameTileMsg) => t.traceId === choice);
+    if (idx === -1) {
+      throw new Error(`Tile traceId ${choice} not in play-tile options`);
+    }
+    responseStr = JSON.stringify(idx);
+  }
+
+  return {
+    index,
+    response: responseStr,
+  };
+}

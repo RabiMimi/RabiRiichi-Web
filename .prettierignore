@@ -3,3 +3,4 @@ node_modules
 src/generated
 protos
 package-lock.json
+src/dev/fixtures
