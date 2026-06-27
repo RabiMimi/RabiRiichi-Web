@@ -30,3 +30,6 @@ pnpm-debug.log*
 
 # TS build info
 *.tsbuildinfo
+
+# Scratch scripts
+scratch/

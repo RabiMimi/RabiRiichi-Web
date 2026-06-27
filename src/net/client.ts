@@ -65,6 +65,21 @@ export class RabiRiichiClient {
   public currentInquiry: ActiveInquiry | null = null;
   public readonly onChange = new RabiEvent<void>();
 
+  // Backdoor for development and testing helpers (e.g. replay driver, test mocks)
+  public readonly dev = {
+    setConnectionStatus: (newStatus: ConnectionStatus) =>
+      this.setConnectionStatus(newStatus),
+    setSelf: (newSelf: PlayerModel | null) => {
+      this.self = newSelf;
+      this.onChange.emit();
+    },
+    setRoom: (newRoom: RoomModel | null) => {
+      this.room = newRoom;
+      this.onChange.emit();
+    },
+    handleGameEvent: (eventMsg: IEventMsg) => this.handleGameEvent(eventMsg),
+  };
+
   public constructor() {
     this.messagePump.subscribeRoomState(this.handleRoomState.bind(this));
     this.messagePump.subscribeGameEvent(this.handleGameEvent.bind(this));

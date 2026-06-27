@@ -52,7 +52,7 @@ export function RoomScreen(): React.JSX.Element | null {
           await rabiriichi.refreshMyInfo();
           return rabiriichi.self?.status === UserStatus.USER_STATUS_NONE;
         },
-        { tries: 30, delayMs: 1000 },
+        { tries: 10, delayMs: 500 },
       );
 
       if (!success) {

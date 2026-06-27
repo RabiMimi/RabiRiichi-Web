@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { SpinningCube } from './scene/SpinningCube.tsx';
+import { GameTable } from './scene/GameTable';
 import { initRabiRiichi } from './net/client';
 import { useConnectionStatus, useSelf, useRoom } from './state/store';
 import { ConnectScreen } from './ui/ConnectScreen';
@@ -15,7 +15,16 @@ function App(): React.JSX.Element {
   const room = useRoom();
 
   useEffect(() => {
-    void initRabiRiichi();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('replay') === '1') {
+      import('./dev/replayDriver')
+        .then(({ startReplay }) => {
+          void startReplay();
+        })
+        .catch(console.error);
+    } else {
+      void initRabiRiichi();
+    }
   }, []);
 
   const renderUI = () => {
@@ -33,12 +42,13 @@ function App(): React.JSX.Element {
 
   return (
     <div className="app">
-      <Canvas camera={{ position: [3, 3, 3], fov: 50 }}>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 5, 5]} intensity={1} />
-        <SpinningCube />
-        <gridHelper args={[10, 10]} />
-        <OrbitControls />
+      <Canvas camera={{ position: [0, 4.5, 5], fov: 50 }}>
+        <GameTable />
+        <OrbitControls
+          maxPolarAngle={Math.PI / 2 - 0.05}
+          minDistance={2}
+          maxDistance={10}
+        />
       </Canvas>
       {renderUI()}
     </div>

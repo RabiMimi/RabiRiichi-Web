@@ -133,29 +133,29 @@ Mark progress by checking the box and noting the PR/commit.
 
 ## Phase 5 — Assets & 3D rendering (manual visual verification)
 
-- [ ] **T19. Asset import + conversion.**
+- [x] **T19. Asset import + conversion.**
   - Copy from Cocos (AGENTS §7) into `public/assets/`: rabbit-girl PNG, tile
     face textures (`hand_tiles/*`), table texture, TableMid info graphics.
   - Convert `Tile.fbx` → `tile.glb` (document the step / add a script). Add a
     small typed asset-path/texture registry module (`scene/assets.ts`) keyed by
     tile string (with a unit test for the key mapping).
 
-- [ ] **T20. Static table scene (`scene/`).**
+- [x] **T20. Static table scene (`scene/`).**
   - `<Canvas>`, camera (Majsoul 3/4 view), table mesh, lights, seat anchors for
     2 and 4 players. No tiles yet. Seat rotation helper (render-seat) — unit
     test the rotation math.
 
-- [ ] **T21. Tile rendering (`scene/`).**
+- [x] **T21. Tile rendering (`scene/`).**
   - Load `tile.glb`; render a tile with a face texture; `TileDisplayState`
     rotation presets (hand/face/back/sideways). A `TileManager` keyed by
     `traceId`. Render a static hand from a hydrated state.
 
-- [ ] **T22. Bind scene to game state.**
+- [x] **T22. Bind scene to game state.**
   - Drive hands, rivers (discards), called melds, riichi sticks, scores, current
     -player indicator from the store’s `GameState`. Verify by running the replay
     harness in the browser (`?replay=1`).
 
-- [ ] **T23. Tile animations.**
+- [x] **T23. Tile animations.**
   - Tween tile moves/flips on draw/discard/claim. Keep timing data-driven.
 
 ## Phase 6 — Interaction & result
