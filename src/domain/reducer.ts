@@ -22,6 +22,7 @@ import type {
   INextGameEventMsg,
   IStopGameEventMsg,
   ISyncGameStateEventMsg,
+  IServerRoomStateMsg,
 } from '../proto/index.js';
 import type {
   RoomModel,
@@ -808,4 +809,33 @@ export function applyEvent(state: RoomModel, eventMsg: IEventMsg): RoomModel {
   }
 
   return state;
+}
+
+export function applyRoomState(
+  state: RoomModel | null,
+  msg: IServerRoomStateMsg | null,
+): RoomModel | null {
+  if (!msg) {
+    return null;
+  }
+  const players = (msg.players ?? []).map((p): PlayerModel => {
+    const existingPlayer = state?.players.find((ep) => ep.id === p.id);
+    const player: PlayerModel = {
+      id: p.id ?? -1,
+      nickname: p.nickname ?? '',
+      status: p.status ?? 0,
+      gameState: existingPlayer?.gameState ?? null,
+    };
+    if (p.seat !== null && p.seat !== undefined) {
+      player.seat = p.seat;
+    }
+    return player;
+  });
+
+  return {
+    id: msg.id ?? state?.id ?? -1,
+    config: msg.config ?? state?.config ?? null,
+    info: state?.info ?? null,
+    players,
+  };
 }

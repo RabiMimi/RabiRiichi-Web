@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hydrateFromGameState, applyEvent } from './reducer';
+import { hydrateFromGameState, applyEvent, applyRoomState } from './reducer';
 import type { RoomModel } from './model';
 import {
   UserStatus,
@@ -775,5 +775,66 @@ describe('Reducer - Events', () => {
 
     expect(nextState.info?.round).toBe(2);
     expect(nextState.info?.remainingTiles).toBe(70);
+  });
+});
+
+describe('Reducer - Room State', () => {
+  it('should apply room state to null state', () => {
+    const roomState = {
+      id: 5678,
+      config: { playerCount: 2 },
+      players: [
+        {
+          id: 101,
+          nickname: 'Alice',
+          status: UserStatus.USER_STATUS_IN_ROOM,
+          seat: 0,
+        },
+        {
+          id: 102,
+          nickname: 'Bob',
+          status: UserStatus.USER_STATUS_READY,
+          seat: 1,
+        },
+      ],
+    };
+
+    const nextState = applyRoomState(null, roomState);
+
+    expect(nextState).not.toBeNull();
+    expect(nextState?.id).toBe(5678);
+    expect(nextState?.config?.playerCount).toBe(2);
+    expect(nextState?.players).toHaveLength(2);
+    expect(nextState?.players[0]?.nickname).toBe('Alice');
+    expect(nextState?.players[1]?.status).toBe(UserStatus.USER_STATUS_READY);
+    expect(nextState?.players[0]?.gameState).toBeNull();
+  });
+
+  it('should preserve gameState when applying room state to existing room', () => {
+    const initialState = createInitializedRoom(); // Alice and Bob have gameState
+    const roomState = {
+      id: 1234,
+      config: { playerCount: 2 },
+      players: [
+        {
+          id: 101,
+          nickname: 'AliceUpdated',
+          status: UserStatus.USER_STATUS_PLAYING,
+          seat: 0,
+        },
+        {
+          id: 102,
+          nickname: 'BobUpdated',
+          status: UserStatus.USER_STATUS_PLAYING,
+          seat: 1,
+        },
+      ],
+    };
+
+    const nextState = applyRoomState(initialState, roomState);
+
+    expect(nextState?.players[0]?.nickname).toBe('AliceUpdated');
+    expect(nextState?.players[0]?.gameState).not.toBeNull();
+    expect(nextState?.players[0]?.gameState?.points).toBe(25000);
   });
 });

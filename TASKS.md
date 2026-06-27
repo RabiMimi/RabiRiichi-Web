@@ -81,32 +81,32 @@ Mark progress by checking the box and noting the PR/commit.
 
 ## Phase 2 — Transport & networking (unit-tested with a fake socket)
 
-- [ ] **T10. WebSocket transport (`transport/`).**
+- [x] **T10. WebSocket transport (`transport/`).**
   - `RabiSocket` (binary protobuf frames) + `MsgRecord` (monotonic ids,
     `respond_to` correlation via `Deferred`, reorder buffer, gap detection).
     Port Cocos `RabiWSClient.ts`.
   - _Tests:_ feed encoded `ServerMessageDto`s through a mock socket; assert
     ordering, response correlation, gap detection.
 
-- [ ] **T11. Heartbeat & resend (`transport/`).**
+- [x] **T11. Heartbeat & resend (`transport/`).**
   - `TwoWayHeartBeatMsg` loop (id = -1), `max_id`/`requesting_ids`, resend of
     requested client messages.
   - _Tests:_ missing-id request triggers resend; heartbeat scheduling.
 
-- [ ] **T12. Client facade — auth & connect (`net/client.ts`).**
+- [x] **T12. Client facade — auth & connect (`net/client.ts`).**
   - URLs (`/ws/public`, `/ws/connect`), `createUser`, `connect`, sign-in +
     version-check handshake, credential persistence (localStorage). Port Cocos
     `RabiRiichiClient.ts` connect path.
   - _Tests:_ handshake sequence against a mock socket (sign-in then version
     reply); reconnect from stored creds.
 
-- [ ] **T13. Message pump + room handlers (`net/messagePump.ts`).**
+- [x] **T13. Message pump + room handlers (`net/messagePump.ts`).**
   - In-order dispatch of incoming `ServerMessageDto` to: room/lobby handler
     (room state) and game pipeline (reducer + inquiry). Mirror Cocos
     `GameMessageQueue` + `ServerMsgHandlers`.
   - _Tests:_ room-state messages update a room model; events reach the reducer.
 
-- [ ] **T14. Rooms API (`net/`): create/join/ready + respondInquiry.**
+- [x] **T14. Rooms API (`net/`): create/join/ready + respondInquiry.**
   - `createRoom`, `joinRoom(roomId)`, `setReady(status)`,
     `respondInquiry(respondTo, option)` (uses `domain/inquiry`’s encoder).
   - _Tests:_ correct wire messages produced for each call.

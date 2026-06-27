@@ -87,6 +87,16 @@ export default tseslint.config(
       globals: globals.node,
     },
   },
+  // Tests and test helpers may use terse non-null assertions on fixtures and
+  // reuse natural identifiers (e.g. `event`); these add noise without value
+  // in test code. Production rules remain strict.
+  {
+    files: ['**/*.test.ts', '**/mockWebSocket.ts'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-shadow': 'off',
+    },
+  },
   // Keep Prettier last so it disables any stylistic rules that conflict.
   prettier,
 );

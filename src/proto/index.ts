@@ -41,6 +41,14 @@ import {
   StopGameEventMsg,
   SyncGameStateEventMsg,
   SinglePlayerInquiryMsg,
+  ServerVersionCheckMsg,
+  ClientVersionCheckMsg,
+  TwoWayHeartBeatMsg,
+  UserInfoResponse,
+  ServerInquiryMsg,
+  CreateUserResponse,
+  ServerResponse,
+  ServerRoomStateResponse,
 } from '../generated/protos.js';
 
 export {
@@ -86,6 +94,14 @@ export {
   StopGameEventMsg,
   SyncGameStateEventMsg,
   SinglePlayerInquiryMsg,
+  ServerVersionCheckMsg,
+  ClientVersionCheckMsg,
+  TwoWayHeartBeatMsg,
+  UserInfoResponse,
+  ServerInquiryMsg,
+  CreateUserResponse,
+  ServerResponse,
+  ServerRoomStateResponse,
 };
 
 export type IEventMsg = EventMsg.$Properties;
@@ -125,3 +141,11 @@ export type IRyuukyokuEventMsg = RyuukyokuEventMsg.$Properties;
 export type IStopGameEventMsg = StopGameEventMsg.$Properties;
 export type ISyncGameStateEventMsg = SyncGameStateEventMsg.$Properties;
 export type ISinglePlayerInquiryMsg = SinglePlayerInquiryMsg.$Properties;
+export type IServerVersionCheckMsg = ServerVersionCheckMsg.$Properties;
+export type IClientVersionCheckMsg = ClientVersionCheckMsg.$Properties;
+export type ITwoWayHeartBeatMsg = TwoWayHeartBeatMsg.$Properties;
+export type IUserInfoResponse = UserInfoResponse.$Properties;
+export type IServerInquiryMsg = ServerInquiryMsg.$Properties;
+export type ICreateUserResponse = CreateUserResponse.$Properties;
+export type IServerResponse = ServerResponse.$Properties;
+export type IServerRoomStateResponse = ServerRoomStateResponse.$Properties;
