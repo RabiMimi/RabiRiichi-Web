@@ -1,17 +1,25 @@
 import React, { useEffect } from 'react';
 import { useTexture, Text as DreiText } from '@react-three/drei';
 import * as THREE from 'three';
-import { useRoom, useSelf } from '../state/store';
+import {
+  useRoom,
+  useSelf,
+  useActionTimeout,
+  useTimerActiveSeat,
+} from '../state/store';
 import { getScreenPosition, getSeatRotation } from './seat';
 import { getTableMidTexturePath, ROBOTO_FONT_PATH } from './assets';
 
 export function TableCenter(): React.JSX.Element | null {
   const room = useRoom();
   const currentUser = useSelf();
+  const actionTimeout = useActionTimeout();
+  const timerActiveSeat = useTimerActiveSeat();
 
   // Load textures
   const bgTexture = useTexture(getTableMidTexturePath('bg'));
-  const activeTexture = useTexture(getTableMidTexturePath('box_color'));
+  const activeTexture = useTexture(getTableMidTexturePath('box_color_white'));
+  const riichiTexture = useTexture(getTableMidTexturePath('box_color'));
   const windE = useTexture(getTableMidTexturePath('feng_E'));
   const windS = useTexture(getTableMidTexturePath('feng_S'));
   const windW = useTexture(getTableMidTexturePath('feng_W'));
@@ -19,16 +27,24 @@ export function TableCenter(): React.JSX.Element | null {
 
   // Configure textures
   useEffect(() => {
-    [bgTexture, activeTexture, windE, windS, windW, windN].forEach((tex) => {
+    [
+      bgTexture,
+      activeTexture,
+      riichiTexture,
+      windE,
+      windS,
+      windW,
+      windN,
+    ].forEach((tex) => {
       tex.colorSpace = THREE.SRGBColorSpace;
     });
-  }, [bgTexture, activeTexture, windE, windS, windW, windN]);
+  }, [bgTexture, activeTexture, riichiTexture, windE, windS, windW, windN]);
 
   if (!room?.info || !currentUser) {
     return null;
   }
 
-  const { round, currentPlayer, remainingTiles } = room.info;
+  const { round, currentPlayer, remainingTiles, dealer } = room.info;
   const selfPlayer = room.players.find((p) => p.id === currentUser.id);
   const selfSeat = selfPlayer?.seat;
 
@@ -66,50 +82,143 @@ export function TableCenter(): React.JSX.Element | null {
         />
       </mesh>
 
-      {/* Active player indicator bar */}
+      {/* Active player turn indicator (small white dot from box_color_white texture scaled to z=0.56) */}
       <group rotation={[0, -activeRotation, 0]}>
-        <mesh position={[0, 0.001, 0.48]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[0.7, 0.12]} />
+        <mesh
+          position={[0, 0.002, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          renderOrder={1}
+        >
+          <planeGeometry args={[1.16, 1.16]} />
           <meshBasicMaterial
             map={activeTexture}
             transparent
-            blending={THREE.AdditiveBlending}
-            opacity={0.8}
+            depthWrite={false}
           />
         </mesh>
       </group>
 
-      {/* Round Wind Indicator */}
-      <mesh position={[-0.15, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.2, 0.2]} />
-        <meshBasicMaterial map={windTexture} transparent />
+      {/* Round Wind Indicator (placed in left half of the white circle) */}
+      <mesh
+        position={[-0.08, 0.003, -0.02]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        renderOrder={1}
+      >
+        <planeGeometry args={[0.15, 0.15]} />
+        <meshBasicMaterial map={windTexture} transparent depthWrite={false} />
       </mesh>
 
-      {/* Round Number (e.g. East "1") */}
+      {/* Round Number (placed in right half of the white circle, dark color for contrast) */}
       <DreiText
-        position={[0.15, 0.003, 0]}
+        position={[0.08, 0.004, -0.02]}
         rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.18}
-        color="#ffffff"
+        fontSize={0.16}
+        color="#1a1a1a"
         anchorX="center"
         anchorY="middle"
         font={ROBOTO_FONT_PATH}
+        renderOrder={1}
       >
         {roundNum}
       </DreiText>
 
-      {/* Remaining tiles indicator */}
+      {/* Remaining tiles indicator (centered inside the white circle, dark color for contrast) */}
       <DreiText
-        position={[0, 0.003, 0.22]}
+        position={[0, 0.004, 0.12]}
         rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.1}
-        color="#ffcc00"
+        fontSize={0.09}
+        color="#1a1a1a"
         anchorX="center"
         anchorY="middle"
         font={ROBOTO_FONT_PATH}
+        renderOrder={1}
       >
         {remainingTiles}
       </DreiText>
+
+      {/* Ticking countdown timer (centered below remaining tiles, dark red) */}
+      {actionTimeout > 0 && (
+        <DreiText
+          position={[0, 0.004, 0.24]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          fontSize={0.11}
+          color="#d32f2f"
+          anchorX="center"
+          anchorY="middle"
+          font={ROBOTO_FONT_PATH}
+          renderOrder={1}
+        >
+          {actionTimeout}
+        </DreiText>
+      )}
+
+      {/* Render score, seat wind, and Riichi sticks for each player */}
+      {room.players.map((p) => {
+        if (p.seat === undefined) return null;
+        const screenPos = getScreenPosition(p.seat, selfSeat, playerCount);
+        const rotY = getSeatRotation(screenPos);
+
+        const seatWindIdx = (p.seat - dealer + playerCount) % playerCount;
+        const windTextures =
+          playerCount === 2 ? [windE, windS] : [windE, windS, windW, windN];
+        const seatWindTexture = windTextures[seatWindIdx] ?? windE;
+
+        const points =
+          p.gameState?.points ??
+          room.config?.pointThreshold?.initialPoints ??
+          25000;
+
+        const isTimerActive = timerActiveSeat === p.seat && actionTimeout > 0;
+        const isRiichi = !!p.gameState && p.gameState.riichiTileId > 0;
+
+        return (
+          <group key={p.id} rotation={[0, -rotY, 0]}>
+            {/* Score Text (centered horizontally, pushed inwards to avoid lines) */}
+            <DreiText
+              position={[0, 0.004, 0.32]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              fontSize={0.07}
+              color={isTimerActive ? '#ffcc00' : '#ffffff'}
+              anchorX="center"
+              anchorY="middle"
+              font={ROBOTO_FONT_PATH}
+              renderOrder={1}
+            >
+              {points}
+            </DreiText>
+
+            {/* Seat Wind Icon (shifted to the bottom-left corner on the white corner, larger display) */}
+            <mesh
+              position={[-0.45, 0.003, 0.45]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              renderOrder={1}
+            >
+              <planeGeometry args={[0.13, 0.13]} />
+              <meshBasicMaterial
+                map={seatWindTexture}
+                transparent
+                depthWrite={false}
+              />
+            </mesh>
+
+            {/* Riichi Stick (placed flat in front of their discard river) */}
+            {isRiichi && (
+              <mesh
+                position={[0, 0.003, 0.62]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                renderOrder={1}
+              >
+                <planeGeometry args={[0.55, 0.09]} />
+                <meshBasicMaterial
+                  map={riichiTexture}
+                  transparent
+                  depthWrite={false}
+                />
+              </mesh>
+            )}
+          </group>
+        );
+      })}
     </group>
   );
 }
@@ -117,6 +226,7 @@ export function TableCenter(): React.JSX.Element | null {
 // Pre-load textures
 useTexture.preload(getTableMidTexturePath('bg'));
 useTexture.preload(getTableMidTexturePath('box_color'));
+useTexture.preload(getTableMidTexturePath('box_color_white'));
 useTexture.preload(getTableMidTexturePath('feng_E'));
 useTexture.preload(getTableMidTexturePath('feng_S'));
 useTexture.preload(getTableMidTexturePath('feng_W'));

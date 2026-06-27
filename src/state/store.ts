@@ -14,6 +14,8 @@ export interface RabiRiichiState {
   pendingActionOption: ActionOption | null;
   animationSpeed: number;
   isWaitingForProceed: boolean;
+  actionTimeout: number;
+  timerActiveSeat: number | null;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -32,7 +34,9 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.isRiichiSelectMode !== rabiriichi.isRiichiSelectMode ||
     lastSnapshot.pendingActionOption !== rabiriichi.pendingActionOption ||
     lastSnapshot.animationSpeed !== rabiriichi.animationSpeed ||
-    lastSnapshot.isWaitingForProceed !== rabiriichi.isWaitingForProceed
+    lastSnapshot.isWaitingForProceed !== rabiriichi.isWaitingForProceed ||
+    lastSnapshot.actionTimeout !== rabiriichi.actionTimeout ||
+    lastSnapshot.timerActiveSeat !== rabiriichi.timerActiveSeat
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -43,6 +47,8 @@ function getSnapshot(): RabiRiichiState {
       pendingActionOption: rabiriichi.pendingActionOption,
       animationSpeed: rabiriichi.animationSpeed,
       isWaitingForProceed: rabiriichi.isWaitingForProceed,
+      actionTimeout: rabiriichi.actionTimeout,
+      timerActiveSeat: rabiriichi.timerActiveSeat,
     };
   }
   return lastSnapshot;
@@ -106,6 +112,22 @@ export function usePendingActionOption(): ActionOption | null {
     subscribe,
     getPendingActionOption,
     getPendingActionOption,
+  );
+}
+
+export function useActionTimeout(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.actionTimeout,
+    () => rabiriichi.actionTimeout,
+  );
+}
+
+export function useTimerActiveSeat(): number | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.timerActiveSeat,
+    () => rabiriichi.timerActiveSeat,
   );
 }
 

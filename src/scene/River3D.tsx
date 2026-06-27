@@ -15,7 +15,7 @@ export function River3D({
 }: River3DProps): React.JSX.Element {
   const spacingX = 0.19; // Tile width (0.18) + small gap
   const spacingZ = 0.25; // Tile height (0.24) + small gap
-  const zStart = -1.35; // Start position of the river (further from player, near center)
+  const zStart = -1.6; // Start position of the river (further from player, near center)
 
   return (
     <group>

@@ -45,19 +45,23 @@ export function PlayerArea3D({
 
   return (
     <group>
-      {/* Hand (closed tiles + drawn tile) */}
-      <Hand3D
-        tiles={hand.freeTiles}
-        pendingTile={hand.pendingTile}
-        isLocal={isLocal}
-        shiftX={shiftX}
-      />
+      {/* Hand (closed tiles + drawn tile) - pushed towards center */}
+      <group position={[0, 0, -0.2]}>
+        <Hand3D
+          tiles={hand.freeTiles}
+          pendingTile={hand.pendingTile}
+          isLocal={isLocal}
+          shiftX={shiftX}
+        />
+      </group>
 
       {/* Discard River */}
       <River3D discarded={hand.discarded} riichiTileId={riichiTileId} />
 
-      {/* Called Melds */}
-      <Melds3D called={hand.called} seat={seat} playerCount={playerCount} />
+      {/* Called Melds - pushed towards center */}
+      <group position={[0, 0, -0.2]}>
+        <Melds3D called={hand.called} seat={seat} playerCount={playerCount} />
+      </group>
     </group>
   );
 }

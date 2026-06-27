@@ -3,6 +3,7 @@ import {
   useRoom,
   useCurrentInquiry,
   useIsWaitingForProceed,
+  useActionTimeout,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
@@ -18,8 +19,9 @@ export function ResultPanel(): React.JSX.Element | null {
   const room = useRoom();
   const currentInquiry = useCurrentInquiry();
   const isWaitingForProceed = useIsWaitingForProceed();
+  const actionTimeout = useActionTimeout();
 
-  const [secondsLeft, setSecondsLeft] = React.useState<number>(8);
+  const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(8);
 
   const submitAction = React.useCallback(
     async (action: ActionOption, choice?: number) => {
@@ -61,10 +63,10 @@ export function ResultPanel(): React.JSX.Element | null {
   }, [proceedAction, isWaitingForProceed, submitAction]);
 
   React.useEffect(() => {
-    if (!canProceed) return;
+    if (!isWaitingForProceed) return;
 
     const intervalId = setInterval(() => {
-      setSecondsLeft((prev) => {
+      setLocalSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(intervalId);
           handleProceed();
@@ -76,9 +78,11 @@ export function ResultPanel(): React.JSX.Element | null {
 
     return () => {
       clearInterval(intervalId);
-      setSecondsLeft(8);
+      setLocalSecondsLeft(8);
     };
-  }, [canProceed, handleProceed]);
+  }, [isWaitingForProceed, handleProceed]);
+
+  const secondsLeft = currentInquiry ? actionTimeout : localSecondsLeft;
 
   if (!room || playersWithResult.length === 0) return null;
 

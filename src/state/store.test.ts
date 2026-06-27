@@ -48,6 +48,8 @@ describe('RabiRiichi Store', () => {
       pendingActionOption: null,
       animationSpeed: 1.0,
       isWaitingForProceed: false,
+      actionTimeout: 0,
+      timerActiveSeat: null,
     });
   });
 

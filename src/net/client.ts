@@ -76,6 +76,10 @@ export class RabiRiichiClient {
   public animationSpeed = 1.0;
   public isWaitingForProceed = false;
 
+  public actionTimeout = 0;
+  public timerActiveSeat: number | null = null;
+  private actionTimerId: ReturnType<typeof setInterval> | null = null;
+
   public setAnimationSpeed(speed: number): void {
     this.animationSpeed = speed;
     this.onChange.emit();
@@ -242,12 +246,32 @@ export class RabiRiichiClient {
       `Game event applied. Current player: ${this.room.info?.currentPlayer}`,
     );
 
-    if (gameEvent.endInquiryEvent) {
+    const configTimeout = this.room.config?.gameplayActionTimeout ?? 18;
+    const visualTimeout = Math.max(0, configTimeout - 3);
+
+    if (gameEvent.drawTileEvent) {
+      this.startTimer(
+        gameEvent.drawTileEvent.playerId ?? 0,
+        visualTimeout,
+        false,
+      );
+    } else if (gameEvent.dealerFirstTurnEvent) {
+      this.startTimer(this.room.info?.dealer ?? 0, visualTimeout, false);
+    } else if (gameEvent.claimTileEvent) {
+      this.startTimer(
+        gameEvent.claimTileEvent.playerId ?? 0,
+        visualTimeout,
+        false,
+      );
+    } else if (gameEvent.discardTileEvent) {
+      this.clearTimer();
+    } else if (gameEvent.endInquiryEvent) {
       const playerId = gameEvent.endInquiryEvent.playerId;
       if (this.selfSeat !== undefined && playerId === this.selfSeat) {
         this.currentInquiry = null;
         this.isRiichiSelectMode = false;
         this.pendingActionOption = null;
+        this.clearTimer();
       }
     }
     this.onChange.emit();
@@ -265,6 +289,18 @@ export class RabiRiichiClient {
       original: inquiry,
     };
     this.logger.info(`Received inquiry ${respondTo}`);
+    const configTimeout = this.room?.config?.gameplayActionTimeout ?? 18;
+    const fallbackTimeout = Math.max(0, configTimeout - 3);
+    const serverTimeout =
+      inquiry.timeoutSeconds && inquiry.timeoutSeconds > 0
+        ? inquiry.timeoutSeconds
+        : fallbackTimeout;
+
+    if (serverTimeout > 0) {
+      this.startTimer(this.selfSeat ?? 0, serverTimeout, true);
+    } else {
+      this.clearTimer();
+    }
     this.onChange.emit();
   }
 
@@ -331,6 +367,7 @@ export class RabiRiichiClient {
     choice?: number,
   ): Promise<void> {
     if (!this.currentInquiry) return;
+    this.clearTimer();
     const responseDto = encodeInquiryResponse(
       this.currentInquiry.original,
       action,
@@ -370,7 +407,94 @@ export class RabiRiichiClient {
     this.currentInquiry = null;
     this.isRiichiSelectMode = false;
     this.pendingActionOption = null;
+    this.clearTimer();
     this.setConnectionStatus('disconnected');
+  }
+  private startTimer(
+    seat: number,
+    seconds: number,
+    interactive: boolean,
+  ): void {
+    this.clearTimer();
+    this.timerActiveSeat = seat;
+    this.actionTimeout = seconds;
+    this.onChange.emit();
+
+    this.actionTimerId = setInterval(() => {
+      this.actionTimeout--;
+      if (this.actionTimeout <= 0) {
+        this.clearTimer();
+        if (interactive) {
+          this.logger.info(
+            'Inquiry timeout reached. Auto-submitting default action.',
+          );
+          this.autoSubmitDefaultAction();
+        }
+      } else {
+        this.onChange.emit();
+      }
+    }, 1000);
+  }
+
+  private clearTimer(): void {
+    if (this.actionTimerId) {
+      clearInterval(this.actionTimerId);
+      this.actionTimerId = null;
+    }
+    this.actionTimeout = 0;
+    this.timerActiveSeat = null;
+    this.onChange.emit();
+  }
+
+  private autoSubmitDefaultAction(): void {
+    if (!this.currentInquiry) return;
+    const mapped = this.currentInquiry.mapped;
+
+    if (mapped.playTile) {
+      const seat = this.selfSeat ?? 0;
+      const pendingTile = this.room?.players.find((p) => p.seat === seat)
+        ?.gameState?.hand.pendingTile;
+      if (pendingTile?.traceId !== undefined && pendingTile?.traceId !== null) {
+        const playTileAction: ActionOption = {
+          type: 'play-tile',
+          label: '打',
+          actionIndex: mapped.playTile.actionIndex,
+          legalTiles: mapped.playTile.legalTiles,
+        };
+        void this.submitInquiryResponse(playTileAction, pendingTile.traceId);
+        return;
+      } else {
+        const freeTiles =
+          this.room?.players.find((p) => p.seat === seat)?.gameState?.hand
+            .freeTiles ?? [];
+        if (freeTiles.length > 0) {
+          const lastTile = freeTiles[freeTiles.length - 1];
+          if (lastTile?.traceId !== undefined && lastTile?.traceId !== null) {
+            const playTileAction: ActionOption = {
+              type: 'play-tile',
+              label: '打',
+              actionIndex: mapped.playTile.actionIndex,
+              legalTiles: mapped.playTile.legalTiles,
+            };
+            void this.submitInquiryResponse(playTileAction, lastTile.traceId);
+            return;
+          }
+        }
+      }
+    }
+
+    const skipAction = mapped.buttons.find(
+      (b) => b.type === 'skip' || b.type === 'ryuukyoku',
+    );
+    if (skipAction) {
+      void this.submitInquiryResponse(skipAction);
+      return;
+    }
+
+    const firstButton = mapped.buttons[0];
+    if (firstButton) {
+      void this.submitInquiryResponse(firstButton);
+    }
   }
 }
 

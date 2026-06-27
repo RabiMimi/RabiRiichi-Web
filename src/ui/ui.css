@@ -250,7 +250,7 @@
 /* Action HUD overlay styles */
 .action-hud-container {
   position: absolute;
-  bottom: 150px; /* Positioned above the local player's hand */
+  bottom: 220px; /* Positioned above the local player's hand */
   left: 50%;
   transform: translateX(-50%);
   display: flex;

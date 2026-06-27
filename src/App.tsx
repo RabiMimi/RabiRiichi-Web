@@ -62,7 +62,7 @@ function App(): React.JSX.Element {
 
   return (
     <div className="app">
-      <Canvas camera={{ position: [0, 4.5, 5], fov: 50 }}>
+      <Canvas camera={{ position: [0, 3.6, 4.0], fov: 50 }}>
         <GameTable />
         <OrbitControls
           maxPolarAngle={Math.PI / 2 - 0.05}
