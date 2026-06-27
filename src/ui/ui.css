@@ -710,7 +710,7 @@
 /* Settings panel */
 .settings-panel {
   position: absolute;
-  top: 20px;
+  top: 105px;
   left: 20px;
   background-color: rgba(20, 20, 20, 0.85);
   border: 1.5px solid #444;
@@ -727,7 +727,7 @@
 /* Dora panel */
 .dora-panel {
   position: absolute;
-  top: 90px; /* Positioned below settings-panel */
+  top: 20px;
   left: 20px;
   background-color: rgba(20, 20, 20, 0.85);
   border: 1.5px solid #444;
