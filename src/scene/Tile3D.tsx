@@ -27,18 +27,19 @@ export type TileDisplayState =
 
 function createMappedMaterial(
   mat: THREE.Material,
-  texture: THREE.Texture,
+  frontTexture: THREE.Texture,
+  backTexture: THREE.Texture,
 ): THREE.Material {
   const matName = mat.name;
   if (matName === 'Front.001') {
     return new THREE.MeshStandardMaterial({
-      map: texture,
+      map: frontTexture,
       roughness: 0.15,
       metalness: 0.05,
     });
   } else if (matName === 'Back.001') {
     return new THREE.MeshStandardMaterial({
-      color: '#136a3e', // Rich green
+      map: backTexture,
       roughness: 0.25,
       metalness: 0.05,
     });
@@ -108,7 +109,10 @@ export function Tile3D({
   const texturePath = getTileTexturePath(tile);
   const texture = useTexture(texturePath);
 
-  // Clone the texture and configure it.
+  // Always load the back face texture
+  const backTexture = useTexture('/assets/hand_tiles/back.jpg');
+
+  // Clone the textures and configure them.
   // This avoids mutating the raw hook return value which violates strict react-hooks rules.
   const clonedTexture = useMemo(() => {
     const tex = texture.clone();
@@ -120,6 +124,16 @@ export function Tile3D({
     return tex;
   }, [texture]);
 
+  const clonedBackTexture = useMemo(() => {
+    const tex = backTexture.clone();
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.flipY = false;
+    tex.needsUpdate = true;
+    return tex;
+  }, [backTexture]);
+
   // Clone the scene graph so this tile has its own material instances
   const clone = useMemo(() => scene.clone(), [scene]);
 
@@ -130,10 +144,14 @@ export function Tile3D({
         const childMat = child.material as THREE.Material | THREE.Material[];
         if (Array.isArray(childMat)) {
           child.material = childMat.map((mat) =>
-            createMappedMaterial(mat, clonedTexture),
+            createMappedMaterial(mat, clonedTexture, clonedBackTexture),
           );
         } else {
-          child.material = createMappedMaterial(childMat, clonedTexture);
+          child.material = createMappedMaterial(
+            childMat,
+            clonedTexture,
+            clonedBackTexture,
+          );
         }
 
         // Enable shadows
@@ -141,7 +159,7 @@ export function Tile3D({
         child.receiveShadow = true;
       }
     });
-  }, [clone, clonedTexture]);
+  }, [clone, clonedTexture, clonedBackTexture]);
 
   // Determine rotation and Y-offset based on the display state
   const { rotation, yOffset } = useMemo(() => {
@@ -311,6 +329,6 @@ useGLTF.preload(TILE_MODEL_PATH);
 VALID_TILE_STRINGS.forEach((tileStr) => {
   useTexture.preload(getTileTexturePath(tileStr));
 });
-useTexture.preload(getTileTexturePath('back'));
-useTexture.preload(getTileTexturePath('front'));
-useTexture.preload(getTileTexturePath('blank'));
+useTexture.preload('/assets/hand_tiles/back.jpg');
+useTexture.preload('/assets/hand_tiles/blank.jpg');
+useTexture.preload('/assets/hand_tiles/front.jpg');

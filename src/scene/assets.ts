@@ -52,18 +52,18 @@ export type ValidTileString = (typeof VALID_TILE_STRINGS)[number];
 
 /**
  * Returns the texture path for a given tile or tile string.
- * Falls back to 'back.jpg' if the tile is invalid or a back-face is requested.
+ * Falls back to 'blank.jpg' if the tile is invalid or a back-face is requested.
  */
 export function getTileTexturePath(tile: string | Tile | null): string {
   if (!tile) {
-    return '/assets/hand_tiles/back.jpg';
+    return '/assets/hand_tiles/blank.jpg';
   }
 
   const tileStr = typeof tile === 'string' ? tile : tile.toString();
 
   // If it's explicitly 'back' or represents a back/invalid tile
   if (tileStr === 'back' || tileStr === '0x' || tileStr.includes('x')) {
-    return '/assets/hand_tiles/back.jpg';
+    return '/assets/hand_tiles/blank.jpg';
   }
 
   if (tileStr === 'blank' || tileStr === 'front') {
@@ -75,8 +75,8 @@ export function getTileTexturePath(tile: string | Tile | null): string {
     return `/assets/hand_tiles/${tileStr}.jpg`;
   }
 
-  // Fallback to back
-  return '/assets/hand_tiles/back.jpg';
+  // Fallback to blank
+  return '/assets/hand_tiles/blank.jpg';
 }
 
 /**
