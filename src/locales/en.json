@@ -23,7 +23,7 @@
     "rounds": "Rounds",
     "minHan": "Min Han",
     "actionTimeout": "Action Timeout",
-    "timeoutError": "Timeout must be between 5 and 120 seconds",
+    "timeoutError": "Timeout must be between 5 and 3600 seconds",
     "minHanError": "Min Han must be between 1 and 13",
     "defaultPlaceholder": "Default: {{value}}s"
   },

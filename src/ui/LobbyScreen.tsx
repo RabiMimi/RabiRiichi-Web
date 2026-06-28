@@ -158,7 +158,7 @@ export function LobbyScreen(): React.JSX.Element {
       return;
     }
     const seconds = parseFloat(val);
-    if (isNaN(seconds) || seconds < 5 || seconds > 120) {
+    if (isNaN(seconds) || seconds < 5 || seconds > 3600) {
       setTimeoutError(t('lobby.timeoutError'));
     } else {
       setTimeoutError(null);
@@ -185,7 +185,7 @@ export function LobbyScreen(): React.JSX.Element {
     let actionTimeout = DEFAULT_ACTION_TIMEOUT;
     if (actionTimeoutInput !== '') {
       const parsed = parseFloat(actionTimeoutInput);
-      if (!isNaN(parsed) && parsed >= 5 && parsed <= 120) {
+      if (!isNaN(parsed) && parsed >= 5 && parsed <= 3600) {
         actionTimeout = parsed;
       }
     }
