@@ -322,6 +322,36 @@ describe('Reducer - Events', () => {
     expect(nextState.players[0]?.gameState?.points).toBe(25000);
   });
 
+  it('preserves accumulated points across rounds on beginGameEvent', () => {
+    // Points accumulate over the whole game; beginGameEvent (start of each
+    // round) must NOT reset them to initialPoints.
+    const state = createInitializedRoom();
+    const p0 = state.players[0];
+    const p1 = state.players[1];
+    if (p0?.gameState) p0.gameState.points = 32100;
+    if (p1?.gameState) p1.gameState.points = 17900;
+
+    const nextState = applyEvent(state, {
+      beginGameEvent: { round: 1, dealer: 1, honba: 0 },
+    });
+
+    expect(nextState.players[0]?.gameState?.points).toBe(32100);
+    expect(nextState.players[1]?.gameState?.points).toBe(17900);
+  });
+
+  it('uses configured initialPoints for the first round (no prior state)', () => {
+    const state = createInitializedRoom();
+    // Simulate a fresh game with no per-player gameState yet.
+    state.players = state.players.map((p) => ({ ...p, gameState: null }));
+
+    const nextState = applyEvent(state, {
+      beginGameEvent: { round: 0, dealer: 0, honba: 0 },
+    });
+
+    expect(nextState.players[0]?.gameState?.points).toBe(25000);
+    expect(nextState.players[1]?.gameState?.points).toBe(25000);
+  });
+
   it('should handle dealHandEvent', () => {
     const state = createInitializedRoom();
     const eventMsg = {
@@ -718,14 +748,21 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.uradoras[0]?.traceId).toBe(91);
   });
 
-  it('should handle nextGameEvent', () => {
+  it('should handle nextGameEvent by advancing round metadata only', () => {
+    // nextGameEvent fires BEFORE the next_round ack inquiry and beginGameEvent.
+    // It must advance the round but NOT clear per-player hand/agari state, so
+    // the result panel stays visible until the next hand actually begins.
     const state = createInitializedRoom();
-    // Pre-populate some hand states to verify they get reset
     setFreeTiles(state, 0, [{ traceId: 10, tile: 17 }]);
     setPendingTile(state, 0, { traceId: 50, tile: 21 });
     const p0 = state.players[0];
     if (p0?.gameState) {
-      p0.gameState.points = 28900; // Keep points
+      p0.gameState.points = 28900;
+      p0.gameState.agari = {
+        scores: { result: { han: 3, fu: 40 } },
+        gainPoints: 3900,
+        losePoints: 0,
+      };
     }
 
     const eventMsg = {
@@ -745,8 +782,32 @@ describe('Reducer - Events', () => {
 
     const nextP0 = nextState.players.find((p) => p.seat === 0);
     expect(nextP0?.gameState?.points).toBe(28900); // Points preserved
-    expect(nextP0?.gameState?.hand.freeTiles).toHaveLength(0); // Hand reset
-    expect(nextP0?.gameState?.hand.pendingTile).toBeNull();
+    // Result and hand are preserved until beginGameEvent clears them.
+    expect(nextP0?.gameState?.agari?.scores?.result?.han).toBe(3);
+    expect(nextP0?.gameState?.hand.freeTiles).toHaveLength(1);
+    expect(nextP0?.gameState?.hand.pendingTile).not.toBeNull();
+  });
+
+  it('clears the previous hand result on beginGameEvent', () => {
+    // The full per-hand reset (incl. clearing agari) happens here, after the
+    // next_round acknowledgment, when the next hand starts dealing.
+    const state = createInitializedRoom();
+    const p0 = state.players[0];
+    if (p0?.gameState) {
+      p0.gameState.agari = {
+        scores: { result: { han: 3, fu: 40 } },
+        gainPoints: 3900,
+        losePoints: 0,
+      };
+    }
+
+    const nextState = applyEvent(state, {
+      beginGameEvent: { round: 1, dealer: 1, honba: 1 },
+    });
+
+    const nextP0 = nextState.players.find((p) => p.seat === 0);
+    expect(nextP0?.gameState?.agari).toBeNull();
+    expect(nextP0?.gameState?.hand.freeTiles).toHaveLength(0);
   });
 
   it('should handle stopGameEvent', () => {
@@ -867,6 +928,57 @@ describe('Reducer - Events', () => {
       expect(p.gameState?.agari?.losePoints).toBe(0);
       expect(p.gameState?.agari?.scores).toBeUndefined();
     }
+  });
+
+  it('keeps the winner result through the full end-of-hand sequence', () => {
+    // Regression: live order is agari -> applyScore -> conclude -> nextGame,
+    // all sent before the next_round ack inquiry. nextGame previously wiped
+    // agari, so the result panel rendered "Draw". The win result must survive
+    // until beginGameEvent (the next hand) clears it.
+    let state = createInitializedRoom();
+
+    state = applyEvent(state, {
+      agariEvent: {
+        agariInfos: [
+          {
+            playerId: 1,
+            scores: {
+              items: [{ Type: 1, Val: 1, Src: 'Riichi' }],
+              result: { han: 5, fu: 30 },
+            },
+            freeTiles: [{ traceId: 1, tile: 19 }],
+          },
+        ],
+        incoming: { tile: 19, traceId: 99 },
+      },
+    });
+    state = applyEvent(state, {
+      applyScoreEvent: { scoreChange: [{ from: 0, to: 1, points: 7700 }] },
+    });
+    state = applyEvent(state, {
+      concludeGameEvent: { doras: [], uradoras: [] },
+    });
+    state = applyEvent(state, {
+      nextGameEvent: {
+        nextRound: 1,
+        nextDealer: 1,
+        nextHonba: 0,
+        riichiStick: 0,
+      },
+    });
+
+    const winner = state.players.find(
+      (p) => p.gameState?.agari?.scores != null,
+    );
+    expect(winner?.seat).toBe(1);
+    expect(winner?.gameState?.agari?.scores?.result?.han).toBe(5);
+    expect(winner?.gameState?.agari?.gainPoints).toBe(7700);
+
+    // beginGameEvent (after the ack) finally clears the result.
+    state = applyEvent(state, { beginGameEvent: { round: 1, dealer: 1 } });
+    expect(
+      state.players.find((p) => p.gameState?.agari?.scores != null),
+    ).toBeUndefined();
   });
 });
 

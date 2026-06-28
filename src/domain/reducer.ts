@@ -131,12 +131,17 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     uradoras: [],
   };
 
+  const initialPoints = state.config?.pointThreshold?.initialPoints
+    ? Number(state.config.pointThreshold.initialPoints)
+    : 25000;
+
   const updatedPlayers = state.players.map((p): PlayerModel => {
+    // beginGameEvent fires at the start of every round, but points accumulate
+    // across the whole game. Preserve any existing points and only fall back to
+    // the configured initial value for the very first round (no prior state).
     const initialGameState: PlayerGameState = {
       jun: 0,
-      points: state.config?.pointThreshold?.initialPoints
-        ? Number(state.config.pointThreshold.initialPoints)
-        : 25000,
+      points: p.gameState?.points ?? initialPoints,
       riichiTileId: 0,
       furiten: {
         [FuritenType.FURITEN_TYPE_DISCARD]: false,
@@ -698,6 +703,11 @@ function handleConcludeGame(
 
 function handleNextGame(state: RoomModel, ev: INextGameEventMsg): RoomModel {
   if (!state.info) return state;
+  // The server's order is concludeGame -> nextGame -> next_round ack inquiry
+  // -> beginGame. The result panel must stay visible during the ack window, so
+  // nextGame must NOT clear the per-player hand/agari result. We only advance
+  // the round metadata here; the full per-hand reset happens in handleBeginGame
+  // once the next hand actually starts dealing (after the ack).
   return {
     ...state,
     info: {
@@ -706,33 +716,7 @@ function handleNextGame(state: RoomModel, ev: INextGameEventMsg): RoomModel {
       dealer: ev.nextDealer ?? 0,
       honba: ev.nextHonba ?? 0,
       riichiStick: ev.riichiStick ?? 0,
-      remainingTiles: 0,
-      doras: [],
-      uradoras: [],
     },
-    players: state.players.map((p): PlayerModel => {
-      if (!p.gameState) return p;
-      return {
-        ...p,
-        gameState: {
-          ...p.gameState,
-          jun: 0,
-          riichiTileId: 0,
-          furiten: {
-            [FuritenType.FURITEN_TYPE_DISCARD]: false,
-            [FuritenType.FURITEN_TYPE_RIICHI]: false,
-            [FuritenType.FURITEN_TYPE_TEMP]: false,
-          },
-          hand: {
-            freeTiles: [],
-            called: [],
-            discarded: [],
-            pendingTile: null,
-          },
-          agari: null,
-        },
-      };
-    }),
   };
 }
 
