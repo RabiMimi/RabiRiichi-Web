@@ -1,4 +1,4 @@
-name: Build & Test Web Client
+name: Build & Test
 
 on:
   push:

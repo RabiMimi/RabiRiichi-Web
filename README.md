@@ -2,6 +2,7 @@
 
 [![100hun](https://100hun.rabimimi.com/provider/codecov/github/RabiMimi/RabiRiichi-Web/main/badge.png?size=128)](https://github.com/KCFindstr/100hun)
 [![build-test](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/build-test.yml/badge.svg)](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/build-test.yml)
+[![deploy](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/deploy.yml/badge.svg)](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/deploy.yml)
 [![codecov](https://codecov.io/gh/RabiMimi/RabiRiichi-Web/branch/main/graph/badge.svg)](https://codecov.io/gh/RabiMimi/RabiRiichi-Web)
 
 The web client of [RabiRiichi](https://github.com/RabiMimi/RabiRiichi), built as
