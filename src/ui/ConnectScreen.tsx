@@ -10,7 +10,9 @@ export function ConnectScreen(): React.JSX.Element {
   const OFFICIAL_SERVER = 'wss://riichi-server.rabimimi.com';
   const LOCAL_SERVER = 'ws://localhost:5150';
 
-  const [serverSelection, setServerSelection] = useState<'official' | 'local' | 'custom'>('official');
+  const [serverSelection, setServerSelection] = useState<
+    'official' | 'local' | 'custom'
+  >('official');
   const [customUrl, setCustomUrl] = useState(LOCAL_SERVER);
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState<string | null>(null);
