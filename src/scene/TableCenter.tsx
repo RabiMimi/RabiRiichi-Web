@@ -37,6 +37,14 @@ export function TableCenter(): React.JSX.Element | null {
       windN,
     ].forEach((tex) => {
       tex.colorSpace = THREE.SRGBColorSpace;
+      // The wind glyphs are small NPOT (41x41) textures. Mipmapping averages
+      // the sparse dark pixels with the transparent surround, dropping alpha so
+      // the white plate behind shows through (the glyph "turns white"). Disable
+      // mipmaps and use linear filtering so the glyph keeps its color/alpha.
+      tex.generateMipmaps = false;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.needsUpdate = true;
     });
   }, [bgTexture, activeTexture, riichiTexture, windE, windS, windW, windN]);
 
@@ -102,7 +110,7 @@ export function TableCenter(): React.JSX.Element | null {
       <mesh
         position={[-0.08, 0.003, -0.02]}
         rotation={[-Math.PI / 2, 0, 0]}
-        renderOrder={1}
+        renderOrder={2}
       >
         <planeGeometry args={[0.15, 0.15]} />
         <meshBasicMaterial map={windTexture} transparent depthWrite={false} />
@@ -117,7 +125,7 @@ export function TableCenter(): React.JSX.Element | null {
         anchorX="center"
         anchorY="middle"
         font={ROBOTO_FONT_PATH}
-        renderOrder={1}
+        renderOrder={2}
       >
         {roundNum}
       </DreiText>
@@ -131,7 +139,7 @@ export function TableCenter(): React.JSX.Element | null {
         anchorX="center"
         anchorY="middle"
         font={ROBOTO_FONT_PATH}
-        renderOrder={1}
+        renderOrder={2}
       >
         {remainingTiles}
       </DreiText>
@@ -153,7 +161,7 @@ export function TableCenter(): React.JSX.Element | null {
           25000;
 
         const isTimerActive = timerActiveSeat === p.seat && actionTimeout > 0;
-        const isRiichi = !!p.gameState && p.gameState.riichiTileId > 0;
+        const isRiichi = p.gameState ? p.gameState.riichiTileId > 0 : false;
 
         return (
           <group key={p.id} rotation={[0, rotY, 0]}>
@@ -166,7 +174,7 @@ export function TableCenter(): React.JSX.Element | null {
               anchorX="center"
               anchorY="middle"
               font={ROBOTO_FONT_PATH}
-              renderOrder={1}
+              renderOrder={2}
             >
               {points}
             </DreiText>
@@ -175,7 +183,7 @@ export function TableCenter(): React.JSX.Element | null {
             <mesh
               position={[-0.45, 0.003, 0.45]}
               rotation={[-Math.PI / 2, 0, 0]}
-              renderOrder={1}
+              renderOrder={2}
             >
               <planeGeometry args={[0.13, 0.13]} />
               <meshBasicMaterial
@@ -190,7 +198,7 @@ export function TableCenter(): React.JSX.Element | null {
               <mesh
                 position={[0, 0.003, 0.62]}
                 rotation={[-Math.PI / 2, 0, 0]}
-                renderOrder={1}
+                renderOrder={2}
               >
                 <planeGeometry args={[0.55, 0.09]} />
                 <meshBasicMaterial
