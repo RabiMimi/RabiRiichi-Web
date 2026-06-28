@@ -33,3 +33,6 @@ pnpm-debug.log*
 
 # Scratch scripts
 scratch/
+
+# Code coverage
+coverage/

@@ -1,5 +1,9 @@
 # RabiRiichi-Web
 
+[![100hun](https://100hun.rabimimi.com/provider/codecov/github/RabiMimi/RabiRiichi-Web/main/badge.png?size=128)](https://github.com/KCFindstr/100hun)
+[![build-test](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/build-test.yml/badge.svg)](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/build-test.yml)
+[![codecov](https://codecov.io/gh/RabiMimi/RabiRiichi-Web/branch/main/graph/badge.svg)](https://codecov.io/gh/RabiMimi/RabiRiichi-Web)
+
 The web client of [RabiRiichi](https://github.com/RabiMimi/RabiRiichi), built as
 a 3D browser game on top of the open-source gRPC server implementation.
 
