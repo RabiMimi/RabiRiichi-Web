@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useRoom,
   useCurrentInquiry,
@@ -16,6 +17,7 @@ import { proceedReplay } from '../dev/replayDriver';
 const logger = new Logger('ResultPanel');
 
 export function ResultPanel(): React.JSX.Element | null {
+  const { t } = useTranslation();
   const room = useRoom();
   const currentInquiry = useCurrentInquiry();
   const isWaitingForProceed = useIsWaitingForProceed();
@@ -85,9 +87,9 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const secondsLeft = currentInquiry ? actionTimeout : localSecondsLeft;
 
-  const hasNextRound = currentInquiry?.mapped.buttons.some(
-    (b) => b.type === 'next-round',
-  );
+  const hasNextRound =
+    currentInquiry?.mapped.buttons.some((b) => b.type === 'next-round') ??
+    false;
   const showPanel =
     playersWithResult.length > 0 || hasNextRound || isWaitingForProceed;
 
@@ -103,9 +105,12 @@ export function ResultPanel(): React.JSX.Element | null {
     let summaryText = '';
     if (result) {
       if (result.yakuman && result.yakuman > 0) {
-        summaryText = `${result.yakuman > 1 ? result.yakuman + '倍' : ''}役满 / Yakuman`;
+        summaryText =
+          result.yakuman > 1
+            ? t('result.multipleYakuman', { count: result.yakuman })
+            : t('result.yakuman');
       } else {
-        summaryText = `${result.fu} 符 ${result.han} 番 / ${result.fu} Fu ${result.han} Han`;
+        summaryText = t('result.fuAndHan', { fu: result.fu, han: result.han });
       }
     }
 
@@ -115,7 +120,7 @@ export function ResultPanel(): React.JSX.Element | null {
     return (
       <div key={player.id} className="winner-details-card">
         <div className="winner-name-row">
-          <span className="winner-badge">和牌者 / Winner</span>
+          <span className="winner-badge">{t('result.winnerBadge')}</span>
           <span className="winner-name">{player.nickname}</span>
           <span className="winner-summary">{summaryText}</span>
         </div>
@@ -138,7 +143,7 @@ export function ResultPanel(): React.JSX.Element | null {
           {/* Winning tile */}
           {agari.incoming && (
             <div className="winning-tile-group">
-              <span className="winning-tile-label">胡 / Win:</span>
+              <span className="winning-tile-label">{t('result.winTile')}:</span>
               <img
                 src={getTileTexturePath(
                   Tile.fromByte(agari.incoming.tile ?? 0).toString(),
@@ -175,11 +180,15 @@ export function ResultPanel(): React.JSX.Element | null {
             if (yaku.Type === ScoringType.SCORING_TYPE_FU) return null; // Skip Fu entries in the list
             const typeLabel =
               yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
-                ? '役满'
-                : `${yaku.Val}番`;
+                ? t('result.yakuman')
+                : t('result.han', { count: yaku.Val });
             return (
               <div key={idx} className="yaku-item">
-                <span className="yaku-name">{yaku.Src}</span>
+                <span className="yaku-name">
+                  {t(`yaku.${yaku.Src ?? ''}`, {
+                    defaultValue: yaku.Src ?? '',
+                  })}
+                </span>
                 <span className="yaku-val">{typeLabel}</span>
               </div>
             );
@@ -192,7 +201,7 @@ export function ResultPanel(): React.JSX.Element | null {
   const renderScoreChanges = () => {
     return (
       <div className="result-score-changes">
-        <h3>点数收支 / Score Changes</h3>
+        <h3>{t('result.scoreChangesTitle')}</h3>
         <div className="score-changes-list">
           {room.players.map((p) => {
             const agari = p.gameState?.agari;
@@ -227,7 +236,7 @@ export function ResultPanel(): React.JSX.Element | null {
     <div className="result-overlay">
       <div className="result-panel">
         <h2 className="result-title">
-          {isDraw ? '流局 / Draw' : '和牌 / Agari'}
+          {isDraw ? t('result.draw') : t('result.agari')}
         </h2>
 
         {/* Background art element */}
@@ -250,8 +259,8 @@ export function ResultPanel(): React.JSX.Element | null {
             disabled={!canProceed}
           >
             {canProceed
-              ? `确定 / Confirm (${secondsLeft}s)`
-              : '等待下一局... / Waiting...'}
+              ? t('result.confirmWithTime', { seconds: secondsLeft })
+              : t('result.waitingForNext')}
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import type {
   IUserInfoResponse,
   IServerResponse,
   IServerRoomStateResponse,
+  IGameConfigMsg,
 } from '../proto';
 import { RabiError, ServerError } from '../lib';
 import { type RabiSocket } from '../transport/rabiSocket';
@@ -44,12 +45,17 @@ export function createUser(
   );
 }
 
-export function createRoom(ws: RabiSocket): Promise<IServerRoomStateResponse> {
+export function createRoom(
+  ws: RabiSocket,
+  config?: IGameConfigMsg,
+): Promise<IServerRoomStateResponse> {
   return throwIfRespondError(
     ws,
     {
       clientRequest: {
-        createRoom: {},
+        createRoom: {
+          config: config ?? null,
+        },
       },
     },
     (resp) => resp.roomState,

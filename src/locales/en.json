@@ -1,0 +1,221 @@
+{
+  "connect": {
+    "subtitle": "3D browser mahjong client",
+    "serverAddress": "Server Address",
+    "nickname": "Nickname",
+    "nicknamePlaceholder": "Enter your nickname",
+    "connect": "Connect",
+    "connecting": "Connecting...",
+    "urlError": "URL must start with ws:// or wss://",
+    "nicknameError": "Nickname cannot be empty"
+  },
+  "lobby": {
+    "title": "Lobby",
+    "welcome": "Welcome, {{nickname}}!",
+    "you": "You",
+    "createRoom": "Create Room",
+    "joinRoom": "Join Room",
+    "joinRoomLabel": "Join Existing Room",
+    "disconnect": "Disconnect",
+    "roomSettings": "Room Settings",
+    "advancedSettings": "Advanced Settings",
+    "players": "Players",
+    "rounds": "Rounds",
+    "minHan": "Min Han",
+    "actionTimeout": "Action Timeout",
+    "timeoutError": "Timeout must be between 5 and 120 seconds",
+    "minHanError": "Min Han must be between 1 and 13"
+  },
+  "playersOpt": {
+    "2": "2-Player Game",
+    "3": "3-Player Game",
+    "4": "4-Player Game"
+  },
+  "roundsOpt": {
+    "1": "East Only (Tonpuu)",
+    "2": "East-South (Hanchan)"
+  },
+  "hanOpt": {
+    "1": "1 Han",
+    "2": "2 Han"
+  },
+  "room": {
+    "title": "Room ID: {{id}}",
+    "leave": "Leave Room",
+    "ready": "Ready",
+    "unready": "Unready",
+    "seat": "Seat: {{seat}}",
+    "seatAssigning": "Assigning...",
+    "status": {
+      "ready": "Ready",
+      "waiting": "Waiting",
+      "playing": "Playing"
+    }
+  },
+  "hud": {
+    "dora": "Dora",
+    "speed": "Animation Speed",
+    "discard": "Please Discard",
+    "chooseAction": "Choose Action",
+    "east": "East",
+    "south": "South",
+    "west": "West",
+    "north": "North",
+    "dealer": "Dealer",
+    "roundInfo": "East {{round}} - {{honba}} Honba",
+    "remainingTiles": "Wall Tiles: {{count}}",
+    "timerLabel": "Your Turn",
+    "timerWaiting": "Waiting for others...",
+    "action": {
+      "chii": "Chii",
+      "pon": "Pon",
+      "kan": "Kan",
+      "riichi": "Riichi",
+      "ron": "Ron",
+      "tsumo": "Tsumo",
+      "ryuukyoku": "Nine Winds Draw",
+      "skip": "Skip"
+    }
+  },
+  "result": {
+    "draw": "Draw",
+    "agari": "Agari",
+    "winner": "Winner",
+    "scoreChanges": "Score Changes",
+    "confirm": "Confirm",
+    "nextRound": "Next Game",
+    "points": "{{count}} pts",
+    "han": "{{count}} Han",
+    "fu": "{{count}} Fu",
+    "yakuman": "Yakuman",
+    "multipleYakuman": "{{count}}x Yakuman",
+    "fuAndHan": "{{fu}} Fu {{han}} Han",
+    "winnerBadge": "Winner",
+    "winTile": "Win",
+    "scoreChangesTitle": "Score Changes",
+    "confirmWithTime": "Confirm ({{seconds}}s)",
+    "waitingForNext": "Waiting..."
+  },
+  "advanced": {
+    "renchanPolicy": "Renchan Policy",
+    "endGamePolicy": "End Game Policy",
+    "kuikaePolicy": "Kuikae Policy",
+    "riichiPolicy": "Riichi Policy",
+    "doraOption": "Dora Options",
+    "agariOption": "Winning Options",
+    "scoringOption": "Scoring Options",
+    "ryuukyokuTrigger": "Mid-Game Draws",
+    "pointsDeductionPolicy": "Skill Points Deduction",
+    "renchan": {
+      "dealerWin": "Dealer wins continuous turn",
+      "dealerTenpai": "Dealer tenpai continuous turn",
+      "endGameRyuukyoku": "Always renchan on final game draw",
+      "midGameRyuukyoku": "Continuous turn on mid-game draws"
+    },
+    "endGame": {
+      "pointsOutOfRange": "End game if points out of range",
+      "instantPointsOutOfRange": "Instant end game if points out of range",
+      "dealerTenpai": "End game if dealer has top points & tenpai",
+      "dealerAgari": "End game if dealer has top points & agari",
+      "extendedRound": "Enter West round if no winner"
+    },
+    "kuikae": {
+      "genbutsu": "Block Genbutsu Kuikae",
+      "suji": "Block Suji Kuikae"
+    },
+    "riichi": {
+      "sufficientPoints": "Block Riichi if points would fall below 0 after declaring",
+      "validPoints": "Block Riichi if points are already below 0",
+      "sufficientTiles": "Block Riichi if remaining wall tiles are less than player count"
+    },
+    "dora": {
+      "initialDora": "Initial Dora",
+      "initialUradora": "Initial Ura Dora",
+      "kanDora": "Kan Dora",
+      "kanUradora": "Kan Ura Dora",
+      "instantDaiMinKan": "Instant Dora on Open Kan",
+      "instantKaKan": "Instant Dora on Added Kan",
+      "instantAnKan": "Instant Dora on Closed Kan"
+    },
+    "agari": {
+      "kuitan": "Allow Kuitan (Open Tanyao)",
+      "pao": "Enable Pao (Responsibility)",
+      "nagashiMangan": "Enable Nagashi Mangan",
+      "firstWinner": "Enable Head Bump (No Multi-Win)"
+    },
+    "scoring": {
+      "kiriageMangan": "Enable Kiriage Mangan",
+      "aotenjou": "Enable Aotenjou (Green Ceiling)",
+      "yakuman": "Enable Yakuman",
+      "multipleYakuman": "Enable Multiple Yakuman",
+      "kazoeYakuman": "Enable Kazoe Yakuman (Counted)"
+    },
+    "ryuukyoku": {
+      "suufonRenda": "Four Winds Discard Draw",
+      "kyuushuKyuuhai": "Nine Orphans Draw",
+      "suuchaRiichi": "Four Riichi Draw",
+      "sanchahou": "Triple Ron Draw",
+      "suukanSanra": "Four Kan Draw"
+    },
+    "deduction": {
+      "alwaysAllow": "Always Allow",
+      "sufficientPoints": "Prevent Bust (Cannot drop below limit)",
+      "validPoints": "Bust Protection (Must start in range)",
+      "alwaysBlock": "Always Block"
+    }
+  },
+  "yaku": {
+    "Chankan": "Robbing a Kan",
+    "HaiteiRaoyue": "Under the Sea",
+    "HouteiRaoyui": "Under the River",
+    "Iipeikou": "Pure Double Chi",
+    "Ippatsu": "Ippatsu (One-Shot)",
+    "MenzenchinTsumohou": "Fully Concealed Hand",
+    "Pinfu": "Pinfu (All Chi)",
+    "Riichi": "Riichi",
+    "RinshanKaihou": "After a Kan",
+    "ShiiaruRaotai": "Twelve Fall States",
+    "Tanyao": "All Simples",
+    "YakuhaiBakaze": "Value Tiles: Prevalent Wind",
+    "YakuhaiChun": "Value Tiles: Chun",
+    "YakuhaiHaku": "Value Tiles: Haku",
+    "YakuhaiHatsu": "Value Tiles: Hatsu",
+    "YakuhaiJikaze": "Value Tiles: Seat Wind",
+    "Chantaiyao": "Half-Outside Hand",
+    "Chiitoitsu": "Seven Pairs",
+    "DoubleRiichi": "Double Riichi",
+    "Honroutou": "All Terminals & Honors",
+    "Ittsu": "Straight",
+    "Sanankou": "Three Concealed Pongs",
+    "Sankantsu": "Three Kans",
+    "SanshokuDoujun": "Mixed Triple Chi",
+    "SanshokuDoukou": "Triple Pong",
+    "Shousangen": "Little Three Dragons",
+    "Toitoi": "All Pongs",
+    "Honitsu": "Half Flush",
+    "JunchanTaiyao": "Pure Outside Hand",
+    "Ryanpeikou": "Twice Pure Double Chi",
+    "Chinitsu": "Full Flush",
+    "Akadora": "Red Dora",
+    "Dora": "Dora",
+    "Uradora": "Ura Dora",
+    "fu": "Fu",
+    "Chiihou": "Earthly Hand",
+    "Chinroutou": "All Terminals",
+    "ChuurenPoutou": "Nine Gates",
+    "Daisangen": "Big Three Dragons",
+    "Daisuushii": "Big Four Winds",
+    "JunseiChuurenPoutou": "Pure Nine Gates",
+    "KokushiMusou": "Thirteen Orphans",
+    "KokushiMusouJuusanmenMachi": "Thirteen Orphans 13-Way Wait",
+    "Ryuuiisou": "All Green",
+    "Shousuushii": "Little Four Winds",
+    "Suuankou": "Four Concealed Pongs",
+    "SuuankouTanki": "Four Concealed Pongs Single Wait",
+    "Suukantsu": "Four Kans",
+    "Tenhou": "Heavenly Hand",
+    "Tsuuiisou": "All Honors",
+    "IshiueSannen": "Four Years on a Stone",
+    "HelloWorld": "Hello World"
+  }
+}

@@ -7,9 +7,11 @@ import type {
   IEventMsg,
   IServerRoomStateMsg,
   ISinglePlayerInquiryMsg,
+  IGameConfigMsg,
 } from '../proto';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import { MessagePump } from './messagePump';
+import { DEFAULT_ACTION_TIMEOUT } from '../domain/constants';
 import { applyEvent, applyRoomState } from '../domain/reducer';
 import {
   type MappedInquiry,
@@ -252,8 +254,8 @@ export class RabiRiichiClient {
       this.pendingActionOption = null;
     }
 
-    const configTimeout = this.room.config?.gameplayActionTimeout ?? 18;
-    const visualTimeout = Math.max(0, configTimeout - 3);
+    const configTimeout = this.room.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
+    const visualTimeout = configTimeout;
 
     if (gameEvent.drawTileEvent) {
       this.startTimer(
@@ -295,8 +297,8 @@ export class RabiRiichiClient {
       original: inquiry,
     };
     this.logger.info(`Received inquiry ${respondTo}`);
-    const configTimeout = this.room?.config?.gameplayActionTimeout ?? 18;
-    const fallbackTimeout = Math.max(0, configTimeout - 3);
+    const configTimeout = this.room?.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
+    const fallbackTimeout = configTimeout;
     const serverTimeout =
       inquiry.timeoutSeconds && inquiry.timeoutSeconds > 0
         ? inquiry.timeoutSeconds
@@ -334,10 +336,10 @@ export class RabiRiichiClient {
     this.updateUserInfo(resp);
   }
 
-  public async createRoom(): Promise<void> {
-    this.logger.info('Creating room');
+  public async createRoom(config?: IGameConfigMsg): Promise<void> {
+    this.logger.info('Creating room', config);
     const client = await this.getWSClient(true);
-    const resp = await createRoom(client);
+    const resp = await createRoom(client, config);
     if (resp.state) {
       this.handleRoomState(resp.state);
     }

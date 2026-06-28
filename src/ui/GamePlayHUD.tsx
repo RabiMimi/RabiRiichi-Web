@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useRoom,
   useSelf,
@@ -12,6 +13,7 @@ import { Tile } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
 
 function DoraPanel(): React.JSX.Element | null {
+  const { t } = useTranslation();
   const room = useRoom();
   if (!room?.info) return null;
 
@@ -19,13 +21,13 @@ function DoraPanel(): React.JSX.Element | null {
 
   return (
     <div className="dora-panel">
-      <div className="dora-panel-title">宝牌 / DORA</div>
+      <div className="dora-panel-title">{t('hud.dora')}</div>
       <div className="dora-tiles-row">
         {Array.from({ length: 5 }).map((_, idx) => {
-          const doraTileMsg = doras && idx < doras.length ? doras[idx] : null;
+          const doraTileMsg = idx < doras.length ? doras[idx] : null;
           let imgSrc = '/assets/hand_tiles/back.jpg';
 
-          if (doraTileMsg && doraTileMsg.tile) {
+          if (doraTileMsg?.tile) {
             const tileStr = Tile.fromByte(doraTileMsg.tile).toString();
             imgSrc = getTileTexturePath(tileStr);
           }
@@ -45,6 +47,7 @@ function DoraPanel(): React.JSX.Element | null {
 }
 
 export function GamePlayHUD(): React.JSX.Element | null {
+  const { t } = useTranslation();
   const room = useRoom();
   const currentUser = useSelf();
   const animationSpeed = useAnimationSpeed();
@@ -64,7 +67,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
   }
 
   const hasPlayTile = currentInquiry?.mapped.playTile != null;
-  const timerLabel = hasPlayTile ? '请出牌 / DISCARD' : '请选择 / ACTION';
+  const timerLabel = hasPlayTile ? t('hud.discard') : t('hud.chooseAction');
 
   return (
     <div className="game-play-hud">
@@ -77,7 +80,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
           htmlFor="speed-select"
           style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#aaa' }}
         >
-          动画速度 / Speed
+          {t('hud.speed')}
         </label>
         <select
           id="speed-select"

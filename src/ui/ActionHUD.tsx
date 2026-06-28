@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCurrentInquiry, useIsRiichiSelectMode } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Logger } from '../lib/logger';
@@ -17,6 +18,7 @@ interface FlattenedOption {
 }
 
 export function ActionHUD(): React.JSX.Element | null {
+  const { t } = useTranslation();
   const currentInquiry = useCurrentInquiry();
   const isRiichiSelectMode = useIsRiichiSelectMode();
 
@@ -42,14 +44,12 @@ export function ActionHUD(): React.JSX.Element | null {
   if (isRiichiSelectMode) {
     return (
       <div className="action-hud-container">
-        <div className="action-hud-message">
-          请选择要打出的立直牌 / Discard a tile to declare Riichi
-        </div>
+        <div className="action-hud-message">{t('hud.declareRiichi')}</div>
         <button
           className="hud-cancel-btn"
           onClick={() => setIsRiichiSelectMode(false)}
         >
-          取消立直 / Cancel Riichi
+          {t('hud.cancelRiichi')}
         </button>
       </div>
     );
@@ -60,6 +60,32 @@ export function ActionHUD(): React.JSX.Element | null {
   if (displayButtons.length === 0) {
     return null;
   }
+
+  const getActionLabel = (type: InquiryOptionType, origLabel: string) => {
+    switch (type) {
+      case 'skip':
+        return t('hud.action.skip');
+      case 'ryuukyoku':
+        return t('hud.action.ryuukyoku');
+      case 'chii':
+        return t('hud.action.chii');
+      case 'pon':
+        return t('hud.action.pon');
+      case 'kan':
+        return t('hud.action.kan');
+      case 'riichi':
+        return t('hud.action.riichi');
+      case 'agari':
+        return origLabel === '自摸'
+          ? t('hud.action.tsumo')
+          : t('hud.action.ron');
+      case 'play-tile':
+      case 'next-round':
+        return origLabel;
+      default:
+        return origLabel;
+    }
+  };
 
   // Flatten options: map Pon/Chi/Kan options with multiple tile groups into distinct clickable options
   const flatOptions: FlattenedOption[] = [];
@@ -72,7 +98,7 @@ export function ActionHUD(): React.JSX.Element | null {
       btn.tileGroups.forEach((group) => {
         flatOptions.push({
           key: `${btn.type}-${btn.actionIndex}-${group.index}`,
-          label: btn.label,
+          label: getActionLabel(btn.type, btn.label),
           type: btn.type,
           tiles: group.tiles,
           onClick: () => void submitAction(btn, group.index),
@@ -81,7 +107,7 @@ export function ActionHUD(): React.JSX.Element | null {
     } else {
       flatOptions.push({
         key: `${btn.type}-${btn.actionIndex}`,
-        label: btn.label,
+        label: getActionLabel(btn.type, btn.label),
         type: btn.type,
         onClick: () => {
           if (btn.type === 'riichi') {
@@ -107,8 +133,8 @@ export function ActionHUD(): React.JSX.Element | null {
               <div className="hud-tile-group">
                 <span className="hud-group-type-label">{opt.label}</span>
                 <div className="hud-group-tiles">
-                  {opt.tiles.map((t, idx) => {
-                    const tileStr = Tile.fromByte(t.tile).toString();
+                  {opt.tiles.map((tileMsg, idx) => {
+                    const tileStr = Tile.fromByte(tileMsg.tile).toString();
                     const imgSrc = getTileTexturePath(tileStr);
                     return (
                       <img

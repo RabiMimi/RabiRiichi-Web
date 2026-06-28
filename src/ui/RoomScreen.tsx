@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { useRoom, useSelf } from '../state/store';
 import { UserStatus } from '../proto';
@@ -6,6 +7,7 @@ import { pollUntil } from '../lib';
 import './ui.css';
 
 export function RoomScreen(): React.JSX.Element | null {
+  const { t } = useTranslation();
   const room = useRoom();
   const currentUser = useSelf();
   const [error, setError] = useState<string | null>(null);
@@ -82,10 +84,7 @@ export function RoomScreen(): React.JSX.Element | null {
   return (
     <div className="ui-screen room-screen">
       <div className="ui-card room-card">
-        <h2 className="ui-title">Game Room</h2>
-        <div className="room-info">
-          Room ID: <span className="room-id-highlight">{room.id}</span>
-        </div>
+        <h2 className="ui-title">{t('room.title', { id: room.id })}</h2>
 
         {error && <div className="ui-error">{error}</div>}
 
@@ -102,10 +101,12 @@ export function RoomScreen(): React.JSX.Element | null {
                 {renderAvatar(player.nickname)}
                 <div className="player-details">
                   <div className="player-name">
-                    {player.nickname} {isMe && '(You)'}
+                    {player.nickname} {isMe && `(${t('lobby.you')})`}
                   </div>
                   <div className="player-seat">
-                    Seat: {player.seat ?? 'Assigning...'}
+                    {player.seat !== undefined
+                      ? t('room.seat', { seat: player.seat })
+                      : t('room.seatAssigning')}
                   </div>
                 </div>
                 <div
@@ -113,7 +114,9 @@ export function RoomScreen(): React.JSX.Element | null {
                     playerIsReady ? 'ready' : 'waiting'
                   }`}
                 >
-                  {playerIsReady ? 'READY' : 'WAITING'}
+                  {playerIsReady
+                    ? t('room.status.ready')
+                    : t('room.status.waiting')}
                 </div>
               </div>
             );
@@ -126,7 +129,11 @@ export function RoomScreen(): React.JSX.Element | null {
             className={`ui-button ${isReady ? 'secondary-button' : 'primary-button'}`}
             disabled={isLoading}
           >
-            {isLoading ? 'Updating...' : isReady ? 'Cancel Ready' : 'Ready Up'}
+            {isLoading
+              ? 'Updating...'
+              : isReady
+                ? t('room.unready')
+                : t('room.ready')}
           </button>
 
           <button
@@ -134,7 +141,7 @@ export function RoomScreen(): React.JSX.Element | null {
             className="ui-button secondary-button"
             disabled={isLoading}
           >
-            Leave Room
+            {t('room.leave')}
           </button>
         </div>
       </div>
