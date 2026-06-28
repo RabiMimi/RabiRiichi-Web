@@ -7,7 +7,10 @@
     "connect": "Connect",
     "connecting": "Connecting...",
     "urlError": "URL must start with ws:// or wss://",
-    "nicknameError": "Nickname cannot be empty"
+    "nicknameError": "Nickname cannot be empty",
+    "officialServer": "Rabimimi",
+    "localServer": "Local (localhost:5150)",
+    "customServer": "Custom Server Address"
   },
   "lobby": {
     "title": "Lobby",

@@ -8,7 +8,7 @@ import prettier from 'eslint-config-prettier';
 export default tseslint.config(
   // Ignore build output, dependencies, and generated proto code.
   {
-    ignores: ['dist', 'node_modules', 'src/generated', 'protos'],
+    ignores: ['dist', 'node_modules', 'src/generated', 'protos', 'coverage'],
   },
   {
     files: ['**/*.{ts,tsx}'],

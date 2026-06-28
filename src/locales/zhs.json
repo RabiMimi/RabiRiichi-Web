@@ -7,7 +7,10 @@
     "connect": "连接",
     "connecting": "正在连接...",
     "urlError": "服务器地址必须以 ws:// 或 wss:// 开头",
-    "nicknameError": "昵称不能为空"
+    "nicknameError": "昵称不能为空",
+    "officialServer": "兔兔服",
+    "localServer": "本地服 (localhost:5150)",
+    "customServer": "自定义服务器地址"
   },
   "lobby": {
     "title": "大厅",

@@ -7,7 +7,11 @@ import './ui.css';
 export function ConnectScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
   const connectionStatus = useConnectionStatus();
-  const [url, setUrl] = useState('ws://localhost:5150');
+  const OFFICIAL_SERVER = 'wss://riichi-server.rabimimi.com';
+  const LOCAL_SERVER = 'ws://localhost:5150';
+
+  const [serverSelection, setServerSelection] = useState<'official' | 'local' | 'custom'>('official');
+  const [customUrl, setCustomUrl] = useState(LOCAL_SERVER);
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +19,14 @@ export function ConnectScreen(): React.JSX.Element {
     e.preventDefault();
     setError(null);
 
-    if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
+    const targetUrl =
+      serverSelection === 'official'
+        ? OFFICIAL_SERVER
+        : serverSelection === 'local'
+          ? LOCAL_SERVER
+          : customUrl;
+
+    if (!targetUrl.startsWith('ws://') && !targetUrl.startsWith('wss://')) {
       setError(t('connect.urlError'));
       return;
     }
@@ -27,7 +38,7 @@ export function ConnectScreen(): React.JSX.Element {
 
     try {
       // 1. Connect to public socket first
-      await rabiriichi.connect(url);
+      await rabiriichi.connect(targetUrl);
       // 2. Register user (which gets token and reconnects with token)
       await rabiriichi.registerUser(nickname.trim());
     } catch (err) {
@@ -80,15 +91,41 @@ export function ConnectScreen(): React.JSX.Element {
 
         <form onSubmit={onSubmit} className="ui-form">
           <div className="form-group">
-            <label htmlFor="server-url">{t('connect.serverAddress')}</label>
-            <input
-              id="server-url"
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
+            <label htmlFor="server-select">{t('connect.serverAddress')}</label>
+            <select
+              id="server-select"
+              value={serverSelection}
+              onChange={(e) => {
+                const val = e.target.value as 'official' | 'local' | 'custom';
+                setServerSelection(val);
+              }}
               disabled={isConnecting}
-              placeholder="ws://localhost:5150"
-            />
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '4px',
+                backgroundColor: '#1a1a1a',
+                color: '#fff',
+                border: '1px solid #555',
+                boxSizing: 'border-box',
+                marginBottom: serverSelection === 'custom' ? '8px' : '0',
+              }}
+            >
+              <option value="official">{t('connect.officialServer')}</option>
+              <option value="local">{t('connect.localServer')}</option>
+              <option value="custom">{t('connect.customServer')}</option>
+            </select>
+
+            {serverSelection === 'custom' && (
+              <input
+                id="server-url"
+                type="text"
+                value={customUrl}
+                onChange={(e) => setCustomUrl(e.target.value)}
+                disabled={isConnecting}
+                placeholder="ws://localhost:5150"
+              />
+            )}
           </div>
 
           <div className="form-group">
