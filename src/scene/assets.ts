@@ -1,5 +1,4 @@
 import type { Tile } from '../domain/tile';
-import { TileSource } from '../proto';
 import type { IMenLikeMsg } from '../proto';
 
 export const TILE_MODEL_PATH = '/assets/tile.glb';
@@ -127,11 +126,9 @@ export function getMeldsLeftEdge(called: IMenLikeMsg[], seat: number): number {
     const tiles = meld.tiles ?? [];
     if (tiles.length === 0) continue;
 
-    // Determine if Ankan (Closed Kan)
-    // Closed kan tiles all have source TILE_SOURCE_ANKAN.
     const isAnkan =
       tiles.length === 4 &&
-      tiles.every((t) => t.source === TileSource.TILE_SOURCE_ANKAN);
+      !tiles.some((t) => t.discardInfo && t.discardInfo.from !== seat);
 
     let meldWidth: number;
     if (isAnkan) {

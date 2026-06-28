@@ -24,7 +24,8 @@
     "minHan": "起和番数",
     "actionTimeout": "出牌限时",
     "timeoutError": "限时必须在 5 到 120 秒之间",
-    "minHanError": "起和番数必须在 1 到 13 之间"
+    "minHanError": "起和番数必须在 1 到 13 之间",
+    "defaultPlaceholder": "默认：{{value}}秒"
   },
   "playersOpt": {
     "2": "2人局",
@@ -46,6 +47,7 @@
     "unready": "取消准备",
     "seat": "席位: {{seat}}",
     "seatAssigning": "分配中...",
+    "updating": "更新中...",
     "status": {
       "ready": "已准备",
       "waiting": "等待中",
@@ -66,6 +68,8 @@
     "remainingTiles": "牌山剩余: {{count}}",
     "timerLabel": "出牌倒计时",
     "timerWaiting": "等待他人...",
+    "declareRiichi": "请选择立直要切的牌",
+    "cancelRiichi": "取消立直",
     "action": {
       "chii": "吃",
       "pon": "碰",

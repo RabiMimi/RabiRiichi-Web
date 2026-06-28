@@ -130,7 +130,7 @@ export function RoomScreen(): React.JSX.Element | null {
             disabled={isLoading}
           >
             {isLoading
-              ? 'Updating...'
+              ? t('room.updating')
               : isReady
                 ? t('room.unready')
                 : t('room.ready')}

@@ -24,7 +24,8 @@
     "minHan": "Min Han",
     "actionTimeout": "Action Timeout",
     "timeoutError": "Timeout must be between 5 and 120 seconds",
-    "minHanError": "Min Han must be between 1 and 13"
+    "minHanError": "Min Han must be between 1 and 13",
+    "defaultPlaceholder": "Default: {{value}}s"
   },
   "playersOpt": {
     "2": "2-Player Game",
@@ -46,6 +47,7 @@
     "unready": "Unready",
     "seat": "Seat: {{seat}}",
     "seatAssigning": "Assigning...",
+    "updating": "Updating...",
     "status": {
       "ready": "Ready",
       "waiting": "Waiting",
@@ -66,6 +68,8 @@
     "remainingTiles": "Wall Tiles: {{count}}",
     "timerLabel": "Your Turn",
     "timerWaiting": "Waiting for others...",
+    "declareRiichi": "Select a tile to discard for Riichi",
+    "cancelRiichi": "Cancel Riichi",
     "action": {
       "chii": "Chii",
       "pon": "Pon",

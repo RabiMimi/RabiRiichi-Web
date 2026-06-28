@@ -53,7 +53,6 @@ const AGARI_OPTIONS: PolicyOption[] = [
   { value: 8, labelKey: 'advanced.agari.firstWinner' },
 ];
 
-
 const RYUUKYOKU_TRIGGERS: PolicyOption[] = [
   { value: 1, labelKey: 'advanced.ryuukyoku.suufonRenda' },
   { value: 2, labelKey: 'advanced.ryuukyoku.kyuushuKyuuhai' },
@@ -179,8 +178,6 @@ export function LobbyScreen(): React.JSX.Element {
     }
   };
 
-
-
   const handleCreateRoom = async () => {
     setError(null);
     setIsLoading(true);
@@ -303,12 +300,14 @@ export function LobbyScreen(): React.JSX.Element {
           <div className="room-config-panel">
             <h3>{t('lobby.roomSettings')}</h3>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '8px 12px',
-              marginBottom: '10px',
-            }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '8px 12px',
+                marginBottom: '10px',
+              }}
+            >
               <div className="form-group" style={{ margin: 0 }}>
                 <label htmlFor="player-count">{t('lobby.players')}</label>
                 <select
@@ -354,12 +353,16 @@ export function LobbyScreen(): React.JSX.Element {
                   style={{ width: '100%', boxSizing: 'border-box' }}
                 />
                 {minHanError && (
-                  <span className="field-error" style={{ fontSize: '0.75rem' }}>{minHanError}</span>
+                  <span className="field-error" style={{ fontSize: '0.75rem' }}>
+                    {minHanError}
+                  </span>
                 )}
               </div>
 
               <div className="form-group" style={{ margin: 0 }}>
-                <label htmlFor="action-timeout">{t('lobby.actionTimeout')}</label>
+                <label htmlFor="action-timeout">
+                  {t('lobby.actionTimeout')}
+                </label>
                 <input
                   id="action-timeout"
                   type="text"
@@ -370,11 +373,15 @@ export function LobbyScreen(): React.JSX.Element {
                     validateTimeout(val);
                   }}
                   disabled={isLoading}
-                  placeholder={`Default: ${DEFAULT_ACTION_TIMEOUT}s`}
+                  placeholder={t('lobby.defaultPlaceholder', {
+                    value: DEFAULT_ACTION_TIMEOUT,
+                  })}
                   style={{ width: '100%', boxSizing: 'border-box' }}
                 />
                 {timeoutError && (
-                  <span className="field-error" style={{ fontSize: '0.75rem' }}>{timeoutError}</span>
+                  <span className="field-error" style={{ fontSize: '0.75rem' }}>
+                    {timeoutError}
+                  </span>
                 )}
               </div>
             </div>
@@ -466,24 +473,58 @@ export function LobbyScreen(): React.JSX.Element {
 
                 {/* Scoring Option */}
                 <div className="policy-group" style={{ fontSize: '0.75rem' }}>
-                  <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', color: '#ff9900' }}>
+                  <h4
+                    style={{
+                      margin: '0 0 4px 0',
+                      fontSize: '0.8rem',
+                      color: '#ff9900',
+                    }}
+                  >
                     {t('advanced.scoringOption')}
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '3px',
+                    }}
+                  >
                     {/* 切上满贯 */}
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', cursor: 'pointer', lineHeight: '1.2' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        lineHeight: '1.2',
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={(scoringOption & 1) !== 0}
                         onChange={() => setScoringOption(scoringOption ^ 1)}
                         disabled={isLoading}
-                        style={{ margin: 0, transform: 'scale(0.85)', transformOrigin: 'left center' }}
+                        style={{
+                          margin: 0,
+                          transform: 'scale(0.85)',
+                          transformOrigin: 'left center',
+                        }}
                       />
                       {t('advanced.scoring.kiriageMangan')}
                     </label>
 
                     {/* 青天井 (Virtual checkbox, checked when Yakuman bit 2 is 0) */}
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', cursor: 'pointer', lineHeight: '1.2' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        lineHeight: '1.2',
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={(scoringOption & 2) === 0}
@@ -497,13 +538,26 @@ export function LobbyScreen(): React.JSX.Element {
                           }
                         }}
                         disabled={isLoading}
-                        style={{ margin: 0, transform: 'scale(0.85)', transformOrigin: 'left center' }}
+                        style={{
+                          margin: 0,
+                          transform: 'scale(0.85)',
+                          transformOrigin: 'left center',
+                        }}
                       />
                       {t('advanced.scoring.aotenjou')}
                     </label>
 
                     {/* 役满 (Bit 2) */}
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', cursor: 'pointer', lineHeight: '1.2' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        lineHeight: '1.2',
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={(scoringOption & 2) !== 0}
@@ -516,45 +570,75 @@ export function LobbyScreen(): React.JSX.Element {
                           }
                         }}
                         disabled={isLoading}
-                        style={{ margin: 0, transform: 'scale(0.85)', transformOrigin: 'left center' }}
+                        style={{
+                          margin: 0,
+                          transform: 'scale(0.85)',
+                          transformOrigin: 'left center',
+                        }}
                       />
                       {t('advanced.scoring.yakuman')}
                     </label>
 
                     {/* 多倍役满 (Bit 4) */}
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', cursor: 'pointer', lineHeight: '1.2' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        lineHeight: '1.2',
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={(scoringOption & 4) !== 0}
                         onChange={(e) => {
                           if (e.target.checked) {
                             // Enable Multiple: also forces Yakuman (2) enabled
-                            setScoringOption((scoringOption | 4) | 2);
+                            setScoringOption(scoringOption | 4 | 2);
                           } else {
                             setScoringOption(scoringOption & ~4);
                           }
                         }}
                         disabled={isLoading || (scoringOption & 2) === 0}
-                        style={{ margin: 0, transform: 'scale(0.85)', transformOrigin: 'left center' }}
+                        style={{
+                          margin: 0,
+                          transform: 'scale(0.85)',
+                          transformOrigin: 'left center',
+                        }}
                       />
                       {t('advanced.scoring.multipleYakuman')}
                     </label>
 
                     {/* 累计役满 (Bit 8) */}
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', cursor: 'pointer', lineHeight: '1.2' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        lineHeight: '1.2',
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={(scoringOption & 8) !== 0}
                         onChange={(e) => {
                           if (e.target.checked) {
                             // Enable Kazoe: also forces Yakuman (2) enabled
-                            setScoringOption((scoringOption | 8) | 2);
+                            setScoringOption(scoringOption | 8 | 2);
                           } else {
                             setScoringOption(scoringOption & ~8);
                           }
                         }}
                         disabled={isLoading || (scoringOption & 2) === 0}
-                        style={{ margin: 0, transform: 'scale(0.85)', transformOrigin: 'left center' }}
+                        style={{
+                          margin: 0,
+                          transform: 'scale(0.85)',
+                          transformOrigin: 'left center',
+                        }}
                       />
                       {t('advanced.scoring.kazoeYakuman')}
                     </label>
@@ -627,7 +711,9 @@ export function LobbyScreen(): React.JSX.Element {
           <button
             onClick={onCreateRoom}
             className="ui-button primary-button"
-            disabled={isLoading || timeoutError !== null || minHanError !== null}
+            disabled={
+              isLoading || timeoutError !== null || minHanError !== null
+            }
           >
             {isLoading ? 'Processing...' : t('lobby.createRoom')}
           </button>

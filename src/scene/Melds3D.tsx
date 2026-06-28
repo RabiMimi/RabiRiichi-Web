@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { TileSource } from '../proto';
 import type { IMenLikeMsg, IGameTileMsg } from '../proto';
 import { Tile3D } from './Tile3D';
 import { Tile } from '../domain/tile';
@@ -38,11 +37,9 @@ export function Melds3D({
       const tiles = meld.tiles ?? [];
       if (tiles.length === 0) return;
 
-      // 1. Check if Ankan (Closed Kan)
-      // Closed kan tiles all have source TILE_SOURCE_ANKAN.
       const isAnkan =
         tiles.length === 4 &&
-        tiles.every((t) => t.source === TileSource.TILE_SOURCE_ANKAN);
+        !tiles.some((t) => t.discardInfo && t.discardInfo.from !== seat);
 
       const meldLayout: LayoutTileInfo[] = [];
       let totalMeldWidth: number;
@@ -207,13 +204,14 @@ function orderMeldTiles(
   seat: number,
   playerCount: number,
 ): IGameTileMsg[] {
-  if (
-    calledTile.discardInfo?.from === undefined ||
-    calledTile.discardInfo?.from === null
-  ) {
+  const discardInfo = calledTile.discardInfo;
+  if (!discardInfo) {
     return handTiles;
   }
-  const discarderSeat = calledTile.discardInfo.from;
+  if (discardInfo.from == null) {
+    return handTiles;
+  }
+  const discarderSeat = discardInfo.from;
 
   let relativePos: number;
   if (playerCount === 2) {

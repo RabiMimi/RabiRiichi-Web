@@ -254,7 +254,8 @@ export class RabiRiichiClient {
       this.pendingActionOption = null;
     }
 
-    const configTimeout = this.room.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
+    const configTimeout =
+      this.room.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
     const visualTimeout = configTimeout;
 
     if (gameEvent.drawTileEvent) {
@@ -297,7 +298,8 @@ export class RabiRiichiClient {
       original: inquiry,
     };
     this.logger.info(`Received inquiry ${respondTo}`);
-    const configTimeout = this.room?.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
+    const configTimeout =
+      this.room?.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
     const fallbackTimeout = configTimeout;
     const serverTimeout =
       inquiry.timeoutSeconds && inquiry.timeoutSeconds > 0
