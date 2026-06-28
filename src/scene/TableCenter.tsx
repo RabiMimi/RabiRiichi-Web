@@ -136,22 +136,6 @@ export function TableCenter(): React.JSX.Element | null {
         {remainingTiles}
       </DreiText>
 
-      {/* Ticking countdown timer (centered below remaining tiles, dark red) */}
-      {actionTimeout > 0 && (
-        <DreiText
-          position={[0, 0.004, 0.24]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          fontSize={0.11}
-          color="#d32f2f"
-          anchorX="center"
-          anchorY="middle"
-          font={ROBOTO_FONT_PATH}
-          renderOrder={1}
-        >
-          {actionTimeout}
-        </DreiText>
-      )}
-
       {/* Render score, seat wind, and Riichi sticks for each player */}
       {room.players.map((p) => {
         if (p.seat === undefined) return null;

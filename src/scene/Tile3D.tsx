@@ -215,9 +215,9 @@ export function Tile3D({
   useEffect(() => {
     let finalY = posY + yOffset;
     if (isPlayable) {
-      finalY += 0.03; // Lift slightly if playable
+      finalY += 0.06; // Lift slightly if playable
       if (isHovered) {
-        finalY += 0.04; // Lift more if hovered
+        finalY += 0.06; // Lift more if hovered
       }
     }
     targetPos.set(posX, finalY, posZ);

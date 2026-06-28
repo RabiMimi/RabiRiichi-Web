@@ -246,6 +246,12 @@ export class RabiRiichiClient {
       `Game event applied. Current player: ${this.room.info?.currentPlayer}`,
     );
 
+    if (!gameEvent.syncGameStateEvent) {
+      this.currentInquiry = null;
+      this.isRiichiSelectMode = false;
+      this.pendingActionOption = null;
+    }
+
     const configTimeout = this.room.config?.gameplayActionTimeout ?? 18;
     const visualTimeout = Math.max(0, configTimeout - 3);
 
@@ -448,52 +454,59 @@ export class RabiRiichiClient {
 
   private autoSubmitDefaultAction(): void {
     if (!this.currentInquiry) return;
-    const mapped = this.currentInquiry.mapped;
+    try {
+      const mapped = this.currentInquiry.mapped;
 
-    if (mapped.playTile) {
-      const seat = this.selfSeat ?? 0;
-      const pendingTile = this.room?.players.find((p) => p.seat === seat)
-        ?.gameState?.hand.pendingTile;
-      if (pendingTile?.traceId !== undefined && pendingTile?.traceId !== null) {
-        const playTileAction: ActionOption = {
-          type: 'play-tile',
-          label: '打',
-          actionIndex: mapped.playTile.actionIndex,
-          legalTiles: mapped.playTile.legalTiles,
-        };
-        void this.submitInquiryResponse(playTileAction, pendingTile.traceId);
-        return;
-      } else {
-        const freeTiles =
-          this.room?.players.find((p) => p.seat === seat)?.gameState?.hand
-            .freeTiles ?? [];
-        if (freeTiles.length > 0) {
-          const lastTile = freeTiles[freeTiles.length - 1];
-          if (lastTile?.traceId !== undefined && lastTile?.traceId !== null) {
-            const playTileAction: ActionOption = {
-              type: 'play-tile',
-              label: '打',
-              actionIndex: mapped.playTile.actionIndex,
-              legalTiles: mapped.playTile.legalTiles,
-            };
-            void this.submitInquiryResponse(playTileAction, lastTile.traceId);
-            return;
+      if (mapped.playTile) {
+        const seat = this.selfSeat ?? 0;
+        const pendingTile = this.room?.players.find((p) => p.seat === seat)
+          ?.gameState?.hand.pendingTile;
+        if (
+          pendingTile?.traceId !== undefined &&
+          pendingTile?.traceId !== null
+        ) {
+          const playTileAction: ActionOption = {
+            type: 'play-tile',
+            label: '打',
+            actionIndex: mapped.playTile.actionIndex,
+            legalTiles: mapped.playTile.legalTiles,
+          };
+          void this.submitInquiryResponse(playTileAction, pendingTile.traceId);
+          return;
+        } else {
+          const freeTiles =
+            this.room?.players.find((p) => p.seat === seat)?.gameState?.hand
+              .freeTiles ?? [];
+          if (freeTiles.length > 0) {
+            const lastTile = freeTiles[freeTiles.length - 1];
+            if (lastTile?.traceId !== undefined && lastTile?.traceId !== null) {
+              const playTileAction: ActionOption = {
+                type: 'play-tile',
+                label: '打',
+                actionIndex: mapped.playTile.actionIndex,
+                legalTiles: mapped.playTile.legalTiles,
+              };
+              void this.submitInquiryResponse(playTileAction, lastTile.traceId);
+              return;
+            }
           }
         }
       }
-    }
 
-    const skipAction = mapped.buttons.find(
-      (b) => b.type === 'skip' || b.type === 'ryuukyoku',
-    );
-    if (skipAction) {
-      void this.submitInquiryResponse(skipAction);
-      return;
-    }
+      const skipAction = mapped.buttons.find(
+        (b) => b.type === 'skip' || b.type === 'ryuukyoku',
+      );
+      if (skipAction) {
+        void this.submitInquiryResponse(skipAction);
+        return;
+      }
 
-    const firstButton = mapped.buttons[0];
-    if (firstButton) {
-      void this.submitInquiryResponse(firstButton);
+      const firstButton = mapped.buttons[0];
+      if (firstButton) {
+        void this.submitInquiryResponse(firstButton);
+      }
+    } catch (err) {
+      this.logger.error('Failed to auto-submit default action:', err);
     }
   }
 }

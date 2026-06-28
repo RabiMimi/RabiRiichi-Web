@@ -56,7 +56,11 @@ export function PlayerArea3D({
       </group>
 
       {/* Discard River */}
-      <River3D discarded={hand.discarded} riichiTileId={riichiTileId} />
+      <River3D
+        discarded={hand.discarded}
+        riichiTileId={riichiTileId}
+        isLocal={isLocal}
+      />
 
       {/* Called Melds - pushed towards center */}
       <group position={[0, 0, -0.2]}>

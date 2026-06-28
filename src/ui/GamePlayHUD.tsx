@@ -1,5 +1,11 @@
 import React from 'react';
-import { useRoom, useSelf, useAnimationSpeed } from '../state/store';
+import {
+  useRoom,
+  useSelf,
+  useAnimationSpeed,
+  useActionTimeout,
+  useCurrentInquiry,
+} from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
@@ -42,6 +48,9 @@ export function GamePlayHUD(): React.JSX.Element | null {
   const room = useRoom();
   const currentUser = useSelf();
   const animationSpeed = useAnimationSpeed();
+  const actionTimeout = useActionTimeout();
+
+  const currentInquiry = useCurrentInquiry();
 
   if (!room?.info || !currentUser) {
     return null;
@@ -53,6 +62,9 @@ export function GamePlayHUD(): React.JSX.Element | null {
   if (selfSeat === undefined) {
     return null;
   }
+
+  const hasPlayTile = currentInquiry?.mapped.playTile != null;
+  const timerLabel = hasPlayTile ? '请出牌 / DISCARD' : '请选择 / ACTION';
 
   return (
     <div className="game-play-hud">
@@ -93,6 +105,14 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
       {/* Dora Panel */}
       <DoraPanel />
+
+      {/* Fancy Turn Countdown (visible when player has a pending action inquiry) */}
+      {currentInquiry && actionTimeout > 0 && (
+        <div className="player-timer-overlay">
+          <span className="timer-label">{timerLabel}</span>
+          <span className="timer-seconds">{actionTimeout}</span>
+        </div>
+      )}
 
       {/* 2D Action HUD overlay buttons */}
       <ActionHUD />

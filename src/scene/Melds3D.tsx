@@ -4,7 +4,6 @@ import type { IMenLikeMsg, IGameTileMsg } from '../proto';
 import { Tile3D } from './Tile3D';
 import { Tile } from '../domain/tile';
 import { getSafeKey, getSafeTraceId } from './assets';
-import { prevPlayerSeat, nextPlayerSeat } from '../domain/model';
 
 interface Melds3DProps {
   called: IMenLikeMsg[];
@@ -208,19 +207,29 @@ function orderMeldTiles(
   seat: number,
   playerCount: number,
 ): IGameTileMsg[] {
-  if (calledTile.discardInfo?.from === undefined) {
+  if (
+    calledTile.discardInfo?.from === undefined ||
+    calledTile.discardInfo?.from === null
+  ) {
     return handTiles;
   }
   const discarderSeat = calledTile.discardInfo.from;
-  const leftSeat = prevPlayerSeat(seat, playerCount);
-  const rightSeat = nextPlayerSeat(seat, playerCount);
 
-  if (discarderSeat === leftSeat) {
+  let relativePos: number;
+  if (playerCount === 2) {
+    relativePos = 2; // Always opposite in 2-player
+  } else {
+    relativePos = (discarderSeat - seat + 4) % 4;
+  }
+
+  if (relativePos === 3) {
+    // Left player (Kamicha)
     return [calledTile, ...handTiles];
-  } else if (discarderSeat === rightSeat) {
+  } else if (relativePos === 1) {
+    // Right player (Shimodacha)
     return [...handTiles, calledTile];
   } else {
-    // Opposite player
+    // Opposite player (Toimichu)
     const result = [...handTiles];
     result.splice(1, 0, calledTile);
     return result;

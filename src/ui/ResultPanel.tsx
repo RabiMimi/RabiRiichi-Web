@@ -48,7 +48,8 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const proceedAction = React.useMemo(() => {
     return currentInquiry?.mapped.buttons.find(
-      (b) => b.type === 'skip' || b.type === 'ryuukyoku',
+      (b) =>
+        b.type === 'next-round' || b.type === 'skip' || b.type === 'ryuukyoku',
     );
   }, [currentInquiry]);
 
@@ -84,7 +85,13 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const secondsLeft = currentInquiry ? actionTimeout : localSecondsLeft;
 
-  if (!room || playersWithResult.length === 0) return null;
+  const hasNextRound = currentInquiry?.mapped.buttons.some(
+    (b) => b.type === 'next-round',
+  );
+  const showPanel =
+    playersWithResult.length > 0 || hasNextRound || isWaitingForProceed;
+
+  if (!room || !showPanel) return null;
 
   const renderWinnerDetails = (player: (typeof room.players)[0]) => {
     const agari = player.gameState?.agari;

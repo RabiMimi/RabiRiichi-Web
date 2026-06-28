@@ -13,7 +13,8 @@ export type InquiryOptionType =
   | 'kan'
   | 'riichi'
   | 'play-tile'
-  | 'ryuukyoku';
+  | 'ryuukyoku'
+  | 'next-round';
 
 export interface TileGroupOption {
   index: number; // Index in the action's tileGroups array
@@ -22,7 +23,7 @@ export interface TileGroupOption {
 
 export type ActionOption =
   | {
-      type: 'skip' | 'ryuukyoku';
+      type: 'skip' | 'ryuukyoku' | 'next-round';
       label: string; // "跳过" or "流局"
       actionIndex: number;
     }
@@ -150,6 +151,12 @@ export function mapInquiry(inq: ISinglePlayerInquiryMsg): MappedInquiry {
         actionIndex: i,
         legalTiles: tiles.map((t: IGameTileMsg) => t.traceId ?? 0),
       };
+    } else if (action.nextRoundAction) {
+      buttons.push({
+        type: 'next-round',
+        label: '确定',
+        actionIndex: i,
+      });
     }
   }
 

@@ -55,15 +55,16 @@ export function ActionHUD(): React.JSX.Element | null {
     );
   }
 
-  // If no action buttons to display
-  if (buttons.length === 0) {
+  // If no action buttons to display (excluding next-round buttons)
+  const displayButtons = buttons.filter((b) => b.type !== 'next-round');
+  if (displayButtons.length === 0) {
     return null;
   }
 
   // Flatten options: map Pon/Chi/Kan options with multiple tile groups into distinct clickable options
   const flatOptions: FlattenedOption[] = [];
 
-  buttons.forEach((btn) => {
+  displayButtons.forEach((btn) => {
     if (
       (btn.type === 'chii' || btn.type === 'pon' || btn.type === 'kan') &&
       'tileGroups' in btn

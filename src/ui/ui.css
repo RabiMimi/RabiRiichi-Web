@@ -795,3 +795,52 @@
   object-fit: cover;
   background-color: #f7f4eb;
 }
+
+/* Fancy Player Turn Timer Overlay */
+.player-timer-overlay {
+  position: absolute;
+  bottom: 220px;
+  right: 12%; /* Offset to the right of central ActionHUD buttons */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background-color: rgba(20, 20, 20, 0.85);
+  border: 2px solid #ff3333;
+  border-radius: 12px;
+  padding: 8px 16px;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  animation: timer-pulse 1s infinite alternate;
+  min-width: 90px;
+  box-sizing: border-box;
+}
+
+.timer-label {
+  font-size: 0.65rem;
+  font-weight: bold;
+  color: #ff9999;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.timer-seconds {
+  font-size: 2.8rem;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  color: #ff3333;
+  text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+  line-height: 1;
+}
+
+@keyframes timer-pulse {
+  0% {
+    border-color: #ff3333;
+    box-shadow: 0 4px 15px rgba(255, 51, 51, 0.3);
+  }
+  100% {
+    border-color: #ff9999;
+    box-shadow: 0 4px 20px rgba(255, 51, 51, 0.7);
+  }
+}

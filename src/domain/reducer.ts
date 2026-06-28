@@ -91,7 +91,7 @@ export function hydrateFromGameState(
         discarded: handState?.discarded ?? [],
         pendingTile: handState?.pendingTile ?? null,
       },
-      agari: null,
+      agari: p.gameState?.agari ?? null,
     };
 
     return {
@@ -284,11 +284,14 @@ function handleDiscardTile(
     }
 
     const discarded = [...p.gameState.hand.discarded, discardedTile];
+    const riichiTileId =
+      (ev.isRiichi ? discardedTile.traceId : p.gameState.riichiTileId) ?? 0;
 
     return {
       ...p,
       gameState: {
         ...p.gameState,
+        riichiTileId,
         hand: {
           ...p.gameState.hand,
           freeTiles,
@@ -586,8 +589,8 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
     const agariState: PlayerAgariState = {
       scores: agariInfo.scores ?? null,
       incoming: incoming ?? null,
-      gainPoints: 0,
-      losePoints: 0,
+      gainPoints: p.gameState.agari?.gainPoints ?? 0,
+      losePoints: p.gameState.agari?.losePoints ?? 0,
     };
 
     return {
@@ -789,8 +792,8 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       gameState: {
         ...p.gameState,
         agari: {
-          gainPoints: 0,
-          losePoints: 0,
+          gainPoints: p.gameState.agari?.gainPoints ?? 0,
+          losePoints: p.gameState.agari?.losePoints ?? 0,
         },
       },
     };
