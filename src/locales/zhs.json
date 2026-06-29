@@ -9,7 +9,6 @@
     "urlError": "服务器地址必须以 ws:// 或 wss:// 开头",
     "nicknameError": "昵称不能为空",
     "officialServer": "兔兔服",
-    "frenqyServer": "富人服",
     "localServer": "本地服 (localhost:5150)",
     "customServer": "自定义服务器地址",
     "serverNamePlaceholder": "输入服务器名称",
