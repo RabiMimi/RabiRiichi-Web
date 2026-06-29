@@ -50,6 +50,7 @@ import {
   ServerResponse,
   ServerRoomStateResponse,
   CreateRoomRequest,
+  GetInfoResponse,
 } from '../generated/protos.js';
 
 export {
@@ -104,6 +105,7 @@ export {
   ServerResponse,
   ServerRoomStateResponse,
   CreateRoomRequest,
+  GetInfoResponse,
 };
 
 export type IEventMsg = EventMsg.$Properties;
@@ -152,3 +154,4 @@ export type ICreateUserResponse = CreateUserResponse.$Properties;
 export type IServerResponse = ServerResponse.$Properties;
 export type IServerRoomStateResponse = ServerRoomStateResponse.$Properties;
 export type ICreateRoomRequest = CreateRoomRequest.$Properties;
+export type IGetInfoResponse = GetInfoResponse.$Properties;

@@ -5,6 +5,7 @@ import type {
   IServerResponse,
   IServerRoomStateResponse,
   IGameConfigMsg,
+  IGetInfoResponse,
 } from '../proto';
 import { RabiError, ServerError } from '../lib';
 import { type RabiSocket } from '../transport/rabiSocket';
@@ -88,5 +89,17 @@ export function getUserInfo(ws: RabiSocket): Promise<IUserInfoResponse> {
       },
     },
     (resp) => resp.userInfo,
+  );
+}
+
+export function getInfo(ws: RabiSocket): Promise<IGetInfoResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        getInfo: {},
+      },
+    },
+    (resp) => resp.getInfo,
   );
 }

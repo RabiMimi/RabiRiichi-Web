@@ -32,6 +32,31 @@ describe('RabiRiichi Store', () => {
     );
   }
 
+  function respondToGetInfo(ws: MockWebSocket) {
+    const getInfoCall = ws.send.mock.calls.find((call) => {
+      const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+      return Boolean(msg.clientRequest?.getInfo);
+    });
+    if (getInfoCall) {
+      const getInfoMsg = ClientMessageDto.decode(
+        new Uint8Array(getInfoCall[0]),
+      );
+      sendServerMsg(ws, {
+        id: 0,
+        respondTo: getInfoMsg.id,
+        serverResp: {
+          getInfo: {
+            game: 'rabiriichi',
+            gameVersion: '0.1.0',
+            server: 'dotnet',
+            serverVersion: '0.1.0.0',
+            minClientVersion: '0.1.0',
+          },
+        },
+      });
+    }
+  }
+
   it('should initialize with default state', () => {
     expect(testStore.getConnectionStatus()).toBe('disconnected');
     expect(testStore.getSelf()).toBeNull();
@@ -223,6 +248,8 @@ describe('RabiRiichi Store', () => {
         },
       },
     });
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS);
     await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
 

@@ -10,9 +10,22 @@ import {
 import { RabiRiichiClient, initRabiRiichi, rabiriichi } from './client';
 import { MockWebSocket } from '../transport/mockWebSocket';
 import { ClientMessageDto, ServerMessageDto, UserStatus } from '../proto';
+import { TILE_SET_PRESETS } from '../domain/tilesets';
+
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
 import type { RoomModel } from '../domain/model';
 import { mapInquiry } from '../domain/inquiry';
+
+function toNormalNumber(val: unknown): number {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'object' && 'toNumber' in val) {
+    const hasToNumber = val as { toNumber: () => number };
+    if (typeof hasToNumber.toNumber === 'function') {
+      return hasToNumber.toNumber();
+    }
+  }
+  return Number(val);
+}
 
 describe('RabiRiichiClient', () => {
   let mockLocalStorage: Record<string, string>;
@@ -50,6 +63,31 @@ describe('RabiRiichiClient', () => {
     );
   }
 
+  function respondToGetInfo(ws: MockWebSocket) {
+    const getInfoCall = ws.send.mock.calls.find((call) => {
+      const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+      return Boolean(msg.clientRequest?.getInfo);
+    });
+    if (getInfoCall) {
+      const getInfoMsg = ClientMessageDto.decode(
+        new Uint8Array(getInfoCall[0]),
+      );
+      sendServerMsg(ws, {
+        id: 0,
+        respondTo: getInfoMsg.id,
+        serverResp: {
+          getInfo: {
+            game: 'rabiriichi',
+            gameVersion: '0.1.0',
+            server: 'dotnet',
+            serverVersion: '0.1.0.0',
+            minClientVersion: '0.1.0',
+          },
+        },
+      });
+    }
+  }
+
   async function setupConnectedClient(
     client: RabiRiichiClient,
   ): Promise<MockWebSocket> {
@@ -84,6 +122,8 @@ describe('RabiRiichiClient', () => {
       },
     });
 
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS);
     await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
     mockWS.send.mockClear();
@@ -129,6 +169,9 @@ describe('RabiRiichiClient', () => {
       },
     });
 
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS);
+    await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
 
     expect(client.self).toEqual({
@@ -217,6 +260,9 @@ describe('RabiRiichiClient', () => {
       },
     });
 
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS2);
+    await vi.advanceTimersByTimeAsync(0);
     await registerPromise;
 
     expect(client.accessToken).toBe('new-token');
@@ -256,6 +302,9 @@ describe('RabiRiichiClient', () => {
         },
       },
     });
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS);
+    await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
 
     mockWS.send.mockClear();
@@ -353,6 +402,8 @@ describe('RabiRiichiClient', () => {
     });
 
     await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(serverMock);
+    await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
 
     expect(client.self?.id).toBe(123);
@@ -444,6 +495,85 @@ describe('RabiRiichiClient', () => {
           state: {
             id: 4321,
             config: { playerCount: 2 },
+            players: [
+              {
+                id: 123,
+                nickname: 'TestUser',
+                status: UserStatus.USER_STATUS_IN_ROOM,
+                seat: 0,
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    await createPromise;
+
+    expect(client.room).not.toBeNull();
+    expect(client.room?.id).toBe(4321);
+
+    client.close();
+    vi.useRealTimers();
+  });
+
+  it('should create room with custom configuration', async () => {
+    vi.useFakeTimers();
+    const client = new RabiRiichiClient();
+    const mockWS = await setupConnectedClient(client);
+
+    const sanmaTiles = TILE_SET_PRESETS.Sanma().map((t) => t.toByte());
+    const customConfig = {
+      playerCount: 3,
+      totalRound: 2,
+      minHan: 2,
+      gameplayActionTimeout: 15,
+      pointThreshold: {
+        initialPoints: 35000,
+        finishPoints: 40000,
+        validPointsRange: [0, 60000],
+      },
+      initialTiles: sanmaTiles,
+      allowedYakus: ['Riichi', 'Tanyao'],
+    };
+
+    const createPromise = client.createRoom(customConfig);
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(mockWS.send).toHaveBeenCalledTimes(1);
+    const reqBytes = mockWS.send.mock.calls[0]![0];
+    const reqMsg = ClientMessageDto.decode(new Uint8Array(reqBytes));
+    expect(reqMsg.clientRequest?.createRoom?.config).toBeDefined();
+
+    const sentConfig = reqMsg.clientRequest?.createRoom?.config;
+    expect(sentConfig?.playerCount).toBe(3);
+    expect(sentConfig?.totalRound).toBe(2);
+    expect(sentConfig?.minHan).toBe(2);
+    expect(sentConfig?.gameplayActionTimeout).toBe(15);
+    expect(toNormalNumber(sentConfig?.pointThreshold?.initialPoints)).toBe(
+      35000,
+    );
+    expect(toNormalNumber(sentConfig?.pointThreshold?.finishPoints)).toBe(
+      40000,
+    );
+    expect(
+      sentConfig?.pointThreshold?.validPointsRange?.map(toNormalNumber),
+    ).toEqual([0, 60000]);
+
+    expect(sentConfig?.initialTiles).toEqual(sanmaTiles);
+    expect(sentConfig?.allowedYakus).toEqual(['Riichi', 'Tanyao']);
+
+    // Respond with room state
+    sendServerMsg(mockWS, {
+      id: 11,
+      respondTo: reqMsg.id,
+      serverResp: {
+        roomState: {
+          state: {
+            id: 4321,
+            config: customConfig,
             players: [
               {
                 id: 123,

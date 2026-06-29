@@ -19,6 +19,7 @@ import {
   type ActionOption,
   encodeInquiryResponse,
 } from '../domain/inquiry';
+import { type YakuInfo, YAKUS } from '../domain/yakus';
 import {
   updateRoom as sendUpdateRoom,
   respondInquiry as sendRespondInquiry,
@@ -75,6 +76,7 @@ export class RabiRiichiClient {
   private readonly pingListener = (ping: number) =>
     this.handlePingUpdated(ping);
   public readonly onChange = new RabiEvent<void>();
+  public availableYakus: YakuInfo[] = YAKUS;
 
   public isRiichiSelectMode = false;
   public pendingActionOption: ActionOption | null = null;

@@ -3,6 +3,7 @@ import { rabiriichi } from '../net/client';
 import type { ConnectionStatus, ActiveInquiry } from '../net/client';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import type { ActionOption } from '../domain/inquiry';
+import type { YakuInfo } from '../domain/yakus';
 
 // Note: GameState is folded into RoomModel (specifically via RoomModel.info and players[].gameState)
 export interface RabiRiichiState {
@@ -140,6 +141,12 @@ export function useTimerActiveSeat(): number | null {
     () => rabiriichi.timerActiveSeat,
     () => rabiriichi.timerActiveSeat,
   );
+}
+
+const getAvailableYakus = () => rabiriichi.availableYakus;
+
+export function useAvailableYakus(): YakuInfo[] {
+  return useSyncExternalStore(subscribe, getAvailableYakus, getAvailableYakus);
 }
 
 function resetForTest(): void {

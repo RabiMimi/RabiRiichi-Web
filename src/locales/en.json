@@ -32,7 +32,17 @@
     "actionTimeout": "Action Timeout",
     "timeoutError": "Timeout must be between 5 and 3600 seconds",
     "minHanError": "Min Han must be between 1 and 13",
-    "defaultPlaceholder": "Default: {{value}}s"
+    "defaultPlaceholder": "Default: {{value}}s",
+    "initialPoints": "Starting Points",
+    "finishPoints": "Target Points",
+    "upperPoints": "Tenpen Upper Limit",
+    "tileSet": "Tile Set",
+    "configureYakus": "Configure Yakus",
+    "allYakus": "All",
+    "yakus": "Yakus",
+    "pointsError": "Points must be between 0 and 1,000,000",
+    "selectAll": "Select All",
+    "selectNone": "Select None"
   },
   "playersOpt": {
     "2": "2-Player Game",
@@ -42,6 +52,20 @@
   "roundsOpt": {
     "1": "East Only (Tonpuu)",
     "2": "East-South (Hanchan)"
+  },
+  "tileSetOpt": {
+    "regular": "Regular (136 tiles)",
+    "sanma": "Sanma (108 tiles)",
+    "twoSets": "2 Sets (272 tiles)",
+    "onlySZ": "Only Sou & Honor (64 tiles)"
+  },
+  "yakuGroup": {
+    "1han": "1 Han",
+    "2han": "2 Han",
+    "3han": "3 Han",
+    "6han": "6 Han",
+    "yakuman": "Yakuman",
+    "other": "Other"
   },
   "hanOpt": {
     "1": "1 Han",

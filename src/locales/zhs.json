@@ -32,7 +32,17 @@
     "actionTimeout": "出牌限时",
     "timeoutError": "限时必须在 5 到 3600 秒之间",
     "minHanError": "起和番数必须在 1 到 13 之间",
-    "defaultPlaceholder": "默认：{{value}}秒"
+    "defaultPlaceholder": "默认：{{value}}秒",
+    "initialPoints": "初始点数",
+    "finishPoints": "终局点数",
+    "upperPoints": "天边上限",
+    "tileSet": "使用牌张",
+    "configureYakus": "配置役种",
+    "allYakus": "全部",
+    "yakus": "个役",
+    "pointsError": "点数必须在 0 到 1,000,000 之间",
+    "selectAll": "全选",
+    "selectNone": "全不选"
   },
   "playersOpt": {
     "2": "2人局",
@@ -42,6 +52,20 @@
   "roundsOpt": {
     "1": "东风战 (Tonpuu)",
     "2": "半庄战 (Hanchan)"
+  },
+  "tileSetOpt": {
+    "regular": "普通 (136张)",
+    "sanma": "三人麻将 (108张)",
+    "twoSets": "两副牌 (272张)",
+    "onlySZ": "仅条子与字牌 (64张)"
+  },
+  "yakuGroup": {
+    "1han": "1番",
+    "2han": "2番",
+    "3han": "3番",
+    "6han": "6番",
+    "yakuman": "役满",
+    "other": "其他"
   },
   "hanOpt": {
     "1": "1番",
