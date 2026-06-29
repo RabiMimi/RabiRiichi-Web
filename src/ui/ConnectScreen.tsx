@@ -2,18 +2,17 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { useConnectionStatus } from '../state/store';
+import { DEFAULT_SERVERS } from '../config/servers';
 import './ui.css';
 
 export function ConnectScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
   const connectionStatus = useConnectionStatus();
-  const OFFICIAL_SERVER = 'wss://riichi-server.rabimimi.com';
-  const LOCAL_SERVER = 'ws://localhost:5150';
 
-  const [serverSelection, setServerSelection] = useState<
-    'official' | 'local' | 'custom'
-  >('official');
-  const [customUrl, setCustomUrl] = useState(LOCAL_SERVER);
+  const [serverSelection, setServerSelection] = useState<string>(
+    DEFAULT_SERVERS[0]?.id ?? 'custom',
+  );
+  const [customUrl, setCustomUrl] = useState('ws://localhost:5150');
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -21,12 +20,10 @@ export function ConnectScreen(): React.JSX.Element {
     e.preventDefault();
     setError(null);
 
-    const targetUrl =
-      serverSelection === 'official'
-        ? OFFICIAL_SERVER
-        : serverSelection === 'local'
-          ? LOCAL_SERVER
-          : customUrl;
+    const selectedServer = DEFAULT_SERVERS.find(
+      (s) => s.id === serverSelection,
+    );
+    const targetUrl = selectedServer ? selectedServer.url : customUrl;
 
     if (!targetUrl.startsWith('ws://') && !targetUrl.startsWith('wss://')) {
       setError(t('connect.urlError'));
@@ -98,8 +95,7 @@ export function ConnectScreen(): React.JSX.Element {
               id="server-select"
               value={serverSelection}
               onChange={(e) => {
-                const val = e.target.value as 'official' | 'local' | 'custom';
-                setServerSelection(val);
+                setServerSelection(e.target.value);
               }}
               disabled={isConnecting}
               style={{
@@ -113,8 +109,11 @@ export function ConnectScreen(): React.JSX.Element {
                 marginBottom: serverSelection === 'custom' ? '8px' : '0',
               }}
             >
-              <option value="official">{t('connect.officialServer')}</option>
-              <option value="local">{t('connect.localServer')}</option>
+              {DEFAULT_SERVERS.map((server) => (
+                <option key={server.id} value={server.id}>
+                  {t(server.nameKey)}
+                </option>
+              ))}
               <option value="custom">{t('connect.customServer')}</option>
             </select>
 
