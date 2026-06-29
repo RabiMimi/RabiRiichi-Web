@@ -11,7 +11,10 @@
     "officialServer": "兔兔服",
     "frenqyServer": "富人服",
     "localServer": "本地服 (localhost:5150)",
-    "customServer": "自定义服务器地址"
+    "customServer": "自定义服务器地址",
+    "serverNamePlaceholder": "输入服务器名称",
+    "saveServer": "保存服务器",
+    "removeServer": "删除服务器"
   },
   "lobby": {
     "title": "大厅",

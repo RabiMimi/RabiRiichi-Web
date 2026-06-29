@@ -2,28 +2,20 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { useConnectionStatus } from '../state/store';
-import { DEFAULT_SERVERS } from '../config/servers';
+import { ServerSelector } from './ServerSelector';
 import './ui.css';
 
 export function ConnectScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
   const connectionStatus = useConnectionStatus();
 
-  const [serverSelection, setServerSelection] = useState<string>(
-    DEFAULT_SERVERS[0]?.id ?? 'custom',
-  );
-  const [customUrl, setCustomUrl] = useState('ws://localhost:5150');
+  const [targetUrl, setTargetUrl] = useState('');
   const [nickname, setNickname] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    const selectedServer = DEFAULT_SERVERS.find(
-      (s) => s.id === serverSelection,
-    );
-    const targetUrl = selectedServer ? selectedServer.url : customUrl;
 
     if (!targetUrl.startsWith('ws://') && !targetUrl.startsWith('wss://')) {
       setError(t('connect.urlError'));
@@ -91,42 +83,10 @@ export function ConnectScreen(): React.JSX.Element {
         <form onSubmit={onSubmit} className="ui-form">
           <div className="form-group">
             <label htmlFor="server-select">{t('connect.serverAddress')}</label>
-            <select
-              id="server-select"
-              value={serverSelection}
-              onChange={(e) => {
-                setServerSelection(e.target.value);
-              }}
-              disabled={isConnecting}
-              style={{
-                width: '100%',
-                padding: '8px',
-                borderRadius: '4px',
-                backgroundColor: '#1a1a1a',
-                color: '#fff',
-                border: '1px solid #555',
-                boxSizing: 'border-box',
-                marginBottom: serverSelection === 'custom' ? '8px' : '0',
-              }}
-            >
-              {DEFAULT_SERVERS.map((server) => (
-                <option key={server.id} value={server.id}>
-                  {t(server.nameKey)}
-                </option>
-              ))}
-              <option value="custom">{t('connect.customServer')}</option>
-            </select>
-
-            {serverSelection === 'custom' && (
-              <input
-                id="server-url"
-                type="text"
-                value={customUrl}
-                onChange={(e) => setCustomUrl(e.target.value)}
-                disabled={isConnecting}
-                placeholder="ws://localhost:5150"
-              />
-            )}
+            <ServerSelector
+              onTargetUrlChange={setTargetUrl}
+              isConnecting={isConnecting}
+            />
           </div>
 
           <div className="form-group">

@@ -11,7 +11,10 @@
     "officialServer": "Rabimimi",
     "frenqyServer": "Frenqy",
     "localServer": "Local (localhost:5150)",
-    "customServer": "Custom Server Address"
+    "customServer": "Custom Server Address",
+    "serverNamePlaceholder": "Enter server name",
+    "saveServer": "Save Server",
+    "removeServer": "Remove Server"
   },
   "lobby": {
     "title": "Lobby",
