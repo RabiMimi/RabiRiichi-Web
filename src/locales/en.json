@@ -9,6 +9,7 @@
     "urlError": "URL must start with ws:// or wss://",
     "nicknameError": "Nickname cannot be empty",
     "officialServer": "Rabimimi",
+    "devServer": "Rabimimi Dev ❤️",
     "localServer": "Local (localhost:5150)",
     "customServer": "Custom Server Address",
     "serverNamePlaceholder": "Enter server name",
