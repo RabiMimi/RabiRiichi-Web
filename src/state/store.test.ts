@@ -7,6 +7,7 @@ import { MockWebSocket } from '../transport/mockWebSocket';
 import { ClientMessageDto, ServerMessageDto } from '../proto';
 import type { IServerMessageDto } from '../proto';
 import type { ActionOption } from '../domain/inquiry';
+import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
 
 describe('RabiRiichi Store', () => {
   beforeEach(() => {
@@ -47,10 +48,10 @@ describe('RabiRiichi Store', () => {
         serverResp: {
           getInfo: {
             game: 'rabiriichi',
-            gameVersion: '0.1.0',
+            gameVersion: CLIENT_VERSION,
             server: 'dotnet',
-            serverVersion: '0.1.0.0',
-            minClientVersion: '0.1.0',
+            serverVersion: MIN_SERVER_VERSION,
+            minClientVersion: CLIENT_VERSION,
           },
         },
       });
@@ -243,8 +244,8 @@ describe('RabiRiichi Store', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });

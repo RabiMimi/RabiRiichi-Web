@@ -11,6 +11,7 @@ import { RabiRiichiClient, initRabiRiichi, rabiriichi } from './client';
 import { MockWebSocket } from '../transport/mockWebSocket';
 import { ClientMessageDto, ServerMessageDto, UserStatus } from '../proto';
 import { TILE_SET_PRESETS } from '../domain/tilesets';
+import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
 
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
 import type { RoomModel } from '../domain/model';
@@ -78,10 +79,10 @@ describe('RabiRiichiClient', () => {
         serverResp: {
           getInfo: {
             game: 'rabiriichi',
-            gameVersion: '0.1.0',
+            gameVersion: CLIENT_VERSION,
             server: 'dotnet',
-            serverVersion: '0.1.0.0',
-            minClientVersion: '0.1.0',
+            serverVersion: MIN_SERVER_VERSION,
+            minClientVersion: CLIENT_VERSION,
           },
         },
       });
@@ -116,8 +117,8 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
@@ -163,8 +164,8 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
@@ -254,8 +255,8 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
@@ -297,8 +298,8 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
@@ -395,8 +396,8 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
