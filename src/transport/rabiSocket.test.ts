@@ -212,4 +212,78 @@ describe('RabiSocket', () => {
 
     vi.useRealTimers();
   });
+
+  it('should update ping when heartbeat response is received', async () => {
+    vi.useFakeTimers();
+    const socket = new RabiSocket('ws://localhost:1234');
+    const handshakePromise = socket.handShake(vi.fn());
+    await vi.advanceTimersByTimeAsync(10);
+    await handshakePromise;
+
+    const mockWS = MockWebSocket.instances[0]!;
+    mockWS.send.mockClear();
+
+    const pingCallback = vi.fn();
+    socket.onPingUpdated.subscribe(pingCallback);
+
+    // Advance to trigger heartbeat
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(mockWS.send).toHaveBeenCalledTimes(1);
+    const hbBytes = mockWS.send.mock.calls[0]![0];
+    const hbMsg = ClientMessageDto.decode(new Uint8Array(hbBytes));
+    const hbId = hbMsg.id;
+
+    // Simulate server response after 150ms
+    await vi.advanceTimersByTimeAsync(150);
+    const hbResp = ServerMessageDto.encode({
+      id: -1,
+      respondTo: hbId,
+      serverMsg: {
+        heartBeatMsg: {
+          maxId: 0,
+        },
+      },
+    }).finish();
+
+    mockWS.triggerMessage(
+      hbResp.buffer.slice(
+        hbResp.byteOffset,
+        hbResp.byteOffset + hbResp.byteLength,
+      ),
+    );
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(socket.ping).toBe(150);
+    expect(pingCallback).toHaveBeenCalledWith(150);
+
+    vi.useRealTimers();
+  });
+
+  it('should close socket and set ping to -1 on heartbeat timeout', async () => {
+    vi.useFakeTimers();
+    const socket = new RabiSocket('ws://localhost:1234');
+    const handshakePromise = socket.handShake(vi.fn());
+    await vi.advanceTimersByTimeAsync(10);
+    await handshakePromise;
+
+    const mockWS = MockWebSocket.instances[0]!;
+    mockWS.send.mockClear();
+
+    const pingCallback = vi.fn();
+    socket.onPingUpdated.subscribe(pingCallback);
+
+    // Advance to trigger heartbeat
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(mockWS.send).toHaveBeenCalledTimes(1);
+
+    // Wait for response timeout (15000ms)
+    await vi.advanceTimersByTimeAsync(15000);
+
+    expect(socket.ping).toBe(-1);
+    expect(pingCallback).toHaveBeenCalledWith(-1);
+    expect(socket.isConnected).toBe(false);
+
+    vi.useRealTimers();
+  });
 });

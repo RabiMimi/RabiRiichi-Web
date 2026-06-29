@@ -50,6 +50,7 @@ describe('RabiRiichi Store', () => {
       isWaitingForProceed: false,
       actionTimeout: 0,
       timerActiveSeat: null,
+      ping: -1,
     });
   });
 

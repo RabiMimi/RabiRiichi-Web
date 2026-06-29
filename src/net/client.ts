@@ -71,6 +71,9 @@ export class RabiRiichiClient {
 
   public connectionStatus: ConnectionStatus = 'disconnected';
   public currentInquiry: ActiveInquiry | null = null;
+  public ping = -1;
+  private readonly pingListener = (ping: number) =>
+    this.handlePingUpdated(ping);
   public readonly onChange = new RabiEvent<void>();
 
   public isRiichiSelectMode = false;
@@ -168,12 +171,15 @@ export class RabiRiichiClient {
       await this._ws.handShake(this.updateUserInfo.bind(this));
       this.messagePump.attach(this._ws);
       this.storeCredentials();
+      this._ws.onPingUpdated.subscribe(this.pingListener);
+      this.ping = this._ws.ping;
       this.setConnectionStatus('connected');
 
       const ws = this._ws;
       void ws.waitClose.then(() => {
         if (this._ws === ws) {
           this.setConnectionStatus('disconnected');
+          this.handlePingUpdated(-1);
         }
       });
     } catch (e) {
@@ -215,6 +221,13 @@ export class RabiRiichiClient {
     }
     await ws.waitOpen;
     return ws;
+  }
+
+  private handlePingUpdated(ping: number): void {
+    if (this.ping !== ping) {
+      this.ping = ping;
+      this.onChange.emit();
+    }
   }
 
   private updateUserInfo(userInfo: IUserInfoResponse): void {
@@ -409,6 +422,7 @@ export class RabiRiichiClient {
   public close(): void {
     this.messagePump.detach();
     if (this._ws) {
+      this._ws.onPingUpdated.unsubscribe(this.pingListener);
       this._ws.close();
       this._ws = null;
     }
@@ -418,6 +432,7 @@ export class RabiRiichiClient {
     this.isRiichiSelectMode = false;
     this.pendingActionOption = null;
     this.clearTimer();
+    this.ping = -1;
     this.setConnectionStatus('disconnected');
   }
 
@@ -437,11 +452,12 @@ export class RabiRiichiClient {
   ): void {
     this.clearTimer();
     this.timerActiveSeat = seat;
-    this.actionTimeout = seconds;
+    this.actionTimeout = seconds * 1000;
     this.onChange.emit();
 
+    const tick = 100;
     this.actionTimerId = setInterval(() => {
-      this.actionTimeout--;
+      this.actionTimeout -= tick;
       if (this.actionTimeout <= 0) {
         this.clearTimer();
         if (interactive) {
@@ -451,9 +467,13 @@ export class RabiRiichiClient {
           this.autoSubmitDefaultAction();
         }
       } else {
-        this.onChange.emit();
+        const prevSec = Math.ceil((this.actionTimeout + tick) / 1000);
+        const currSec = Math.ceil(this.actionTimeout / 1000);
+        if (prevSec !== currSec) {
+          this.onChange.emit();
+        }
       }
-    }, 1000);
+    }, tick);
   }
 
   private clearTimer(): void {

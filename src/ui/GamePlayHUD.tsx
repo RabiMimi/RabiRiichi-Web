@@ -11,6 +11,7 @@ import { ActionHUD } from './ActionHUD';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
+import { ConnectionStatusIndicator } from './ConnectionStatus';
 
 function DoraPanel(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -71,6 +72,9 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
   return (
     <div className="game-play-hud">
+      {/* Connection Status */}
+      <ConnectionStatusIndicator />
+
       {/* Settings Panel */}
       <div
         className="settings-panel"
@@ -113,7 +117,9 @@ export function GamePlayHUD(): React.JSX.Element | null {
       {currentInquiry && actionTimeout > 0 && (
         <div className="player-timer-overlay">
           <span className="timer-label">{timerLabel}</span>
-          <span className="timer-seconds">{actionTimeout}</span>
+          <span className="timer-seconds">
+            {Math.ceil(actionTimeout / 1000)}
+          </span>
         </div>
       )}
 

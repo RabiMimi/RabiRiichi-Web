@@ -5,7 +5,7 @@ import type {
   IUserInfoResponse,
   ITwoWayHeartBeatMsg,
 } from '../proto';
-import { Logger, type RabiEvent, sleep, TimeoutError } from '../lib';
+import { Logger, RabiEvent, sleep, TimeoutError } from '../lib';
 import { MessageRecord } from './messageRecord';
 import { ClientMessageWrapper } from './messageWrapper';
 import { CLIENT_NAME, WS_HEARTBEAT_INTERVAL } from './constants';
@@ -24,6 +24,12 @@ export class RabiSocket {
 
   public get onMessage(): RabiEvent<IServerMessageDto> {
     return this.msgs.onMessage;
+  }
+
+  public readonly onPingUpdated = new RabiEvent<number>();
+  private _ping = -1;
+  public get ping(): number {
+    return this._ping;
   }
 
   public constructor(
@@ -127,6 +133,7 @@ export class RabiSocket {
 
   private async waitHeartBeat(msg: ClientMessageWrapper): Promise<void> {
     const heartBeatId = -(msg.msg.id ?? 0);
+    const startTime = Date.now();
     let reply: ITwoWayHeartBeatMsg | undefined;
     try {
       const resp = await msg.waitResponse();
@@ -134,15 +141,31 @@ export class RabiSocket {
     } catch (e) {
       if (e instanceof TimeoutError) {
         this.clientLog.info(`Heartbeat ${heartBeatId} timeout`);
+        this._ping = -1;
+        this.onPingUpdated.emit(-1);
+        this.close();
         return;
       }
-      this.clientLog.error(`Heartbeat error`, e);
+      if (this.isClosing) {
+        this.clientLog.debug(
+          `Heartbeat ${heartBeatId} failed during close:`,
+          e,
+        );
+      } else {
+        this.clientLog.error(`Heartbeat error`, e);
+      }
+      this._ping = -1;
+      this.onPingUpdated.emit(-1);
       return;
     }
     if (!reply) {
       this.clientLog.warn(`Heartbeat ${heartBeatId} reply is not a heartbeat`);
       return;
     }
+    const ping = Date.now() - startTime;
+    this._ping = ping;
+    this.onPingUpdated.emit(ping);
+
     this.msgs.maxServerMsgId = Math.max(
       this.msgs.maxServerMsgId,
       reply.maxId ?? 0,

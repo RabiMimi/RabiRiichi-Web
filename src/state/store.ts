@@ -16,6 +16,7 @@ export interface RabiRiichiState {
   isWaitingForProceed: boolean;
   actionTimeout: number;
   timerActiveSeat: number | null;
+  ping: number;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -36,7 +37,8 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.animationSpeed !== rabiriichi.animationSpeed ||
     lastSnapshot.isWaitingForProceed !== rabiriichi.isWaitingForProceed ||
     lastSnapshot.actionTimeout !== rabiriichi.actionTimeout ||
-    lastSnapshot.timerActiveSeat !== rabiriichi.timerActiveSeat
+    lastSnapshot.timerActiveSeat !== rabiriichi.timerActiveSeat ||
+    lastSnapshot.ping !== rabiriichi.ping
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -49,6 +51,7 @@ function getSnapshot(): RabiRiichiState {
       isWaitingForProceed: rabiriichi.isWaitingForProceed,
       actionTimeout: rabiriichi.actionTimeout,
       timerActiveSeat: rabiriichi.timerActiveSeat,
+      ping: rabiriichi.ping,
     };
   }
   return lastSnapshot;
@@ -120,6 +123,14 @@ export function useActionTimeout(): number {
     subscribe,
     () => rabiriichi.actionTimeout,
     () => rabiriichi.actionTimeout,
+  );
+}
+
+export function usePing(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.ping,
+    () => rabiriichi.ping,
   );
 }
 
