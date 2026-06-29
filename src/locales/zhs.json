@@ -14,7 +14,12 @@
     "customServer": "自定义服务器地址",
     "serverNamePlaceholder": "输入服务器名称",
     "saveServer": "保存服务器",
-    "removeServer": "删除服务器"
+    "removeServer": "删除服务器",
+    "serverVersionUnsupported": "服务器版本不支持",
+    "versionErrorServerTooOld": "服务器版本过旧 ({{serverVersion}} < {{minServerVersion}})",
+    "versionErrorClientTooOld": "客户端版本过旧 ({{clientVersion}} < {{minClientVersion}})",
+    "versionErrorMissingFields": "缺少版本校验字段",
+    "versionErrorValidationFailed": "版本校验失败"
   },
   "lobby": {
     "title": "大厅",
@@ -101,6 +106,9 @@
     "honbaSuffix": "本场",
     "riichiSuffix": "立直棒",
     "remainingTiles": "牌山剩余: {{count}}",
+    "gameInfo": "对局信息",
+    "allowedYakus": "启用役种",
+    "startingYama": "初始牌山",
     "timerLabel": "出牌倒计时",
     "timerWaiting": "等待他人...",
     "declareRiichi": "请选择立直要切的牌",
@@ -146,6 +154,7 @@
     "scoringOption": "计分选项",
     "ryuukyokuTrigger": "中途流局",
     "pointsDeductionPolicy": "技能点数扣减",
+    "none": "无",
     "renchan": {
       "dealerWin": "庄家和牌连庄",
       "dealerTenpai": "庄家听牌连庄",
@@ -178,10 +187,10 @@
       "instantAnKan": "暗杠宝牌即开"
     },
     "agari": {
-      "kuitan": "允许食断 (鸣牌断幺)",
-      "pao": "允许包牌 (大三元等)",
+      "kuitan": "允许食断",
+      "pao": "允许包牌",
       "nagashiMangan": "启用流局满贯",
-      "firstWinner": "启用头跳 (不允许一炮多响)"
+      "firstWinner": "启用头跳"
     },
     "scoring": {
       "kiriageMangan": "启用切上满贯",
@@ -199,7 +208,7 @@
     },
     "deduction": {
       "alwaysAllow": "总是允许扣减",
-      "sufficientPoints": "扣减后不低于最低分 (防止被飞)",
+      "sufficientPoints": "扣减后不低于最低分",
       "validPoints": "扣除前需在有效范围内",
       "alwaysBlock": "总是禁止扣减"
     }

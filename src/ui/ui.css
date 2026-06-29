@@ -1165,3 +1165,363 @@
   margin: 0;
   cursor: pointer;
 }
+
+/* Game Info Button & Modal */
+.info-icon-btn {
+  background-color: rgba(20, 20, 20, 0.85);
+  border: 1.5px solid #444;
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s;
+  width: fit-content;
+}
+
+.info-icon-btn:hover {
+  border-color: #ff9900;
+  color: #ff9900;
+  transform: scale(1.05);
+}
+
+.game-info-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+
+.game-info-modal-content {
+  background-color: #252525;
+  border: 2px solid #ff9900;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 650px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.game-info-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.game-info-modal-header h3 {
+  margin: 0;
+  color: #ff9900;
+  font-size: 1.2rem;
+}
+
+.game-info-modal-header .close-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.game-info-modal-header .close-btn:hover {
+  color: #fff;
+}
+
+.game-info-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.game-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.game-info-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #ffaa22;
+  border-bottom: 1px solid #333;
+  padding-bottom: 6px;
+}
+
+.game-info-yakus-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.game-info-yaku-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.yaku-group-title {
+  color: #888;
+  font-weight: bold;
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.yaku-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.yaku-badge {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: #ccc;
+  font-size: 0.8rem;
+}
+
+.yama-tiles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background-color: #1a1a1a;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.yama-tile-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.yama-tile-img {
+  width: 32px;
+  height: 42px;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.yama-tile-count {
+  font-size: 0.75rem;
+  color: #ff9900;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.game-info-modal-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Tabs for GameInfoModal */
+.game-info-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: #fff;
+  background-color: #333;
+}
+
+.tab-btn.active {
+  color: #ff9900;
+  background-color: #333;
+  box-shadow: inset 0 -2px 0 #ff9900;
+}
+
+/* Debug Tab Content styles */
+.debug-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+.debug-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 16px;
+  background-color: #1a1a1a;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+@media (max-width: 480px) {
+  .debug-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.debug-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  border-bottom: 1px dashed #222;
+  padding-bottom: 4px;
+}
+
+.debug-label {
+  color: #aaa;
+}
+
+.debug-val {
+  color: #fff;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.debug-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.debug-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.debug-player-card {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.player-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.p-seat {
+  color: #ff9900;
+  font-weight: bold;
+}
+
+.p-name {
+  color: #fff;
+  font-weight: bold;
+}
+
+.p-id {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.player-state {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.debug-policies-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #1a1a1a;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.policy-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.85rem;
+  border-bottom: 1px dashed #222;
+  padding-bottom: 6px;
+}
+
+.policy-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.p-label {
+  color: #aaa;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.p-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.debug-badge {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: #ddd;
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+
+.text-badge {
+  color: #ffaa22;
+  font-weight: bold;
+}

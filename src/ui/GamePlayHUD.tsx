@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useRoom,
@@ -13,6 +13,7 @@ import { Tile } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
 import { getWindKey } from '../domain/model';
+import { GameInfoModal } from './GameInfoModal';
 
 function GameInfoPanel(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -81,6 +82,8 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
   const currentInquiry = useCurrentInquiry();
 
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+
   if (!room?.info || !currentUser) {
     return null;
   }
@@ -138,6 +141,29 @@ export function GamePlayHUD(): React.JSX.Element | null {
             <option value="8">x8.0</option>
           </select>
         </div>
+
+        <button
+          type="button"
+          className="info-icon-btn"
+          onClick={() => setIsInfoOpen(true)}
+          title={t('hud.gameInfo')}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
       </div>
 
       {/* Fancy Turn Countdown (visible when player has a pending action inquiry) */}
@@ -152,6 +178,12 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
       {/* 2D Action HUD overlay buttons */}
       <ActionHUD />
+
+      <GameInfoModal
+        isOpen={isInfoOpen}
+        onClose={() => setIsInfoOpen(false)}
+        room={room}
+      />
     </div>
   );
 }

@@ -14,7 +14,12 @@
     "customServer": "Custom Server Address",
     "serverNamePlaceholder": "Enter server name",
     "saveServer": "Save Server",
-    "removeServer": "Remove Server"
+    "removeServer": "Remove Server",
+    "serverVersionUnsupported": "Server version is not supported",
+    "versionErrorServerTooOld": "Server version too old ({{serverVersion}} < {{minServerVersion}})",
+    "versionErrorClientTooOld": "Client version too old ({{clientVersion}} < {{minClientVersion}})",
+    "versionErrorMissingFields": "Missing version check fields",
+    "versionErrorValidationFailed": "Version validation failed"
   },
   "lobby": {
     "title": "Lobby",
@@ -101,6 +106,9 @@
     "honbaSuffix": " Honba",
     "riichiSuffix": " Riichi",
     "remainingTiles": "Wall Tiles: {{count}}",
+    "gameInfo": "Game Info",
+    "allowedYakus": "Allowed Yakus",
+    "startingYama": "Starting Yama",
     "timerLabel": "Your Turn",
     "timerWaiting": "Waiting for others...",
     "declareRiichi": "Select a tile to discard for Riichi",
@@ -146,6 +154,7 @@
     "scoringOption": "Scoring Options",
     "ryuukyokuTrigger": "Mid-Game Draws",
     "pointsDeductionPolicy": "Skill Points Deduction",
+    "none": "None",
     "renchan": {
       "dealerWin": "Dealer wins continuous turn",
       "dealerTenpai": "Dealer tenpai continuous turn",
@@ -178,17 +187,17 @@
       "instantAnKan": "Instant Dora on Closed Kan"
     },
     "agari": {
-      "kuitan": "Allow Kuitan (Open Tanyao)",
-      "pao": "Enable Pao (Responsibility)",
+      "kuitan": "Allow Kuitan",
+      "pao": "Enable Pao",
       "nagashiMangan": "Enable Nagashi Mangan",
-      "firstWinner": "Enable Head Bump (No Multi-Win)"
+      "firstWinner": "Enable Head Bump"
     },
     "scoring": {
       "kiriageMangan": "Enable Kiriage Mangan",
-      "aotenjou": "Enable Aotenjou (Green Ceiling)",
+      "aotenjou": "Enable Aotenjou",
       "yakuman": "Enable Yakuman",
       "multipleYakuman": "Enable Multiple Yakuman",
-      "kazoeYakuman": "Enable Kazoe Yakuman (Counted)"
+      "kazoeYakuman": "Enable Kazoe Yakuman"
     },
     "ryuukyoku": {
       "suufonRenda": "Four Winds Discard Draw",
@@ -199,8 +208,8 @@
     },
     "deduction": {
       "alwaysAllow": "Always Allow",
-      "sufficientPoints": "Prevent Bust (Cannot drop below limit)",
-      "validPoints": "Bust Protection (Must start in range)",
+      "sufficientPoints": "Prevent Bust",
+      "validPoints": "Bust Protection",
       "alwaysBlock": "Always Block"
     }
   },

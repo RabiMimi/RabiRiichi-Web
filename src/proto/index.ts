@@ -51,6 +51,15 @@ import {
   ServerRoomStateResponse,
   CreateRoomRequest,
   GetInfoResponse,
+  KuikaePolicy,
+  RiichiPolicy,
+  RyuukyokuTrigger,
+  RenchanPolicy,
+  EndGamePolicy,
+  DoraOption,
+  AgariOption,
+  ScoringOption,
+  PointsDeductionPolicy,
 } from '../generated/protos.js';
 
 export {
@@ -106,6 +115,15 @@ export {
   ServerRoomStateResponse,
   CreateRoomRequest,
   GetInfoResponse,
+  KuikaePolicy,
+  RiichiPolicy,
+  RyuukyokuTrigger,
+  RenchanPolicy,
+  EndGamePolicy,
+  DoraOption,
+  AgariOption,
+  ScoringOption,
+  PointsDeductionPolicy,
 };
 
 export type IEventMsg = EventMsg.$Properties;

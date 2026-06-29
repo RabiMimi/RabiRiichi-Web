@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { useConnectionStatus } from '../state/store';
 import { ServerSelector } from './ServerSelector';
+import { CLIENT_VERSION } from '../transport/constants';
 import './ui.css';
 
 export function ConnectScreen(): React.JSX.Element {
@@ -47,7 +48,18 @@ export function ConnectScreen(): React.JSX.Element {
 
   return (
     <div className="ui-screen connect-screen">
-      <div className="ui-card connect-card">
+      <div className="ui-card connect-card" style={{ position: 'relative' }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: '8px',
+            left: '12px',
+            fontSize: '0.8rem',
+            color: '#666',
+          }}
+        >
+          v{CLIENT_VERSION}
+        </div>
         {/* Title row with language switcher */}
         <div
           style={{
