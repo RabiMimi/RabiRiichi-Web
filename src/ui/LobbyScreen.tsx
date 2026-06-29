@@ -261,13 +261,31 @@ export function LobbyScreen(): React.JSX.Element {
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: 'baseline',
             marginBottom: '16px',
           }}
         >
-          <h2 className="ui-title" style={{ margin: 0 }}>
-            {t('lobby.title')}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <h2 className="ui-title" style={{ margin: 0 }}>
+              {t('lobby.title')}
+            </h2>
+            {rabiriichi.wsurl && (
+              <span
+                className="server-url-display"
+                style={{
+                  fontSize: '0.85rem',
+                  color: '#888',
+                  fontWeight: 'normal',
+                }}
+              >
+                (
+                {t('lobby.connectedServer', {
+                  url: rabiriichi.wsurl.replace(/^wss?:\/\//, ''),
+                })}
+                )
+              </span>
+            )}
+          </div>
           <select
             value={i18n.language}
             onChange={(e) => void i18n.changeLanguage(e.target.value)}
@@ -288,7 +306,7 @@ export function LobbyScreen(): React.JSX.Element {
         </div>
 
         {currentUser && (
-          <p className="user-welcome">
+          <p className="user-welcome" style={{ marginBottom: '16px' }}>
             {t('lobby.welcome', { nickname: currentUser.nickname })}
           </p>
         )}
@@ -718,38 +736,57 @@ export function LobbyScreen(): React.JSX.Element {
             {isLoading ? 'Processing...' : t('lobby.createRoom')}
           </button>
 
-          <form onSubmit={onJoinRoom} className="join-section">
-            <div className="form-group">
-              <label htmlFor="room-id">{t('lobby.joinRoomLabel')}</label>
-              <input
-                id="room-id"
-                type="text"
-                value={roomIdInput}
-                onChange={(e) =>
-                  setRoomIdInput(e.target.value.replace(/\D/g, '').slice(0, 4))
-                }
-                disabled={isLoading}
-                placeholder={t('lobby.joinRoomLabel')}
-                pattern="\d{4}"
-              />
-            </div>
-            <button
-              type="submit"
-              className="ui-button secondary-button"
-              disabled={isLoading || roomIdInput.length !== 4}
+          <div className="lobby-bottom-row">
+            <form
+              onSubmit={onJoinRoom}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                flex: 1,
+              }}
             >
-              {t('lobby.joinRoom')}
-            </button>
-          </form>
+              <label
+                htmlFor="room-id"
+                style={{ fontSize: '0.9rem', color: '#ccc', fontWeight: 600 }}
+              >
+                {t('lobby.joinRoomLabel')}
+              </label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input
+                  id="room-id"
+                  type="text"
+                  className="room-id-input"
+                  value={roomIdInput}
+                  onChange={(e) =>
+                    setRoomIdInput(
+                      e.target.value.replace(/\D/g, '').slice(0, 4),
+                    )
+                  }
+                  disabled={isLoading}
+                  placeholder="1234"
+                  pattern="\d{4}"
+                  style={{ width: '120px' }}
+                />
+                <button
+                  type="submit"
+                  className="ui-button secondary-button"
+                  disabled={isLoading || roomIdInput.length !== 4}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  {t('lobby.joinRoom')}
+                </button>
+              </div>
+            </form>
 
-          <button
-            onClick={handleDisconnect}
-            className="ui-button secondary-button"
-            style={{ marginTop: '12px' }}
-            disabled={isLoading}
-          >
-            {t('lobby.disconnect')}
-          </button>
+            <button
+              onClick={handleDisconnect}
+              className="ui-button danger-button"
+              disabled={isLoading}
+            >
+              {t('lobby.disconnect')}
+            </button>
+          </div>
         </div>
       </div>
     </div>

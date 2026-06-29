@@ -132,6 +132,51 @@
   background-color: #555;
 }
 
+.danger-button {
+  background-color: #cc3333;
+  color: #fff;
+  border: 1px solid #772222;
+}
+
+.danger-button:hover:not(:disabled) {
+  background-color: #dd4444;
+}
+
+.room-id-input {
+  font-size: 1.4rem !important;
+  text-align: center;
+  letter-spacing: 0.25em;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  padding: 8px 10px !important;
+  color: #ff9900 !important;
+}
+
+.room-id-input::placeholder {
+  letter-spacing: normal;
+  font-size: 0.95rem;
+  font-family: inherit;
+  font-weight: normal;
+  color: #666;
+}
+
+.lobby-bottom-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid #444;
+  padding-top: 16px;
+  margin-top: 8px;
+}
+
+@media (min-width: 480px) {
+  .lobby-bottom-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+}
+
 /* Lobby Screen styles */
 .lobby-card {
   max-width: 750px;

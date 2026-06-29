@@ -18,6 +18,7 @@
   "lobby": {
     "title": "Lobby",
     "welcome": "Welcome, {{nickname}}!",
+    "connectedServer": "Server: {{url}}",
     "you": "You",
     "createRoom": "Create Room",
     "joinRoom": "Join Room",

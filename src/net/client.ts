@@ -526,9 +526,13 @@ export async function initRabiRiichi(): Promise<void> {
   if (!url || !token) {
     return;
   }
+  const logger = new Logger('AutoReconnect');
+  logger.info(`Auto-reconnecting to server: ${url}, token: ${token}`);
   try {
     await rabiriichi.connect(url, token);
-  } catch {
+    logger.info(`Auto-reconnection succeeded! Connected to ${url}`);
+  } catch (err) {
+    logger.error(`Auto-reconnection failed for URL ${url}`, err);
     // Silent fail on auto-connect
   }
 }
