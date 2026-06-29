@@ -24,7 +24,6 @@ import type {
   IStopGameEventMsg,
   ISyncGameStateEventMsg,
   IServerRoomStateMsg,
-  IPlayerHandStateMsg,
 } from '../proto/index.js';
 import type {
   RoomModel,
@@ -34,33 +33,6 @@ import type {
   PlayerAgariState,
 } from './model.js';
 import { Tile } from './tile.js';
-
-/**
- * Rebuilds a player's end-of-hand result from a sync snapshot so the result
- * screen survives a refresh/reconnect. The snapshot carries the winning tile
- * (`agariTile`), the score breakdown (`agariScore`), and the signed settlement
- * `pointDelta` (covers agari and ryuukyoku). A result is reconstructed when the
- * player won or had any point change. Any agari already in memory (e.g. from
- * the live event) takes precedence.
- */
-function reconstructAgariFromSync(
-  handState: IPlayerHandStateMsg | null | undefined,
-  existing: PlayerGameState | null,
-): PlayerAgariState | null {
-  if (existing?.agari) {
-    return existing.agari;
-  }
-  const pointDelta = Number(handState?.pointDelta ?? 0);
-  if (!handState?.agariTile && pointDelta === 0) {
-    return null;
-  }
-  return {
-    scores: handState?.agariScore ?? null,
-    incoming: handState?.agariTile ?? null,
-    gainPoints: pointDelta > 0 ? pointDelta : 0,
-    losePoints: pointDelta < 0 ? -pointDelta : 0,
-  };
-}
 
 export function hydrateFromGameState(
   state: RoomModel,
@@ -114,16 +86,12 @@ export function hydrateFromGameState(
         [FuritenType.FURITEN_TYPE_TEMP]: handState?.isTempFuriten ?? false,
       },
       hand: {
-        // The server sends free tiles in draw order; sort them to match the
-        // ordering the live event handlers maintain (e.g. the result screen).
-        freeTiles: sortGameTiles(handState?.freeTiles ?? []),
+        freeTiles: handState?.freeTiles ?? [],
         called: handState?.called ?? [],
         discarded: handState?.discarded ?? [],
         pendingTile: handState?.pendingTile ?? null,
       },
-      // Rebuild the win result from the snapshot so the result screen renders
-      // correctly after a refresh/reconnect (issue #68).
-      agari: reconstructAgariFromSync(handState, p.gameState),
+      agari: p.gameState?.agari ?? null,
     };
 
     return {

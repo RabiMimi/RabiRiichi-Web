@@ -193,188 +193,6 @@ describe('Reducer - Hydration', () => {
     expect(p1?.status).toBe(UserStatus.USER_STATUS_PLAYING);
     expect(p1?.gameState).not.toBeNull();
   });
-
-  it('reconstructs the agari result from a sync snapshot on reconnect', () => {
-    // Regression for "result screen shows incorrect hand tiles after refresh":
-    // the snapshot carries agariTile + agariScore, which must rebuild the agari
-    // result so the result panel renders correctly after a refresh.
-    const initialState: RoomModel = {
-      id: 1,
-      config: null,
-      info: null,
-      players: [
-        {
-          id: 1001,
-          nickname: 'Alice',
-          status: UserStatus.USER_STATUS_PLAYING,
-          seat: 0,
-          gameState: null,
-        },
-      ],
-    };
-
-    const snapshot: IGameStateMsg = {
-      config: null,
-      info: { round: 0, dealer: 0, honba: 0, riichiStick: 0, currentPlayer: 0 },
-      wall: { doras: [], remaining: 0, rinshanRemaining: 0 },
-      players: [
-        {
-          id: 0,
-          points: 32000,
-          hand: {
-            freeTiles: [{ traceId: 1, tile: 17 }],
-            called: [],
-            discarded: [],
-            jun: 0,
-            agariTile: { traceId: 99, tile: 19 },
-            agariScore: {
-              items: [{ Type: 1, Val: 1, Src: 'Riichi' }],
-              result: { han: 5, fu: 30 },
-            },
-            pointDelta: 7700,
-          },
-        },
-      ],
-      currentPlayer: 0,
-    };
-
-    const nextState = hydrateFromGameState(initialState, snapshot);
-
-    const p0 = nextState.players.find((p) => p.id === 1001);
-    expect(p0?.gameState?.agari).not.toBeNull();
-    expect(p0?.gameState?.agari?.incoming?.tile).toBe(19);
-    expect(p0?.gameState?.agari?.scores?.result?.han).toBe(5);
-    expect(p0?.gameState?.agari?.gainPoints).toBe(7700);
-    expect(p0?.gameState?.agari?.losePoints).toBe(0);
-  });
-
-  it('sorts free tiles when hydrating (server sends draw order)', () => {
-    const initialState: RoomModel = {
-      id: 1,
-      config: null,
-      info: null,
-      players: [
-        {
-          id: 1001,
-          nickname: 'Alice',
-          status: UserStatus.USER_STATUS_PLAYING,
-          seat: 0,
-          gameState: null,
-        },
-      ],
-    };
-
-    const snapshot: IGameStateMsg = {
-      config: null,
-      info: { round: 0, dealer: 0, honba: 0, riichiStick: 0, currentPlayer: 0 },
-      wall: { doras: [], remaining: 0, rinshanRemaining: 0 },
-      players: [
-        {
-          id: 0,
-          points: 25000,
-          hand: {
-            // Out-of-order (draw order): 5m, 1m, 3p, 2m.
-            freeTiles: [
-              { traceId: 1, tile: 21 },
-              { traceId: 2, tile: 17 },
-              { traceId: 3, tile: 35 },
-              { traceId: 4, tile: 18 },
-            ],
-            called: [],
-            discarded: [],
-            jun: 0,
-          },
-        },
-      ],
-      currentPlayer: 0,
-    };
-
-    const nextState = hydrateFromGameState(initialState, snapshot);
-    const tiles = nextState.players[0]?.gameState?.hand.freeTiles ?? [];
-    expect(tiles.map((t) => t.tile)).toEqual([17, 18, 21, 35]);
-  });
-
-  it('reconstructs a point loss (no win) from a sync snapshot', () => {
-    // A loser/noten player has a negative pointDelta but no winning tile; the
-    // result screen still shows their point loss after a refresh.
-    const initialState: RoomModel = {
-      id: 1,
-      config: null,
-      info: null,
-      players: [
-        {
-          id: 1001,
-          nickname: 'Alice',
-          status: UserStatus.USER_STATUS_PLAYING,
-          seat: 0,
-          gameState: null,
-        },
-      ],
-    };
-
-    const snapshot: IGameStateMsg = {
-      config: null,
-      info: { round: 0, dealer: 0, honba: 0, riichiStick: 0, currentPlayer: 0 },
-      wall: { doras: [], remaining: 0, rinshanRemaining: 0 },
-      players: [
-        {
-          id: 0,
-          points: 17300,
-          hand: {
-            freeTiles: [],
-            called: [],
-            discarded: [],
-            jun: 0,
-            pointDelta: -7700,
-          },
-        },
-      ],
-      currentPlayer: 0,
-    };
-
-    const nextState = hydrateFromGameState(initialState, snapshot);
-    const p0 = nextState.players.find((p) => p.id === 1001);
-    expect(p0?.gameState?.agari).not.toBeNull();
-    expect(p0?.gameState?.agari?.incoming).toBeNull();
-    expect(p0?.gameState?.agari?.scores).toBeNull();
-    expect(p0?.gameState?.agari?.losePoints).toBe(7700);
-    expect(p0?.gameState?.agari?.gainPoints).toBe(0);
-  });
-
-  it('leaves agari null when the snapshot has no win', () => {
-    const initialState: RoomModel = {
-      id: 1,
-      config: null,
-      info: null,
-      players: [
-        {
-          id: 1001,
-          nickname: 'Alice',
-          status: UserStatus.USER_STATUS_PLAYING,
-          seat: 0,
-          gameState: null,
-        },
-      ],
-    };
-
-    const snapshot: IGameStateMsg = {
-      config: null,
-      info: { round: 0, dealer: 0, honba: 0, riichiStick: 0, currentPlayer: 0 },
-      wall: { doras: [], remaining: 0, rinshanRemaining: 0 },
-      players: [
-        {
-          id: 0,
-          points: 25000,
-          hand: { freeTiles: [], called: [], discarded: [], jun: 0 },
-        },
-      ],
-      currentPlayer: 0,
-    };
-
-    const nextState = hydrateFromGameState(initialState, snapshot);
-    const p0 = nextState.players.find((p) => p.id === 1001);
-    expect(p0?.gameState?.agari).toBeNull();
-  });
 });
 
 function createInitializedRoom(): RoomModel {
@@ -805,7 +623,7 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.doras[0]?.traceId).toBe(999);
   });
 
-  it('should handle setRiichiEvent by setting tile id, deducting points, and adding riichi stick', () => {
+  it('should handle setRiichiEvent', () => {
     const state = createInitializedRoom();
     const eventMsg = {
       setRiichiEvent: {
@@ -818,8 +636,9 @@ describe('Reducer - Events', () => {
     const nextState = applyEvent(state, eventMsg);
 
     expect(nextState.players[0]?.gameState?.riichiTileId).toBe(50);
-    expect(nextState.players[0]?.gameState?.points).toBe(24000); // 25000 - 1000
-    expect(nextState.info?.riichiStick).toBe(1); // 0 + 1
+    // Declaring riichi deducts the 1000-point stick and adds it to the pot.
+    expect(nextState.players[0]?.gameState?.points).toBe(24000);
+    expect(nextState.info?.riichiStick).toBe(1);
   });
 
   it('should handle setFuritenEvent', () => {

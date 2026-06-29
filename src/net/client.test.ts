@@ -11,6 +11,7 @@ import { RabiRiichiClient, initRabiRiichi, rabiriichi } from './client';
 import { MockWebSocket } from '../transport/mockWebSocket';
 import { ClientMessageDto, ServerMessageDto, UserStatus } from '../proto';
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
+import type { RoomModel } from '../domain/model';
 import { mapInquiry } from '../domain/inquiry';
 
 describe('RabiRiichiClient', () => {
@@ -596,6 +597,93 @@ describe('RabiRiichiClient', () => {
     expect(client.currentInquiry).toBeNull();
     expect(client.isRiichiSelectMode).toBe(false);
     expect(client.pendingActionOption).toBeNull();
+
+    client.close();
+    vi.useRealTimers();
+  });
+
+  function makeRoomWithAgari(hasAgari: boolean): RoomModel {
+    return {
+      id: 4321,
+      config: { playerCount: 2 },
+      info: null,
+      players: [
+        {
+          id: 123,
+          nickname: 'TestUser',
+          status: UserStatus.USER_STATUS_PLAYING,
+          seat: 0,
+          gameState: {
+            jun: 0,
+            points: 25000,
+            riichiTileId: 0,
+            furiten: {},
+            hand: {
+              freeTiles: [],
+              called: [],
+              discarded: [],
+              pendingTile: null,
+            },
+            agari: hasAgari
+              ? {
+                  gainPoints: 1000,
+                  losePoints: 0,
+                  scores: null,
+                  incoming: null,
+                }
+              : null,
+          },
+        },
+      ],
+    };
+  }
+
+  function sendNextRoundInquiry(ws: MockWebSocket, id: number) {
+    sendServerMsg(ws, {
+      id,
+      serverMsg: {
+        inquiry: { inquiry: { actions: [{ nextRoundAction: {} }] } },
+      },
+    });
+  }
+
+  it('auto-acks the next-round inquiry on reconnect (no in-memory result)', async () => {
+    vi.useFakeTimers();
+    const client = new RabiRiichiClient();
+    const mockWS = await setupConnectedClient(client);
+
+    // Reconnect: snapshot hydrated, no finished-round result in memory.
+    client.dev.setRoom(makeRoomWithAgari(false));
+
+    sendNextRoundInquiry(mockWS, 11);
+    await vi.advanceTimersByTimeAsync(0);
+
+    // The client should have auto-submitted the next-round acknowledgement.
+    expect(mockWS.send).toHaveBeenCalledTimes(1);
+    const msgBytes = mockWS.send.mock.calls[0]![0];
+    const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+    expect(msg.respondTo).toBe(11);
+    expect(msg.clientMsg?.inquiryMsg?.response).toBe('{}');
+    expect(client.currentInquiry).toBeNull();
+
+    client.close();
+    vi.useRealTimers();
+  });
+
+  it('does NOT auto-ack the next-round inquiry during live play (has result)', async () => {
+    vi.useFakeTimers();
+    const client = new RabiRiichiClient();
+    const mockWS = await setupConnectedClient(client);
+
+    // Live play: the win was observed, so an agari result is in memory.
+    client.dev.setRoom(makeRoomWithAgari(true));
+
+    sendNextRoundInquiry(mockWS, 11);
+    await vi.advanceTimersByTimeAsync(0);
+
+    // No auto-submit; the inquiry stays for the result panel to advance.
+    expect(mockWS.send).not.toHaveBeenCalled();
+    expect(client.currentInquiry).not.toBeNull();
 
     client.close();
     vi.useRealTimers();

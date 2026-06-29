@@ -108,7 +108,8 @@
     "winTile": "胡",
     "scoreChangesTitle": "点数收支",
     "confirmWithTime": "确定 ({{seconds}}s)",
-    "waitingForNext": "等待下一局..."
+    "waitingForNext": "等待下一局...",
+    "waitingForNextRound": "等待下一局开始..."
   },
   "advanced": {
     "renchanPolicy": "连庄策略",

@@ -108,7 +108,8 @@
     "winTile": "Win",
     "scoreChangesTitle": "Score Changes",
     "confirmWithTime": "Confirm ({{seconds}}s)",
-    "waitingForNext": "Waiting..."
+    "waitingForNext": "Waiting...",
+    "waitingForNextRound": "Waiting for the next round..."
   },
   "advanced": {
     "renchanPolicy": "Renchan Policy",

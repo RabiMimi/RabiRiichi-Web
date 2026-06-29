@@ -90,6 +90,21 @@ export function ResultPanel(): React.JSX.Element | null {
   const hasNextRound =
     currentInquiry?.mapped.buttons.some((b) => b.type === 'next-round') ??
     false;
+
+  // On reconnect the server re-pushes the next-round ack but the snapshot has no
+  // finished-round result to display. The client auto-acks it (see client.ts);
+  // meanwhile show a small notice rather than an empty result overlay.
+  const isAwaitingNextRound =
+    hasNextRound && playersWithResult.length === 0 && !isWaitingForProceed;
+
+  if (room && isAwaitingNextRound) {
+    return (
+      <div className="next-round-waiting">
+        {t('result.waitingForNextRound')}
+      </div>
+    );
+  }
+
   const showPanel =
     playersWithResult.length > 0 || hasNextRound || isWaitingForProceed;
 

@@ -325,6 +325,39 @@ export class RabiRiichiClient {
       this.clearTimer();
     }
     this.onChange.emit();
+
+    this.maybeAutoAckNextRound();
+  }
+
+  /**
+   * After a reconnect the server re-pushes the pending next-round acknowledgement
+   * inquiry, but the sync snapshot does not carry the finished round's result, so
+   * we cannot faithfully redraw the result screen. In that case auto-acknowledge
+   * the next round: the UI shows a brief "waiting" notice and the correct hand
+   * appears once the next round is dealt.
+   *
+   * We only auto-ack when this is purely a next-round inquiry AND no player has an
+   * in-memory agari result (i.e. we reconnected instead of playing through the
+   * win); during live play the result screen is shown and the player advances it.
+   */
+  private maybeAutoAckNextRound(): void {
+    const inquiry = this.currentInquiry;
+    if (!inquiry) return;
+
+    const { buttons } = inquiry.mapped;
+    const isNextRoundOnly =
+      buttons.length === 1 && buttons[0]?.type === 'next-round';
+    if (!isNextRoundOnly) return;
+
+    const hasInMemoryResult =
+      this.room?.players.some((p) => p.gameState?.agari) ?? false;
+    if (hasInMemoryResult) return;
+
+    this.logger.info('Auto-acknowledging next round after reconnect.');
+    const nextRound = buttons[0];
+    if (nextRound) {
+      void this.submitInquiryResponse(nextRound);
+    }
   }
 
   public async registerUser(nickname: string): Promise<void> {
