@@ -248,6 +248,52 @@ describe('Reducer - Hydration', () => {
     expect(p0?.gameState?.agari?.losePoints).toBe(0);
   });
 
+  it('sorts free tiles when hydrating (server sends draw order)', () => {
+    const initialState: RoomModel = {
+      id: 1,
+      config: null,
+      info: null,
+      players: [
+        {
+          id: 1001,
+          nickname: 'Alice',
+          status: UserStatus.USER_STATUS_PLAYING,
+          seat: 0,
+          gameState: null,
+        },
+      ],
+    };
+
+    const snapshot: IGameStateMsg = {
+      config: null,
+      info: { round: 0, dealer: 0, honba: 0, riichiStick: 0, currentPlayer: 0 },
+      wall: { doras: [], remaining: 0, rinshanRemaining: 0 },
+      players: [
+        {
+          id: 0,
+          points: 25000,
+          hand: {
+            // Out-of-order (draw order): 5m, 1m, 3p, 2m.
+            freeTiles: [
+              { traceId: 1, tile: 21 },
+              { traceId: 2, tile: 17 },
+              { traceId: 3, tile: 35 },
+              { traceId: 4, tile: 18 },
+            ],
+            called: [],
+            discarded: [],
+            jun: 0,
+          },
+        },
+      ],
+      currentPlayer: 0,
+    };
+
+    const nextState = hydrateFromGameState(initialState, snapshot);
+    const tiles = nextState.players[0]?.gameState?.hand.freeTiles ?? [];
+    expect(tiles.map((t) => t.tile)).toEqual([17, 18, 21, 35]);
+  });
+
   it('reconstructs a point loss (no win) from a sync snapshot', () => {
     // A loser/noten player has a negative pointDelta but no winning tile; the
     // result screen still shows their point loss after a refresh.

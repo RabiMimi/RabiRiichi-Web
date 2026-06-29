@@ -114,7 +114,9 @@ export function hydrateFromGameState(
         [FuritenType.FURITEN_TYPE_TEMP]: handState?.isTempFuriten ?? false,
       },
       hand: {
-        freeTiles: handState?.freeTiles ?? [],
+        // The server sends free tiles in draw order; sort them to match the
+        // ordering the live event handlers maintain (e.g. the result screen).
+        freeTiles: sortGameTiles(handState?.freeTiles ?? []),
         called: handState?.called ?? [],
         discarded: handState?.discarded ?? [],
         pendingTile: handState?.pendingTile ?? null,
