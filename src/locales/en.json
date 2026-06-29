@@ -107,6 +107,8 @@
     "riichiSuffix": " Riichi",
     "remainingTiles": "Wall Tiles: {{count}}",
     "gameInfo": "Game Info",
+    "activePlayer": "Active Player",
+    "turnJun": "Turn (Jun)",
     "allowedYakus": "Allowed Yakus",
     "startingYama": "Starting Yama",
     "timerLabel": "Your Turn",

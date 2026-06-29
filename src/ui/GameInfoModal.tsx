@@ -98,6 +98,9 @@ export function GameInfoModal({
       ? String(config.seed)
       : '0';
 
+  const activePlayer = players.find((p) => p.seat === info?.currentPlayer);
+  const activePlayerJun = activePlayer?.gameState?.jun ?? 0;
+
   // Tab: Yaku & Yama
   const allowedYakus = config?.allowedYakus;
   const allowedSet =
@@ -183,8 +186,16 @@ export function GameInfoModal({
                       <span className="debug-val">Seat {info.dealer}</span>
                     </div>
                     <div className="debug-row">
-                      <span className="debug-label">Current Turn:</span>
-                      <span className="debug-val">{info.currentPlayer}</span>
+                      <span className="debug-label">
+                        {t('hud.activePlayer')}:
+                      </span>
+                      <span className="debug-val">
+                        {t('room.seat', { seat: info.currentPlayer })}
+                      </span>
+                    </div>
+                    <div className="debug-row">
+                      <span className="debug-label">{t('hud.turnJun')}:</span>
+                      <span className="debug-val">{activePlayerJun}</span>
                     </div>
                     <div className="debug-row">
                       <span className="debug-label">Wall:</span>
@@ -229,9 +240,8 @@ export function GameInfoModal({
                       <div className="player-state">
                         <span className="p-points">
                           Points:{' '}
-                          {p.gameState?.points !== undefined &&
-                          p.gameState.points !== null
-                            ? t('points', { count: p.gameState.points })
+                          {p.gameState?.points !== undefined
+                            ? t('result.points', { count: p.gameState.points })
                             : 'N/A'}
                         </span>
                         <span className="p-status">

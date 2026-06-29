@@ -107,6 +107,8 @@
     "riichiSuffix": "立直棒",
     "remainingTiles": "牌山剩余: {{count}}",
     "gameInfo": "对局信息",
+    "activePlayer": "当前玩家",
+    "turnJun": "当前巡数",
     "allowedYakus": "启用役种",
     "startingYama": "初始牌山",
     "timerLabel": "出牌倒计时",
