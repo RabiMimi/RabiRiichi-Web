@@ -600,4 +600,26 @@ describe('RabiRiichiClient', () => {
     client.close();
     vi.useRealTimers();
   });
+
+  it('should clear stored credentials and close connection on logout', async () => {
+    vi.useFakeTimers();
+    mockLocalStorage.rabiriichi_url = 'ws://localhost:5150';
+    mockLocalStorage.rabiriichi_token = 'my-token';
+
+    const client = new RabiRiichiClient();
+    await setupConnectedClient(client);
+
+    expect(client.accessToken).toBe('my-token');
+    expect(client.wsurl).toBe('ws://localhost:1234');
+
+    client.logout();
+
+    expect(client.accessToken).toBeNull();
+    expect(client.wsurl).toBeNull();
+    expect(mockLocalStorage.rabiriichi_url).toBeUndefined();
+    expect(mockLocalStorage.rabiriichi_token).toBeUndefined();
+    expect(client.connectionStatus).toBe('disconnected');
+
+    vi.useRealTimers();
+  });
 });

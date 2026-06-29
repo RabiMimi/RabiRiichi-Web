@@ -420,6 +420,16 @@ export class RabiRiichiClient {
     this.clearTimer();
     this.setConnectionStatus('disconnected');
   }
+
+  public logout(): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(URL_STORE_KEY);
+      localStorage.removeItem(TOKEN_STORE_KEY);
+    }
+    this.accessToken = null;
+    this.wsurl = null;
+    this.close();
+  }
   private startTimer(
     seat: number,
     seconds: number,

@@ -249,8 +249,8 @@ export function LobbyScreen(): React.JSX.Element {
     void handleJoinRoom(e);
   };
 
-  const handleDisconnect = () => {
-    rabiriichi.close();
+  const handleLogout = () => {
+    rabiriichi.logout();
   };
 
   return (
@@ -307,7 +307,10 @@ export function LobbyScreen(): React.JSX.Element {
 
         {currentUser && (
           <p className="user-welcome" style={{ marginBottom: '16px' }}>
-            {t('lobby.welcome', { nickname: currentUser.nickname })}
+            {t('lobby.welcome', {
+              nickname: currentUser.nickname,
+              id: currentUser.id,
+            })}
           </p>
         )}
 
@@ -780,11 +783,11 @@ export function LobbyScreen(): React.JSX.Element {
             </form>
 
             <button
-              onClick={handleDisconnect}
+              onClick={handleLogout}
               className="ui-button danger-button"
               disabled={isLoading}
             >
-              {t('lobby.disconnect')}
+              {t('lobby.logout')}
             </button>
           </div>
         </div>
