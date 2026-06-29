@@ -24,6 +24,7 @@ import type {
   IStopGameEventMsg,
   ISyncGameStateEventMsg,
   IServerRoomStateMsg,
+  IPlayerHandStateMsg,
 } from '../proto/index.js';
 import type {
   RoomModel,
@@ -33,6 +34,30 @@ import type {
   PlayerAgariState,
 } from './model.js';
 import { Tile } from './tile.js';
+
+/**
+ * Rebuilds a player's agari (win) result from a sync snapshot so the result
+ * screen survives a refresh/reconnect. The snapshot carries the winning tile
+ * (`agariTile`) and the score breakdown (`agariScore`). Any agari already in
+ * memory (e.g. from the live agari event) takes precedence.
+ */
+function reconstructAgariFromSync(
+  handState: IPlayerHandStateMsg | null | undefined,
+  existing: PlayerGameState | null,
+): PlayerAgariState | null {
+  if (existing?.agari) {
+    return existing.agari;
+  }
+  if (!handState?.agariTile) {
+    return null;
+  }
+  return {
+    scores: handState.agariScore ?? null,
+    incoming: handState.agariTile,
+    gainPoints: 0,
+    losePoints: 0,
+  };
+}
 
 export function hydrateFromGameState(
   state: RoomModel,
@@ -91,7 +116,9 @@ export function hydrateFromGameState(
         discarded: handState?.discarded ?? [],
         pendingTile: handState?.pendingTile ?? null,
       },
-      agari: p.gameState?.agari ?? null,
+      // Rebuild the win result from the snapshot so the result screen renders
+      // correctly after a refresh/reconnect (issue #68).
+      agari: reconstructAgariFromSync(handState, p.gameState),
     };
 
     return {
@@ -507,6 +534,12 @@ function handleRevealDora(
 }
 
 function handleSetRiichi(state: RoomModel, ev: ISetRiichiEventMsg): RoomModel {
+  // A set-riichi event is a riichi declaration: deduct the riichi stick from
+  // the declaring player and add it to the table pot.
+  const riichiPoints = state.config?.pointThreshold?.riichiPoints
+    ? Number(state.config.pointThreshold.riichiPoints)
+    : 1000;
+
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (p.seat !== ev.playerId || !p.gameState) return p;
     return {
@@ -514,11 +547,18 @@ function handleSetRiichi(state: RoomModel, ev: ISetRiichiEventMsg): RoomModel {
       gameState: {
         ...p.gameState,
         riichiTileId: ev.riichiTile?.traceId ?? 0,
+        points: p.gameState.points - riichiPoints,
       },
     };
   });
+
+  const info = state.info
+    ? { ...state.info, riichiStick: state.info.riichiStick + 1 }
+    : state.info;
+
   return {
     ...state,
+    info,
     players: updatedPlayers,
   };
 }
