@@ -4,6 +4,7 @@ import {
   prevPlayerSeat,
   getPlayerBySeat,
   getPlayerById,
+  getWindKey,
   type PlayerModel,
 } from './model';
 import { UserStatus } from '../proto';
@@ -77,5 +78,16 @@ describe('Model lookups', () => {
     expect(getPlayerById(mockPlayers, 101)).toBe(mockPlayers[0]);
     expect(getPlayerById(mockPlayers, 102)).toBe(mockPlayers[1]);
     expect(getPlayerById(mockPlayers, 999)).toBeUndefined();
+  });
+});
+
+describe('Model wind conversion', () => {
+  it('should return correct wind keys', () => {
+    expect(getWindKey(0)).toBe('east');
+    expect(getWindKey(1)).toBe('south');
+    expect(getWindKey(2)).toBe('west');
+    expect(getWindKey(3)).toBe('north');
+    expect(getWindKey(4)).toBe('east');
+    expect(getWindKey(7)).toBe('north');
   });
 });

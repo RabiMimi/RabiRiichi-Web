@@ -81,3 +81,9 @@ export function prevPlayerSeat(seat: number, playerCount: number): number {
   if (playerCount <= 0) return 0;
   return (seat + playerCount - 1) % playerCount;
 }
+
+export function getWindKey(round: number): string {
+  const winds = ['east', 'south', 'west', 'north'];
+  const index = ((round % 4) + 4) % 4;
+  return winds[index] ?? 'east';
+}
