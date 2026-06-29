@@ -36,10 +36,12 @@ import type {
 import { Tile } from './tile.js';
 
 /**
- * Rebuilds a player's agari (win) result from a sync snapshot so the result
+ * Rebuilds a player's end-of-hand result from a sync snapshot so the result
  * screen survives a refresh/reconnect. The snapshot carries the winning tile
- * (`agariTile`) and the score breakdown (`agariScore`). Any agari already in
- * memory (e.g. from the live agari event) takes precedence.
+ * (`agariTile`), the score breakdown (`agariScore`), and the signed settlement
+ * `pointDelta` (covers agari and ryuukyoku). A result is reconstructed when the
+ * player won or had any point change. Any agari already in memory (e.g. from
+ * the live event) takes precedence.
  */
 function reconstructAgariFromSync(
   handState: IPlayerHandStateMsg | null | undefined,
@@ -48,14 +50,15 @@ function reconstructAgariFromSync(
   if (existing?.agari) {
     return existing.agari;
   }
-  if (!handState?.agariTile) {
+  const pointDelta = Number(handState?.pointDelta ?? 0);
+  if (!handState?.agariTile && pointDelta === 0) {
     return null;
   }
   return {
-    scores: handState.agariScore ?? null,
-    incoming: handState.agariTile,
-    gainPoints: 0,
-    losePoints: 0,
+    scores: handState?.agariScore ?? null,
+    incoming: handState?.agariTile ?? null,
+    gainPoints: pointDelta > 0 ? pointDelta : 0,
+    losePoints: pointDelta < 0 ? -pointDelta : 0,
   };
 }
 

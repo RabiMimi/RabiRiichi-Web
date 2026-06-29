@@ -231,6 +231,7 @@ describe('Reducer - Hydration', () => {
               items: [{ Type: 1, Val: 1, Src: 'Riichi' }],
               result: { han: 5, fu: 30 },
             },
+            pointDelta: 7700,
           },
         },
       ],
@@ -243,6 +244,55 @@ describe('Reducer - Hydration', () => {
     expect(p0?.gameState?.agari).not.toBeNull();
     expect(p0?.gameState?.agari?.incoming?.tile).toBe(19);
     expect(p0?.gameState?.agari?.scores?.result?.han).toBe(5);
+    expect(p0?.gameState?.agari?.gainPoints).toBe(7700);
+    expect(p0?.gameState?.agari?.losePoints).toBe(0);
+  });
+
+  it('reconstructs a point loss (no win) from a sync snapshot', () => {
+    // A loser/noten player has a negative pointDelta but no winning tile; the
+    // result screen still shows their point loss after a refresh.
+    const initialState: RoomModel = {
+      id: 1,
+      config: null,
+      info: null,
+      players: [
+        {
+          id: 1001,
+          nickname: 'Alice',
+          status: UserStatus.USER_STATUS_PLAYING,
+          seat: 0,
+          gameState: null,
+        },
+      ],
+    };
+
+    const snapshot: IGameStateMsg = {
+      config: null,
+      info: { round: 0, dealer: 0, honba: 0, riichiStick: 0, currentPlayer: 0 },
+      wall: { doras: [], remaining: 0, rinshanRemaining: 0 },
+      players: [
+        {
+          id: 0,
+          points: 17300,
+          hand: {
+            freeTiles: [],
+            called: [],
+            discarded: [],
+            jun: 0,
+            pointDelta: -7700,
+          },
+        },
+      ],
+      currentPlayer: 0,
+    };
+
+    const nextState = hydrateFromGameState(initialState, snapshot);
+    const p0 = nextState.players.find((p) => p.id === 1001);
+    expect(p0?.gameState?.agari).not.toBeNull();
+    expect(p0?.gameState?.agari?.incoming).toBeNull();
+    expect(p0?.gameState?.agari?.scores).toBeNull();
+    expect(p0?.gameState?.agari?.losePoints).toBe(7700);
+    expect(p0?.gameState?.agari?.gainPoints).toBe(0);
   });
 
   it('leaves agari null when the snapshot has no win', () => {
