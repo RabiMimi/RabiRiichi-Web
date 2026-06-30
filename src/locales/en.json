@@ -85,6 +85,8 @@
     "seat": "Seat: {{seat}}",
     "seatAssigning": "Assigning...",
     "updating": "Updating...",
+    "emptySeat": "Empty Seat",
+    "addAi": "Add AI",
     "status": {
       "ready": "Ready",
       "waiting": "Waiting",
@@ -109,6 +111,8 @@
     "gameInfo": "Game Info",
     "activePlayer": "Active Player",
     "turnJun": "Turn (Jun)",
+    "exitGame": "Exit Game",
+    "confirmExit": "Are you sure you want to exit the game?",
     "allowedYakus": "Allowed Yakus",
     "startingYama": "Starting Yama",
     "timerLabel": "Your Turn",
@@ -268,5 +272,11 @@
     "Tsuuiisou": "All Honors",
     "IshiueSannen": "Four Years on a Stone",
     "HelloWorld": "Hello World"
+  },
+  "ai": {
+    "type": {
+      "AI_TYPE_NONE": "",
+      "AI_TYPE_DUMMY": "Dummy AI"
+    }
   }
 }

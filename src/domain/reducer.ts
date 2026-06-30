@@ -1,4 +1,4 @@
-import { UserStatus, FuritenType, TileSource } from '../proto/index.js';
+import { UserStatus, FuritenType, TileSource, AiType } from '../proto/index.js';
 import type {
   IGameStateMsg,
   IEventMsg,
@@ -62,6 +62,7 @@ export function hydrateFromGameState(
       status: UserStatus.USER_STATUS_PLAYING,
       seat: sp.id ?? 0,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     }));
   }
 
@@ -911,6 +912,7 @@ export function applyRoomState(
       nickname: p.nickname ?? '',
       status: p.status ?? 0,
       gameState: existingPlayer?.gameState ?? null,
+      aiType: p.aiType ?? AiType.AI_TYPE_NONE,
     };
     if (p.seat !== null && p.seat !== undefined) {
       player.seat = p.seat;

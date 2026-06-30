@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { useRoom, useSelf } from '../state/store';
-import { UserStatus } from '../proto';
+import { UserStatus, AiType } from '../proto';
 import { pollUntil } from '../lib';
 import './ui.css';
 
@@ -20,6 +20,37 @@ export function RoomScreen(): React.JSX.Element | null {
   // Find our own player object in the room to check our status
   const myPlayer = room.players.find((p) => p.id === currentUser.id);
   const isReady = myPlayer?.status === UserStatus.USER_STATUS_READY;
+
+  const humanPlayers = room.players.filter(
+    (p) => p.aiType === AiType.AI_TYPE_NONE,
+  );
+  const sortedHumans = [...humanPlayers].sort(
+    (a, b) => (a.seat ?? 0) - (b.seat ?? 0),
+  );
+  const isOwner =
+    sortedHumans.length > 0 && sortedHumans[0]?.id === currentUser.id;
+
+  const maxPlayers = room.config?.playerCount ?? 4;
+  const seats = Array.from({ length: maxPlayers }, (_, index) => {
+    return room.players.find((p) => p.seat === index);
+  });
+  const firstEmptySeatIndex = seats.findIndex((p) => p === undefined);
+
+  const handleAddAi = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await rabiriichi.addAi(AiType.AI_TYPE_DUMMY);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add AI');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onAddAi = () => {
+    void handleAddAi();
+  };
 
   const handleToggleReady = async () => {
     setError(null);
@@ -89,37 +120,72 @@ export function RoomScreen(): React.JSX.Element | null {
         {error && <div className="ui-error">{error}</div>}
 
         <div className="player-list">
-          {room.players.map((player) => {
-            const playerIsReady =
-              player.status === UserStatus.USER_STATUS_READY;
-            const isMe = player.id === currentUser.id;
-            return (
-              <div
-                key={player.id}
-                className={`player-card ${isMe ? 'is-me' : ''}`}
-              >
-                {renderAvatar(player.nickname)}
-                <div className="player-details">
-                  <div className="player-name">
-                    {player.nickname} {isMe && `(${t('lobby.you')})`}
-                  </div>
-                  <div className="player-seat">
-                    {player.seat !== undefined
-                      ? t('room.seat', { seat: player.seat })
-                      : t('room.seatAssigning')}
-                  </div>
-                </div>
+          {seats.map((player, index) => {
+            if (player) {
+              const playerIsReady =
+                player.status === UserStatus.USER_STATUS_READY;
+              const isMe = player.id === currentUser.id;
+              return (
                 <div
-                  className={`player-status-badge ${
-                    playerIsReady ? 'ready' : 'waiting'
+                  key={player.id}
+                  className={`player-card ${isMe ? 'is-me' : ''} ${
+                    player.aiType !== AiType.AI_TYPE_NONE ? 'is-ai' : ''
                   }`}
                 >
-                  {playerIsReady
-                    ? t('room.status.ready')
-                    : t('room.status.waiting')}
+                  {renderAvatar(player.nickname)}
+                  <div className="player-details">
+                    <div className="player-name">
+                      {player.nickname} {isMe && `(${t('lobby.you')})`}
+                      {player.aiType !== AiType.AI_TYPE_NONE && (
+                        <span
+                          className="ai-badge-text"
+                          title={t(`ai.type.${player.aiType}`)}
+                        >
+                          (AI)
+                        </span>
+                      )}
+                    </div>
+                    <div className="player-seat">
+                      {t('room.seat', { seat: index })}
+                    </div>
+                  </div>
+                  <div
+                    className={`player-status-badge ${
+                      playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
+                        ? 'ready'
+                        : 'waiting'
+                    }`}
+                  >
+                    {playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
+                      ? t('room.status.ready')
+                      : t('room.status.waiting')}
+                  </div>
                 </div>
-              </div>
-            );
+              );
+            } else {
+              return (
+                <div key={`empty-${index}`} className="player-card empty-seat">
+                  <div className="player-avatar-placeholder empty">?</div>
+                  <div className="player-details">
+                    <div className="player-name empty-text">
+                      {t('room.emptySeat')}
+                    </div>
+                    <div className="player-seat">
+                      {t('room.seat', { seat: index })}
+                    </div>
+                  </div>
+                  {isOwner && index === firstEmptySeatIndex && (
+                    <button
+                      className="ui-button mini-button add-ai-btn"
+                      onClick={onAddAi}
+                      disabled={isLoading}
+                    >
+                      {t('room.addAi')}
+                    </button>
+                  )}
+                </div>
+              );
+            }
           })}
         </div>
 

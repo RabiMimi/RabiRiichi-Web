@@ -9,6 +9,8 @@ import {
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { rabiriichi } from '../net/client';
+import { UserStatus } from '../proto';
+import { pollUntil } from '../lib';
 import { Tile } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
@@ -83,6 +85,44 @@ export function GamePlayHUD(): React.JSX.Element | null {
   const currentInquiry = useCurrentInquiry();
 
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  const handleExitGame = async () => {
+    if (isExiting) return;
+    if (!window.confirm(t('hud.confirmExit'))) {
+      return;
+    }
+
+    setIsExiting(true);
+    try {
+      await rabiriichi.updateRoom(UserStatus.USER_STATUS_NONE);
+
+      const success = await pollUntil(
+        async () => {
+          await rabiriichi.refreshMyInfo();
+          return rabiriichi.self?.status === UserStatus.USER_STATUS_NONE;
+        },
+        { tries: 10, delayMs: 500 },
+      );
+
+      if (!success) {
+        throw new Error('Failed to exit game (timeout)');
+      }
+    } catch (err) {
+      console.error('Failed to exit game:', err);
+      alert(
+        t('room.leave') +
+          ' failed: ' +
+          (err instanceof Error ? err.message : String(err)),
+      );
+    } finally {
+      setIsExiting(false);
+    }
+  };
+
+  const onExitGame = () => {
+    void handleExitGame();
+  };
 
   if (!room?.info || !currentUser) {
     return null;
@@ -142,28 +182,54 @@ export function GamePlayHUD(): React.JSX.Element | null {
           </select>
         </div>
 
-        <button
-          type="button"
-          className="info-icon-btn"
-          onClick={() => setIsInfoOpen(true)}
-          title={t('hud.gameInfo')}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="hud-buttons-row">
+          <button
+            type="button"
+            className="info-icon-btn"
+            onClick={() => setIsInfoOpen(true)}
+            title={t('hud.gameInfo')}
           >
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            className="info-icon-btn exit-btn"
+            onClick={onExitGame}
+            disabled={isExiting}
+            title={t('hud.exitGame')}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Fancy Turn Countdown (visible when player has a pending action inquiry) */}

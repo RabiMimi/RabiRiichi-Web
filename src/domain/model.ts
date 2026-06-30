@@ -5,6 +5,7 @@ import type {
   IGameTileMsg,
   IScoreStorageMsg,
   IMenLikeMsg,
+  AiType,
 } from '../proto/index.js';
 
 export interface PlayerAgariState {
@@ -36,6 +37,7 @@ export interface PlayerModel {
   status: UserStatus;
   seat?: number;
   gameState: PlayerGameState | null;
+  aiType: AiType;
 }
 
 export interface GameInfo {

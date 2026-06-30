@@ -4,7 +4,7 @@ import type { ActiveInquiry } from '../net/client';
 import { testStore } from './store';
 import type { RoomModel, PlayerModel } from '../domain/model';
 import { MockWebSocket } from '../transport/mockWebSocket';
-import { ClientMessageDto, ServerMessageDto } from '../proto';
+import { ClientMessageDto, ServerMessageDto, AiType } from '../proto';
 import type { IServerMessageDto } from '../proto';
 import type { ActionOption } from '../domain/inquiry';
 import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
@@ -159,6 +159,7 @@ describe('RabiRiichi Store', () => {
       nickname: 'Test',
       status: 1,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     };
     rabiriichi.self = mockSelf;
     rabiriichi.onChange.emit();

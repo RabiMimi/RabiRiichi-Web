@@ -9,7 +9,12 @@ import {
 } from 'vitest';
 import { RabiRiichiClient, initRabiRiichi, rabiriichi } from './client';
 import { MockWebSocket } from '../transport/mockWebSocket';
-import { ClientMessageDto, ServerMessageDto, UserStatus } from '../proto';
+import {
+  ClientMessageDto,
+  ServerMessageDto,
+  UserStatus,
+  AiType,
+} from '../proto';
 import { TILE_SET_PRESETS } from '../domain/tilesets';
 import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
 
@@ -180,6 +185,7 @@ describe('RabiRiichiClient', () => {
       nickname: 'TestUser',
       status: 1,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     });
 
     expect(setItemMock).toHaveBeenCalledWith(
@@ -764,6 +770,7 @@ describe('RabiRiichiClient', () => {
                 }
               : null,
           },
+          aiType: AiType.AI_TYPE_NONE,
         },
       ],
     };

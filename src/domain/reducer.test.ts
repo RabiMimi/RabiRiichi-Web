@@ -12,6 +12,7 @@ import {
   UserStatus,
   FuritenType,
   TileSource,
+  AiType,
   type IGameStateMsg,
   type IGameTileMsg,
   type IMenLikeMsg,
@@ -126,6 +127,7 @@ describe('Reducer - Hydration', () => {
           status: UserStatus.USER_STATUS_READY,
           seat: 0,
           gameState: null,
+          aiType: AiType.AI_TYPE_NONE,
         },
         {
           id: 1002,
@@ -133,6 +135,7 @@ describe('Reducer - Hydration', () => {
           status: UserStatus.USER_STATUS_READY,
           seat: 1,
           gameState: null,
+          aiType: AiType.AI_TYPE_NONE,
         },
       ],
     };
@@ -234,6 +237,7 @@ function createInitializedRoom(): RoomModel {
           },
           agari: null,
         },
+        aiType: AiType.AI_TYPE_NONE,
       },
       {
         id: 102,
@@ -253,6 +257,7 @@ function createInitializedRoom(): RoomModel {
           },
           agari: null,
         },
+        aiType: AiType.AI_TYPE_NONE,
       },
     ],
   };
@@ -1102,6 +1107,7 @@ describe('Reducer - Replay coverage (F3)', () => {
         status: UserStatus.USER_STATUS_PLAYING,
         seat,
         gameState: null,
+        aiType: AiType.AI_TYPE_NONE,
       })),
     };
 

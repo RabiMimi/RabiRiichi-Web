@@ -1189,6 +1189,17 @@
   transform: scale(1.05);
 }
 
+.hud-buttons-row {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.exit-btn:hover {
+  border-color: #ff3333;
+  color: #ff3333;
+}
+
 .game-info-modal-overlay {
   position: fixed;
   top: 0;
@@ -1524,4 +1535,103 @@
 .text-badge {
   color: #ffaa22;
   font-weight: bold;
+}
+
+.player-card.empty-seat {
+  border-style: dashed;
+  background-color: #111;
+  opacity: 0.6;
+}
+
+.player-avatar-placeholder.empty {
+  color: #888;
+  border-color: #444;
+}
+
+.player-name.empty-text {
+  color: #888;
+  font-style: italic;
+}
+
+.ai-badge-text {
+  background-color: #3f51b5;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.add-ai-btn {
+  margin-left: auto;
+}
+
+.mini-button {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  min-width: auto;
+}
+
+.player-plate-3d {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+  font-family: sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+
+.ai-indicator-gemini {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4285f4, #9b51e0, #e91e63, #f2994a);
+  background-size: 200% 200%;
+  animation: gemini-gradient 3s ease infinite;
+  box-shadow: 0 0 6px rgba(155, 81, 224, 0.6);
+  cursor: help;
+  position: relative;
+}
+
+@keyframes gemini-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.ai-indicator-gemini::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  background-color: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid #444;
+  z-index: 1000;
+}
+
+.ai-indicator-gemini:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-8px);
 }

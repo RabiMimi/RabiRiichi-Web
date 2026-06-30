@@ -1,7 +1,13 @@
 import { Logger, NetworkError, AuthError, RabiEvent } from '../lib';
 import { RabiSocket } from '../transport/rabiSocket';
-import { createUser, getUserInfo, createRoom, joinRoom } from './requests';
-import { UserStatus } from '../proto';
+import {
+  createUser,
+  getUserInfo,
+  createRoom,
+  joinRoom,
+  addAi,
+} from './requests';
+import { UserStatus, AiType } from '../proto';
 import type {
   IUserInfoResponse,
   IEventMsg,
@@ -238,6 +244,7 @@ export class RabiRiichiClient {
       nickname: userInfo.nickname ?? '',
       status: userInfo.status ?? 0,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     };
     if (userInfo.room) {
       this.handleRoomState(userInfo.room);
@@ -373,6 +380,7 @@ export class RabiRiichiClient {
       nickname: nickname,
       status: UserStatus.USER_STATUS_NONE,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     };
     this.accessToken = resp.accessToken ?? null;
     await this.connectWS();
@@ -399,6 +407,15 @@ export class RabiRiichiClient {
     this.logger.info(`Joining room: ${roomId}`);
     const client = await this.getWSClient(true);
     const resp = await joinRoom(client, roomId);
+    if (resp.state) {
+      this.handleRoomState(resp.state);
+    }
+  }
+
+  public async addAi(type: AiType): Promise<void> {
+    this.logger.info(`Adding AI to room: ${type}`);
+    const client = await this.getWSClient(true);
+    const resp = await addAi(client, type);
     if (resp.state) {
       this.handleRoomState(resp.state);
     }

@@ -60,6 +60,8 @@ import {
   AgariOption,
   ScoringOption,
   PointsDeductionPolicy,
+  AiType,
+  AddAiRequest,
 } from '../generated/protos.js';
 
 export {
@@ -124,6 +126,8 @@ export {
   AgariOption,
   ScoringOption,
   PointsDeductionPolicy,
+  AiType,
+  AddAiRequest,
 };
 
 export type IEventMsg = EventMsg.$Properties;
@@ -173,3 +177,4 @@ export type IServerResponse = ServerResponse.$Properties;
 export type IServerRoomStateResponse = ServerRoomStateResponse.$Properties;
 export type ICreateRoomRequest = CreateRoomRequest.$Properties;
 export type IGetInfoResponse = GetInfoResponse.$Properties;
+export type IAddAiRequest = AddAiRequest.$Properties;

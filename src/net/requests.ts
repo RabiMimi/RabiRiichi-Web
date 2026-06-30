@@ -6,6 +6,7 @@ import type {
   IServerRoomStateResponse,
   IGameConfigMsg,
   IGetInfoResponse,
+  AiType,
 } from '../proto';
 import { RabiError, ServerError } from '../lib';
 import { type RabiSocket } from '../transport/rabiSocket';
@@ -101,5 +102,22 @@ export function getInfo(ws: RabiSocket): Promise<IGetInfoResponse> {
       },
     },
     (resp) => resp.getInfo,
+  );
+}
+
+export function addAi(
+  ws: RabiSocket,
+  type: AiType,
+): Promise<IServerRoomStateResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        addAi: {
+          type,
+        },
+      },
+    },
+    (resp) => resp.roomState,
   );
 }

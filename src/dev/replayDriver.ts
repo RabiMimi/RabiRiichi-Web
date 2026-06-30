@@ -1,6 +1,6 @@
 import { rabiriichi } from '../net/client';
 import { getEventsFromReplay, createInitialRoomFromReplay } from './replay';
-import { UserStatus, type IEventMsg } from '../proto';
+import { UserStatus, AiType, type IEventMsg } from '../proto';
 import { Logger } from '../lib';
 
 const logger = new Logger('ReplayDriver');
@@ -55,6 +55,7 @@ export async function startReplay(): Promise<void> {
     nickname: `Player ${seat}`,
     status: UserStatus.USER_STATUS_PLAYING,
     gameState: null,
+    aiType: AiType.AI_TYPE_NONE,
   });
 
   const initialRoom = createInitialRoomFromReplay(replayData);

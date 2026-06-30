@@ -1,4 +1,4 @@
-import { GameLogMsg, UserStatus } from '../proto/index.js';
+import { GameLogMsg, UserStatus, AiType } from '../proto/index.js';
 import type { IEventMsg, IGameLogMsg } from '../proto/index.js';
 import type { RoomModel } from '../domain/model.js';
 
@@ -36,6 +36,7 @@ export function createInitialRoomFromReplay(replayJson: unknown): RoomModel {
     status: UserStatus.USER_STATUS_PLAYING,
     seat: i,
     gameState: null,
+    aiType: AiType.AI_TYPE_NONE,
   }));
 
   return {

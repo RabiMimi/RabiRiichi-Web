@@ -7,7 +7,7 @@ import {
   getWindKey,
   type PlayerModel,
 } from './model';
-import { UserStatus } from '../proto';
+import { UserStatus, AiType } from '../proto';
 
 describe('Model seat math', () => {
   describe('2-player config', () => {
@@ -58,6 +58,7 @@ describe('Model lookups', () => {
       status: UserStatus.USER_STATUS_PLAYING,
       seat: 0,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     },
     {
       id: 102,
@@ -65,6 +66,7 @@ describe('Model lookups', () => {
       status: UserStatus.USER_STATUS_PLAYING,
       seat: 1,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     },
   ];
 
