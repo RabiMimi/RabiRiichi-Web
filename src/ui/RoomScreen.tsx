@@ -33,7 +33,7 @@ export function RoomScreen(): React.JSX.Element | null {
 
   const maxPlayers = room.config?.playerCount ?? 4;
   const seats = Array.from({ length: maxPlayers }, (_, index) => {
-    return room.players.find((p) => p.seat === index);
+    return room.players[index];
   });
   const firstEmptySeatIndex = seats.findIndex((p) => p === undefined);
 

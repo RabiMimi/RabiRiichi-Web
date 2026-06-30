@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import type { YakuInfo } from '../domain/yakus';
@@ -21,25 +22,27 @@ export function YakuModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="yaku-modal-overlay">
       <div className="yaku-modal-content">
-        <h3>{t('lobby.configureYakus')}</h3>
-        <div className="yaku-modal-actions">
-          <button
-            type="button"
-            className="ui-button"
-            onClick={() => onChange(new Set(availableYakus.map((y) => y.name)))}
-          >
-            {t('lobby.selectAll')}
-          </button>
-          <button
-            type="button"
-            className="ui-button"
-            onClick={() => onChange(new Set())}
-          >
-            {t('lobby.selectNone')}
-          </button>
+        <div className="yaku-modal-header-row">
+          <h3>{t('lobby.configureYakus')}</h3>
+          <div className="yaku-modal-actions">
+            <button
+              type="button"
+              className="ui-button"
+              onClick={() => onChange(new Set(availableYakus.map((y) => y.name)))}
+            >
+              {t('lobby.selectAll')}
+            </button>
+            <button
+              type="button"
+              className="ui-button"
+              onClick={() => onChange(new Set())}
+            >
+              {t('lobby.selectNone')}
+            </button>
+          </div>
         </div>
         <div className="yaku-list-container">
           {['1han', '2han', '3han', '6han', 'yakuman', 'other'].map((group) => {
@@ -85,6 +88,7 @@ export function YakuModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

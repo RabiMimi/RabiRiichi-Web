@@ -89,6 +89,19 @@ export class RabiRiichiClient {
   public animationSpeed = 1.0;
   public isWaitingForProceed = false;
 
+  public selectedTileTraceId: number | null = null;
+  public isCameraLocked = true;
+
+  public selectTile(traceId: number | null): void {
+    this.selectedTileTraceId = traceId;
+    this.onChange.emit();
+  }
+
+  public toggleCameraLock(): void {
+    this.isCameraLocked = !this.isCameraLocked;
+    this.onChange.emit();
+  }
+
   public actionTimeout = 0;
   public timerActiveSeat: number | null = null;
   private actionTimerId: ReturnType<typeof setInterval> | null = null;
@@ -274,6 +287,7 @@ export class RabiRiichiClient {
       this.currentInquiry = null;
       this.isRiichiSelectMode = false;
       this.pendingActionOption = null;
+      this.selectedTileTraceId = null;
     }
 
     const configTimeout =
@@ -467,6 +481,7 @@ export class RabiRiichiClient {
       this.currentInquiry = null;
       this.isRiichiSelectMode = false;
       this.pendingActionOption = null;
+      this.selectedTileTraceId = null;
       this.onChange.emit();
     }
   }
@@ -483,6 +498,7 @@ export class RabiRiichiClient {
     this.currentInquiry = null;
     this.isRiichiSelectMode = false;
     this.pendingActionOption = null;
+    this.selectedTileTraceId = null;
     this.clearTimer();
     this.ping = -1;
     this.setConnectionStatus('disconnected');

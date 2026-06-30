@@ -1,4 +1,4 @@
-import { UserStatus, FuritenType, TileSource, AiType } from '../proto/index.js';
+import { UserStatus, FuritenType, TileSource, AiType, ScoringType } from '../proto/index.js';
 import type {
   IGameStateMsg,
   IEventMsg,
@@ -786,16 +786,43 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
   // Initialize agari delta state to trigger Draw result panel.
   // The actual points and delta values are updated by the subsequent applyScoreEvent.
   const updatedPlayers = state.players.map((p): PlayerModel => {
-    if (!p.gameState) return p;
+    if (!p.gameState || p.seat === undefined) return p;
+
+    const isNagashi = _ev.endGameRyuukyoku?.nagashiManganPlayers?.includes(p.seat) ?? false;
+
+    let agari = p.gameState.agari;
+    if (isNagashi) {
+      agari = {
+        gainPoints: agari?.gainPoints ?? 0,
+        losePoints: agari?.losePoints ?? 0,
+        isNagashi: true,
+        scores: {
+          items: [
+            {
+              Type: ScoringType.SCORING_TYPE_HAN,
+              Val: 5,
+              Src: 'NagashiMangan',
+            },
+          ],
+          result: {
+            han: 5,
+            fu: 30,
+            yakuman: 0,
+          },
+        },
+      };
+    } else {
+      agari = {
+        gainPoints: agari?.gainPoints ?? 0,
+        losePoints: agari?.losePoints ?? 0,
+      };
+    }
 
     return {
       ...p,
       gameState: {
         ...p.gameState,
-        agari: {
-          gainPoints: p.gameState.agari?.gainPoints ?? 0,
-          losePoints: p.gameState.agari?.losePoints ?? 0,
-        },
+        agari,
       },
     };
   });

@@ -113,6 +113,10 @@
     "turnJun": "Turn (Jun)",
     "exitGame": "Exit Game",
     "confirmExit": "Are you sure you want to exit the game?",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "lockCamera": "Lock Camera View",
+    "unlockCamera": "Unlock Camera View",
     "allowedYakus": "Allowed Yakus",
     "startingYama": "Starting Yama",
     "timerLabel": "Your Turn",
@@ -135,6 +139,7 @@
     "agari": "Agari",
     "dora": "Dora Indicator",
     "uradora": "Ura Dora Indicator",
+    "mangan": "Mangan",
     "winner": "Winner",
     "scoreChanges": "Score Changes",
     "confirm": "Confirm",
@@ -273,12 +278,16 @@
     "Tenhou": "Heavenly Hand",
     "Tsuuiisou": "All Honors",
     "IshiueSannen": "Four Years on a Stone",
-    "HelloWorld": "Hello World"
+    "HelloWorld": "Hello World",
+    "NagashiMangan": "Nagashi Mangan"
   },
   "ai": {
     "type": {
       "AI_TYPE_NONE": "",
       "AI_TYPE_DUMMY": "Drooling Rabbit"
     }
+  },
+  "orientation": {
+    "rotatePrompt": "Please rotate your device to landscape to play!"
   }
 }

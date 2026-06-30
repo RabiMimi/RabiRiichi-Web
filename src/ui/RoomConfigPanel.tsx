@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DEFAULT_ACTION_TIMEOUT } from '../domain/constants';
 import type { IGameConfigMsg } from '../proto';
 import { TILE_SET_PRESETS, type TileSetPresetName } from '../domain/tilesets';
-import { type YakuInfo, buildAllowedYakusPayload } from '../domain/yakus';
+import { buildAllowedYakusPayload } from '../domain/yakus';
 import { useAvailableYakus } from '../state/store';
 import { YakuModal } from './YakuModal';
 import { PolicyCheckboxGroup } from './PolicyCheckboxGroup';
@@ -239,9 +239,6 @@ export function RoomConfigPanel({
         validateUpperPoints={validateUpperPoints}
         tileSetPreset={tileSetPreset}
         setTileSetPreset={setTileSetPreset}
-        allowedYakus={allowedYakus}
-        setShowYakuModal={setShowYakuModal}
-        availableYakus={availableYakus}
       />
 
       {/* Collapsible Advanced Policy Settings */}
@@ -284,14 +281,30 @@ export function RoomConfigPanel({
         />
       )}
 
-      <button
-        onClick={handleCreateClick}
-        className="ui-button primary-button"
-        disabled={isLoading || isFormInvalid}
-        style={{ marginTop: '16px', width: '100%' }}
-      >
-        {t('lobby.createRoom')}
-      </button>
+      <div className="room-config-actions" style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+        <button
+          type="button"
+          onClick={() => setShowYakuModal(true)}
+          className="ui-button secondary-button"
+          style={{ flex: 1, whiteSpace: 'nowrap' }}
+          disabled={isLoading}
+        >
+          {t('lobby.configureYakus')} (
+          {allowedYakus.size === availableYakus.length
+            ? t('lobby.allYakus')
+            : `${allowedYakus.size} ${t('lobby.yakus')}`}
+          )
+        </button>
+
+        <button
+          onClick={handleCreateClick}
+          className="ui-button primary-button"
+          disabled={isLoading || isFormInvalid}
+          style={{ flex: 1 }}
+        >
+          {t('lobby.createRoom')}
+        </button>
+      </div>
 
       <YakuModal
         isOpen={showYakuModal}
@@ -520,9 +533,6 @@ interface BasicSettingsGridProps {
   validateUpperPoints: (v: string) => void;
   tileSetPreset: TileSetPresetName;
   setTileSetPreset: (v: TileSetPresetName) => void;
-  allowedYakus: Set<string>;
-  setShowYakuModal: (v: boolean) => void;
-  availableYakus: YakuInfo[];
 }
 
 function BasicSettingsGrid({
@@ -553,28 +563,17 @@ function BasicSettingsGrid({
   validateUpperPoints,
   tileSetPreset,
   setTileSetPreset,
-  allowedYakus,
-  setShowYakuModal,
-  availableYakus,
 }: BasicSettingsGridProps) {
   const { t } = useTranslation();
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '8px 12px',
-        marginBottom: '10px',
-      }}
-    >
-      <div className="form-group" style={{ margin: 0 }}>
+    <div className="basic-settings-grid">
+      <div className="form-group-inline">
         <label htmlFor="player-count">{t('lobby.players')}</label>
         <select
           id="player-count"
           value={playerCount}
           onChange={(e) => setPlayerCount(Number(e.target.value))}
           disabled={isLoading}
-          style={{ width: '100%', boxSizing: 'border-box' }}
         >
           <option value={2}>{t('playersOpt.2')}</option>
           <option value={3}>{t('playersOpt.3')}</option>
@@ -582,111 +581,102 @@ function BasicSettingsGrid({
         </select>
       </div>
 
-      <div className="form-group" style={{ margin: 0 }}>
+      <div className="form-group-inline">
         <label htmlFor="total-round">{t('lobby.rounds')}</label>
         <select
           id="total-round"
           value={totalRound}
           onChange={(e) => setTotalRound(Number(e.target.value))}
           disabled={isLoading}
-          style={{ width: '100%', boxSizing: 'border-box' }}
         >
           <option value={1}>{t('roundsOpt.1')}</option>
           <option value={2}>{t('roundsOpt.2')}</option>
         </select>
       </div>
 
-      <div className="form-group" style={{ margin: 0 }}>
-        <label htmlFor="min-han">{t('lobby.minHan')}</label>
-        <input
-          id="min-han"
-          type="text"
-          value={minHanInput}
-          onChange={(e) => {
-            const val = e.target.value.replace(/\D/g, '');
-            setMinHanInput(val);
-            validateMinHan(val);
-          }}
-          disabled={isLoading}
-          placeholder="1"
-          style={{ width: '100%', boxSizing: 'border-box' }}
-        />
-        {minHanError && (
-          <span className="field-error" style={{ fontSize: '0.75rem' }}>
-            {minHanError}
-          </span>
-        )}
+      <div className="form-group-inline-wrapper">
+        <div className="form-group-inline">
+          <label htmlFor="min-han">{t('lobby.minHan')}</label>
+          <input
+            id="min-han"
+            type="text"
+            value={minHanInput}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '');
+              setMinHanInput(val);
+              validateMinHan(val);
+            }}
+            disabled={isLoading}
+            placeholder="1"
+          />
+        </div>
+        {minHanError && <span className="field-error">{minHanError}</span>}
       </div>
 
-      <div className="form-group" style={{ margin: 0 }}>
-        <label htmlFor="action-timeout">{t('lobby.actionTimeout')}</label>
-        <input
-          id="action-timeout"
-          type="text"
-          value={actionTimeoutInput}
-          onChange={(e) => {
-            const val = e.target.value.replace(/[^\d.]/g, '');
-            setActionTimeoutInput(val);
-            validateTimeout(val);
-          }}
-          disabled={isLoading}
-          placeholder={t('lobby.defaultPlaceholder', {
-            value: DEFAULT_ACTION_TIMEOUT,
-          })}
-          style={{ width: '100%', boxSizing: 'border-box' }}
-        />
-        {timeoutError && (
-          <span className="field-error" style={{ fontSize: '0.75rem' }}>
-            {timeoutError}
-          </span>
-        )}
+      <div className="form-group-inline-wrapper">
+        <div className="form-group-inline">
+          <label htmlFor="action-timeout">{t('lobby.actionTimeout')}</label>
+          <input
+            id="action-timeout"
+            type="text"
+            value={actionTimeoutInput}
+            onChange={(e) => {
+              const val = e.target.value.replace(/[^\d.]/g, '');
+              setActionTimeoutInput(val);
+              validateTimeout(val);
+            }}
+            disabled={isLoading}
+            placeholder={t('lobby.defaultPlaceholder', {
+              value: DEFAULT_ACTION_TIMEOUT,
+            })}
+          />
+        </div>
+        {timeoutError && <span className="field-error">{timeoutError}</span>}
       </div>
 
-      <div className="form-group" style={{ margin: 0 }}>
-        <label htmlFor="initial-points">{t('lobby.initialPoints')}</label>
-        <input
-          id="initial-points"
-          type="text"
-          value={initialPointsInput}
-          onChange={(e) => {
-            const val = e.target.value.replace(/\D/g, '');
-            setInitialPointsInput(val);
-            validateInitialPoints(val);
-          }}
-          disabled={isLoading}
-          placeholder="25000"
-          style={{ width: '100%', boxSizing: 'border-box' }}
-        />
+      <div className="form-group-inline-wrapper">
+        <div className="form-group-inline">
+          <label htmlFor="initial-points">{t('lobby.initialPoints')}</label>
+          <input
+            id="initial-points"
+            type="text"
+            value={initialPointsInput}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '');
+              setInitialPointsInput(val);
+              validateInitialPoints(val);
+            }}
+            disabled={isLoading}
+            placeholder="25000"
+          />
+        </div>
         {initialPointsError && (
-          <span className="field-error" style={{ fontSize: '0.75rem' }}>
-            {initialPointsError}
-          </span>
+          <span className="field-error">{initialPointsError}</span>
         )}
       </div>
 
-      <div className="form-group" style={{ margin: 0 }}>
-        <label htmlFor="finish-points">{t('lobby.finishPoints')}</label>
-        <input
-          id="finish-points"
-          type="text"
-          value={finishPointsInput}
-          onChange={(e) => {
-            const val = e.target.value.replace(/\D/g, '');
-            setFinishPointsInput(val);
-            validateFinishPoints(val);
-          }}
-          disabled={isLoading}
-          placeholder="30000"
-          style={{ width: '100%', boxSizing: 'border-box' }}
-        />
+      <div className="form-group-inline-wrapper">
+        <div className="form-group-inline">
+          <label htmlFor="finish-points">{t('lobby.finishPoints')}</label>
+          <input
+            id="finish-points"
+            type="text"
+            value={finishPointsInput}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '');
+              setFinishPointsInput(val);
+              validateFinishPoints(val);
+            }}
+            disabled={isLoading}
+            placeholder="30000"
+          />
+        </div>
         {finishPointsError && (
-          <span className="field-error" style={{ fontSize: '0.75rem' }}>
-            {finishPointsError}
-          </span>
+          <span className="field-error">{finishPointsError}</span>
         )}
       </div>
 
-      <div className="form-group" style={{ margin: 0 }}>
+      <div className="form-group-inline">
         <label htmlFor="tile-set">{t('lobby.tileSet')}</label>
         <select
           id="tile-set"
@@ -695,7 +685,6 @@ function BasicSettingsGrid({
             setTileSetPreset(e.target.value as TileSetPresetName)
           }
           disabled={isLoading}
-          style={{ width: '100%', boxSizing: 'border-box' }}
         >
           <option value="Regular">{t('tileSetOpt.regular')}</option>
           <option value="Sanma">{t('tileSetOpt.sanma')}</option>
@@ -704,51 +693,25 @@ function BasicSettingsGrid({
         </select>
       </div>
 
-      <div className="form-group" style={{ margin: 0 }}>
-        <label htmlFor="upper-points">{t('lobby.upperPoints')}</label>
-        <input
-          id="upper-points"
-          type="text"
-          value={upperPointsInput}
-          onChange={(e) => {
-            const val = e.target.value.replace(/\D/g, '');
-            setUpperPointsInput(val);
-            validateUpperPoints(val);
-          }}
-          disabled={isLoading}
-          placeholder="1000000"
-          style={{ width: '100%', boxSizing: 'border-box' }}
-        />
+      <div className="form-group-inline-wrapper">
+        <div className="form-group-inline">
+          <label htmlFor="upper-points">{t('lobby.upperPoints')}</label>
+          <input
+            id="upper-points"
+            type="text"
+            value={upperPointsInput}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '');
+              setUpperPointsInput(val);
+              validateUpperPoints(val);
+            }}
+            disabled={isLoading}
+            placeholder="1000000"
+          />
+        </div>
         {upperPointsError && (
-          <span className="field-error" style={{ fontSize: '0.75rem' }}>
-            {upperPointsError}
-          </span>
+          <span className="field-error">{upperPointsError}</span>
         )}
-      </div>
-
-      <div
-        className="form-group"
-        style={{
-          margin: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-          gridColumn: '1 / span 2',
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setShowYakuModal(true)}
-          className="ui-button secondary-button"
-          style={{ width: '100%', height: '36px', padding: 0 }}
-          disabled={isLoading}
-        >
-          {t('lobby.configureYakus')} (
-          {allowedYakus.size === availableYakus.length
-            ? t('lobby.allYakus')
-            : `${allowedYakus.size} ${t('lobby.yakus')}`}
-          )
-        </button>
       </div>
     </div>
   );
@@ -799,20 +762,7 @@ function AdvancedSettingsGrid({
 }: AdvancedSettingsGridProps) {
   const { t } = useTranslation();
   return (
-    <div
-      className="advanced-settings-section"
-      style={{
-        maxHeight: '400px',
-        overflowY: 'auto',
-        paddingTop: '12px',
-        borderTop: '1px solid #333',
-        marginTop: '10px',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '12px 16px',
-        textAlign: 'left',
-      }}
-    >
+    <div className="advanced-settings-section">
       <PolicyCheckboxGroup
         title={t('advanced.renchanPolicy')}
         options={RENCHAN_POLICIES}

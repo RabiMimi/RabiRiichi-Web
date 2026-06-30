@@ -113,6 +113,10 @@
     "turnJun": "当前巡数",
     "exitGame": "退出对局",
     "confirmExit": "确定要退出对局吗？",
+    "confirm": "确定",
+    "cancel": "取消",
+    "lockCamera": "锁定视角",
+    "unlockCamera": "解锁视角",
     "allowedYakus": "启用役种",
     "startingYama": "初始牌山",
     "timerLabel": "出牌倒计时",
@@ -135,6 +139,7 @@
     "agari": "和牌",
     "dora": "宝牌指示牌",
     "uradora": "里宝牌指示牌",
+    "mangan": "满贯",
     "winner": "赢家",
     "scoreChanges": "点数变动",
     "confirm": "确定",
@@ -273,12 +278,16 @@
     "Tenhou": "天和",
     "Tsuuiisou": "字一色",
     "IshiueSannen": "石上三年",
-    "HelloWorld": "你好世界"
+    "HelloWorld": "你好世界",
+    "NagashiMangan": "流局满贯"
   },
   "ai": {
     "type": {
       "AI_TYPE_NONE": "",
       "AI_TYPE_DUMMY": "口水兔"
     }
+  },
+  "orientation": {
+    "rotatePrompt": "请将设备横屏以继续游戏！"
   }
 }

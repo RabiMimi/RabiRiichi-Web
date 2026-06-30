@@ -22,7 +22,7 @@ function PlayerIndicator3D({
 
   return (
     <Html
-      position={[-1.2, 0.15, -0.2]}
+      position={[1.2, 0.15, -0.2]}
       style={{
         pointerEvents: 'auto',
         userSelect: 'none',

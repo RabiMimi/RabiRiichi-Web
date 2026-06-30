@@ -18,6 +18,8 @@ export interface RabiRiichiState {
   actionTimeout: number;
   timerActiveSeat: number | null;
   ping: number;
+  selectedTileTraceId: number | null;
+  isCameraLocked: boolean;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -39,7 +41,9 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.isWaitingForProceed !== rabiriichi.isWaitingForProceed ||
     lastSnapshot.actionTimeout !== rabiriichi.actionTimeout ||
     lastSnapshot.timerActiveSeat !== rabiriichi.timerActiveSeat ||
-    lastSnapshot.ping !== rabiriichi.ping
+    lastSnapshot.ping !== rabiriichi.ping ||
+    lastSnapshot.selectedTileTraceId !== rabiriichi.selectedTileTraceId ||
+    lastSnapshot.isCameraLocked !== rabiriichi.isCameraLocked
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -53,6 +57,8 @@ function getSnapshot(): RabiRiichiState {
       actionTimeout: rabiriichi.actionTimeout,
       timerActiveSeat: rabiriichi.timerActiveSeat,
       ping: rabiriichi.ping,
+      selectedTileTraceId: rabiriichi.selectedTileTraceId,
+      isCameraLocked: rabiriichi.isCameraLocked,
     };
   }
   return lastSnapshot;
@@ -141,6 +147,21 @@ export function useTimerActiveSeat(): number | null {
     () => rabiriichi.timerActiveSeat,
     () => rabiriichi.timerActiveSeat,
   );
+}
+
+const getSelectedTileTraceId = () => rabiriichi.selectedTileTraceId;
+const getIsCameraLocked = () => rabiriichi.isCameraLocked;
+
+export function useSelectedTileTraceId(): number | null {
+  return useSyncExternalStore(
+    subscribe,
+    getSelectedTileTraceId,
+    getSelectedTileTraceId,
+  );
+}
+
+export function useIsCameraLocked(): boolean {
+  return useSyncExternalStore(subscribe, getIsCameraLocked, getIsCameraLocked);
 }
 
 const getAvailableYakus = () => rabiriichi.availableYakus;

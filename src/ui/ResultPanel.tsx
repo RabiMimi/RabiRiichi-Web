@@ -41,13 +41,20 @@ export function ResultPanel(): React.JSX.Element | null {
     return room ? room.players.filter((p) => p.gameState?.agari) : [];
   }, [room]);
 
-  const winner = React.useMemo(() => {
-    return room
-      ? room.players.find((p) => p.gameState?.agari?.scores != null)
-      : undefined;
+  const hasNagashiWinner = React.useMemo(() => {
+    return room?.players.some((p) => p.gameState?.agari?.isNagashi) ?? false;
   }, [room]);
 
-  const isDraw = !winner;
+  const hasNormalWinner = React.useMemo(() => {
+    return (
+      room?.players.some(
+        (p) =>
+          p.gameState?.agari?.scores != null && !p.gameState.agari.isNagashi,
+      ) ?? false
+    );
+  }, [room]);
+
+  const isDraw = !hasNormalWinner;
 
   const proceedAction = React.useMemo(() => {
     return currentInquiry?.mapped.buttons.find(
@@ -103,7 +110,7 @@ export function ResultPanel(): React.JSX.Element | null {
   }, [room?.players]);
 
   const renderDoraIndicators = () => {
-    if (!room?.info) return null;
+    if (isDraw || !room?.info) return null;
 
     const doraCount = room.info.revealedDoraCount;
     const doras = room.info.doras ?? [];
@@ -113,37 +120,39 @@ export function ResultPanel(): React.JSX.Element | null {
 
     return (
       <div className="result-dora-indicators-section">
-        <span className="dora-row-label">{t('result.dora')}</span>
-        <div className="dora-indicator-tiles">
-          {Array.from({ length: 5 }).map((_, idx) => {
-            const tileMsg = doras[idx];
-            const isRevealed = idx < doraCount;
-            if (isRevealed && tileMsg) {
-              const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+        <div className="dora-indicator-row">
+          <span className="dora-row-label">{t('result.dora')}</span>
+          <div className="dora-indicator-tiles">
+            {Array.from({ length: 5 }).map((_, idx) => {
+              const tileMsg = doras[idx];
+              const isRevealed = idx < doraCount;
+              if (isRevealed && tileMsg) {
+                const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+                return (
+                  <img
+                    key={`dora-${idx}`}
+                    src={getTileTexturePath(tileStr)}
+                    alt={tileStr}
+                    className="result-tile-img"
+                  />
+                );
+              }
               return (
                 <img
                   key={`dora-${idx}`}
-                  src={getTileTexturePath(tileStr)}
-                  alt={tileStr}
+                  src={getTileTexturePath('back')}
+                  alt="back"
                   className="result-tile-img"
                 />
               );
-            }
-            return (
-              <img
-                key={`dora-${idx}`}
-                src={getTileTexturePath('back')}
-                alt="back"
-                className="result-tile-img"
-              />
-            );
-          })}
+            })}
+          </div>
         </div>
 
         {/* Uradora Indicator Row */}
         {showUradoras && uradoras.length > 0 && (
-          <>
-            <span className="dora-separator">|</span>
+          <div className="dora-indicator-row">
+            <span className="dora-row-label">{t('result.uradora')}</span>
             <div className="dora-indicator-tiles">
               {Array.from({ length: 5 }).map((_, idx) => {
                 const tileMsg = uradoras[idx];
@@ -169,7 +178,7 @@ export function ResultPanel(): React.JSX.Element | null {
                 );
               })}
             </div>
-          </>
+          </div>
         )}
       </div>
     );
@@ -201,8 +210,16 @@ export function ResultPanel(): React.JSX.Element | null {
     const { items, result } = agari.scores;
     const yakuList = items ?? [];
 
+    const isNagashi = agari.isNagashi ?? false;
+    let badgeText = t('result.winnerBadge');
+    if (isNagashi) {
+      badgeText = t('yaku.NagashiMangan');
+    }
+
     let summaryText = '';
-    if (result) {
+    if (isNagashi) {
+      summaryText = t('result.mangan');
+    } else if (result) {
       if (result.yakuman && result.yakuman > 0) {
         summaryText =
           result.yakuman > 1
@@ -217,9 +234,9 @@ export function ResultPanel(): React.JSX.Element | null {
     const calledMelds = player.gameState?.hand.called ?? [];
 
     return (
-      <div key={player.id} className="winner-details-card">
+      <div key={player.id} className={`winner-details-card ${isNagashi ? 'nagashi-card' : ''}`}>
         <div className="winner-name-row">
-          <span className="winner-badge">{t('result.winnerBadge')}</span>
+          <span className="winner-badge">{badgeText}</span>
           <span className="winner-name">{getPlayerDisplayName(player, t)}</span>
           <span className="winner-summary">{summaryText}</span>
         </div>
@@ -300,7 +317,6 @@ export function ResultPanel(): React.JSX.Element | null {
   const renderScoreChanges = () => {
     return (
       <div className="result-score-changes">
-        <h3>{t('result.scoreChangesTitle')}</h3>
         <div className="score-changes-list">
           {room.players.map((p) => {
             const agari = p.gameState?.agari;
@@ -337,22 +353,24 @@ export function ResultPanel(): React.JSX.Element | null {
     <div className="result-overlay">
       <div className="result-panel">
         <h2 className="result-title">
-          {isDraw ? t('result.draw') : t('result.agari')}
+          {isDraw ? (hasNagashiWinner ? t('yaku.NagashiMangan') : t('result.draw')) : t('result.agari')}
         </h2>
 
         {/* Background art element */}
         <img src={MIMI_PATH} alt="mimi-avatar" className="result-mimi-art" />
 
-        <div className="result-winners-container">
-          {playersWithResult
-            .filter((p) => p.gameState?.agari?.scores != null)
-            .map((w) => renderWinnerDetails(w))}
+        <div className="result-content-scrollable">
+          <div className="result-winners-container">
+            {playersWithResult
+              .filter((p) => p.gameState?.agari?.scores != null)
+              .map((w) => renderWinnerDetails(w))}
+          </div>
+
+          {renderDoraIndicators()}
+
+          {/* Score changes panel */}
+          {renderScoreChanges()}
         </div>
-
-        {renderDoraIndicators()}
-
-        {/* Score changes panel */}
-        {renderScoreChanges()}
 
         {/* Proceed button */}
         <div className="result-actions">

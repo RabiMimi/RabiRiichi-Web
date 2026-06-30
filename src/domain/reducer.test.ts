@@ -939,6 +939,36 @@ describe('Reducer - Events', () => {
     }
   });
 
+  it('should handle ryuukyokuEvent with single or multiple Nagashi Mangan players', () => {
+    const state = createInitializedRoom();
+
+    const eventMsg = {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        endGameRyuukyoku: {
+          remainingPlayers: [0, 1],
+          nagashiManganPlayers: [0, 1],
+          tenpaiPlayers: [],
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    const p1 = nextState.players.find((p) => p.seat === 1);
+
+    expect(p0?.gameState?.agari).not.toBeNull();
+    expect(p0?.gameState?.agari?.isNagashi).toBe(true);
+    expect(p0?.gameState?.agari?.scores?.items?.[0]?.Src).toBe('NagashiMangan');
+    expect(p0?.gameState?.agari?.scores?.items?.[0]?.Val).toBe(5);
+
+    expect(p1?.gameState?.agari).not.toBeNull();
+    expect(p1?.gameState?.agari?.isNagashi).toBe(true);
+    expect(p1?.gameState?.agari?.scores?.items?.[0]?.Src).toBe('NagashiMangan');
+    expect(p1?.gameState?.agari?.scores?.items?.[0]?.Val).toBe(5);
+  });
+
   it('keeps the winner result through the full end-of-hand sequence', () => {
     // Regression: live order is agari -> applyScore -> conclude -> nextGame,
     // all sent before the next_round ack inquiry. nextGame previously wiped

@@ -13,6 +13,7 @@ export interface PlayerAgariState {
   incoming?: IGameTileMsg | null;
   gainPoints: number;
   losePoints: number;
+  isNagashi?: boolean;
 }
 
 export interface PlayerHandState {
