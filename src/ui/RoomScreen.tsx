@@ -4,6 +4,7 @@ import { rabiriichi } from '../net/client';
 import { useRoom, useSelf } from '../state/store';
 import { UserStatus, AiType } from '../proto';
 import { pollUntil } from '../lib';
+import { getPlayerDisplayName } from '../domain/model';
 import './ui.css';
 
 export function RoomScreen(): React.JSX.Element | null {
@@ -135,7 +136,8 @@ export function RoomScreen(): React.JSX.Element | null {
                   {renderAvatar(player.nickname)}
                   <div className="player-details">
                     <div className="player-name">
-                      {player.nickname} {isMe && `(${t('lobby.you')})`}
+                      {getPlayerDisplayName(player, t)}{' '}
+                      {isMe && `(${t('lobby.you')})`}
                       {player.aiType !== AiType.AI_TYPE_NONE && (
                         <span
                           className="ai-badge-text"

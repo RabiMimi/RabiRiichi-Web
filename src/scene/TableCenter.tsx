@@ -3,6 +3,7 @@ import { useTexture, Text as DreiText, Html } from '@react-three/drei';
 import { useTranslation } from 'react-i18next';
 import * as THREE from 'three';
 import { AiType } from '../proto';
+import { getPlayerDisplayName } from '../domain/model';
 import {
   useRoom,
   useSelf,
@@ -194,7 +195,9 @@ export function TableCenter(): React.JSX.Element | null {
               }}
             >
               <div className="player-plate-3d">
-                <span className="player-name-3d">{p.nickname}</span>
+                <span className="player-name-3d">
+                  {getPlayerDisplayName(p, t)}
+                </span>
                 {p.aiType !== AiType.AI_TYPE_NONE && (
                   <div
                     className="ai-indicator-gemini"

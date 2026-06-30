@@ -13,6 +13,7 @@ import { type ActionOption } from '../domain/inquiry';
 import { ScoringType } from '../proto';
 import { Logger } from '../lib/logger';
 import { proceedReplay } from '../dev/replayDriver';
+import { getPlayerDisplayName } from '../domain/model';
 
 const logger = new Logger('ResultPanel');
 
@@ -136,7 +137,7 @@ export function ResultPanel(): React.JSX.Element | null {
       <div key={player.id} className="winner-details-card">
         <div className="winner-name-row">
           <span className="winner-badge">{t('result.winnerBadge')}</span>
-          <span className="winner-name">{player.nickname}</span>
+          <span className="winner-name">{getPlayerDisplayName(player, t)}</span>
           <span className="winner-summary">{summaryText}</span>
         </div>
 
@@ -232,7 +233,9 @@ export function ResultPanel(): React.JSX.Element | null {
 
             return (
               <div key={p.id} className="score-change-row">
-                <span className="player-name">{p.nickname}</span>
+                <span className="player-name">
+                  {getPlayerDisplayName(p, t)}
+                </span>
                 <span className="points-transition">
                   {prevPoints} → {currentPoints}
                 </span>
