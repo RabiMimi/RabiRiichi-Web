@@ -241,75 +241,96 @@ export function ResultPanel(): React.JSX.Element | null {
           <span className="winner-summary">{summaryText}</span>
         </div>
 
-        {/* Display final sorted hand tiles */}
-        <div className="winner-hand-tiles">
-          <div className="closed-hand-tiles">
-            {handTiles.map((tileMsg, idx) => {
-              const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-              return (
+        {isNagashi ? (
+          <div className="winner-river-tiles">
+            <span className="river-label">{t('result.river')}</span>
+            <div className="river-tiles-grid">
+              {(player.gameState?.hand.discarded ?? []).map((tileMsg, idx) => {
+                const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+                return (
+                  <img
+                    key={tileMsg.traceId ?? idx}
+                    src={getTileTexturePath(tileStr)}
+                    alt={tileStr}
+                    className="result-tile-img"
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Display final sorted hand tiles */
+          <div className="winner-hand-tiles">
+            <div className="closed-hand-tiles">
+              {handTiles.map((tileMsg, idx) => {
+                const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+                return (
+                  <img
+                    key={tileMsg.traceId ?? idx}
+                    src={getTileTexturePath(tileStr)}
+                    alt={tileStr}
+                    className="result-tile-img"
+                  />
+                );
+              })}
+            </div>
+            {/* Winning tile */}
+            {agari.incoming && (
+              <div className="winning-tile-group">
+                <span className="winning-tile-label">{t('result.winTile')}:</span>
                 <img
-                  key={tileMsg.traceId ?? idx}
-                  src={getTileTexturePath(tileStr)}
-                  alt={tileStr}
-                  className="result-tile-img"
+                  src={getTileTexturePath(
+                    Tile.fromByte(agari.incoming.tile ?? 0).toString(),
+                  )}
+                  alt="winning-tile"
+                  className="result-tile-img winning-tile"
                 />
+              </div>
+            )}
+            {/* Called melds */}
+            {calledMelds.map((meld, meldIdx) => {
+              const tiles = meld.tiles ?? [];
+              return (
+                <div key={meldIdx} className="result-meld-group">
+                  {tiles.map((tile, tileIdx) => {
+                    const tileStr = Tile.fromByte(tile.tile ?? 0).toString();
+                    return (
+                      <img
+                        key={tile.traceId ?? tileIdx}
+                        src={getTileTexturePath(tileStr)}
+                        alt={tileStr}
+                        className="result-tile-img"
+                      />
+                    );
+                  })}
+                </div>
               );
             })}
           </div>
-          {/* Winning tile */}
-          {agari.incoming && (
-            <div className="winning-tile-group">
-              <span className="winning-tile-label">{t('result.winTile')}:</span>
-              <img
-                src={getTileTexturePath(
-                  Tile.fromByte(agari.incoming.tile ?? 0).toString(),
-                )}
-                alt="winning-tile"
-                className="result-tile-img winning-tile"
-              />
-            </div>
-          )}
-          {/* Called melds */}
-          {calledMelds.map((meld, meldIdx) => {
-            const tiles = meld.tiles ?? [];
-            return (
-              <div key={meldIdx} className="result-meld-group">
-                {tiles.map((tile, tileIdx) => {
-                  const tileStr = Tile.fromByte(tile.tile ?? 0).toString();
-                  return (
-                    <img
-                      key={tile.traceId ?? tileIdx}
-                      src={getTileTexturePath(tileStr)}
-                      alt={tileStr}
-                      className="result-tile-img"
-                    />
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+        )}
 
         {/* List of Yaku */}
-        <div className="yaku-list">
-          {yakuList.map((yaku, idx) => {
-            if (yaku.Type === ScoringType.SCORING_TYPE_FU) return null; // Skip Fu entries in the list
-            const typeLabel =
-              yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
-                ? t('result.yakuman')
-                : t('result.han', { count: yaku.Val });
-            return (
-              <div key={idx} className="yaku-item">
-                <span className="yaku-name">
-                  {t(`yaku.${yaku.Src ?? ''}`, {
-                    defaultValue: yaku.Src ?? '',
-                  })}
-                </span>
-                <span className="yaku-val">{typeLabel}</span>
-              </div>
-            );
-          })}
-        </div>
+        {!isNagashi && (
+          <div className="yaku-list">
+            {yakuList.map((yaku, idx) => {
+              if (yaku.Type === ScoringType.SCORING_TYPE_FU) return null; // Skip Fu entries in the list
+              const typeLabel =
+                yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
+                  ? t('result.yakuman')
+                  : t('result.han', { count: yaku.Val });
+              return (
+                <div key={idx} className="yaku-item">
+                  <span className="yaku-name">
+                    {t(`yaku.${yaku.Src ?? ''}`, {
+                      defaultValue: yaku.Src ?? '',
+                    })}
+                  </span>
+                  <span className="yaku-val">{typeLabel}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };

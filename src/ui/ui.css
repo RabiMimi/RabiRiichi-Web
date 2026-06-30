@@ -763,6 +763,28 @@
   color: #00e5ff;
 }
 
+.winner-river-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: rgba(20, 20, 20, 0.4);
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.river-label {
+  font-size: 0.8rem;
+  color: #88a8cc;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.river-tiles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .winner-name-row {
   display: flex;
   align-items: center;

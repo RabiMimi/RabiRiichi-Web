@@ -167,9 +167,9 @@ export function TableCenter(): React.JSX.Element | null {
           <group key={p.id} rotation={[0, rotY, 0]}>
             {/* Score Text (centered horizontally, pushed inwards to avoid lines) */}
             <DreiText
-              position={[0, 0.004, 0.32]}
+              position={[0, 0.004, 0.3]}
               rotation={[-Math.PI / 2, 0, 0]}
-              fontSize={0.07}
+              fontSize={0.1}
               color={isTimerActive ? '#ffcc00' : '#ffffff'}
               anchorX="center"
               anchorY="middle"
