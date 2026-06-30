@@ -236,9 +236,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
       {currentInquiry && actionTimeout > 0 && (
         <div className="player-timer-overlay">
           <span className="timer-label">{timerLabel}</span>
-          <span className="timer-seconds">
-            {Math.ceil(actionTimeout / 1000)}
-          </span>
+          <span className="timer-seconds">{Math.ceil(actionTimeout)}</span>
         </div>
       )}
 

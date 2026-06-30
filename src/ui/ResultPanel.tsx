@@ -87,7 +87,7 @@ export function ResultPanel(): React.JSX.Element | null {
   }, [isWaitingForProceed, handleProceed]);
 
   const secondsLeft = currentInquiry
-    ? Math.ceil(actionTimeout / 1000)
+    ? Math.ceil(actionTimeout)
     : localSecondsLeft;
 
   const hasNextRound =

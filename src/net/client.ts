@@ -504,12 +504,12 @@ export class RabiRiichiClient {
   ): void {
     this.clearTimer();
     this.timerActiveSeat = seat;
-    this.actionTimeout = seconds * 1000;
+    this.actionTimeout = seconds;
     this.onChange.emit();
 
-    const tick = 100;
+    const tick = 0.1; // 100ms in seconds
     this.actionTimerId = setInterval(() => {
-      this.actionTimeout -= tick;
+      this.actionTimeout = Math.round((this.actionTimeout - tick) * 10) / 10;
       if (this.actionTimeout <= 0) {
         this.clearTimer();
         if (interactive) {
@@ -519,13 +519,13 @@ export class RabiRiichiClient {
           this.autoSubmitDefaultAction();
         }
       } else {
-        const prevSec = Math.ceil((this.actionTimeout + tick) / 1000);
-        const currSec = Math.ceil(this.actionTimeout / 1000);
+        const prevSec = Math.ceil(this.actionTimeout + tick);
+        const currSec = Math.ceil(this.actionTimeout);
         if (prevSec !== currSec) {
           this.onChange.emit();
         }
       }
-    }, tick);
+    }, tick * 1000);
   }
 
   private clearTimer(): void {
