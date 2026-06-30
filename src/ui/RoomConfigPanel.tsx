@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DEFAULT_ACTION_TIMEOUT } from '../domain/constants';
 import type { IGameConfigMsg } from '../proto';
 import { TILE_SET_PRESETS, type TileSetPresetName } from '../domain/tilesets';
-import type { YakuInfo } from '../domain/yakus';
+import { type YakuInfo, buildAllowedYakusPayload } from '../domain/yakus';
 import { useAvailableYakus } from '../state/store';
 import { YakuModal } from './YakuModal';
 import { PolicyCheckboxGroup } from './PolicyCheckboxGroup';
@@ -196,10 +196,7 @@ export function RoomConfigPanel({
       initialTiles: TILE_SET_PRESETS[tileSetPreset]().map((tile) =>
         tile.toByte(),
       ),
-      allowedYakus:
-        allowedYakus.size === availableYakus.length
-          ? []
-          : Array.from(allowedYakus),
+      allowedYakus: buildAllowedYakusPayload(allowedYakus),
     });
   };
 

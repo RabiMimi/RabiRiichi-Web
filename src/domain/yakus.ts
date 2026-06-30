@@ -62,3 +62,18 @@ export const YAKUS: YakuInfo[] = [
   // Other
   { name: 'HelloWorld', group: 'other' },
 ];
+
+/**
+ * Builds the `allowedYakus` payload for a create-room request.
+ *
+ * The server treats this list as a filter over its yaku set: it keeps only the
+ * yakus named here. Because protobuf cannot distinguish an unset repeated field
+ * from an empty one, an empty array is read by the server as "allow no yakus"
+ * (every yaku is stripped, leaving hands effectively yakuless). Therefore we
+ * always send the actual selected names, even when every yaku is enabled.
+ */
+export function buildAllowedYakusPayload(
+  selected: ReadonlySet<string>,
+): string[] {
+  return Array.from(selected);
+}
