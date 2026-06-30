@@ -94,6 +94,87 @@ export function ResultPanel(): React.JSX.Element | null {
     currentInquiry?.mapped.buttons.some((b) => b.type === 'next-round') ??
     false;
 
+  const showUradoras = React.useMemo(() => {
+    return (
+      room?.players.some(
+        (p) => p.gameState?.agari != null && p.gameState.riichiTileId > 0,
+      ) ?? false
+    );
+  }, [room?.players]);
+
+  const renderDoraIndicators = () => {
+    if (!room?.info) return null;
+
+    const doraCount = room.info.revealedDoraCount;
+    const doras = room.info.doras ?? [];
+    const uradoras = room.info.uradoras ?? [];
+
+    if (doras.length === 0) return null;
+
+    return (
+      <div className="result-dora-indicators-section">
+        <span className="dora-row-label">{t('result.dora')}</span>
+        <div className="dora-indicator-tiles">
+          {Array.from({ length: 5 }).map((_, idx) => {
+            const tileMsg = doras[idx];
+            const isRevealed = idx < doraCount;
+            if (isRevealed && tileMsg) {
+              const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+              return (
+                <img
+                  key={`dora-${idx}`}
+                  src={getTileTexturePath(tileStr)}
+                  alt={tileStr}
+                  className="result-tile-img"
+                />
+              );
+            }
+            return (
+              <img
+                key={`dora-${idx}`}
+                src={getTileTexturePath('back')}
+                alt="back"
+                className="result-tile-img"
+              />
+            );
+          })}
+        </div>
+
+        {/* Uradora Indicator Row */}
+        {showUradoras && uradoras.length > 0 && (
+          <>
+            <span className="dora-separator">|</span>
+            <div className="dora-indicator-tiles">
+              {Array.from({ length: 5 }).map((_, idx) => {
+                const tileMsg = uradoras[idx];
+                const isRevealed = idx < doraCount;
+                if (isRevealed && tileMsg) {
+                  const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+                  return (
+                    <img
+                      key={`uradora-${idx}`}
+                      src={getTileTexturePath(tileStr)}
+                      alt={tileStr}
+                      className="result-tile-img"
+                    />
+                  );
+                }
+                return (
+                  <img
+                    key={`uradora-${idx}`}
+                    src={getTileTexturePath('back')}
+                    alt="back"
+                    className="result-tile-img"
+                  />
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   // On reconnect the server re-pushes the next-round ack but the snapshot has no
   // finished-round result to display. The client auto-acks it (see client.ts);
   // meanwhile show a small notice rather than an empty result overlay.
@@ -267,6 +348,8 @@ export function ResultPanel(): React.JSX.Element | null {
             .filter((p) => p.gameState?.agari?.scores != null)
             .map((w) => renderWinnerDetails(w))}
         </div>
+
+        {renderDoraIndicators()}
 
         {/* Score changes panel */}
         {renderScoreChanges()}

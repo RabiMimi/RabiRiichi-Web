@@ -217,6 +217,7 @@ function createInitializedRoom(): RoomModel {
       currentPlayer: 0,
       doras: [],
       uradoras: [],
+      revealedDoraCount: 0,
     },
     players: [
       {

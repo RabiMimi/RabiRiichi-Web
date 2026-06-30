@@ -24,14 +24,14 @@ describe('scene assets registry', () => {
 
   it('should fallback to blank.jpg for invalid or unknown tiles', () => {
     expect(getTileTexturePath(null)).toBe('/assets/hand_tiles/blank.jpg');
-    expect(getTileTexturePath('back')).toBe('/assets/hand_tiles/blank.jpg');
     expect(getTileTexturePath('0x')).toBe('/assets/hand_tiles/blank.jpg');
     expect(getTileTexturePath('9z')).toBe('/assets/hand_tiles/blank.jpg'); // invalid dragon
     expect(getTileTexturePath('10m')).toBe('/assets/hand_tiles/blank.jpg'); // invalid rank
   });
 
-  it('should map front and blank special textures correctly', () => {
+  it('should map front, blank and back special textures correctly', () => {
     expect(getTileTexturePath('front')).toBe('/assets/hand_tiles/front.jpg');
     expect(getTileTexturePath('blank')).toBe('/assets/hand_tiles/blank.jpg');
+    expect(getTileTexturePath('back')).toBe('/assets/hand_tiles/back.jpg');
   });
 });

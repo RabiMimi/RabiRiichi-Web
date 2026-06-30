@@ -49,6 +49,7 @@ export interface GameInfo {
   currentPlayer: number;
   doras: IGameTileMsg[];
   uradoras: IGameTileMsg[];
+  revealedDoraCount: number;
 }
 
 export interface RoomModel {

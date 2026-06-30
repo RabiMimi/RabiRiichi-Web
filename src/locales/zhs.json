@@ -133,6 +133,8 @@
   "result": {
     "draw": "流局",
     "agari": "和牌",
+    "dora": "宝牌指示牌",
+    "uradora": "里宝牌指示牌",
     "winner": "赢家",
     "scoreChanges": "点数变动",
     "confirm": "确定",

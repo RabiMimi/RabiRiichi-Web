@@ -60,8 +60,12 @@ export function getTileTexturePath(tile: string | Tile | null): string {
 
   const tileStr = typeof tile === 'string' ? tile : tile.toString();
 
-  // If it's explicitly 'back' or represents a back/invalid tile
-  if (tileStr === 'back' || tileStr === '0x' || tileStr.includes('x')) {
+  if (tileStr === 'back') {
+    return '/assets/hand_tiles/back.jpg';
+  }
+
+  // If it represents a back/invalid tile
+  if (tileStr === '0x' || tileStr.includes('x')) {
     return '/assets/hand_tiles/blank.jpg';
   }
 
