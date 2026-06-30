@@ -4,7 +4,7 @@ import { rabiriichi } from '../net/client';
 import { useRoom, useSelf } from '../state/store';
 import { UserStatus, AiType } from '../proto';
 import { pollUntil } from '../lib';
-import { getPlayerDisplayName } from '../domain/model';
+import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
 import './ui.css';
 
 export function RoomScreen(): React.JSX.Element | null {
@@ -104,10 +104,12 @@ export function RoomScreen(): React.JSX.Element | null {
   };
 
   // Helper to render a placeholder avatar or initials
-  const renderAvatar = (nickname: string) => {
-    const initials = nickname.slice(0, 2).toUpperCase();
+  const renderAvatar = (player: PlayerModel) => {
+    const isAi = player.aiType !== AiType.AI_TYPE_NONE;
+    const displayName = getPlayerDisplayName(player, t);
+    const initials = isAi ? 'AI' : displayName.slice(0, 2).toUpperCase();
     return (
-      <div className="player-avatar-placeholder" title={nickname}>
+      <div className="player-avatar-placeholder" title={displayName}>
         {initials}
       </div>
     );
@@ -133,7 +135,7 @@ export function RoomScreen(): React.JSX.Element | null {
                     player.aiType !== AiType.AI_TYPE_NONE ? 'is-ai' : ''
                   }`}
                 >
-                  {renderAvatar(player.nickname)}
+                  {renderAvatar(player)}
                   <div className="player-details">
                     <div className="player-name">
                       {getPlayerDisplayName(player, t)}{' '}
@@ -143,7 +145,7 @@ export function RoomScreen(): React.JSX.Element | null {
                           className="ai-badge-text"
                           title={t(`ai.type.${player.aiType}`)}
                         >
-                          (AI)
+                          AI
                         </span>
                       )}
                     </div>

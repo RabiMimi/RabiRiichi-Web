@@ -1,9 +1,6 @@
 import React, { useEffect } from 'react';
-import { useTexture, Text as DreiText, Html } from '@react-three/drei';
-import { useTranslation } from 'react-i18next';
+import { useTexture, Text as DreiText } from '@react-three/drei';
 import * as THREE from 'three';
-import { AiType } from '../proto';
-import { getPlayerDisplayName } from '../domain/model';
 import {
   useRoom,
   useSelf,
@@ -14,7 +11,6 @@ import { getScreenPosition, getSeatRotation } from './seat';
 import { getTableMidTexturePath, ROBOTO_FONT_PATH } from './assets';
 
 export function TableCenter(): React.JSX.Element | null {
-  const { t } = useTranslation();
   const room = useRoom();
   const currentUser = useSelf();
   const actionTimeout = useActionTimeout();
@@ -182,30 +178,6 @@ export function TableCenter(): React.JSX.Element | null {
             >
               {points}
             </DreiText>
-
-            {/* Player Nameplate */}
-            <Html
-              position={[0, 0.004, 0.4]}
-              rotation={[-Math.PI / 2, 0, 0]}
-              transform
-              occlude
-              style={{
-                pointerEvents: 'auto',
-                userSelect: 'none',
-              }}
-            >
-              <div className="player-plate-3d">
-                <span className="player-name-3d">
-                  {getPlayerDisplayName(p, t)}
-                </span>
-                {p.aiType !== AiType.AI_TYPE_NONE && (
-                  <div
-                    className="ai-indicator-gemini"
-                    data-tooltip={t(`ai.type.${p.aiType}`)}
-                  />
-                )}
-              </div>
-            </Html>
 
             {/* Seat Wind Icon (shifted to the bottom-left corner on the white corner, larger display) */}
             <mesh

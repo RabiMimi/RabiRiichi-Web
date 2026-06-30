@@ -35,7 +35,7 @@ export function GameTable(): React.JSX.Element {
       return (
         <SeatAnchor key={player.id} screenPos={screenPos}>
           <PlayerArea3D
-            gameState={player.gameState}
+            player={player}
             isLocal={isLocal}
             seat={player.seat}
             playerCount={playerCount}

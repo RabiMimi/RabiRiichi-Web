@@ -86,7 +86,9 @@ export function ResultPanel(): React.JSX.Element | null {
     };
   }, [isWaitingForProceed, handleProceed]);
 
-  const secondsLeft = currentInquiry ? actionTimeout : localSecondsLeft;
+  const secondsLeft = currentInquiry
+    ? Math.ceil(actionTimeout / 1000)
+    : localSecondsLeft;
 
   const hasNextRound =
     currentInquiry?.mapped.buttons.some((b) => b.type === 'next-round') ??
