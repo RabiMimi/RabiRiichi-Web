@@ -234,7 +234,10 @@ export function ResultPanel(): React.JSX.Element | null {
     const calledMelds = player.gameState?.hand.called ?? [];
 
     return (
-      <div key={player.id} className={`winner-details-card ${isNagashi ? 'nagashi-card' : ''}`}>
+      <div
+        key={player.id}
+        className={`winner-details-card ${isNagashi ? 'nagashi-card' : ''}`}
+      >
         <div className="winner-name-row">
           <span className="winner-badge">{badgeText}</span>
           <span className="winner-name">{getPlayerDisplayName(player, t)}</span>
@@ -277,7 +280,9 @@ export function ResultPanel(): React.JSX.Element | null {
             {/* Winning tile */}
             {agari.incoming && (
               <div className="winning-tile-group">
-                <span className="winning-tile-label">{t('result.winTile')}:</span>
+                <span className="winning-tile-label">
+                  {t('result.winTile')}:
+                </span>
                 <img
                   src={getTileTexturePath(
                     Tile.fromByte(agari.incoming.tile ?? 0).toString(),
@@ -374,7 +379,11 @@ export function ResultPanel(): React.JSX.Element | null {
     <div className="result-overlay">
       <div className="result-panel">
         <h2 className="result-title">
-          {isDraw ? (hasNagashiWinner ? t('yaku.NagashiMangan') : t('result.draw')) : t('result.agari')}
+          {isDraw
+            ? hasNagashiWinner
+              ? t('yaku.NagashiMangan')
+              : t('result.draw')
+            : t('result.agari')}
         </h2>
 
         {/* Background art element */}

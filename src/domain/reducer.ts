@@ -1,4 +1,10 @@
-import { UserStatus, FuritenType, TileSource, AiType, ScoringType } from '../proto/index.js';
+import {
+  UserStatus,
+  FuritenType,
+  TileSource,
+  AiType,
+  ScoringType,
+} from '../proto/index.js';
 import type {
   IGameStateMsg,
   IEventMsg,
@@ -788,7 +794,8 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (!p.gameState || p.seat === undefined) return p;
 
-    const isNagashi = _ev.endGameRyuukyoku?.nagashiManganPlayers?.includes(p.seat) ?? false;
+    const isNagashi =
+      _ev.endGameRyuukyoku?.nagashiManganPlayers?.includes(p.seat) ?? false;
 
     let agari = p.gameState.agari;
     if (isNagashi) {

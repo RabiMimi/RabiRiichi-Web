@@ -33,7 +33,7 @@ test('simulate seats positioning output', () => {
   const currentUser = rabiriichi.self;
 
   if (!room || !currentUser) {
-    throw new Error("Room or current user is null!");
+    throw new Error('Room or current user is null!');
   }
 
   const selfPlayer = room.players.find((p) => p.id === currentUser.id);
@@ -46,17 +46,23 @@ test('simulate seats positioning output', () => {
   room.players.forEach((player) => {
     const hasGameState = !!player.gameState;
     const isLocal = player.id === currentUser.id;
-    const screenPos = player.seat !== undefined && selfSeat !== undefined
-      ? getScreenPosition(player.seat, selfSeat, playerCount)
-      : undefined;
-    const rotation = screenPos !== undefined ? getSeatRotation(screenPos) : undefined;
+    const screenPos =
+      player.seat !== undefined && selfSeat !== undefined
+        ? getScreenPosition(player.seat, selfSeat, playerCount)
+        : undefined;
+    const rotation =
+      screenPos !== undefined ? getSeatRotation(screenPos) : undefined;
     const radius = 2.4;
     const x = rotation !== undefined ? Math.sin(rotation) * radius : undefined;
     const z = rotation !== undefined ? Math.cos(rotation) * radius : undefined;
 
-    console.log(`Player ID=${player.id} (seat=${player.seat}, Me=${isLocal}, hasGameState=${hasGameState}):`);
+    console.log(
+      `Player ID=${player.id} (seat=${player.seat}, Me=${isLocal}, hasGameState=${hasGameState}):`,
+    );
     console.log(`  => screenPos=${screenPos}`);
-    console.log(`  => rotation=${rotation} rad (${rotation !== undefined ? (rotation * 180 / Math.PI).toFixed(0) : 'N/A'} deg)`);
+    console.log(
+      `  => rotation=${rotation} rad (${rotation !== undefined ? ((rotation * 180) / Math.PI).toFixed(0) : 'N/A'} deg)`,
+    );
     console.log(`  => position=[${x?.toFixed(2)}, 0, ${z?.toFixed(2)}]`);
   });
 });
@@ -124,7 +130,7 @@ test('simulate 2-player positioning', () => {
   rabiriichi.dev.setRoom(room);
 
   const currentUser = rabiriichi.self;
-  if (!currentUser) throw new Error("Self is null");
+  if (!currentUser) throw new Error('Self is null');
 
   const selfPlayer = room.players.find((p) => p.id === currentUser.id);
   const selfSeat = selfPlayer?.seat;
@@ -135,17 +141,23 @@ test('simulate 2-player positioning', () => {
 
   room.players.forEach((player) => {
     const isLocal = player.id === currentUser.id;
-    const screenPos = player.seat !== undefined && selfSeat !== undefined
-      ? getScreenPosition(player.seat, selfSeat, playerCount)
-      : undefined;
-    const rotation = screenPos !== undefined ? getSeatRotation(screenPos) : undefined;
+    const screenPos =
+      player.seat !== undefined && selfSeat !== undefined
+        ? getScreenPosition(player.seat, selfSeat, playerCount)
+        : undefined;
+    const rotation =
+      screenPos !== undefined ? getSeatRotation(screenPos) : undefined;
     const radius = 2.4;
     const x = rotation !== undefined ? Math.sin(rotation) * radius : undefined;
     const z = rotation !== undefined ? Math.cos(rotation) * radius : undefined;
 
-    console.log(`[2P] Player ID=${player.id} (seat=${player.seat}, Me=${isLocal}):`);
+    console.log(
+      `[2P] Player ID=${player.id} (seat=${player.seat}, Me=${isLocal}):`,
+    );
     console.log(`  => screenPos=${screenPos}`);
-    console.log(`  => rotation=${rotation} rad (${rotation !== undefined ? (rotation * 180 / Math.PI).toFixed(0) : 'N/A'} deg)`);
+    console.log(
+      `  => rotation=${rotation} rad (${rotation !== undefined ? ((rotation * 180) / Math.PI).toFixed(0) : 'N/A'} deg)`,
+    );
     console.log(`  => position=[${x?.toFixed(2)}, 0, ${z?.toFixed(2)}]`);
   });
 });

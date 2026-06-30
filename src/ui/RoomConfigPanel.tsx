@@ -281,7 +281,10 @@ export function RoomConfigPanel({
         />
       )}
 
-      <div className="room-config-actions" style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+      <div
+        className="room-config-actions"
+        style={{ display: 'flex', gap: '12px', marginTop: '16px' }}
+      >
         <button
           type="button"
           onClick={() => setShowYakuModal(true)}

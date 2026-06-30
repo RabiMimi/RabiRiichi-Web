@@ -217,9 +217,7 @@ function HUDLeftPanel({
         <select
           id="speed-select"
           value={animationSpeed}
-          onChange={(e) =>
-            rabiriichi.setAnimationSpeed(Number(e.target.value))
-          }
+          onChange={(e) => rabiriichi.setAnimationSpeed(Number(e.target.value))}
           style={{
             background: '#222',
             color: '#fff',
@@ -337,7 +335,11 @@ interface HUDTimerProps {
   isVisible: boolean;
 }
 
-function HUDTimer({ timerLabel, actionTimeout, isVisible }: HUDTimerProps): React.JSX.Element | null {
+function HUDTimer({
+  timerLabel,
+  actionTimeout,
+  isVisible,
+}: HUDTimerProps): React.JSX.Element | null {
   if (!isVisible) return null;
   return (
     <div className="player-timer-overlay">

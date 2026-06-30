@@ -31,7 +31,9 @@ export function YakuModal({
             <button
               type="button"
               className="ui-button"
-              onClick={() => onChange(new Set(availableYakus.map((y) => y.name)))}
+              onClick={() =>
+                onChange(new Set(availableYakus.map((y) => y.name)))
+              }
             >
               {t('lobby.selectAll')}
             </button>

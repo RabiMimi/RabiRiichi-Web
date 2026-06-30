@@ -93,7 +93,9 @@ export function Tile3D({
   const [dragOffsetZ, setDragOffsetZ] = useState(0);
 
   const hasTileSelectionActive = useMemo(() => {
-    return Boolean(currentInquiry?.mapped.playTile != null || isRiichiSelectMode);
+    return Boolean(
+      currentInquiry?.mapped.playTile != null || isRiichiSelectMode,
+    );
   }, [currentInquiry, isRiichiSelectMode]);
 
   const { isPlayable, activeActionOption } = useMemo(() => {
@@ -184,7 +186,7 @@ export function Tile3D({
       isDragging,
       isSelected,
       isHovered,
-      { dragOffsetX, dragOffsetY, dragOffsetZ }
+      { dragOffsetX, dragOffsetY, dragOffsetZ },
     );
     targetRot.setFromEuler(new THREE.Euler(rotX, rotY, rotZ));
   }, [
@@ -243,12 +245,11 @@ export function Tile3D({
           hasTileSelectionActive,
           isPlayable,
           isSelected,
-          isHovered
+          isHovered,
         );
       }
     }
   });
-
 
   return (
     <primitive
@@ -325,25 +326,43 @@ export function Tile3D({
 
             if (deltaY < -60) {
               try {
-                void rabiriichi.submitInquiryResponse(activeActionOption, traceId);
+                void rabiriichi.submitInquiryResponse(
+                  activeActionOption,
+                  traceId,
+                );
               } catch (err) {
-                logger.error('Failed to submit tile discard choice via drag:', err);
+                logger.error(
+                  'Failed to submit tile discard choice via drag:',
+                  err,
+                );
               }
             } else {
               // Tap behavior (using 15px threshold for drag vs tap)
               if (Math.abs(deltaY) < 15) {
                 if (isMouse) {
                   try {
-                    void rabiriichi.submitInquiryResponse(activeActionOption, traceId);
+                    void rabiriichi.submitInquiryResponse(
+                      activeActionOption,
+                      traceId,
+                    );
                   } catch (err) {
-                    logger.error('Failed to submit tile discard choice via mouse click:', err);
+                    logger.error(
+                      'Failed to submit tile discard choice via mouse click:',
+                      err,
+                    );
                   }
                 } else {
                   if (isSelected) {
                     try {
-                      void rabiriichi.submitInquiryResponse(activeActionOption, traceId);
+                      void rabiriichi.submitInquiryResponse(
+                        activeActionOption,
+                        traceId,
+                      );
                     } catch (err) {
-                      logger.error('Failed to submit tile discard choice via double tap:', err);
+                      logger.error(
+                        'Failed to submit tile discard choice via double tap:',
+                        err,
+                      );
                     }
                   } else {
                     rabiriichi.selectTile(traceId);
@@ -387,7 +406,7 @@ interface PlayableState {
 function checkPlayableState(
   currentInquiry: ReturnType<typeof useCurrentInquiry>,
   isRiichiSelectMode: boolean,
-  traceId: number | undefined
+  traceId: number | undefined,
 ): PlayableState {
   let playable = false;
   let activeOpt: ActionOption | null = null;
@@ -431,7 +450,7 @@ function getTileOrientation(displayState: TileDisplayState): TileOrientation {
     case 'hand':
       // Upright in hand, facing the player (rotated 180 around Y)
       // and tilted back more to face the camera directly (like a 2D hand)
-      rot = [-0.90, Math.PI, 0];
+      rot = [-0.9, Math.PI, 0];
       yOff = 0.13;
       break;
     case 'opponent-hand':
@@ -475,7 +494,7 @@ function updateTargetPosition(
   isDragging: boolean,
   isSelected: boolean,
   isHovered: boolean,
-  offsets: TargetOffsets
+  offsets: TargetOffsets,
 ): void {
   let finalX = posX;
   let finalY = posY + yOffset;
@@ -504,7 +523,7 @@ function applyTileAppearance(
   hasTileSelectionActive: boolean,
   isPlayable: boolean,
   isSelected: boolean,
-  isHovered: boolean
+  isHovered: boolean,
 ): void {
   tileObject.traverse((child) => {
     if (child instanceof THREE.Mesh) {
@@ -513,7 +532,11 @@ function applyTileAppearance(
       mats.forEach((mat) => {
         if (mat instanceof THREE.MeshStandardMaterial) {
           // Dimming logic
-          if (displayState === 'hand' && hasTileSelectionActive && !isPlayable) {
+          if (
+            displayState === 'hand' &&
+            hasTileSelectionActive &&
+            !isPlayable
+          ) {
             mat.color.setHex(0x999999);
           } else {
             mat.color.setHex(0xffffff);

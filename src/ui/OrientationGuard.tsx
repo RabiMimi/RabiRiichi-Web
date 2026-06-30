@@ -8,9 +8,10 @@ export function OrientationGuard(): React.JSX.Element | null {
 
   useEffect(() => {
     const checkOrientation = () => {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent,
-      );
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        );
       if (isMobile) {
         setIsPortrait(window.innerHeight > window.innerWidth);
       } else {
