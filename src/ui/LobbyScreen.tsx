@@ -61,7 +61,7 @@ export function LobbyScreen(): React.JSX.Element {
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'baseline',
+            alignItems: 'flex-start',
             marginBottom: '16px',
           }}
         >
@@ -86,33 +86,49 @@ export function LobbyScreen(): React.JSX.Element {
               </span>
             )}
           </div>
-          <select
-            value={i18n.language}
-            onChange={(e) => void i18n.changeLanguage(e.target.value)}
-            className="language-selector"
+
+          <div
             style={{
-              padding: '4px 8px',
-              borderRadius: '4px',
-              backgroundColor: '#1a1a1a',
-              color: '#fff',
-              border: '1px solid #555',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              gap: '4px',
             }}
           >
-            <option value="zhs">简体中文</option>
-            <option value="en">English</option>
-          </select>
+            <select
+              value={i18n.language}
+              onChange={(e) => void i18n.changeLanguage(e.target.value)}
+              className="language-selector"
+              style={{
+                padding: '4px 8px',
+                borderRadius: '4px',
+                backgroundColor: '#1a1a1a',
+                color: '#fff',
+                border: '1px solid #555',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+              }}
+            >
+              <option value="zhs">简体中文</option>
+              <option value="en">English</option>
+            </select>
+            {currentUser && (
+              <span
+                className="user-welcome"
+                style={{
+                  fontSize: '0.8rem',
+                  color: 'white',
+                  textAlign: 'right',
+                }}
+              >
+                {t('lobby.welcome', {
+                  nickname: currentUser.nickname,
+                  id: currentUser.id,
+                })}
+              </span>
+            )}
+          </div>
         </div>
-
-        {currentUser && (
-          <p className="user-welcome" style={{ marginBottom: '16px' }}>
-            {t('lobby.welcome', {
-              nickname: currentUser.nickname,
-              id: currentUser.id,
-            })}
-          </p>
-        )}
 
         {error && <div className="ui-error">{error}</div>}
 
@@ -156,7 +172,7 @@ export function LobbyScreen(): React.JSX.Element {
                 />
                 <button
                   type="submit"
-                  className="ui-button secondary-button"
+                  className="ui-button primary-button"
                   disabled={isLoading || roomIdInput.length !== 4}
                   style={{ whiteSpace: 'nowrap' }}
                 >
