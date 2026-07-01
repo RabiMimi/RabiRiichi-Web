@@ -86,65 +86,71 @@ export function RoomConfigPanel({
     }
   })();
 
-  const [activeTab, setActiveTab] = useState<'game' | 'points' | 'yaku' | 'advanced'>('game');
+  const [activeTab, setActiveTab] = useState<
+    'game' | 'points' | 'yaku' | 'advanced'
+  >('game');
 
   // Room config state
   const [playerCount, setPlayerCount] = useState<number>(
-    () => savedConfig?.playerCount ?? DEFAULT_PLAYER_COUNT
+    () => savedConfig?.playerCount ?? DEFAULT_PLAYER_COUNT,
   );
   const [totalRound, setTotalRound] = useState<number>(
-    () => savedConfig?.totalRound ?? DEFAULT_TOTAL_ROUND
+    () => savedConfig?.totalRound ?? DEFAULT_TOTAL_ROUND,
   );
   const [minHanInput, setMinHanInput] = useState<string>(
-    () => savedConfig?.minHanInput ?? DEFAULT_MIN_HAN.toString()
+    () => savedConfig?.minHanInput ?? DEFAULT_MIN_HAN.toString(),
   );
   const [minHanError, setMinHanError] = useState<string | null>(null);
   const [actionTimeoutInput, setActionTimeoutInput] = useState<string>(
-    () => savedConfig?.actionTimeoutInput ?? DEFAULT_ACTION_TIMEOUT.toString()
+    () => savedConfig?.actionTimeoutInput ?? DEFAULT_ACTION_TIMEOUT.toString(),
   );
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
 
   // New config states
   const [initialPointsInput, setInitialPointsInput] = useState<string>(
-    () => savedConfig?.initialPointsInput ?? DEFAULT_INITIAL_POINTS.toString()
+    () => savedConfig?.initialPointsInput ?? DEFAULT_INITIAL_POINTS.toString(),
   );
   const [finishPointsInput, setFinishPointsInput] = useState<string>(
-    () => savedConfig?.finishPointsInput ?? DEFAULT_FINISH_POINTS.toString()
+    () => savedConfig?.finishPointsInput ?? DEFAULT_FINISH_POINTS.toString(),
   );
   const [initialPointsError, setInitialPointsError] = useState<string | null>(
-    null
+    null,
   );
   const [finishPointsError, setFinishPointsError] = useState<string | null>(
-    null
+    null,
   );
   const [upperPointsInput, setUpperPointsInput] = useState<string>(
-    () => savedConfig?.upperPointsInput ?? DEFAULT_UPPER_POINTS.toString()
+    () => savedConfig?.upperPointsInput ?? DEFAULT_UPPER_POINTS.toString(),
   );
   const [upperPointsError, setUpperPointsError] = useState<string | null>(null);
   const [riichiPointsInput, setRiichiPointsInput] = useState<string>(
-    () => savedConfig?.riichiPointsInput ?? DEFAULT_RIICHI_POINTS.toString()
+    () => savedConfig?.riichiPointsInput ?? DEFAULT_RIICHI_POINTS.toString(),
   );
   const [honbaPointsInput, setHonbaPointsInput] = useState<string>(
-    () => savedConfig?.honbaPointsInput ?? DEFAULT_HONBA_POINTS.toString()
+    () => savedConfig?.honbaPointsInput ?? DEFAULT_HONBA_POINTS.toString(),
   );
   const [riichiPointsError, setRiichiPointsError] = useState<string | null>(
-    null
+    null,
   );
   const [honbaPointsError, setHonbaPointsError] = useState<string | null>(null);
   const [ryuukyokuPoints0Input, setRyuukyokuPoints0Input] = useState<string>(
-    () => savedConfig?.ryuukyokuPoints0Input ?? DEFAULT_RYUUKYOKU_POINTS_0.toString()
+    () =>
+      savedConfig?.ryuukyokuPoints0Input ??
+      DEFAULT_RYUUKYOKU_POINTS_0.toString(),
   );
   const [ryuukyokuPoints1Input, setRyuukyokuPoints1Input] = useState<string>(
-    () => savedConfig?.ryuukyokuPoints1Input ?? DEFAULT_RYUUKYOKU_POINTS_1.toString()
+    () =>
+      savedConfig?.ryuukyokuPoints1Input ??
+      DEFAULT_RYUUKYOKU_POINTS_1.toString(),
   );
-  const [ryuukyokuPoints0Error, setRyuukyokuPoints0Error] = useState<string | null>(
-    null
-  );
-  const [ryuukyokuPoints1Error, setRyuukyokuPoints1Error] = useState<string | null>(
-    null
-  );
+  const [ryuukyokuPoints0Error, setRyuukyokuPoints0Error] = useState<
+    string | null
+  >(null);
+  const [ryuukyokuPoints1Error, setRyuukyokuPoints1Error] = useState<
+    string | null
+  >(null);
   const [tileSetPreset, setTileSetPreset] = useState<TileSetPresetName>(
-    () => savedConfig?.tileSetPreset ?? DEFAULT_TILE_SET_PRESET
+    () => savedConfig?.tileSetPreset ?? DEFAULT_TILE_SET_PRESET,
   );
   const [allowedYakus, setAllowedYakus] = useState<Set<string>>(() => {
     if (savedConfig?.allowedYakus) {
@@ -154,34 +160,32 @@ export function RoomConfigPanel({
   });
   // Advanced policy states (matching server defaults)
   const [renchanPolicy, setRenchanPolicy] = useState<number>(
-    () => savedConfig?.renchanPolicy ?? DEFAULT_RENCHAN_POLICY
+    () => savedConfig?.renchanPolicy ?? DEFAULT_RENCHAN_POLICY,
   );
   const [endGamePolicy, setEndGamePolicy] = useState<number>(
-    () => savedConfig?.endGamePolicy ?? DEFAULT_END_GAME_POLICY
+    () => savedConfig?.endGamePolicy ?? DEFAULT_END_GAME_POLICY,
   );
   const [kuikaePolicy, setKuikaePolicy] = useState<number>(
-    () => savedConfig?.kuikaePolicy ?? DEFAULT_KUIKAE_POLICY
+    () => savedConfig?.kuikaePolicy ?? DEFAULT_KUIKAE_POLICY,
   );
   const [riichiPolicy, setRiichiPolicy] = useState<number>(
-    () => savedConfig?.riichiPolicy ?? DEFAULT_RIICHI_POLICY
+    () => savedConfig?.riichiPolicy ?? DEFAULT_RIICHI_POLICY,
   );
   const [doraOption, setDoraOption] = useState<number>(
-    () => savedConfig?.doraOption ?? DEFAULT_DORA_OPTION
+    () => savedConfig?.doraOption ?? DEFAULT_DORA_OPTION,
   );
   const [agariOption, setAgariOption] = useState<number>(
-    () => savedConfig?.agariOption ?? DEFAULT_AGARI_OPTION
+    () => savedConfig?.agariOption ?? DEFAULT_AGARI_OPTION,
   );
   const [scoringOption, setScoringOption] = useState<number>(
-    () => savedConfig?.scoringOption ?? DEFAULT_SCORING_OPTION
+    () => savedConfig?.scoringOption ?? DEFAULT_SCORING_OPTION,
   );
   const [ryuukyokuTrigger, setRyuukyokuTrigger] = useState<number>(
-    () => savedConfig?.ryuukyokuTrigger ?? DEFAULT_RYUUKYOKU_TRIGGER
+    () => savedConfig?.ryuukyokuTrigger ?? DEFAULT_RYUUKYOKU_TRIGGER,
   );
   const [pointsDeductionPolicy, setPointsDeductionPolicy] = useState<number>(
-    () => savedConfig?.pointsDeductionPolicy ?? DEFAULT_POINTS_DEDUCTION_POLICY
+    () => savedConfig?.pointsDeductionPolicy ?? DEFAULT_POINTS_DEDUCTION_POLICY,
   );
-
-
 
   // Persist config to localStorage
   useEffect(() => {

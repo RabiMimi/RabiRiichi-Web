@@ -37,9 +37,7 @@ export function ServerSelector({
 
   const [serverSelection, setServerSelection] = useState<string>(() => {
     return (
-      loadServerSettings().selectedId ??
-      DEFAULT_SERVERS[0]?.id ??
-      'custom'
+      loadServerSettings().selectedId ?? DEFAULT_SERVERS[0]?.id ?? 'custom'
     );
   });
 

@@ -349,7 +349,9 @@ describe('RabiRiichiClient', () => {
 
   it('should auto-connect using initRabiRiichi if credentials exist', async () => {
     vi.useFakeTimers();
-    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({ lastUrl: 'ws://stored-url:5150' });
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+      lastUrl: 'ws://stored-url:5150',
+    });
     mockLocalStorage.rabiriichi_token = 'stored-token';
 
     // Mock connect of global rabiriichi instance
@@ -369,7 +371,9 @@ describe('RabiRiichiClient', () => {
 
   it('should update room state and game state on socket messages', async () => {
     vi.useFakeTimers();
-    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({ lastUrl: 'ws://localhost:5150' });
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+      lastUrl: 'ws://localhost:5150',
+    });
     mockLocalStorage.rabiriichi_token = 'my-token';
 
     const client = new RabiRiichiClient();
@@ -835,7 +839,9 @@ describe('RabiRiichiClient', () => {
 
   it('should clear stored credentials and close connection on logout', async () => {
     vi.useFakeTimers();
-    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({ lastUrl: 'ws://localhost:5150' });
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+      lastUrl: 'ws://localhost:5150',
+    });
     mockLocalStorage.rabiriichi_token = 'my-token';
 
     const client = new RabiRiichiClient();
@@ -851,9 +857,9 @@ describe('RabiRiichiClient', () => {
     expect(
       (
         JSON.parse(
-          mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] ?? '{}'
+          mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] ?? '{}',
         ) as ServerSettings
-      ).lastUrl
+      ).lastUrl,
     ).toBeUndefined();
     expect(mockLocalStorage.rabiriichi_token).toBeUndefined();
     expect(client.connectionStatus).toBe('disconnected');

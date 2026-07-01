@@ -171,7 +171,10 @@ export class RabiRiichiClient {
           const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
           const settings = stored ? (JSON.parse(stored) as ServerSettings) : {};
           settings.lastUrl = this.wsurl;
-          localStorage.setItem(STORAGE_KEY_SERVER_SETTINGS, JSON.stringify(settings));
+          localStorage.setItem(
+            STORAGE_KEY_SERVER_SETTINGS,
+            JSON.stringify(settings),
+          );
         } catch {
           // ignore
         }
@@ -523,7 +526,10 @@ export class RabiRiichiClient {
         if (stored) {
           const settings = JSON.parse(stored) as ServerSettings;
           delete settings.lastUrl;
-          localStorage.setItem(STORAGE_KEY_SERVER_SETTINGS, JSON.stringify(settings));
+          localStorage.setItem(
+            STORAGE_KEY_SERVER_SETTINGS,
+            JSON.stringify(settings),
+          );
         }
       } catch {
         // ignore

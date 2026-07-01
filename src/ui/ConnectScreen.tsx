@@ -47,9 +47,14 @@ export function ConnectScreen(): React.JSX.Element {
       await rabiriichi.registerUser(nickname.trim());
       try {
         const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
-        const settings: ServerSettings = stored ? (JSON.parse(stored) as ServerSettings) : {};
+        const settings: ServerSettings = stored
+          ? (JSON.parse(stored) as ServerSettings)
+          : {};
         settings.nickname = nickname.trim();
-        localStorage.setItem(STORAGE_KEY_SERVER_SETTINGS, JSON.stringify(settings));
+        localStorage.setItem(
+          STORAGE_KEY_SERVER_SETTINGS,
+          JSON.stringify(settings),
+        );
       } catch {
         // ignore
       }

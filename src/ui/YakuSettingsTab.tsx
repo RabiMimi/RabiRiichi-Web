@@ -16,13 +16,14 @@ export function YakuSettingsTab({
 
   return (
     <div className="yaku-settings-tab">
-      <div className="yaku-tab-actions" style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}>
+      <div
+        className="yaku-tab-actions"
+        style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}
+      >
         <button
           type="button"
           className="ui-button secondary-button"
-          onClick={() =>
-            onChange(new Set(availableYakus.map((y) => y.name)))
-          }
+          onClick={() => onChange(new Set(availableYakus.map((y) => y.name)))}
           style={{ padding: '4px 10px', fontSize: '0.78rem', height: '26px' }}
         >
           {t('lobby.selectAll')}
