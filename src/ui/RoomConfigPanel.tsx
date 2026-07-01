@@ -1,6 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DEFAULT_ACTION_TIMEOUT } from '../domain/constants';
+import {
+  DEFAULT_ACTION_TIMEOUT,
+  DEFAULT_PLAYER_COUNT,
+  DEFAULT_TOTAL_ROUND,
+  DEFAULT_MIN_HAN,
+  DEFAULT_INITIAL_POINTS,
+  DEFAULT_FINISH_POINTS,
+  DEFAULT_UPPER_POINTS,
+  DEFAULT_RIICHI_POINTS,
+  DEFAULT_HONBA_POINTS,
+  DEFAULT_RYUUKYOKU_POINTS_0,
+  DEFAULT_RYUUKYOKU_POINTS_1,
+  DEFAULT_TILE_SET_PRESET,
+  DEFAULT_RENCHAN_POLICY,
+  DEFAULT_END_GAME_POLICY,
+  DEFAULT_KUIKAE_POLICY,
+  DEFAULT_RIICHI_POLICY,
+  DEFAULT_DORA_OPTION,
+  DEFAULT_AGARI_OPTION,
+  DEFAULT_SCORING_OPTION,
+  DEFAULT_RYUUKYOKU_TRIGGER,
+  DEFAULT_POINTS_DEDUCTION_POLICY,
+  MIN_ACTION_TIMEOUT,
+  MAX_ACTION_TIMEOUT,
+  MIN_MIN_HAN,
+  MAX_MIN_HAN,
+  MIN_POINTS,
+  MAX_POINTS,
+  STORAGE_KEY_ROOM_CONFIG,
+} from '../domain/constants';
 import type { IGameConfigMsg } from '../proto';
 import { TILE_SET_PRESETS, type TileSetPresetName } from '../domain/tilesets';
 import { buildAllowedYakusPayload } from '../domain/yakus';
@@ -17,6 +46,31 @@ import {
   RYUUKYOKU_TRIGGERS,
 } from '../domain/policies';
 
+interface SavedRoomConfig {
+  playerCount?: number;
+  totalRound?: number;
+  minHanInput?: string;
+  actionTimeoutInput?: string;
+  initialPointsInput?: string;
+  finishPointsInput?: string;
+  upperPointsInput?: string;
+  riichiPointsInput?: string;
+  honbaPointsInput?: string;
+  ryuukyokuPoints0Input?: string;
+  ryuukyokuPoints1Input?: string;
+  tileSetPreset?: TileSetPresetName;
+  renchanPolicy?: number;
+  endGamePolicy?: number;
+  kuikaePolicy?: number;
+  riichiPolicy?: number;
+  doraOption?: number;
+  agariOption?: number;
+  scoringOption?: number;
+  ryuukyokuTrigger?: number;
+  pointsDeductionPolicy?: number;
+  allowedYakus?: string[];
+}
+
 interface RoomConfigPanelProps {
   onCreateRoom: (config: IGameConfigMsg) => Promise<void>;
   isLoading: boolean;
@@ -30,44 +84,166 @@ export function RoomConfigPanel({
   const { t } = useTranslation();
 
   // Room config state
-  const [playerCount, setPlayerCount] = useState(2);
-  const [totalRound, setTotalRound] = useState(1);
-  const [minHanInput, setMinHanInput] = useState('1');
+  const savedConfig = (() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_ROOM_CONFIG);
+      return stored ? (JSON.parse(stored) as SavedRoomConfig) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const [activeTab, setActiveTab] = useState<'game' | 'points'>('game');
+
+  // Room config state
+  const [playerCount, setPlayerCount] = useState<number>(
+    () => savedConfig?.playerCount ?? DEFAULT_PLAYER_COUNT
+  );
+  const [totalRound, setTotalRound] = useState<number>(
+    () => savedConfig?.totalRound ?? DEFAULT_TOTAL_ROUND
+  );
+  const [minHanInput, setMinHanInput] = useState<string>(
+    () => savedConfig?.minHanInput ?? DEFAULT_MIN_HAN.toString()
+  );
   const [minHanError, setMinHanError] = useState<string | null>(null);
-  const [actionTimeoutInput, setActionTimeoutInput] = useState(
-    DEFAULT_ACTION_TIMEOUT.toString(),
+  const [actionTimeoutInput, setActionTimeoutInput] = useState<string>(
+    () => savedConfig?.actionTimeoutInput ?? DEFAULT_ACTION_TIMEOUT.toString()
   );
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
 
   // New config states
-  const [initialPointsInput, setInitialPointsInput] = useState('25000');
-  const [finishPointsInput, setFinishPointsInput] = useState('30000');
+  const [initialPointsInput, setInitialPointsInput] = useState<string>(
+    () => savedConfig?.initialPointsInput ?? DEFAULT_INITIAL_POINTS.toString()
+  );
+  const [finishPointsInput, setFinishPointsInput] = useState<string>(
+    () => savedConfig?.finishPointsInput ?? DEFAULT_FINISH_POINTS.toString()
+  );
   const [initialPointsError, setInitialPointsError] = useState<string | null>(
-    null,
+    null
   );
   const [finishPointsError, setFinishPointsError] = useState<string | null>(
-    null,
+    null
   );
-  const [upperPointsInput, setUpperPointsInput] = useState('1000000');
+  const [upperPointsInput, setUpperPointsInput] = useState<string>(
+    () => savedConfig?.upperPointsInput ?? DEFAULT_UPPER_POINTS.toString()
+  );
   const [upperPointsError, setUpperPointsError] = useState<string | null>(null);
-  const [tileSetPreset, setTileSetPreset] =
-    useState<TileSetPresetName>('Regular');
-  const [allowedYakus, setAllowedYakus] = useState<Set<string>>(
-    () => new Set(availableYakus.map((y) => y.name)),
+  const [riichiPointsInput, setRiichiPointsInput] = useState<string>(
+    () => savedConfig?.riichiPointsInput ?? DEFAULT_RIICHI_POINTS.toString()
   );
+  const [honbaPointsInput, setHonbaPointsInput] = useState<string>(
+    () => savedConfig?.honbaPointsInput ?? DEFAULT_HONBA_POINTS.toString()
+  );
+  const [riichiPointsError, setRiichiPointsError] = useState<string | null>(
+    null
+  );
+  const [honbaPointsError, setHonbaPointsError] = useState<string | null>(null);
+  const [ryuukyokuPoints0Input, setRyuukyokuPoints0Input] = useState<string>(
+    () => savedConfig?.ryuukyokuPoints0Input ?? DEFAULT_RYUUKYOKU_POINTS_0.toString()
+  );
+  const [ryuukyokuPoints1Input, setRyuukyokuPoints1Input] = useState<string>(
+    () => savedConfig?.ryuukyokuPoints1Input ?? DEFAULT_RYUUKYOKU_POINTS_1.toString()
+  );
+  const [ryuukyokuPoints0Error, setRyuukyokuPoints0Error] = useState<string | null>(
+    null
+  );
+  const [ryuukyokuPoints1Error, setRyuukyokuPoints1Error] = useState<string | null>(
+    null
+  );
+  const [tileSetPreset, setTileSetPreset] = useState<TileSetPresetName>(
+    () => savedConfig?.tileSetPreset ?? DEFAULT_TILE_SET_PRESET
+  );
+  const [allowedYakus, setAllowedYakus] = useState<Set<string>>(() => {
+    if (savedConfig?.allowedYakus) {
+      return new Set(savedConfig.allowedYakus);
+    }
+    return new Set(availableYakus.map((y) => y.name));
+  });
   const [showYakuModal, setShowYakuModal] = useState(false);
 
   // Advanced policy states (matching server defaults)
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [renchanPolicy, setRenchanPolicy] = useState(11);
-  const [endGamePolicy, setEndGamePolicy] = useState(31);
-  const [kuikaePolicy, setKuikaePolicy] = useState(3);
-  const [riichiPolicy, setRiichiPolicy] = useState(7);
-  const [doraOption, setDoraOption] = useState(79);
-  const [agariOption, setAgariOption] = useState(15);
-  const [scoringOption, setScoringOption] = useState(15);
-  const [ryuukyokuTrigger, setRyuukyokuTrigger] = useState(31);
-  const [pointsDeductionPolicy, setPointsDeductionPolicy] = useState(1);
+  const [renchanPolicy, setRenchanPolicy] = useState<number>(
+    () => savedConfig?.renchanPolicy ?? DEFAULT_RENCHAN_POLICY
+  );
+  const [endGamePolicy, setEndGamePolicy] = useState<number>(
+    () => savedConfig?.endGamePolicy ?? DEFAULT_END_GAME_POLICY
+  );
+  const [kuikaePolicy, setKuikaePolicy] = useState<number>(
+    () => savedConfig?.kuikaePolicy ?? DEFAULT_KUIKAE_POLICY
+  );
+  const [riichiPolicy, setRiichiPolicy] = useState<number>(
+    () => savedConfig?.riichiPolicy ?? DEFAULT_RIICHI_POLICY
+  );
+  const [doraOption, setDoraOption] = useState<number>(
+    () => savedConfig?.doraOption ?? DEFAULT_DORA_OPTION
+  );
+  const [agariOption, setAgariOption] = useState<number>(
+    () => savedConfig?.agariOption ?? DEFAULT_AGARI_OPTION
+  );
+  const [scoringOption, setScoringOption] = useState<number>(
+    () => savedConfig?.scoringOption ?? DEFAULT_SCORING_OPTION
+  );
+  const [ryuukyokuTrigger, setRyuukyokuTrigger] = useState<number>(
+    () => savedConfig?.ryuukyokuTrigger ?? DEFAULT_RYUUKYOKU_TRIGGER
+  );
+  const [pointsDeductionPolicy, setPointsDeductionPolicy] = useState<number>(
+    () => savedConfig?.pointsDeductionPolicy ?? DEFAULT_POINTS_DEDUCTION_POLICY
+  );
+
+
+
+  // Persist config to localStorage
+  useEffect(() => {
+    const config = {
+      playerCount,
+      totalRound,
+      minHanInput,
+      actionTimeoutInput,
+      initialPointsInput,
+      finishPointsInput,
+      upperPointsInput,
+      riichiPointsInput,
+      honbaPointsInput,
+      ryuukyokuPoints0Input,
+      ryuukyokuPoints1Input,
+      tileSetPreset,
+      renchanPolicy,
+      endGamePolicy,
+      kuikaePolicy,
+      riichiPolicy,
+      doraOption,
+      agariOption,
+      scoringOption,
+      ryuukyokuTrigger,
+      pointsDeductionPolicy,
+      allowedYakus: Array.from(allowedYakus),
+    };
+    localStorage.setItem(STORAGE_KEY_ROOM_CONFIG, JSON.stringify(config));
+  }, [
+    playerCount,
+    totalRound,
+    minHanInput,
+    actionTimeoutInput,
+    initialPointsInput,
+    finishPointsInput,
+    upperPointsInput,
+    riichiPointsInput,
+    honbaPointsInput,
+    ryuukyokuPoints0Input,
+    ryuukyokuPoints1Input,
+    tileSetPreset,
+    renchanPolicy,
+    endGamePolicy,
+    kuikaePolicy,
+    riichiPolicy,
+    doraOption,
+    agariOption,
+    scoringOption,
+    ryuukyokuTrigger,
+    pointsDeductionPolicy,
+    allowedYakus,
+  ]);
 
   const validateTimeout = (val: string) => {
     if (val === '') {
@@ -75,7 +251,11 @@ export function RoomConfigPanel({
       return;
     }
     const seconds = parseFloat(val);
-    if (isNaN(seconds) || seconds < 5 || seconds > 3600) {
+    if (
+      isNaN(seconds) ||
+      seconds < MIN_ACTION_TIMEOUT ||
+      seconds > MAX_ACTION_TIMEOUT
+    ) {
       setTimeoutError(t('lobby.timeoutError'));
     } else {
       setTimeoutError(null);
@@ -88,7 +268,7 @@ export function RoomConfigPanel({
       return;
     }
     const parsed = parseInt(val, 10);
-    if (isNaN(parsed) || parsed < 1 || parsed > 13) {
+    if (isNaN(parsed) || parsed < MIN_MIN_HAN || parsed > MAX_MIN_HAN) {
       setMinHanError(t('lobby.minHanError'));
     } else {
       setMinHanError(null);
@@ -104,7 +284,7 @@ export function RoomConfigPanel({
       return;
     }
     const parsed = parseInt(val, 10);
-    if (isNaN(parsed) || parsed < 0 || parsed > 1000000) {
+    if (isNaN(parsed) || parsed < MIN_POINTS || parsed > MAX_POINTS) {
       setErrorFunc(t('lobby.pointsError'));
     } else {
       setErrorFunc(null);
@@ -123,13 +303,33 @@ export function RoomConfigPanel({
     validatePoints(val, setUpperPointsError);
   };
 
+  const validateRiichiPoints = (val: string) => {
+    validatePoints(val, setRiichiPointsError);
+  };
+
+  const validateHonbaPoints = (val: string) => {
+    validatePoints(val, setHonbaPointsError);
+  };
+
+  const validateRyuukyokuPoints0 = (val: string) => {
+    validatePoints(val, setRyuukyokuPoints0Error);
+  };
+
+  const validateRyuukyokuPoints1 = (val: string) => {
+    validatePoints(val, setRyuukyokuPoints1Error);
+  };
+
   const handleCreateClick = () => {
     if (
       minHanError ||
       timeoutError ||
       initialPointsError ||
       finishPointsError ||
-      upperPointsError
+      upperPointsError ||
+      riichiPointsError ||
+      honbaPointsError ||
+      ryuukyokuPoints0Error ||
+      ryuukyokuPoints1Error
     ) {
       return;
     }
@@ -137,40 +337,76 @@ export function RoomConfigPanel({
     let actionTimeout = DEFAULT_ACTION_TIMEOUT;
     if (actionTimeoutInput !== '') {
       const parsed = parseFloat(actionTimeoutInput);
-      if (!isNaN(parsed) && parsed >= 5 && parsed <= 3600) {
+      if (
+        !isNaN(parsed) &&
+        parsed >= MIN_ACTION_TIMEOUT &&
+        parsed <= MAX_ACTION_TIMEOUT
+      ) {
         actionTimeout = parsed;
       }
     }
 
-    let minHan = 1;
+    let minHan = DEFAULT_MIN_HAN;
     if (minHanInput !== '') {
       const parsed = parseInt(minHanInput, 10);
-      if (!isNaN(parsed) && parsed >= 1 && parsed <= 13) {
+      if (!isNaN(parsed) && parsed >= MIN_MIN_HAN && parsed <= MAX_MIN_HAN) {
         minHan = parsed;
       }
     }
 
-    let initialPoints = 25000;
+    let initialPoints = DEFAULT_INITIAL_POINTS;
     if (initialPointsInput !== '') {
       const parsed = parseInt(initialPointsInput, 10);
-      if (!isNaN(parsed) && parsed >= 0 && parsed <= 1000000) {
+      if (!isNaN(parsed) && parsed >= MIN_POINTS && parsed <= MAX_POINTS) {
         initialPoints = parsed;
       }
     }
 
-    let finishPoints = 30000;
+    let finishPoints = DEFAULT_FINISH_POINTS;
     if (finishPointsInput !== '') {
       const parsed = parseInt(finishPointsInput, 10);
-      if (!isNaN(parsed) && parsed >= 0 && parsed <= 1000000) {
+      if (!isNaN(parsed) && parsed >= MIN_POINTS && parsed <= MAX_POINTS) {
         finishPoints = parsed;
       }
     }
 
-    let upperPoints = 1000000;
+    let upperPoints = DEFAULT_UPPER_POINTS;
     if (upperPointsInput !== '') {
       const parsed = parseInt(upperPointsInput, 10);
-      if (!isNaN(parsed) && parsed >= 0 && parsed <= 1000000) {
+      if (!isNaN(parsed) && parsed >= MIN_POINTS && parsed <= MAX_POINTS) {
         upperPoints = parsed;
+      }
+    }
+
+    let riichiPoints = DEFAULT_RIICHI_POINTS;
+    if (riichiPointsInput !== '') {
+      const parsed = parseInt(riichiPointsInput, 10);
+      if (!isNaN(parsed) && parsed >= MIN_POINTS && parsed <= MAX_POINTS) {
+        riichiPoints = parsed;
+      }
+    }
+
+    let honbaPoints = DEFAULT_HONBA_POINTS;
+    if (honbaPointsInput !== '') {
+      const parsed = parseInt(honbaPointsInput, 10);
+      if (!isNaN(parsed) && parsed >= MIN_POINTS && parsed <= MAX_POINTS) {
+        honbaPoints = parsed;
+      }
+    }
+
+    let ryuukyokuPoints0 = DEFAULT_RYUUKYOKU_POINTS_0;
+    if (ryuukyokuPoints0Input !== '') {
+      const parsed = parseInt(ryuukyokuPoints0Input, 10);
+      if (!isNaN(parsed) && parsed >= MIN_POINTS && parsed <= MAX_POINTS) {
+        ryuukyokuPoints0 = parsed;
+      }
+    }
+
+    let ryuukyokuPoints1 = DEFAULT_RYUUKYOKU_POINTS_1;
+    if (ryuukyokuPoints1Input !== '') {
+      const parsed = parseInt(ryuukyokuPoints1Input, 10);
+      if (!isNaN(parsed) && parsed >= MIN_POINTS && parsed <= MAX_POINTS) {
+        ryuukyokuPoints1 = parsed;
       }
     }
 
@@ -191,6 +427,9 @@ export function RoomConfigPanel({
       pointThreshold: {
         initialPoints,
         finishPoints,
+        riichiPoints,
+        honbaPoints,
+        ryuukyokuPoints: [ryuukyokuPoints0, ryuukyokuPoints1],
         validPointsRange: [0, upperPoints],
       },
       initialTiles: TILE_SET_PRESETS[tileSetPreset]().map((tile) =>
@@ -205,13 +444,36 @@ export function RoomConfigPanel({
     timeoutError !== null ||
     initialPointsError !== null ||
     finishPointsError !== null ||
-    upperPointsError !== null;
+    upperPointsError !== null ||
+    riichiPointsError !== null ||
+    honbaPointsError !== null ||
+    ryuukyokuPoints0Error !== null ||
+    ryuukyokuPoints1Error !== null;
 
   return (
     <div className="room-config-panel">
-      <h3>{t('lobby.roomSettings')}</h3>
+      <div className="room-config-header">
+        <h3>{t('lobby.roomSettings')}</h3>
+        <div className="room-config-tabs">
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === 'game' ? 'active' : ''}`}
+            onClick={() => setActiveTab('game')}
+          >
+            {t('lobby.gameSettings')}
+          </button>
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === 'points' ? 'active' : ''}`}
+            onClick={() => setActiveTab('points')}
+          >
+            {t('lobby.pointsSettings')}
+          </button>
+        </div>
+      </div>
 
       <BasicSettingsGrid
+        activeTab={activeTab}
         isLoading={isLoading}
         playerCount={playerCount}
         setPlayerCount={setPlayerCount}
@@ -237,6 +499,22 @@ export function RoomConfigPanel({
         setUpperPointsInput={setUpperPointsInput}
         upperPointsError={upperPointsError}
         validateUpperPoints={validateUpperPoints}
+        riichiPointsInput={riichiPointsInput}
+        setRiichiPointsInput={setRiichiPointsInput}
+        riichiPointsError={riichiPointsError}
+        validateRiichiPoints={validateRiichiPoints}
+        honbaPointsInput={honbaPointsInput}
+        setHonbaPointsInput={setHonbaPointsInput}
+        honbaPointsError={honbaPointsError}
+        validateHonbaPoints={validateHonbaPoints}
+        ryuukyokuPoints0Input={ryuukyokuPoints0Input}
+        setRyuukyokuPoints0Input={setRyuukyokuPoints0Input}
+        ryuukyokuPoints0Error={ryuukyokuPoints0Error}
+        validateRyuukyokuPoints0={validateRyuukyokuPoints0}
+        ryuukyokuPoints1Input={ryuukyokuPoints1Input}
+        setRyuukyokuPoints1Input={setRyuukyokuPoints1Input}
+        ryuukyokuPoints1Error={ryuukyokuPoints1Error}
+        validateRyuukyokuPoints1={validateRyuukyokuPoints1}
         tileSetPreset={tileSetPreset}
         setTileSetPreset={setTileSetPreset}
       />
@@ -509,6 +787,7 @@ function ScoringOptionGroup({
 }
 
 interface BasicSettingsGridProps {
+  activeTab: 'game' | 'points';
   isLoading: boolean;
   playerCount: number;
   setPlayerCount: (v: number) => void;
@@ -534,11 +813,28 @@ interface BasicSettingsGridProps {
   setUpperPointsInput: (v: string) => void;
   upperPointsError: string | null;
   validateUpperPoints: (v: string) => void;
+  riichiPointsInput: string;
+  setRiichiPointsInput: (v: string) => void;
+  riichiPointsError: string | null;
+  validateRiichiPoints: (v: string) => void;
+  honbaPointsInput: string;
+  setHonbaPointsInput: (v: string) => void;
+  honbaPointsError: string | null;
+  validateHonbaPoints: (v: string) => void;
+  ryuukyokuPoints0Input: string;
+  setRyuukyokuPoints0Input: (v: string) => void;
+  ryuukyokuPoints0Error: string | null;
+  validateRyuukyokuPoints0: (v: string) => void;
+  ryuukyokuPoints1Input: string;
+  setRyuukyokuPoints1Input: (v: string) => void;
+  ryuukyokuPoints1Error: string | null;
+  validateRyuukyokuPoints1: (v: string) => void;
   tileSetPreset: TileSetPresetName;
   setTileSetPreset: (v: TileSetPresetName) => void;
 }
 
 function BasicSettingsGrid({
+  activeTab,
   isLoading,
   playerCount,
   setPlayerCount,
@@ -564,158 +860,262 @@ function BasicSettingsGrid({
   setUpperPointsInput,
   upperPointsError,
   validateUpperPoints,
+  riichiPointsInput,
+  setRiichiPointsInput,
+  riichiPointsError,
+  validateRiichiPoints,
+  honbaPointsInput,
+  setHonbaPointsInput,
+  honbaPointsError,
+  validateHonbaPoints,
+  ryuukyokuPoints0Input,
+  setRyuukyokuPoints0Input,
+  ryuukyokuPoints0Error,
+  validateRyuukyokuPoints0,
+  ryuukyokuPoints1Input,
+  setRyuukyokuPoints1Input,
+  ryuukyokuPoints1Error,
+  validateRyuukyokuPoints1,
   tileSetPreset,
   setTileSetPreset,
 }: BasicSettingsGridProps) {
   const { t } = useTranslation();
   return (
-    <div className="basic-settings-grid">
-      <div className="form-group-inline">
-        <label htmlFor="player-count">{t('lobby.players')}</label>
-        <select
-          id="player-count"
-          value={playerCount}
-          onChange={(e) => setPlayerCount(Number(e.target.value))}
-          disabled={isLoading}
-        >
-          <option value={2}>{t('playersOpt.2')}</option>
-          <option value={3}>{t('playersOpt.3')}</option>
-          <option value={4}>{t('playersOpt.4')}</option>
-        </select>
-      </div>
+    <div className="basic-settings-container">
+      {activeTab === 'game' && (
+        <div className="basic-settings-grid">
+          <div className="form-group-inline">
+            <label htmlFor="player-count">{t('lobby.players')}</label>
+            <select
+              id="player-count"
+              value={playerCount}
+              onChange={(e) => setPlayerCount(Number(e.target.value))}
+              disabled={isLoading}
+            >
+              <option value={2}>{t('playersOpt.2')}</option>
+              <option value={3}>{t('playersOpt.3')}</option>
+              <option value={4}>{t('playersOpt.4')}</option>
+            </select>
+          </div>
 
-      <div className="form-group-inline">
-        <label htmlFor="total-round">{t('lobby.rounds')}</label>
-        <select
-          id="total-round"
-          value={totalRound}
-          onChange={(e) => setTotalRound(Number(e.target.value))}
-          disabled={isLoading}
-        >
-          <option value={1}>{t('roundsOpt.1')}</option>
-          <option value={2}>{t('roundsOpt.2')}</option>
-        </select>
-      </div>
+          <div className="form-group-inline">
+            <label htmlFor="total-round">{t('lobby.rounds')}</label>
+            <select
+              id="total-round"
+              value={totalRound}
+              onChange={(e) => setTotalRound(Number(e.target.value))}
+              disabled={isLoading}
+            >
+              <option value={1}>{t('roundsOpt.1')}</option>
+              <option value={2}>{t('roundsOpt.2')}</option>
+            </select>
+          </div>
 
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="min-han">{t('lobby.minHan')}</label>
-          <input
-            id="min-han"
-            type="text"
-            value={minHanInput}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '');
-              setMinHanInput(val);
-              validateMinHan(val);
-            }}
-            disabled={isLoading}
-            placeholder="1"
-          />
+          <div className="form-group-inline-wrapper">
+            <div className="form-group-inline">
+              <label htmlFor="min-han">{t('lobby.minHan')}</label>
+              <input
+                id="min-han"
+                type="text"
+                value={minHanInput}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setMinHanInput(val);
+                  validateMinHan(val);
+                }}
+                disabled={isLoading}
+                placeholder="1"
+              />
+            </div>
+            {minHanError && <span className="field-error">{minHanError}</span>}
+          </div>
+
+          <div className="form-group-inline-wrapper">
+            <div className="form-group-inline">
+              <label htmlFor="action-timeout">{t('lobby.actionTimeout')}</label>
+              <input
+                id="action-timeout"
+                type="text"
+                value={actionTimeoutInput}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^\d.]/g, '');
+                  setActionTimeoutInput(val);
+                  validateTimeout(val);
+                }}
+                disabled={isLoading}
+                placeholder={t('lobby.defaultPlaceholder', {
+                  value: DEFAULT_ACTION_TIMEOUT,
+                })}
+              />
+            </div>
+            {timeoutError && <span className="field-error">{timeoutError}</span>}
+          </div>
+
+          <div className="form-group-inline">
+            <label htmlFor="tile-set">{t('lobby.tileSet')}</label>
+            <select
+              id="tile-set"
+              value={tileSetPreset}
+              onChange={(e) =>
+                setTileSetPreset(e.target.value as TileSetPresetName)
+              }
+              disabled={isLoading}
+            >
+              <option value="Regular">{t('tileSetOpt.regular')}</option>
+              <option value="Sanma">{t('tileSetOpt.sanma')}</option>
+              <option value="TwoSets">{t('tileSetOpt.twoSets')}</option>
+              <option value="OnlySZ">{t('tileSetOpt.onlySZ')}</option>
+            </select>
+          </div>
         </div>
-        {minHanError && <span className="field-error">{minHanError}</span>}
-      </div>
+      )}
 
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="action-timeout">{t('lobby.actionTimeout')}</label>
-          <input
-            id="action-timeout"
-            type="text"
-            value={actionTimeoutInput}
-            onChange={(e) => {
-              const val = e.target.value.replace(/[^\d.]/g, '');
-              setActionTimeoutInput(val);
-              validateTimeout(val);
-            }}
-            disabled={isLoading}
-            placeholder={t('lobby.defaultPlaceholder', {
-              value: DEFAULT_ACTION_TIMEOUT,
-            })}
-          />
+      {activeTab === 'points' && (
+        <div className="basic-settings-grid">
+          <div className="form-group-inline-wrapper">
+            <div className="form-group-inline">
+              <label htmlFor="initial-points">{t('lobby.initialPoints')}</label>
+              <input
+                id="initial-points"
+                type="text"
+                value={initialPointsInput}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setInitialPointsInput(val);
+                  validateInitialPoints(val);
+                }}
+                disabled={isLoading}
+                placeholder="25000"
+              />
+            </div>
+            {initialPointsError && (
+              <span className="field-error">{initialPointsError}</span>
+            )}
+          </div>
+
+          <div className="form-group-inline-wrapper">
+            <div className="form-group-inline">
+              <label htmlFor="finish-points">{t('lobby.finishPoints')}</label>
+              <input
+                id="finish-points"
+                type="text"
+                value={finishPointsInput}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setFinishPointsInput(val);
+                  validateFinishPoints(val);
+                }}
+                disabled={isLoading}
+                placeholder="30000"
+              />
+            </div>
+            {finishPointsError && (
+              <span className="field-error">{finishPointsError}</span>
+            )}
+          </div>
+
+          <div className="form-group-inline-wrapper">
+            <div className="form-group-inline">
+              <label htmlFor="upper-points">{t('lobby.upperPoints')}</label>
+              <input
+                id="upper-points"
+                type="text"
+                value={upperPointsInput}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setUpperPointsInput(val);
+                  validateUpperPoints(val);
+                }}
+                disabled={isLoading}
+                placeholder="1000000"
+              />
+            </div>
+            {upperPointsError && (
+              <span className="field-error">{upperPointsError}</span>
+            )}
+          </div>
+
+          <div className="form-group-inline-wrapper">
+            <div className="form-group-inline">
+              <label htmlFor="riichi-points">{t('lobby.riichiPoints')}</label>
+              <input
+                id="riichi-points"
+                type="text"
+                value={riichiPointsInput}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setRiichiPointsInput(val);
+                  validateRiichiPoints(val);
+                }}
+                disabled={isLoading}
+                placeholder="1000"
+              />
+            </div>
+            {riichiPointsError && (
+              <span className="field-error">{riichiPointsError}</span>
+            )}
+          </div>
+
+          <div className="form-group-inline-wrapper">
+            <div className="form-group-inline">
+              <label htmlFor="honba-points">{t('lobby.honbaPoints')}</label>
+              <input
+                id="honba-points"
+                type="text"
+                value={honbaPointsInput}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  setHonbaPointsInput(val);
+                  validateHonbaPoints(val);
+                }}
+                disabled={isLoading}
+                placeholder="300"
+              />
+            </div>
+            {honbaPointsError && (
+              <span className="field-error">{honbaPointsError}</span>
+            )}
+          </div>
+
+          <div className="form-group-inline-wrapper double-input-wrapper">
+            <div className="form-group-inline">
+              <label>{t('lobby.ryuukyokuPoints')}</label>
+              <div className="double-input-container">
+                <input
+                  id="ryuukyoku-points-0"
+                  type="text"
+                  value={ryuukyokuPoints0Input}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setRyuukyokuPoints0Input(val);
+                    validateRyuukyokuPoints0(val);
+                  }}
+                  disabled={isLoading}
+                  placeholder="1000"
+                />
+                <span className="input-separator">/</span>
+                <input
+                  id="ryuukyoku-points-1"
+                  type="text"
+                  value={ryuukyokuPoints1Input}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setRyuukyokuPoints1Input(val);
+                    validateRyuukyokuPoints1(val);
+                  }}
+                  disabled={isLoading}
+                  placeholder="1500"
+                />
+              </div>
+            </div>
+            {(ryuukyokuPoints0Error ?? ryuukyokuPoints1Error) && (
+              <span className="field-error">
+                {ryuukyokuPoints0Error ?? ryuukyokuPoints1Error}
+              </span>
+            )}
+          </div>
         </div>
-        {timeoutError && <span className="field-error">{timeoutError}</span>}
-      </div>
-
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="initial-points">{t('lobby.initialPoints')}</label>
-          <input
-            id="initial-points"
-            type="text"
-            value={initialPointsInput}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '');
-              setInitialPointsInput(val);
-              validateInitialPoints(val);
-            }}
-            disabled={isLoading}
-            placeholder="25000"
-          />
-        </div>
-        {initialPointsError && (
-          <span className="field-error">{initialPointsError}</span>
-        )}
-      </div>
-
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="finish-points">{t('lobby.finishPoints')}</label>
-          <input
-            id="finish-points"
-            type="text"
-            value={finishPointsInput}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '');
-              setFinishPointsInput(val);
-              validateFinishPoints(val);
-            }}
-            disabled={isLoading}
-            placeholder="30000"
-          />
-        </div>
-        {finishPointsError && (
-          <span className="field-error">{finishPointsError}</span>
-        )}
-      </div>
-
-      <div className="form-group-inline">
-        <label htmlFor="tile-set">{t('lobby.tileSet')}</label>
-        <select
-          id="tile-set"
-          value={tileSetPreset}
-          onChange={(e) =>
-            setTileSetPreset(e.target.value as TileSetPresetName)
-          }
-          disabled={isLoading}
-        >
-          <option value="Regular">{t('tileSetOpt.regular')}</option>
-          <option value="Sanma">{t('tileSetOpt.sanma')}</option>
-          <option value="TwoSets">{t('tileSetOpt.twoSets')}</option>
-          <option value="OnlySZ">{t('tileSetOpt.onlySZ')}</option>
-        </select>
-      </div>
-
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="upper-points">{t('lobby.upperPoints')}</label>
-          <input
-            id="upper-points"
-            type="text"
-            value={upperPointsInput}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '');
-              setUpperPointsInput(val);
-              validateUpperPoints(val);
-            }}
-            disabled={isLoading}
-            placeholder="1000000"
-          />
-        </div>
-        {upperPointsError && (
-          <span className="field-error">{upperPointsError}</span>
-        )}
-      </div>
+      )}
     </div>
   );
 }

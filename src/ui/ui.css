@@ -155,14 +155,55 @@
   text-align: left;
 }
 
+.basic-settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.settings-section-title {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #ffaa22;
+  border-bottom: 1px dashed #444;
+  padding-bottom: 6px;
+  text-align: left;
+}
+
 /* 3 Columns Settings Grid */
 .basic-settings-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px 16px;
-  margin-bottom: 12px;
   width: 100%;
   box-sizing: border-box;
+}
+
+.double-input-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.double-input-container input {
+  flex: 1;
+  min-width: 0;
+}
+
+.input-separator {
+  color: #666;
+  font-weight: bold;
 }
 
 @media (max-width: 768px) {
@@ -1213,6 +1254,26 @@
   flex-direction: column;
   gap: 12px;
   box-sizing: border-box;
+}
+
+.room-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+}
+
+.room-config-panel .room-config-header h3 {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin: 0;
+}
+
+.room-config-tabs {
+  display: flex;
+  gap: 4px;
 }
 
 .room-config-panel h3 {

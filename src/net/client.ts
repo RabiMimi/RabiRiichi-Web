@@ -17,7 +17,11 @@ import type {
 } from '../proto';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import { MessagePump } from './messagePump';
-import { DEFAULT_ACTION_TIMEOUT } from '../domain/constants';
+import {
+  DEFAULT_ACTION_TIMEOUT,
+  STORAGE_KEY_SERVER_SETTINGS,
+  type ServerSettings,
+} from '../domain/constants';
 import { applyEvent, applyRoomState } from '../domain/reducer';
 import {
   type MappedInquiry,
@@ -31,7 +35,6 @@ import {
   respondInquiry as sendRespondInquiry,
 } from './messages';
 
-const URL_STORE_KEY = 'rabiriichi_url';
 const TOKEN_STORE_KEY = 'rabiriichi_token';
 
 function getPublicWSUrl(baseUrl: string): string {
@@ -163,7 +166,16 @@ export class RabiRiichiClient {
 
   private storeCredentials(): void {
     if (typeof localStorage !== 'undefined') {
-      if (this.wsurl) localStorage.setItem(URL_STORE_KEY, this.wsurl);
+      if (this.wsurl) {
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
+          const settings = stored ? (JSON.parse(stored) as ServerSettings) : {};
+          settings.lastUrl = this.wsurl;
+          localStorage.setItem(STORAGE_KEY_SERVER_SETTINGS, JSON.stringify(settings));
+        } catch {
+          // ignore
+        }
+      }
       if (this.accessToken)
         localStorage.setItem(TOKEN_STORE_KEY, this.accessToken);
     }
@@ -506,7 +518,16 @@ export class RabiRiichiClient {
 
   public logout(): void {
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(URL_STORE_KEY);
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
+        if (stored) {
+          const settings = JSON.parse(stored) as ServerSettings;
+          delete settings.lastUrl;
+          localStorage.setItem(STORAGE_KEY_SERVER_SETTINGS, JSON.stringify(settings));
+        }
+      } catch {
+        // ignore
+      }
       localStorage.removeItem(TOKEN_STORE_KEY);
     }
     this.accessToken = null;
@@ -619,7 +640,14 @@ export async function initRabiRiichi(): Promise<void> {
   if (typeof localStorage === 'undefined') {
     return;
   }
-  const url = localStorage.getItem(URL_STORE_KEY);
+  let url: string | undefined;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
+    const settings = stored ? (JSON.parse(stored) as ServerSettings) : {};
+    url = settings.lastUrl;
+  } catch {
+    // ignore
+  }
   const token = localStorage.getItem(TOKEN_STORE_KEY);
   if (!url || !token) {
     return;

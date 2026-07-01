@@ -17,6 +17,10 @@ import {
 } from '../proto';
 import { TILE_SET_PRESETS } from '../domain/tilesets';
 import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
+import {
+  STORAGE_KEY_SERVER_SETTINGS,
+  type ServerSettings,
+} from '../domain/constants';
 
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
 import type { RoomModel } from '../domain/model';
@@ -190,8 +194,8 @@ describe('RabiRiichiClient', () => {
     });
 
     expect(setItemMock).toHaveBeenCalledWith(
-      'rabiriichi_url',
-      'ws://localhost:1234',
+      STORAGE_KEY_SERVER_SETTINGS,
+      JSON.stringify({ lastUrl: 'ws://localhost:1234' }),
     );
     expect(setItemMock).toHaveBeenCalledWith('rabiriichi_token', 'my-token');
 
@@ -345,7 +349,7 @@ describe('RabiRiichiClient', () => {
 
   it('should auto-connect using initRabiRiichi if credentials exist', async () => {
     vi.useFakeTimers();
-    mockLocalStorage.rabiriichi_url = 'ws://stored-url:5150';
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({ lastUrl: 'ws://stored-url:5150' });
     mockLocalStorage.rabiriichi_token = 'stored-token';
 
     // Mock connect of global rabiriichi instance
@@ -365,7 +369,7 @@ describe('RabiRiichiClient', () => {
 
   it('should update room state and game state on socket messages', async () => {
     vi.useFakeTimers();
-    mockLocalStorage.rabiriichi_url = 'ws://localhost:5150';
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({ lastUrl: 'ws://localhost:5150' });
     mockLocalStorage.rabiriichi_token = 'my-token';
 
     const client = new RabiRiichiClient();
@@ -831,7 +835,7 @@ describe('RabiRiichiClient', () => {
 
   it('should clear stored credentials and close connection on logout', async () => {
     vi.useFakeTimers();
-    mockLocalStorage.rabiriichi_url = 'ws://localhost:5150';
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({ lastUrl: 'ws://localhost:5150' });
     mockLocalStorage.rabiriichi_token = 'my-token';
 
     const client = new RabiRiichiClient();
@@ -844,7 +848,13 @@ describe('RabiRiichiClient', () => {
 
     expect(client.accessToken).toBeNull();
     expect(client.wsurl).toBeNull();
-    expect(mockLocalStorage.rabiriichi_url).toBeUndefined();
+    expect(
+      (
+        JSON.parse(
+          mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] ?? '{}'
+        ) as ServerSettings
+      ).lastUrl
+    ).toBeUndefined();
     expect(mockLocalStorage.rabiriichi_token).toBeUndefined();
     expect(client.connectionStatus).toBe('disconnected');
 
