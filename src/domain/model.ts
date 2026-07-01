@@ -7,6 +7,7 @@ import type {
   IMenLikeMsg,
 } from '../proto/index.js';
 import { AiType } from '../proto/index.js';
+import type { TileRegistry } from './tileRegistry.js';
 
 export interface PlayerAgariState {
   scores?: IScoreStorageMsg | null;
@@ -58,6 +59,10 @@ export interface RoomModel {
   config: IGameConfigMsg | null;
   info: GameInfo | null;
   players: PlayerModel[];
+  // Every tile the server has mentioned, keyed by traceId. Retains records for
+  // tiles that have left the visible structures (e.g. a called riichi tile), so
+  // the UI can still look up their info. See domain/tileRegistry.ts.
+  tileRegistry: TileRegistry;
 }
 
 // Helper functions for seat math and player lookups

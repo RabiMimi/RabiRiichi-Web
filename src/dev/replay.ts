@@ -1,6 +1,7 @@
 import { GameLogMsg, UserStatus, AiType } from '../proto/index.js';
 import type { IEventMsg, IGameLogMsg } from '../proto/index.js';
 import type { RoomModel } from '../domain/model.js';
+import { createEmptyTileRegistry } from '../domain/tileRegistry.js';
 
 /**
  * Parses a JSON replay log and returns a list of events from the perspective of the given seat.
@@ -44,5 +45,6 @@ export function createInitialRoomFromReplay(replayJson: unknown): RoomModel {
     config,
     info: null,
     players,
+    tileRegistry: createEmptyTileRegistry(),
   };
 }

@@ -3,6 +3,7 @@ import { Html } from '@react-three/drei';
 import { useTranslation } from 'react-i18next';
 import { AiType } from '../proto';
 import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
+import type { TileRegistry } from '../domain/tileRegistry';
 import { Hand3D } from './Hand3D';
 import { River3D } from './River3D';
 import { Melds3D } from './Melds3D';
@@ -45,6 +46,7 @@ interface PlayerArea3DProps {
   isLocal: boolean;
   seat: number;
   playerCount: number;
+  tileRegistry: TileRegistry;
 }
 
 export function PlayerArea3D({
@@ -52,6 +54,7 @@ export function PlayerArea3D({
   isLocal,
   seat,
   playerCount,
+  tileRegistry,
 }: PlayerArea3DProps): React.JSX.Element {
   const shiftX = useMemo(() => {
     const hand = player.gameState?.hand;
@@ -101,6 +104,7 @@ export function PlayerArea3D({
       <River3D
         discarded={hand.discarded}
         riichiTileId={riichiTileId}
+        tileRegistry={tileRegistry}
         isLocal={isLocal}
       />
 

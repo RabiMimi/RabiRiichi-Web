@@ -6,6 +6,8 @@ import {
   KNOWN_EVENTS,
 } from './reducer';
 import type { RoomModel } from './model';
+import { createEmptyTileRegistry, getRegisteredTile } from './tileRegistry';
+import { getRiichiSidewaysTraceId } from './river';
 import { GameLogMsg } from '../proto';
 import type { IEventMsg } from '../proto';
 import {
@@ -25,6 +27,7 @@ describe('Reducer - Hydration', () => {
       config: null,
       info: null,
       players: [],
+      tileRegistry: createEmptyTileRegistry(),
     };
 
     const snapshot: IGameStateMsg = {
@@ -138,6 +141,7 @@ describe('Reducer - Hydration', () => {
           aiType: AiType.AI_TYPE_NONE,
         },
       ],
+      tileRegistry: createEmptyTileRegistry(),
     };
 
     const snapshot: IGameStateMsg = {
@@ -261,6 +265,7 @@ function createInitializedRoom(): RoomModel {
         aiType: AiType.AI_TYPE_NONE,
       },
     ],
+    tileRegistry: createEmptyTileRegistry(),
   };
 }
 
@@ -645,6 +650,105 @@ describe('Reducer - Events', () => {
     // Declaring riichi deducts the 1000-point stick and adds it to the pot.
     expect(nextState.players[0]?.gameState?.points).toBe(24000);
     expect(nextState.info?.riichiStick).toBe(1);
+  });
+
+  it('keeps the riichi sideways tile after the declaration tile is called', () => {
+    // Player 1 declares riichi by discarding tile 50, then player 0 pons it,
+    // then player 1 discards tile 60. The sideways tile must move from 50 to 60.
+    let state = createInitializedRoom();
+
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 1,
+        discarded: {
+          traceId: 50,
+          tile: 21,
+          discardInfo: { from: 1, reason: 1, time: 10 },
+        },
+        isRiichi: true,
+      },
+    });
+
+    // Sanity: declaration tile is registered and currently the sideways tile.
+    expect(getRegisteredTile(state.tileRegistry, 50)?.discardInfo?.time).toBe(
+      10,
+    );
+    const riichiTileId = state.players[1]?.gameState?.riichiTileId ?? 0;
+    expect(riichiTileId).toBe(50);
+    expect(
+      getRiichiSidewaysTraceId(
+        state.players[1]?.gameState?.hand.discarded ?? [],
+        riichiTileId,
+        state.tileRegistry,
+      ),
+    ).toBe(50);
+
+    // Player 0 pons the riichi tile (50), removing it from player 1's river.
+    state = applyEvent(state, {
+      claimTileEvent: {
+        playerId: 0,
+        tile: {
+          traceId: 50,
+          tile: 21,
+          discardInfo: { from: 1, reason: 1, time: 10 },
+        },
+        group: {
+          tiles: [
+            { traceId: 40, tile: 21 },
+            { traceId: 41, tile: 21 },
+            { traceId: 50, tile: 21 },
+          ],
+        },
+        reason: 4,
+      },
+    });
+
+    const riverAfterClaim = state.players[1]?.gameState?.hand.discarded ?? [];
+    expect(riverAfterClaim.some((t) => t.traceId === 50)).toBe(false);
+    // The registry still remembers the called-away declaration tile.
+    expect(getRegisteredTile(state.tileRegistry, 50)?.discardInfo?.time).toBe(
+      10,
+    );
+
+    // Player 1 discards again (tile 60).
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 1,
+        discarded: {
+          traceId: 60,
+          tile: 22,
+          discardInfo: { from: 1, reason: 1, time: 20 },
+        },
+        isRiichi: false,
+      },
+    });
+
+    // riichiTileId still points at the original declaration (matches server).
+    expect(state.players[1]?.gameState?.riichiTileId).toBe(50);
+    // But the rendered sideways tile is now the next surviving discard, 60.
+    expect(
+      getRiichiSidewaysTraceId(
+        state.players[1]?.gameState?.hand.discarded ?? [],
+        state.players[1]?.gameState?.riichiTileId ?? 0,
+        state.tileRegistry,
+      ),
+    ).toBe(60);
+  });
+
+  it('clears the tile registry on beginGameEvent', () => {
+    let state = createInitializedRoom();
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 0,
+        discarded: { traceId: 7, tile: 21 },
+      },
+    });
+    expect(state.tileRegistry.size).toBeGreaterThan(0);
+
+    state = applyEvent(state, {
+      beginGameEvent: { round: 0, dealer: 0, remainingTiles: 70 },
+    });
+    expect(state.tileRegistry.size).toBe(0);
   });
 
   it('should handle setFuritenEvent', () => {
@@ -1140,6 +1244,7 @@ describe('Reducer - Replay coverage (F3)', () => {
         gameState: null,
         aiType: AiType.AI_TYPE_NONE,
       })),
+      tileRegistry: createEmptyTileRegistry(),
     };
 
     expect(() => {

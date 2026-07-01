@@ -3,6 +3,7 @@ import { rabiriichi } from '../net/client';
 import type { ActiveInquiry } from '../net/client';
 import { testStore } from './store';
 import type { RoomModel, PlayerModel } from '../domain/model';
+import { createEmptyTileRegistry } from '../domain/tileRegistry';
 import { MockWebSocket } from '../transport/mockWebSocket';
 import { ClientMessageDto, ServerMessageDto, AiType } from '../proto';
 import type { IServerMessageDto } from '../proto';
@@ -144,6 +145,7 @@ describe('RabiRiichi Store', () => {
       config: null,
       info: null,
       players: [],
+      tileRegistry: createEmptyTileRegistry(),
     };
     rabiriichi.room = mockRoom;
     rabiriichi.onChange.emit();

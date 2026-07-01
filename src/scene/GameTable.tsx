@@ -39,6 +39,7 @@ export function GameTable(): React.JSX.Element {
             isLocal={isLocal}
             seat={player.seat}
             playerCount={playerCount}
+            tileRegistry={room.tileRegistry}
           />
         </SeatAnchor>
       );

@@ -3,18 +3,32 @@ import type { IGameTileMsg } from '../proto';
 import { Tile3D } from './Tile3D';
 import { Tile } from '../domain/tile';
 import { getSafeKey } from './assets';
+import { getRiichiSidewaysTraceId } from '../domain/river';
+import {
+  createEmptyTileRegistry,
+  type TileRegistry,
+} from '../domain/tileRegistry';
 
 interface River3DProps {
   discarded: IGameTileMsg[];
   riichiTileId?: number; // traceId of the riichi declaration tile
+  tileRegistry?: TileRegistry;
   isLocal?: boolean;
 }
 
 export function River3D({
   discarded,
   riichiTileId = 0,
+  tileRegistry = createEmptyTileRegistry(),
   isLocal = false,
 }: River3DProps): React.JSX.Element {
+  // The sideways tile is the riichi declaration discard, or, if that tile has
+  // since been called away, the next surviving discard. Resolve it once here.
+  const sidewaysTraceId = getRiichiSidewaysTraceId(
+    discarded,
+    riichiTileId,
+    tileRegistry,
+  );
   const spacingZ = 0.25; // Tile height (0.24) + small gap
   const zStart = isLocal ? -1.48 : -1.6; // Shift slightly towards local player to expose riichi stick
 
@@ -46,7 +60,8 @@ export function River3D({
                 <group key={rowIndex}>
                   {rowTiles.map((tileMsg, colIndex) => {
                     const isRiichi =
-                      riichiTileId > 0 && tileMsg.traceId === riichiTileId;
+                      sidewaysTraceId > 0 &&
+                      tileMsg.traceId === sidewaysTraceId;
 
                     const tileWidth = 0.18;
                     const tileHeight = 0.24;

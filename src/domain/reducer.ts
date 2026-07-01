@@ -39,6 +39,12 @@ import type {
   PlayerAgariState,
 } from './model.js';
 import { Tile } from './tile.js';
+import {
+  createEmptyTileRegistry,
+  extractEventTiles,
+  extractSnapshotTiles,
+  mergeTilesIntoRegistry,
+} from './tileRegistry.js';
 
 export function hydrateFromGameState(
   state: RoomModel,
@@ -109,11 +115,19 @@ export function hydrateFromGameState(
     };
   });
 
+  // A snapshot is the authoritative full state, so rebuild the tile registry
+  // from scratch rather than merging into a possibly-stale one.
+  const tileRegistry = mergeTilesIntoRegistry(
+    createEmptyTileRegistry(),
+    extractSnapshotTiles(snapshot),
+  );
+
   return {
     ...state,
     config: snapshot.config ?? null,
     info,
     players: updatedPlayers,
+    tileRegistry,
   };
 }
 
@@ -849,6 +863,34 @@ function handleSyncGameState(
 }
 
 export function applyEvent(state: RoomModel, eventMsg: IEventMsg): RoomModel {
+  const nextState = applyEventToState(state, eventMsg);
+  return updateTileRegistry(nextState, eventMsg);
+}
+
+/**
+ * Keeps `state.tileRegistry` in sync with the tiles referenced by an event.
+ *
+ * The registry is reset at round boundaries (a fresh hand reuses traceIds) and
+ * otherwise enriched with every tile the event mentioned. Snapshot events are
+ * skipped here because `hydrateFromGameState` already rebuilds the registry.
+ */
+function updateTileRegistry(state: RoomModel, eventMsg: IEventMsg): RoomModel {
+  if (eventMsg.beginGameEvent || eventMsg.stopGameEvent) {
+    return { ...state, tileRegistry: createEmptyTileRegistry() };
+  }
+  if (eventMsg.syncGameStateEvent) {
+    return state;
+  }
+  const tileRegistry = mergeTilesIntoRegistry(
+    state.tileRegistry,
+    extractEventTiles(eventMsg),
+  );
+  return tileRegistry === state.tileRegistry
+    ? state
+    : { ...state, tileRegistry };
+}
+
+function applyEventToState(state: RoomModel, eventMsg: IEventMsg): RoomModel {
   // Warn on unhandled event variants to catch gaps early (F3)
   if (import.meta.env.DEV) {
     const activeKeys = Object.keys(eventMsg).filter(
@@ -962,5 +1004,6 @@ export function applyRoomState(
     config: msg.config ?? state?.config ?? null,
     info: state?.info ?? null,
     players,
+    tileRegistry: state?.tileRegistry ?? createEmptyTileRegistry(),
   };
 }

@@ -20,6 +20,7 @@ import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
 
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
 import type { RoomModel } from '../domain/model';
+import { createEmptyTileRegistry } from '../domain/tileRegistry';
 import { mapInquiry } from '../domain/inquiry';
 
 function toNormalNumber(val: unknown): number {
@@ -773,6 +774,7 @@ describe('RabiRiichiClient', () => {
           aiType: AiType.AI_TYPE_NONE,
         },
       ],
+      tileRegistry: createEmptyTileRegistry(),
     };
   }
 

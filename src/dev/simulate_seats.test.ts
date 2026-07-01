@@ -1,6 +1,7 @@
 import { test } from 'vitest';
 import { rabiriichi } from '../net/client';
 import { getEventsFromReplay, createInitialRoomFromReplay } from './replay';
+import { createEmptyTileRegistry } from '../domain/tileRegistry';
 import { getScreenPosition, getSeatRotation } from '../scene/seat';
 import { UserStatus, AiType } from '../proto';
 import type { IGameLogMsg } from '../proto';
@@ -125,6 +126,7 @@ test('simulate 2-player positioning', () => {
         aiType: AiType.AI_TYPE_NONE,
       },
     ],
+    tileRegistry: createEmptyTileRegistry(),
   };
 
   rabiriichi.dev.setRoom(room);
