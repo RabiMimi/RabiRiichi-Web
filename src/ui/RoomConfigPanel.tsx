@@ -29,6 +29,7 @@ import {
   MIN_POINTS,
   MAX_POINTS,
   STORAGE_KEY_ROOM_CONFIG,
+  FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK,
 } from '../domain/constants';
 import type { IGameConfigMsg } from '../proto';
 import { TILE_SET_PRESETS, type TileSetPresetName } from '../domain/tilesets';
@@ -180,12 +181,27 @@ export function RoomConfigPanel({
   const [scoringOption, setScoringOption] = useState<number>(
     () => savedConfig?.scoringOption ?? DEFAULT_SCORING_OPTION,
   );
-  const [ryuukyokuTrigger, setRyuukyokuTrigger] = useState<number>(
-    () => savedConfig?.ryuukyokuTrigger ?? DEFAULT_RYUUKYOKU_TRIGGER,
-  );
+  const [ryuukyokuTrigger, setRyuukyokuTrigger] = useState<number>(() => {
+    if (savedConfig?.ryuukyokuTrigger !== undefined) {
+      return savedConfig.ryuukyokuTrigger;
+    }
+    const initialPlayerCount = savedConfig?.playerCount ?? DEFAULT_PLAYER_COUNT;
+    return initialPlayerCount < 4
+      ? DEFAULT_RYUUKYOKU_TRIGGER & ~FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK
+      : DEFAULT_RYUUKYOKU_TRIGGER;
+  });
   const [pointsDeductionPolicy, setPointsDeductionPolicy] = useState<number>(
     () => savedConfig?.pointsDeductionPolicy ?? DEFAULT_POINTS_DEDUCTION_POLICY,
   );
+
+  const handlePlayerCountChange = (count: number) => {
+    setPlayerCount(count);
+    if (count < 4) {
+      setRyuukyokuTrigger(
+        (prev) => prev & ~FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK,
+      );
+    }
+  };
 
   // Persist config to localStorage
   useEffect(() => {
@@ -494,7 +510,7 @@ export function RoomConfigPanel({
           <GameSettingsTab
             isLoading={isLoading}
             playerCount={playerCount}
-            setPlayerCount={setPlayerCount}
+            setPlayerCount={handlePlayerCountChange}
             totalRound={totalRound}
             setTotalRound={setTotalRound}
             minHanInput={minHanInput}
