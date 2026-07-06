@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { AgariType } from '../proto/index.js';
 import type { ISinglePlayerInquiryMsg } from '../proto/index.js';
-import { mapInquiry, encodeInquiryResponse } from './inquiry.js';
+import {
+  mapInquiry,
+  encodeInquiryResponse,
+  getAutoResponse,
+} from './inquiry.js';
 import { assert } from '../lib/assert.js';
 
 describe('Inquiry Mapping & Response Encoding', () => {
@@ -165,5 +169,149 @@ describe('Inquiry Mapping & Response Encoding', () => {
     expect(() => {
       encodeInquiryResponse(mockInquiry, riichiButton, 101);
     }).toThrow('Tile traceId 101 not in riichi options');
+  });
+
+  describe('getAutoResponse', () => {
+    it('should return play-tile auto-response when only 1 legal tile and no buttons', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            playTileAction: {
+              tiles: [{ traceId: 42, tile: 17 }],
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toEqual({
+        action: {
+          type: 'play-tile',
+          label: '打',
+          actionIndex: 0,
+          legalTiles: [42],
+        },
+        choice: 42,
+      });
+    });
+
+    it('should not auto-respond play-tile when multiple legal tiles exist', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            playTileAction: {
+              tiles: [
+                { traceId: 42, tile: 17 },
+                { traceId: 43, tile: 18 },
+              ],
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toBeNull();
+    });
+
+    it('should not auto-respond play-tile if buttons exist alongside single discard', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            skipAction: {},
+          },
+          {
+            playTileAction: {
+              tiles: [{ traceId: 42, tile: 17 }],
+            },
+          },
+          {
+            agariAction: {
+              type: AgariType.AGARI_TYPE_TSUMO,
+              incoming: { traceId: 42, tile: 17 },
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toBeNull();
+    });
+
+    it('should return auto-response for single button (non next-round)', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            chiiAction: {
+              tileGroups: [
+                {
+                  tiles: [
+                    { traceId: 100, tile: 17 },
+                    { traceId: 101, tile: 18 },
+                    { traceId: 200, tile: 19 },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toEqual({
+        action: {
+          type: 'chii',
+          label: '吃',
+          actionIndex: 0,
+          tileGroups: [
+            {
+              index: 0,
+              tiles: [
+                { traceId: 100, tile: 17 },
+                { traceId: 101, tile: 18 },
+                { traceId: 200, tile: 19 },
+              ],
+            },
+          ],
+        },
+        choice: 0,
+      });
+    });
+
+    it('should not auto-respond to next-round button', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            nextRoundAction: {},
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toBeNull();
+    });
+
+    it('should not auto-respond to single button if it has multiple group choices', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            chiiAction: {
+              tileGroups: [
+                {
+                  tiles: [
+                    { traceId: 100, tile: 17 },
+                    { traceId: 101, tile: 18 },
+                    { traceId: 200, tile: 19 },
+                  ],
+                },
+                {
+                  tiles: [
+                    { traceId: 101, tile: 18 },
+                    { traceId: 102, tile: 19 },
+                    { traceId: 200, tile: 20 },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toBeNull();
+    });
   });
 });

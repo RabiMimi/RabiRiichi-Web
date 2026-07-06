@@ -226,3 +226,84 @@ export function encodeInquiryResponse(
     response: responseStr,
   };
 }
+
+export interface AutoResponse {
+  action: ActionOption;
+  choice?: number;
+}
+
+export interface FlatOption {
+  action: ActionOption;
+  choice?: number;
+}
+
+export function flattenInquiry(mapped: MappedInquiry): FlatOption[] {
+  const options: FlatOption[] = [];
+
+  // Add playTile options
+  if (mapped.playTile) {
+    const playTileAction: ActionOption = {
+      type: 'play-tile',
+      label: '打',
+      actionIndex: mapped.playTile.actionIndex,
+      legalTiles: mapped.playTile.legalTiles,
+    };
+    for (const traceId of mapped.playTile.legalTiles) {
+      options.push({
+        action: playTileAction,
+        choice: traceId,
+      });
+    }
+  }
+
+  // Add button options
+  for (const btn of mapped.buttons) {
+    switch (btn.type) {
+      case 'chii':
+      case 'pon':
+      case 'kan': {
+        for (const group of btn.tileGroups) {
+          options.push({
+            action: btn,
+            choice: group.index,
+          });
+        }
+        break;
+      }
+      case 'riichi': {
+        for (const traceId of btn.legalTiles) {
+          options.push({
+            action: btn,
+            choice: traceId,
+          });
+        }
+        break;
+      }
+      case 'skip':
+      case 'agari':
+      case 'ryuukyoku':
+      case 'next-round':
+      case 'play-tile':
+        options.push({
+          action: btn,
+        });
+        break;
+    }
+  }
+
+  return options;
+}
+
+export function getAutoResponse(mapped: MappedInquiry): AutoResponse | null {
+  const flatOptions = flattenInquiry(mapped);
+  if (flatOptions.length === 1) {
+    const opt = flatOptions[0];
+    if (opt && opt.action.type !== 'next-round') {
+      return {
+        action: opt.action,
+        ...(opt.choice !== undefined ? { choice: opt.choice } : {}),
+      };
+    }
+  }
+  return null;
+}

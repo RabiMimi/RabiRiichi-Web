@@ -28,6 +28,7 @@ import {
   mapInquiry,
   type ActionOption,
   encodeInquiryResponse,
+  getAutoResponse,
 } from '../domain/inquiry';
 import { type YakuInfo, YAKUS } from '../domain/yakus';
 import {
@@ -364,7 +365,22 @@ export class RabiRiichiClient {
     }
     this.onChange.emit();
 
-    this.maybeAutoAckNextRound();
+    if (!this.maybeAutoAckNextRound()) {
+      this.maybeAutoRespond();
+    }
+  }
+
+  private maybeAutoRespond(): void {
+    const inquiry = this.currentInquiry;
+    if (!inquiry) return;
+
+    const response = getAutoResponse(inquiry.mapped);
+    if (response) {
+      this.logger.info(
+        `Auto-responding to inquiry: ${JSON.stringify(response)}`,
+      );
+      void this.submitInquiryResponse(response.action, response.choice);
+    }
   }
 
   /**
@@ -378,24 +394,26 @@ export class RabiRiichiClient {
    * in-memory agari result (i.e. we reconnected instead of playing through the
    * win); during live play the result screen is shown and the player advances it.
    */
-  private maybeAutoAckNextRound(): void {
+  private maybeAutoAckNextRound(): boolean {
     const inquiry = this.currentInquiry;
-    if (!inquiry) return;
+    if (!inquiry) return false;
 
     const { buttons } = inquiry.mapped;
     const isNextRoundOnly =
       buttons.length === 1 && buttons[0]?.type === 'next-round';
-    if (!isNextRoundOnly) return;
+    if (!isNextRoundOnly) return false;
 
     const hasInMemoryResult =
       this.room?.players.some((p) => p.gameState?.agari) ?? false;
-    if (hasInMemoryResult) return;
+    if (hasInMemoryResult) return false;
 
     this.logger.info('Auto-acknowledging next round after reconnect.');
     const nextRound = buttons[0];
     if (nextRound) {
       void this.submitInquiryResponse(nextRound);
+      return true;
     }
+    return false;
   }
 
   public async registerUser(nickname: string): Promise<void> {
