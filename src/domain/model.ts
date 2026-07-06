@@ -15,6 +15,7 @@ export interface PlayerAgariState {
   gainPoints: number;
   losePoints: number;
   isNagashi?: boolean;
+  isTenpai?: boolean;
 }
 
 export interface PlayerHandState {

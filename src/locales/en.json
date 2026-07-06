@@ -157,6 +157,7 @@
     "fuAndHan": "{{fu}} Fu {{han}} Han",
     "winnerBadge": "Winner",
     "winTile": "Win",
+    "tenpai": "Tenpai",
     "scoreChangesTitle": "Score Changes",
     "confirmWithTime": "Confirm ({{seconds}}s)",
     "waitingForNext": "Waiting...",

@@ -205,21 +205,26 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const renderWinnerDetails = (player: (typeof room.players)[0]) => {
     const agari = player.gameState?.agari;
-    if (!agari?.scores) return null;
-
-    const { items, result } = agari.scores;
-    const yakuList = items ?? [];
+    if (!agari) return null;
+    if (!agari.scores && !agari.isTenpai) return null;
 
     const isNagashi = agari.isNagashi ?? false;
+    const isTenpai = agari.isTenpai ?? false;
+
     let badgeText = t('result.winnerBadge');
     if (isNagashi) {
       badgeText = t('yaku.NagashiMangan');
+    } else if (isTenpai) {
+      badgeText = t('result.tenpai');
     }
 
     let summaryText = '';
     if (isNagashi) {
       summaryText = t('result.mangan');
-    } else if (result) {
+    } else if (isTenpai) {
+      summaryText = '';
+    } else if (agari.scores?.result) {
+      const result = agari.scores.result;
       if (result.yakuman && result.yakuman > 0) {
         summaryText =
           result.yakuman > 1
@@ -229,6 +234,8 @@ export function ResultPanel(): React.JSX.Element | null {
         summaryText = t('result.fuAndHan', { fu: result.fu, han: result.han });
       }
     }
+
+    const yakuList = agari.scores?.items ?? [];
 
     const handTiles = player.gameState?.hand.freeTiles ?? [];
     const calledMelds = player.gameState?.hand.called ?? [];
@@ -315,7 +322,7 @@ export function ResultPanel(): React.JSX.Element | null {
         )}
 
         {/* List of Yaku */}
-        {!isNagashi && (
+        {!isNagashi && !isTenpai && (
           <div className="yaku-list">
             {yakuList.map((yaku, idx) => {
               if (yaku.Type === ScoringType.SCORING_TYPE_FU) return null; // Skip Fu entries in the list
@@ -392,7 +399,11 @@ export function ResultPanel(): React.JSX.Element | null {
         <div className="result-content-scrollable">
           <div className="result-winners-container">
             {playersWithResult
-              .filter((p) => p.gameState?.agari?.scores != null)
+              .filter(
+                (p) =>
+                  p.gameState?.agari?.scores != null ||
+                  p.gameState?.agari?.isTenpai,
+              )
               .map((w) => renderWinnerDetails(w))}
           </div>
 

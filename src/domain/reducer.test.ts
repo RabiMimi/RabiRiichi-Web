@@ -1073,6 +1073,42 @@ describe('Reducer - Events', () => {
     expect(p1?.gameState?.agari?.scores?.items?.[0]?.Val).toBe(5);
   });
 
+  it('should handle ryuukyokuEvent with tenpai players and reveal their hand tiles', () => {
+    const state = createInitializedRoom();
+    const alice = state.players.find((p) => p.seat === 0)!;
+    alice.gameState!.hand.freeTiles = [
+      { traceId: 1, tile: 0 },
+      { traceId: 2, tile: 0 },
+    ];
+
+    const eventMsg = {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        endGameRyuukyoku: {
+          remainingPlayers: [0, 1],
+          nagashiManganPlayers: [],
+          tenpaiPlayers: [0],
+          revealedTiles: [
+            { traceId: 1, tile: 17, playerId: 0 },
+            { traceId: 2, tile: 18, playerId: 0 },
+          ],
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+    const p0 = nextState.players.find((p) => p.seat === 0)!;
+    const p1 = nextState.players.find((p) => p.seat === 1)!;
+
+    expect(p0.gameState?.agari?.isTenpai).toBe(true);
+    expect(p0.gameState?.hand.freeTiles).toEqual([
+      { traceId: 1, tile: 17, playerId: 0 },
+      { traceId: 2, tile: 18, playerId: 0 },
+    ]);
+
+    expect(p1.gameState?.agari?.isTenpai).toBeFalsy();
+  });
+
   it('keeps the winner result through the full end-of-hand sequence', () => {
     // Regression: live order is agari -> applyScore -> conclude -> nextGame,
     // all sent before the next_round ack inquiry. nextGame previously wiped

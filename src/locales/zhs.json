@@ -157,6 +157,7 @@
     "fuAndHan": "{{fu}} 符 {{han}} 番",
     "winnerBadge": "和牌者",
     "winTile": "胡",
+    "tenpai": "听牌",
     "scoreChangesTitle": "点数收支",
     "confirmWithTime": "确定 ({{seconds}}s)",
     "waitingForNext": "等待下一局...",

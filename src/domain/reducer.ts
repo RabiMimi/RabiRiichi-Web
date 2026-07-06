@@ -803,6 +803,18 @@ export const KNOWN_EVENTS = new Set([
 ]);
 
 function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
+  // Group revealed tiles by player ID
+  const revealedByPlayer = new Map<number, IGameTileMsg[]>();
+  if (_ev.endGameRyuukyoku?.revealedTiles) {
+    for (const tile of _ev.endGameRyuukyoku.revealedTiles) {
+      if (tile.playerId !== undefined && tile.playerId !== null) {
+        const list = revealedByPlayer.get(tile.playerId) ?? [];
+        list.push(tile);
+        revealedByPlayer.set(tile.playerId, list);
+      }
+    }
+  }
+
   // Initialize agari delta state to trigger Draw result panel.
   // The actual points and delta values are updated by the subsequent applyScoreEvent.
   const updatedPlayers = state.players.map((p): PlayerModel => {
@@ -810,8 +822,12 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
 
     const isNagashi =
       _ev.endGameRyuukyoku?.nagashiManganPlayers?.includes(p.seat) ?? false;
+    const isTenpai =
+      _ev.endGameRyuukyoku?.tenpaiPlayers?.includes(p.seat) ?? false;
 
     let agari = p.gameState.agari;
+    let hand = p.gameState.hand;
+
     if (isNagashi) {
       agari = {
         gainPoints: agari?.gainPoints ?? 0,
@@ -832,6 +848,22 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
           },
         },
       };
+    } else if (isTenpai) {
+      agari = {
+        gainPoints: agari?.gainPoints ?? 0,
+        losePoints: agari?.losePoints ?? 0,
+        isTenpai: true,
+      };
+      const pRevealed = revealedByPlayer.get(p.seat);
+      if (pRevealed) {
+        hand = {
+          ...hand,
+          freeTiles: hand.freeTiles.map((t) => {
+            const rev = pRevealed.find((rt) => rt.traceId === t.traceId);
+            return rev ?? t;
+          }),
+        };
+      }
     } else {
       agari = {
         gainPoints: agari?.gainPoints ?? 0,
@@ -844,6 +876,7 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       gameState: {
         ...p.gameState,
         agari,
+        hand,
       },
     };
   });
