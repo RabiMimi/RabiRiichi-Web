@@ -38,7 +38,7 @@
     "rounds": "Rounds",
     "minHan": "Min Han",
     "actionTimeout": "Action Timeout",
-
+    "nextRoundAckTimeout": "Result Timeout",
     "defaultPlaceholder": "Default: {{value}}s",
     "initialPoints": "Starting Points",
     "finishPoints": "Target Points",
@@ -161,7 +161,15 @@
     "scoreChangesTitle": "Score Changes",
     "confirmWithTime": "Confirm ({{seconds}}s)",
     "waitingForNext": "Waiting...",
-    "waitingForNextRound": "Waiting for the next round..."
+    "waitingForNextRound": "Waiting for the next round...",
+    "ryuukyoku": {
+      "suufon_renda": "Four Winds Discard Draw",
+      "kyuushu_kyuuhai": "Nine Orphans Draw",
+      "suucha_riichi": "Four Riichi Draw",
+      "triple_ron": "Triple Ron Draw",
+      "suukan_sanra": "Four Kan Draw",
+      "end_game_ryuukyoku": "Draw"
+    }
   },
   "advanced": {
     "renchanPolicy": "Renchan Policy",
@@ -302,6 +310,7 @@
       "totalRound": "Total rounds must be 1 or 2.",
       "minHan": "Min Han must be between 1 and 13.",
       "timeout": "Timeout must be between 5 and 3600 seconds.",
+      "nextRoundAckTimeout": "Result timeout must be between 5 and 3600 seconds.",
       "tileSet": "Selected tile set has insufficient tiles ({{count}}) for {{players}} players. At least {{min}} are required.",
       "initialPoints": "Starting points must be between 0 and 1,000,000.",
       "finishPoints": "Target points must be between 0 and 1,000,000.",

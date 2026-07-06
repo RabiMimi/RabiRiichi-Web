@@ -80,6 +80,7 @@ describe('RabiRiichi Store', () => {
       ping: -1,
       selectedTileTraceId: null,
       isCameraLocked: true,
+      resultAnimation: null,
     });
   });
 

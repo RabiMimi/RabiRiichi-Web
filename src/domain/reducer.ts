@@ -38,6 +38,7 @@ import type {
   PlayerGameState,
   PlayerAgariState,
 } from './model.js';
+import { isTsumoTile } from './model.js';
 import { Tile } from './tile.js';
 import {
   createEmptyTileRegistry,
@@ -190,6 +191,7 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     ...state,
     info,
     players: updatedPlayers,
+    ryuukyokuReason: null,
   };
 }
 
@@ -628,6 +630,16 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
         ? agariInfo.freeTiles
         : p.gameState.hand.freeTiles;
 
+    let finalFreeTiles = freeTiles;
+    let finalPendingTile: IGameTileMsg | null = null;
+
+    // For a tsumo, lift the self-drawn winning tile out of the hand and show it
+    // as the pending tile so the win animation can highlight it separately.
+    if (incoming && isTsumoTile(incoming)) {
+      finalPendingTile = incoming;
+      finalFreeTiles = freeTiles.filter((t) => t.traceId !== incoming.traceId);
+    }
+
     const agariState: PlayerAgariState = {
       scores: agariInfo.scores ?? null,
       incoming: incoming ?? null,
@@ -641,8 +653,8 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
         ...p.gameState,
         hand: {
           ...p.gameState.hand,
-          freeTiles: sortGameTiles(freeTiles),
-          pendingTile: null,
+          freeTiles: sortGameTiles(finalFreeTiles),
+          pendingTile: finalPendingTile,
         },
         agari: agariState,
       },
@@ -884,6 +896,7 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
   return {
     ...state,
     players: updatedPlayers,
+    ryuukyokuReason: _ev.midGameRyuukyoku?.name ?? 'end_game_ryuukyoku',
   };
 }
 
@@ -1038,5 +1051,6 @@ export function applyRoomState(
     info: state?.info ?? null,
     players,
     tileRegistry: state?.tileRegistry ?? createEmptyTileRegistry(),
+    ryuukyokuReason: state?.ryuukyokuReason ?? null,
   };
 }

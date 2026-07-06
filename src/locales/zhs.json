@@ -38,7 +38,7 @@
     "rounds": "局数",
     "minHan": "起和番数",
     "actionTimeout": "出牌限时",
-
+    "nextRoundAckTimeout": "结算限时",
     "defaultPlaceholder": "默认：{{value}}秒",
     "initialPoints": "初始点数",
     "finishPoints": "终局点数",
@@ -161,7 +161,15 @@
     "scoreChangesTitle": "点数收支",
     "confirmWithTime": "确定 ({{seconds}}s)",
     "waitingForNext": "等待下一局...",
-    "waitingForNextRound": "等待下一局开始..."
+    "waitingForNextRound": "等待下一局开始...",
+    "ryuukyoku": {
+      "suufon_renda": "四风连打",
+      "kyuushu_kyuuhai": "九种九牌",
+      "suucha_riichi": "四家立直",
+      "triple_ron": "三家荣和",
+      "suukan_sanra": "四杠散了",
+      "end_game_ryuukyoku": "流局"
+    }
   },
   "advanced": {
     "renchanPolicy": "连庄策略",
@@ -302,6 +310,7 @@
       "totalRound": "总局数必须是 1 或 2。",
       "minHan": "起和番数必须在 1 到 13 之间。",
       "timeout": "限时必须在 5 到 3600 秒之间。",
+      "nextRoundAckTimeout": "结算限时必须在 5 到 3600 秒之间。",
       "tileSet": "所选牌张数不足 ({{count}} 张)，无法支持 {{players}} 人局（至少需要 {{min}} 张）。",
       "initialPoints": "初始点数必须在 0 到 1,000,000 之间。",
       "finishPoints": "终局点数必须在 0 到 1,000,000 之间。",

@@ -2,12 +2,17 @@ import React, { useMemo } from 'react';
 import { Html } from '@react-three/drei';
 import { useTranslation } from 'react-i18next';
 import { AiType } from '../proto';
-import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
+import {
+  type PlayerModel,
+  getPlayerDisplayName,
+  shouldRevealHand,
+} from '../domain/model';
 import type { TileRegistry } from '../domain/tileRegistry';
 import { Hand3D } from './Hand3D';
 import { River3D } from './River3D';
 import { Melds3D } from './Melds3D';
 import { getMeldsLeftEdge } from './assets';
+import { useResultAnimation } from '../state/store';
 
 interface PlayerIndicator3DProps {
   player: PlayerModel;
@@ -47,6 +52,7 @@ interface PlayerArea3DProps {
   seat: number;
   playerCount: number;
   tileRegistry: TileRegistry;
+  winningTileTraceId: number | null;
 }
 
 export function PlayerArea3D({
@@ -55,6 +61,7 @@ export function PlayerArea3D({
   seat,
   playerCount,
   tileRegistry,
+  winningTileTraceId,
 }: PlayerArea3DProps): React.JSX.Element {
   const shiftX = useMemo(() => {
     const hand = player.gameState?.hand;
@@ -80,6 +87,15 @@ export function PlayerArea3D({
     return Math.min(0, calcShift);
   }, [player.gameState?.hand, seat]);
 
+  const resultAnimation = useResultAnimation();
+
+  const isRevealed = useMemo(() => {
+    if (isLocal) {
+      return Boolean(resultAnimation); // Lay local hand flat at round end
+    }
+    return shouldRevealHand(player.gameState?.agari, isLocal);
+  }, [isLocal, player.gameState?.agari, resultAnimation]);
+
   if (!player.gameState) {
     return <group />;
   }
@@ -96,6 +112,8 @@ export function PlayerArea3D({
           tiles={hand.freeTiles}
           pendingTile={hand.pendingTile}
           isLocal={isLocal}
+          isRevealed={isRevealed}
+          winningTileTraceId={winningTileTraceId}
           shiftX={shiftX}
         />
       </group>
@@ -106,6 +124,7 @@ export function PlayerArea3D({
         riichiTileId={riichiTileId}
         tileRegistry={tileRegistry}
         isLocal={isLocal}
+        winningTileTraceId={winningTileTraceId}
       />
 
       {/* Called Melds - pushed towards center */}

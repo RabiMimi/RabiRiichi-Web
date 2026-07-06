@@ -1043,6 +1043,42 @@ describe('Reducer - Events', () => {
     }
   });
 
+  it('should handle ryuukyokuEvent with midGameRyuukyoku reason', () => {
+    const state = createInitializedRoom();
+
+    const eventMsg = {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        midGameRyuukyoku: {
+          name: 'suufon_renda',
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+
+    expect(nextState.ryuukyokuReason).toBe('suufon_renda');
+  });
+
+  it('should reset ryuukyokuReason on beginGameEvent', () => {
+    const state = createInitializedRoom();
+    state.ryuukyokuReason = 'suufon_renda';
+
+    const eventMsg = {
+      beginGameEvent: {
+        round: 1,
+        dealer: 0,
+        honba: 0,
+        riichiStick: 0,
+        remainingTiles: 122,
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+
+    expect(nextState.ryuukyokuReason).toBeNull();
+  });
+
   it('should handle ryuukyokuEvent with single or multiple Nagashi Mangan players', () => {
     const state = createInitializedRoom();
 

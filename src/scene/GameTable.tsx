@@ -5,6 +5,7 @@ import { useRoom, useSelf } from '../state/store';
 import { getScreenPosition } from './seat';
 import { PlayerArea3D } from './PlayerArea3D';
 import { TableCenter } from './TableCenter';
+import { ResultAnimation3D } from './ResultAnimation3D';
 
 export function GameTable(): React.JSX.Element {
   const room = useRoom();
@@ -24,6 +25,12 @@ export function GameTable(): React.JSX.Element {
 
     const playerCount = room.config?.playerCount ?? 2;
 
+    // The winning tile is shared table-wide, so resolve it once here rather than
+    // rescanning every player inside each PlayerArea3D.
+    const winningTileTraceId =
+      room.players.find((p) => p.gameState?.agari)?.gameState?.agari?.incoming
+        ?.traceId ?? null;
+
     return room.players.map((player) => {
       if (player.seat === undefined || !player.gameState) {
         return null;
@@ -40,6 +47,7 @@ export function GameTable(): React.JSX.Element {
             seat={player.seat}
             playerCount={playerCount}
             tileRegistry={room.tileRegistry}
+            winningTileTraceId={winningTileTraceId}
           />
         </SeatAnchor>
       );
@@ -63,6 +71,10 @@ export function GameTable(): React.JSX.Element {
       <Suspense fallback={null}>
         <Table />
         <TableCenter />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <ResultAnimation3D />
       </Suspense>
 
       {/* Grid helper for development/alignment */}

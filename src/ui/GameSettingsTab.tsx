@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { DEFAULT_ACTION_TIMEOUT } from '../domain/constants';
+import {
+  DEFAULT_ACTION_TIMEOUT,
+  DEFAULT_NEXT_ROUND_ACK_TIMEOUT,
+} from '../domain/constants';
 import type { TileSetPresetName } from '../domain/tilesets';
 
 interface GameSettingsTabProps {
@@ -16,6 +19,10 @@ interface GameSettingsTabProps {
   setActionTimeoutInput: (v: string) => void;
   timeoutError: string | null;
   validateTimeout: (v: string) => void;
+  nextRoundAckTimeoutInput: string;
+  setNextRoundAckTimeoutInput: (v: string) => void;
+  nextRoundAckTimeoutError: string | null;
+  validateNextRoundAckTimeout: (v: string) => void;
   tileSetPreset: TileSetPresetName;
   setTileSetPreset: (v: TileSetPresetName) => void;
 }
@@ -34,6 +41,10 @@ export function GameSettingsTab({
   setActionTimeoutInput,
   timeoutError,
   validateTimeout,
+  nextRoundAckTimeoutInput,
+  setNextRoundAckTimeoutInput,
+  nextRoundAckTimeoutError,
+  validateNextRoundAckTimeout,
   tileSetPreset,
   setTileSetPreset,
 }: GameSettingsTabProps) {
@@ -105,6 +116,30 @@ export function GameSettingsTab({
           />
         </div>
         {timeoutError && <span className="field-error">{timeoutError}</span>}
+      </div>
+      <div className="form-group-inline-wrapper">
+        <div className="form-group-inline">
+          <label htmlFor="next-round-ack-timeout">
+            {t('lobby.nextRoundAckTimeout')}
+          </label>
+          <input
+            id="next-round-ack-timeout"
+            type="text"
+            value={nextRoundAckTimeoutInput}
+            onChange={(e) => {
+              const val = e.target.value.replace(/[^\d.]/g, '');
+              setNextRoundAckTimeoutInput(val);
+              validateNextRoundAckTimeout(val);
+            }}
+            disabled={isLoading}
+            placeholder={t('lobby.defaultPlaceholder', {
+              value: DEFAULT_NEXT_ROUND_ACK_TIMEOUT,
+            })}
+          />
+        </div>
+        {nextRoundAckTimeoutError && (
+          <span className="field-error">{nextRoundAckTimeoutError}</span>
+        )}
       </div>
 
       <div className="form-group-inline">

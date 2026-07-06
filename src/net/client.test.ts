@@ -837,6 +837,63 @@ describe('RabiRiichiClient', () => {
     vi.useRealTimers();
   });
 
+  it('does NOT auto-ack the next-round inquiry after mid-game ryuukyoku', async () => {
+    vi.useFakeTimers();
+    const client = new RabiRiichiClient();
+    const mockWS = await setupConnectedClient(client);
+
+    // Initial state: running game, no agari
+    client.dev.setRoom(makeRoomWithAgari(false));
+
+    // Send mid-game ryuukyoku event
+    sendServerMsg(mockWS, {
+      event: {
+        ryuukyokuEvent: {
+          midGameRyuukyoku: {
+            name: 'suufon_renda',
+          },
+          scoreChange: [],
+        },
+      },
+    });
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Send ConcludeGameEvent
+    sendServerMsg(mockWS, {
+      event: {
+        concludeGameEvent: {
+          doras: [],
+          uradoras: [],
+        },
+      },
+    });
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Send NextGameEvent
+    sendServerMsg(mockWS, {
+      event: {
+        nextGameEvent: {
+          nextRound: 1,
+          nextDealer: 0,
+          nextHonba: 1,
+          riichiStick: 0,
+        },
+      },
+    });
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Send NextRoundAction inquiry
+    sendNextRoundInquiry(mockWS, 11);
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Should NOT auto-ack
+    expect(mockWS.send).not.toHaveBeenCalled();
+    expect(client.currentInquiry).not.toBeNull();
+
+    client.close();
+    vi.useRealTimers();
+  });
+
   it('should clear stored credentials and close connection on logout', async () => {
     vi.useFakeTimers();
     mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({

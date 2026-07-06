@@ -14,6 +14,7 @@ interface River3DProps {
   riichiTileId?: number; // traceId of the riichi declaration tile
   tileRegistry?: TileRegistry;
   isLocal?: boolean;
+  winningTileTraceId?: number | null;
 }
 
 export function River3D({
@@ -21,6 +22,7 @@ export function River3D({
   riichiTileId = 0,
   tileRegistry = createEmptyTileRegistry(),
   isLocal = false,
+  winningTileTraceId = null,
 }: River3DProps): React.JSX.Element {
   // The sideways tile is the riichi declaration discard, or, if that tile has
   // since been called away, the next surviving discard. Resolve it once here.
@@ -80,12 +82,17 @@ export function River3D({
                     const z =
                       zStart + rowIndex * spacingZ + (isRiichi ? 0.03 : 0);
 
+                    const isWinningTile =
+                      winningTileTraceId != null &&
+                      tileMsg.traceId === winningTileTraceId;
+
                     return (
                       <Tile3D
                         key={getSafeKey(tileMsg.traceId, colIndex)}
                         tile={tileStr}
                         displayState={isRiichi ? 'sideways' : 'face'}
                         position={[x, 0, z]}
+                        isWinningTile={isWinningTile}
                       />
                     );
                   })}

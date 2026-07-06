@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   DEFAULT_ACTION_TIMEOUT,
+  DEFAULT_NEXT_ROUND_ACK_TIMEOUT,
   DEFAULT_PLAYER_COUNT,
   DEFAULT_TOTAL_ROUND,
   DEFAULT_MIN_HAN,
@@ -24,6 +25,8 @@ import {
   DEFAULT_POINTS_DEDUCTION_POLICY,
   MIN_ACTION_TIMEOUT,
   MAX_ACTION_TIMEOUT,
+  MIN_NEXT_ROUND_ACK_TIMEOUT,
+  MAX_NEXT_ROUND_ACK_TIMEOUT,
   MIN_MIN_HAN,
   MAX_MIN_HAN,
   MIN_POINTS,
@@ -45,6 +48,7 @@ interface SavedRoomConfig {
   totalRound?: number;
   minHanInput?: string;
   actionTimeoutInput?: string;
+  nextRoundAckTimeoutInput?: string;
   initialPointsInput?: string;
   finishPointsInput?: string;
   upperPointsInput?: string;
@@ -106,6 +110,15 @@ export function RoomConfigPanel({
     () => savedConfig?.actionTimeoutInput ?? DEFAULT_ACTION_TIMEOUT.toString(),
   );
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
+  const [nextRoundAckTimeoutInput, setNextRoundAckTimeoutInput] =
+    useState<string>(
+      () =>
+        savedConfig?.nextRoundAckTimeoutInput ??
+        DEFAULT_NEXT_ROUND_ACK_TIMEOUT.toString(),
+    );
+  const [nextRoundAckTimeoutError, setNextRoundAckTimeoutError] = useState<
+    string | null
+  >(null);
 
   // New config states
   const [initialPointsInput, setInitialPointsInput] = useState<string>(
@@ -210,6 +223,7 @@ export function RoomConfigPanel({
       totalRound,
       minHanInput,
       actionTimeoutInput,
+      nextRoundAckTimeoutInput,
       initialPointsInput,
       finishPointsInput,
       upperPointsInput,
@@ -235,6 +249,7 @@ export function RoomConfigPanel({
     totalRound,
     minHanInput,
     actionTimeoutInput,
+    nextRoundAckTimeoutInput,
     initialPointsInput,
     finishPointsInput,
     upperPointsInput,
@@ -269,6 +284,23 @@ export function RoomConfigPanel({
       setTimeoutError(t('error.lobby.timeout'));
     } else {
       setTimeoutError(null);
+    }
+  };
+
+  const validateNextRoundAckTimeout = (val: string) => {
+    if (val === '') {
+      setNextRoundAckTimeoutError(null);
+      return;
+    }
+    const seconds = parseFloat(val);
+    if (
+      isNaN(seconds) ||
+      seconds < MIN_NEXT_ROUND_ACK_TIMEOUT ||
+      seconds > MAX_NEXT_ROUND_ACK_TIMEOUT
+    ) {
+      setNextRoundAckTimeoutError(t('error.lobby.nextRoundAckTimeout'));
+    } else {
+      setNextRoundAckTimeoutError(null);
     }
   };
 
@@ -342,6 +374,7 @@ export function RoomConfigPanel({
     if (
       minHanError ||
       timeoutError ||
+      nextRoundAckTimeoutError ||
       initialPointsError ||
       finishPointsError ||
       upperPointsError ||
@@ -362,6 +395,18 @@ export function RoomConfigPanel({
         parsed <= MAX_ACTION_TIMEOUT
       ) {
         actionTimeout = parsed;
+      }
+    }
+
+    let nextRoundAckTimeout = DEFAULT_NEXT_ROUND_ACK_TIMEOUT;
+    if (nextRoundAckTimeoutInput !== '') {
+      const parsed = parseFloat(nextRoundAckTimeoutInput);
+      if (
+        !isNaN(parsed) &&
+        parsed >= MIN_NEXT_ROUND_ACK_TIMEOUT &&
+        parsed <= MAX_NEXT_ROUND_ACK_TIMEOUT
+      ) {
+        nextRoundAckTimeout = parsed;
       }
     }
 
@@ -434,6 +479,7 @@ export function RoomConfigPanel({
       totalRound,
       minHan,
       gameplayActionTimeout: actionTimeout,
+      nextRoundAckTimeout,
       renchanPolicy,
       endGamePolicy,
       kuikaePolicy,
@@ -461,6 +507,7 @@ export function RoomConfigPanel({
   const isFormInvalid =
     minHanError !== null ||
     timeoutError !== null ||
+    nextRoundAckTimeoutError !== null ||
     initialPointsError !== null ||
     finishPointsError !== null ||
     upperPointsError !== null ||
@@ -521,6 +568,10 @@ export function RoomConfigPanel({
             setActionTimeoutInput={setActionTimeoutInput}
             timeoutError={timeoutError}
             validateTimeout={validateTimeout}
+            nextRoundAckTimeoutInput={nextRoundAckTimeoutInput}
+            setNextRoundAckTimeoutInput={setNextRoundAckTimeoutInput}
+            nextRoundAckTimeoutError={nextRoundAckTimeoutError}
+            validateNextRoundAckTimeout={validateNextRoundAckTimeout}
             tileSetPreset={tileSetPreset}
             setTileSetPreset={setTileSetPreset}
           />

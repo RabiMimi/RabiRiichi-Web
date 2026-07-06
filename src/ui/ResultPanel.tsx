@@ -5,6 +5,7 @@ import {
   useCurrentInquiry,
   useIsWaitingForProceed,
   useActionTimeout,
+  useResultAnimation,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
@@ -23,6 +24,7 @@ export function ResultPanel(): React.JSX.Element | null {
   const currentInquiry = useCurrentInquiry();
   const isWaitingForProceed = useIsWaitingForProceed();
   const actionTimeout = useActionTimeout();
+  const resultAnimation = useResultAnimation();
 
   const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(8);
 
@@ -199,7 +201,8 @@ export function ResultPanel(): React.JSX.Element | null {
   }
 
   const showPanel =
-    playersWithResult.length > 0 || hasNextRound || isWaitingForProceed;
+    (playersWithResult.length > 0 || hasNextRound || isWaitingForProceed) &&
+    !resultAnimation;
 
   if (!room || !showPanel) return null;
 
@@ -389,7 +392,11 @@ export function ResultPanel(): React.JSX.Element | null {
           {isDraw
             ? hasNagashiWinner
               ? t('yaku.NagashiMangan')
-              : t('result.draw')
+              : room.ryuukyokuReason
+                ? t(`result.ryuukyoku.${room.ryuukyokuReason}`, {
+                    defaultValue: t('result.draw'),
+                  })
+                : t('result.draw')
             : t('result.agari')}
         </h2>
 

@@ -20,6 +20,7 @@ export interface RabiRiichiState {
   ping: number;
   selectedTileTraceId: number | null;
   isCameraLocked: boolean;
+  resultAnimation: 'agari' | 'ryuukyoku' | null;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -43,7 +44,8 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.timerActiveSeat !== rabiriichi.timerActiveSeat ||
     lastSnapshot.ping !== rabiriichi.ping ||
     lastSnapshot.selectedTileTraceId !== rabiriichi.selectedTileTraceId ||
-    lastSnapshot.isCameraLocked !== rabiriichi.isCameraLocked
+    lastSnapshot.isCameraLocked !== rabiriichi.isCameraLocked ||
+    lastSnapshot.resultAnimation !== rabiriichi.resultAnimation
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -59,6 +61,7 @@ function getSnapshot(): RabiRiichiState {
       ping: rabiriichi.ping,
       selectedTileTraceId: rabiriichi.selectedTileTraceId,
       isCameraLocked: rabiriichi.isCameraLocked,
+      resultAnimation: rabiriichi.resultAnimation,
     };
   }
   return lastSnapshot;
@@ -168,6 +171,14 @@ const getAvailableYakus = () => rabiriichi.availableYakus;
 
 export function useAvailableYakus(): YakuInfo[] {
   return useSyncExternalStore(subscribe, getAvailableYakus, getAvailableYakus);
+}
+
+export function useResultAnimation(): 'agari' | 'ryuukyoku' | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.resultAnimation,
+    () => rabiriichi.resultAnimation,
+  );
 }
 
 function resetForTest(): void {

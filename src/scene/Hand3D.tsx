@@ -8,6 +8,8 @@ interface Hand3DProps {
   tiles: IGameTileMsg[];
   pendingTile: IGameTileMsg | null;
   isLocal: boolean;
+  isRevealed?: boolean;
+  winningTileTraceId?: number | null;
   shiftX?: number;
 }
 
@@ -15,10 +17,19 @@ export function Hand3D({
   tiles,
   pendingTile,
   isLocal,
+  isRevealed = false,
+  winningTileTraceId = null,
   shiftX = 0,
 }: Hand3DProps): React.JSX.Element {
   const spacing = 0.19; // Tile width (0.18) + small gap
   const k = tiles.length;
+
+  const showTiles = isLocal || isRevealed;
+  const displayState = isLocal
+    ? 'hand'
+    : isRevealed
+      ? 'face' // Revealed opponent hands lie flat face up
+      : 'opponent-hand';
 
   return (
     <group position={[shiftX, 0, 0]}>
@@ -27,20 +38,23 @@ export function Hand3D({
         // Center the hand at X = 0
         const x = (idx - (k - 1) / 2) * spacing;
 
-        // Only decode tile value if it is the local player's hand.
-        // For opponents, the server might send 0 or we want to hide it anyway.
+        // Only decode tile value if it is revealed or local player's hand.
         const tileStr =
-          isLocal && tileMsg.tile
+          showTiles && tileMsg.tile
             ? Tile.fromByte(tileMsg.tile).toString()
             : null; // null renders as back texture
+
+        const isWinningTile =
+          winningTileTraceId != null && tileMsg.traceId === winningTileTraceId;
 
         return (
           <Tile3D
             key={getSafeKey(tileMsg.traceId, idx)}
             tile={tileStr}
-            displayState={isLocal ? 'hand' : 'opponent-hand'}
+            displayState={displayState}
             position={[x, 0, 0]}
             traceId={getSafeTraceId(tileMsg.traceId)}
+            isWinningTile={isWinningTile}
           />
         );
       })}
@@ -50,17 +64,22 @@ export function Hand3D({
         (() => {
           const x = ((k - 1) / 2 + 1) * spacing + 0.08;
           const tileStr =
-            isLocal && pendingTile.tile
+            showTiles && pendingTile.tile
               ? Tile.fromByte(pendingTile.tile).toString()
               : null;
+
+          const isWinningTile =
+            winningTileTraceId != null &&
+            pendingTile.traceId === winningTileTraceId;
 
           return (
             <Tile3D
               key={getSafeKey(pendingTile.traceId, 'pending')}
               tile={tileStr}
-              displayState={isLocal ? 'hand' : 'opponent-hand'}
+              displayState={displayState}
               position={[x, 0, 0]}
               traceId={getSafeTraceId(pendingTile.traceId)}
+              isWinningTile={isWinningTile}
             />
           );
         })()}

@@ -70,11 +70,11 @@ export function TableCenter(): React.JSX.Element | null {
   );
   const activeRotation = getSeatRotation(activeScreenPos);
 
-  // Round wind texture (East = rounds 0-3, South = rounds 4-7, West = 8-11, North = 12-15)
-  const roundWindIdx = Math.floor(round / 4) % 4;
+  // Round wind texture (East = 0, South = 1, West = 2, North = 3)
+  const roundWindIdx = round % 4;
   const windTexture = [windE, windS, windW, windN][roundWindIdx] ?? windE;
 
-  const roundNum = (round % 4) + 1;
+  const roundNum = dealer + 1;
 
   return (
     // Slightly elevated above table top (y=0) to prevent z-fighting

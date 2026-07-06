@@ -64,9 +64,43 @@ export interface RoomModel {
   // tiles that have left the visible structures (e.g. a called riichi tile), so
   // the UI can still look up their info. See domain/tileRegistry.ts.
   tileRegistry: TileRegistry;
+  ryuukyokuReason?: string | null;
 }
 
 // Helper functions for seat math and player lookups
+
+/**
+ * Whether a winning tile was self-drawn (tsumo) rather than claimed off a
+ * discard (ron).
+ *
+ * The server omits `discardInfo` entirely for a self-drawn tile (a tsumo tile
+ * has no discarder), so its absence is the tsumo signal. `discardInfo.from` is a
+ * plain int that is never null on the wire, so checking it is not meaningful;
+ * only the presence of `discardInfo` matters.
+ */
+export function isTsumoTile(tile: IGameTileMsg | null | undefined): boolean {
+  return tile != null && tile.discardInfo == null;
+}
+
+/**
+ * Whether an opponent's concealed hand should be revealed at the end of a hand.
+ *
+ * We reveal winners (they gained points or have a score breakdown) and players
+ * who kept tenpai at an exhaustive draw. Noten players at a draw keep their hand
+ * hidden even though a ryuukyoku result assigns them an (empty) agari state, so
+ * this must NOT trigger merely because `agari` is present. The local player's
+ * own hand is always visible, so callers pass `isLocal` to short-circuit.
+ */
+export function shouldRevealHand(
+  agari: PlayerAgariState | null | undefined,
+  isLocal: boolean,
+): boolean {
+  if (isLocal || !agari) return false;
+  const isTenpai = agari.isTenpai ?? false;
+  const gainedPoints = agari.gainPoints > 0;
+  const hasScores = agari.scores != null;
+  return isTenpai || gainedPoints || hasScores;
+}
 
 export function getPlayerBySeat(
   players: PlayerModel[],

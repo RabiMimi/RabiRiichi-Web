@@ -5,7 +5,10 @@ import {
   getPlayerBySeat,
   getPlayerById,
   getWindKey,
+  isTsumoTile,
+  shouldRevealHand,
   type PlayerModel,
+  type PlayerAgariState,
 } from './model';
 import { UserStatus, AiType } from '../proto';
 
@@ -91,5 +94,77 @@ describe('Model wind conversion', () => {
     expect(getWindKey(3)).toBe('north');
     expect(getWindKey(4)).toBe('east');
     expect(getWindKey(7)).toBe('north');
+  });
+});
+
+describe('isTsumoTile', () => {
+  it('treats a tile without discardInfo as tsumo', () => {
+    expect(isTsumoTile({ traceId: 1, tile: 17 })).toBe(true);
+  });
+
+  it('treats a tile with discardInfo as ron (not tsumo)', () => {
+    expect(
+      isTsumoTile({
+        traceId: 1,
+        tile: 17,
+        discardInfo: { from: 2, reason: 1, time: 5 },
+      }),
+    ).toBe(false);
+  });
+
+  it('treats a discardInfo with from=0 as ron (from is never null on the wire)', () => {
+    expect(
+      isTsumoTile({
+        traceId: 1,
+        tile: 17,
+        discardInfo: { from: 0, reason: 1, time: 5 },
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false for null/undefined', () => {
+    expect(isTsumoTile(null)).toBe(false);
+    expect(isTsumoTile(undefined)).toBe(false);
+  });
+});
+
+describe('shouldRevealHand', () => {
+  const winner: PlayerAgariState = { gainPoints: 8000, losePoints: 0 };
+  const tenpai: PlayerAgariState = {
+    gainPoints: 1000,
+    losePoints: 0,
+    isTenpai: true,
+  };
+  const scoredOnly: PlayerAgariState = {
+    gainPoints: 0,
+    losePoints: 0,
+    scores: { items: [] },
+  };
+  // A noten player at a draw: reducer still assigns an (empty) agari state.
+  const noten: PlayerAgariState = { gainPoints: 0, losePoints: 3000 };
+
+  it('reveals a winner', () => {
+    expect(shouldRevealHand(winner, false)).toBe(true);
+  });
+
+  it('reveals a tenpai player at a draw', () => {
+    expect(shouldRevealHand(tenpai, false)).toBe(true);
+  });
+
+  it('reveals a player with a score breakdown', () => {
+    expect(shouldRevealHand(scoredOnly, false)).toBe(true);
+  });
+
+  it('does NOT reveal a noten player at a draw (even though agari is set)', () => {
+    expect(shouldRevealHand(noten, false)).toBe(false);
+  });
+
+  it('never reveals the local player', () => {
+    expect(shouldRevealHand(winner, true)).toBe(false);
+  });
+
+  it('does not reveal when there is no agari', () => {
+    expect(shouldRevealHand(null, false)).toBe(false);
+    expect(shouldRevealHand(undefined, false)).toBe(false);
   });
 });

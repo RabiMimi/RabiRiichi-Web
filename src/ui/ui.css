@@ -1977,6 +1977,149 @@
   transform: translateX(-50%) translateY(-8px);
 }
 
+/* End-of-hand result flash (agari / ryuukyoku), shown before the result panel */
+.result-flash {
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  perspective: 1000px;
+  animation: result-flash-entrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+    both;
+}
+
+.result-flash-text {
+  position: relative;
+  display: inline-block;
+  font-family:
+    'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 80px;
+  letter-spacing: 4px;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+/* Layered glow underlay */
+.result-flash-text::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  -webkit-text-fill-color: initial;
+  background: none;
+  text-shadow: none;
+}
+
+.result-flash-agari .result-flash-text {
+  background: linear-gradient(
+    120deg,
+    #ff4500 0%,
+    #ffd700 25%,
+    #ffffff 50%,
+    #ffd700 75%,
+    #ff4500 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation:
+    result-flash-idle-agari 2.5s ease-in-out infinite alternate,
+    result-shine 3.5s linear infinite;
+
+  filter: drop-shadow(0 0 12px rgba(255, 140, 0, 0.95))
+    drop-shadow(0 0 25px rgba(255, 69, 0, 0.7))
+    drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
+}
+
+.result-flash-agari .result-flash-text::before {
+  color: #ff4500;
+  filter: blur(14px);
+  opacity: 0.95;
+}
+
+.result-flash-ryuukyoku .result-flash-text {
+  background: linear-gradient(
+    120deg,
+    #4a7ab5 0%,
+    #b0d4ff 25%,
+    #ffffff 50%,
+    #b0d4ff 75%,
+    #4a7ab5 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation:
+    result-flash-idle-ryuukyoku 2.5s ease-in-out infinite alternate,
+    result-shine 3.5s linear infinite;
+
+  filter: drop-shadow(0 0 12px rgba(74, 150, 255, 0.95))
+    drop-shadow(0 0 30px rgba(100, 200, 255, 0.6))
+    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+}
+
+.result-flash-ryuukyoku .result-flash-text::before {
+  color: #4a96ff;
+  filter: blur(14px);
+  opacity: 0.9;
+}
+
+@keyframes result-flash-entrance {
+  0% {
+    transform: scale3d(0.1, 0.1, 0.1) rotate3d(0, 0, 1, -12deg);
+    opacity: 0;
+    filter: brightness(2.5);
+  }
+  50% {
+    transform: scale3d(1.12, 1.12, 1.12) rotate3d(0, 0, 1, 2deg);
+    opacity: 0.9;
+    filter: brightness(1.8);
+  }
+  100% {
+    transform: scale3d(1, 1, 1) rotate3d(0, 0, 1, 0deg);
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes result-shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+@keyframes result-flash-idle-agari {
+  0% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1) drop-shadow(0 0 12px rgba(255, 140, 0, 0.95));
+  }
+  50% {
+    transform: translateY(-8px) scale(1.03);
+    filter: brightness(1.25) drop-shadow(0 0 22px rgba(255, 69, 0, 0.95));
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1) drop-shadow(0 0 12px rgba(255, 140, 0, 0.95));
+  }
+}
+
+@keyframes result-flash-idle-ryuukyoku {
+  0% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1) drop-shadow(0 0 12px rgba(74, 150, 255, 0.95));
+  }
+  50% {
+    transform: translateY(-8px) scale(1.03);
+    filter: brightness(1.2) drop-shadow(0 0 25px rgba(100, 200, 255, 0.95));
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1) drop-shadow(0 0 12px rgba(74, 150, 255, 0.95));
+  }
+}
+
 /* Orientation Guard Overlay */
 .portrait-orientation-overlay {
   position: fixed;

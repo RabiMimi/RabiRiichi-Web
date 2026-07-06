@@ -19,6 +19,7 @@ import type { PlayerModel, RoomModel } from '../domain/model';
 import { MessagePump } from './messagePump';
 import {
   DEFAULT_ACTION_TIMEOUT,
+  RESULT_ANIMATION_DURATION_MS,
   STORAGE_KEY_SERVER_SETTINGS,
   type ServerSettings,
 } from '../domain/constants';
@@ -109,6 +110,8 @@ export class RabiRiichiClient {
   public actionTimeout = 0;
   public timerActiveSeat: number | null = null;
   private actionTimerId: ReturnType<typeof setInterval> | null = null;
+  public resultAnimation: 'agari' | 'ryuukyoku' | null = null;
+  private resultAnimationTimerId: ReturnType<typeof setTimeout> | null = null;
 
   public setAnimationSpeed(speed: number): void {
     this.animationSpeed = speed;
@@ -335,7 +338,41 @@ export class RabiRiichiClient {
         this.clearTimer();
       }
     }
+
+    if (gameEvent.agariEvent) {
+      this.startResultAnimation('agari');
+    } else if (gameEvent.ryuukyokuEvent) {
+      this.startResultAnimation('ryuukyoku');
+    } else if (gameEvent.beginGameEvent) {
+      // A new hand cancels any lingering result animation from the prior hand.
+      this.clearResultAnimation();
+    }
+
     this.onChange.emit();
+  }
+
+  /**
+   * Plays the end-of-hand result animation (agari/ryuukyoku) for a fixed
+   * duration, after which the result panel is shown. The countdown timer for the
+   * next-round ack is started independently (at inquiry time), so it keeps
+   * running during the animation.
+   */
+  private startResultAnimation(type: 'agari' | 'ryuukyoku'): void {
+    this.clearResultAnimation();
+    this.resultAnimation = type;
+    this.resultAnimationTimerId = setTimeout(() => {
+      this.resultAnimationTimerId = null;
+      this.resultAnimation = null;
+      this.onChange.emit();
+    }, RESULT_ANIMATION_DURATION_MS);
+  }
+
+  private clearResultAnimation(): void {
+    if (this.resultAnimationTimerId !== null) {
+      clearTimeout(this.resultAnimationTimerId);
+      this.resultAnimationTimerId = null;
+    }
+    this.resultAnimation = null;
   }
 
   private handleInquiry(
@@ -533,6 +570,7 @@ export class RabiRiichiClient {
     this.pendingActionOption = null;
     this.selectedTileTraceId = null;
     this.clearTimer();
+    this.clearResultAnimation();
     this.ping = -1;
     this.setConnectionStatus('disconnected');
   }

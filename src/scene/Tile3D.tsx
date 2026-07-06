@@ -65,6 +65,7 @@ interface Tile3DProps {
   position?: [number, number, number];
   onClick?: () => void;
   traceId?: number | undefined;
+  isWinningTile?: boolean;
 }
 
 export function Tile3D({
@@ -73,6 +74,7 @@ export function Tile3D({
   position = [0, 0, 0],
   onClick,
   traceId,
+  isWinningTile = false,
 }: Tile3DProps): React.JSX.Element {
   const currentInquiry = useCurrentInquiry();
   const isRiichiSelectMode = useIsRiichiSelectMode();
@@ -168,7 +170,8 @@ export function Tile3D({
   const [posX, posY, posZ] = position;
   const [rotX, rotY, rotZ] = rotation;
 
-  const ref = useRef<THREE.Object3D>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const tileRef = useRef<THREE.Object3D>(null);
 
   // Target position and rotation (stored in refs to avoid recreating vectors on every render)
   const targetPos = useMemo(() => new THREE.Vector3(), []);
@@ -216,8 +219,8 @@ export function Tile3D({
   const prevHasSelection = useRef(false);
 
   // Animate position and rotation towards targets
-  useFrame((_, delta) => {
-    if (ref.current) {
+  useFrame((state, delta) => {
+    if (groupRef.current) {
       // We make it frame-rate independent by incorporating delta:
       // lerpFactor = 1 - Math.exp(-speed * delta)
       const factor = isFirstFrame.current
@@ -225,11 +228,30 @@ export function Tile3D({
         : 1 - Math.exp(-12 * animationSpeed * delta);
       isFirstFrame.current = false;
 
-      ref.current.position.lerp(targetPos, factor);
-      ref.current.quaternion.slerp(targetRot, factor);
+      groupRef.current.position.lerp(targetPos, factor);
+      groupRef.current.quaternion.slerp(targetRot, factor);
+    }
 
-      // Emissive glow for playable tiles (only update on state changes to avoid per-frame traversal)
-      if (
+    if (tileRef.current) {
+      // Emissive glow for playable tiles and continuous pulse for winning tile
+      if (isWinningTile) {
+        const time = state.clock.getElapsedTime();
+        const pulse = 0.3 + Math.sin(time * 6.0) * 0.3; // pulse between 0.0 and 0.6
+        tileRef.current.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            const childMat = child.material as
+              | THREE.Material
+              | THREE.Material[];
+            const mats = Array.isArray(childMat) ? childMat : [childMat];
+            mats.forEach((mat) => {
+              if (mat instanceof THREE.MeshStandardMaterial) {
+                mat.emissive.setHex(0xffaa00); // Gold glow
+                mat.emissiveIntensity = pulse;
+              }
+            });
+          }
+        });
+      } else if (
         prevPlayable.current !== isPlayable ||
         prevHovered.current !== isHovered ||
         prevSelected.current !== isSelected ||
@@ -240,7 +262,7 @@ export function Tile3D({
         prevSelected.current = isSelected;
         prevHasSelection.current = hasTileSelectionActive;
         applyTileAppearance(
-          ref.current,
+          tileRef.current,
           displayState,
           hasTileSelectionActive,
           isPlayable,
@@ -252,10 +274,8 @@ export function Tile3D({
   });
 
   return (
-    <primitive
-      ref={ref}
-      object={clone}
-      scale={[0.18, 0.24, 0.14]}
+    <group
+      ref={groupRef}
       onPointerOver={(e: ThreeEvent<PointerEvent>) => {
         if (isPlayable && e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
@@ -381,7 +401,165 @@ export function Tile3D({
         window.addEventListener('pointermove', handleGlobalMove);
         window.addEventListener('pointerup', handleGlobalUp);
       }}
-    />
+    >
+      <primitive ref={tileRef} object={clone} scale={[0.18, 0.24, 0.14]} />
+      {isWinningTile && <TileSpotlightParticles />}
+    </group>
+  );
+}
+
+const FOUNTAIN_COUNT = 80;
+const FOUNTAIN_NOZZLE_RADIUS = 0.05; // radius of the jet mouth
+const FOUNTAIN_GRAVITY = 4.5; // m/s^2 pulling motes back down
+const FOUNTAIN_LAUNCH_MIN = 1.6; // min upward launch speed (m/s)
+const FOUNTAIN_LAUNCH_MAX = 2.6; // max upward launch speed (m/s)
+const FOUNTAIN_OUTWARD = 0.5; // radial spray speed (m/s)
+
+/** Soft round sprite so motes read as droplets, not squares. */
+function createDropletTexture(): THREE.Texture | null {
+  if (typeof document === 'undefined') return null;
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  const g = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2,
+  );
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.4, 'rgba(255,255,255,0.85)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+const dropletTexture = createDropletTexture();
+
+/**
+ * Owns and simulates the fountain particle buffers.
+ *
+ * Kept as a plain class (outside React) so all per-frame mutation lives in its
+ * methods, away from the React compiler's render-value analysis. `positions` is
+ * shared directly with the geometry's position attribute.
+ */
+class FountainSim {
+  readonly positions = new Float32Array(FOUNTAIN_COUNT * 3);
+  private readonly velocities = new Float32Array(FOUNTAIN_COUNT * 3);
+  private seed = 456;
+
+  constructor() {
+    for (let i = 0; i < FOUNTAIN_COUNT; i++) {
+      this.launch(i);
+      // Stagger initial heights so the jet is full immediately, not a pulse.
+      this.positions[i * 3 + 1] = this.rand() * 0.5;
+    }
+  }
+
+  /** Deterministic PRNG for the initial burst; runtime relaunches use Math.random. */
+  private rand(): number {
+    const x = Math.sin(this.seed++) * 10000;
+    return x - Math.floor(x);
+  }
+
+  private launch(i: number, rand: () => number = () => this.rand()): void {
+    const base = i * 3;
+    const angle = rand() * Math.PI * 2;
+    const r = rand() * FOUNTAIN_NOZZLE_RADIUS;
+    this.positions[base] = Math.cos(angle) * r;
+    this.positions[base + 1] = 0;
+    this.positions[base + 2] = Math.sin(angle) * r;
+
+    const outward = rand() * FOUNTAIN_OUTWARD;
+    this.velocities[base] = Math.cos(angle) * outward;
+    this.velocities[base + 1] =
+      FOUNTAIN_LAUNCH_MIN +
+      rand() * (FOUNTAIN_LAUNCH_MAX - FOUNTAIN_LAUNCH_MIN);
+    this.velocities[base + 2] = Math.sin(angle) * outward;
+  }
+
+  /** Advances all motes by `dt` seconds under gravity, relaunching fallen ones. */
+  step(dt: number): void {
+    const pos = this.positions;
+    const vel = this.velocities;
+    for (let i = 0; i < FOUNTAIN_COUNT; i++) {
+      const base = i * 3;
+      const vy = (vel[base + 1] ?? 0) - FOUNTAIN_GRAVITY * dt;
+      vel[base + 1] = vy;
+      pos[base] = (pos[base] ?? 0) + (vel[base] ?? 0) * dt;
+      const newY = (pos[base + 1] ?? 0) + vy * dt;
+      pos[base + 1] = newY;
+      pos[base + 2] = (pos[base + 2] ?? 0) + (vel[base + 2] ?? 0) * dt;
+
+      // Relaunch a mote once it falls back to (or below) the nozzle.
+      if (newY < 0 && vy < 0) {
+        this.launch(i, Math.random);
+      }
+    }
+  }
+}
+
+/**
+ * A powerful upward fountain of glowing motes marking the winning tile.
+ *
+ * Motes shoot up fast from a small nozzle, decelerate under gravity, arc out,
+ * and fall back — giving the classic fountain silhouette (see FountainSim).
+ *
+ * The tile's own group is rotated to lie the tile flat (or tilt it in hand), so
+ * we can't emit "up" along a fixed local axis. The fountain group therefore
+ * counter-rotates to the parent's inverse world rotation every frame, giving it
+ * a world-aligned frame where +Y is always true up.
+ */
+function TileSpotlightParticles(): React.JSX.Element {
+  const groupRef = useRef<THREE.Group>(null);
+  const pointsRef = useRef<THREE.Points>(null);
+  const [sim] = useState(() => new FountainSim());
+
+  useFrame((_state, delta) => {
+    // Cancel the tile group's rotation so +Y stays world-up for the jet.
+    if (groupRef.current?.parent) {
+      groupRef.current.parent.getWorldQuaternion(groupRef.current.quaternion);
+      groupRef.current.quaternion.invert();
+    }
+
+    const posAttr = pointsRef.current?.geometry.getAttribute('position') as
+      | THREE.BufferAttribute
+      | undefined;
+    if (!posAttr) return;
+
+    sim.step(Math.min(delta, 0.05));
+    posAttr.needsUpdate = true;
+  });
+
+  return (
+    <group ref={groupRef}>
+      <points ref={pointsRef} renderOrder={3} frustumCulled={false}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[sim.positions, 3]}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          color="#ffdd66"
+          size={0.09}
+          sizeAttenuation
+          transparent
+          opacity={0.95}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          {...(dropletTexture ? { map: dropletTexture } : {})}
+        />
+      </points>
+    </group>
   );
 }
 

@@ -11,6 +11,12 @@ import {
 } from '../proto';
 
 export const DEFAULT_ACTION_TIMEOUT = 20;
+export const DEFAULT_NEXT_ROUND_ACK_TIMEOUT = 30;
+
+// How long the end-of-hand result animation (agari/ryuukyoku) plays before the
+// result panel is revealed. The next-round countdown runs independently during
+// this window, so it stays shorter than DEFAULT_NEXT_ROUND_ACK_TIMEOUT.
+export const RESULT_ANIMATION_DURATION_MS = 3000;
 
 export const TILE_LIFT_IDLE = 0;
 export const TILE_LIFT_SELECTED = 0.12;
@@ -19,6 +25,8 @@ export const TILE_LIFT_HOVERED = 0.12;
 // Validation Limits
 export const MIN_ACTION_TIMEOUT = 5;
 export const MAX_ACTION_TIMEOUT = 3600;
+export const MIN_NEXT_ROUND_ACK_TIMEOUT = 5;
+export const MAX_NEXT_ROUND_ACK_TIMEOUT = 3600;
 export const MIN_MIN_HAN = 1;
 export const MAX_MIN_HAN = 13;
 export const MIN_POINTS = 0;
