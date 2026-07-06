@@ -38,8 +38,7 @@
     "rounds": "局数",
     "minHan": "起和番数",
     "actionTimeout": "出牌限时",
-    "timeoutError": "限时必须在 5 到 3600 秒之间",
-    "minHanError": "起和番数必须在 1 到 13 之间",
+
     "defaultPlaceholder": "默认：{{value}}秒",
     "initialPoints": "初始点数",
     "finishPoints": "终局点数",
@@ -51,7 +50,7 @@
     "configureYakus": "配置役种",
     "allYakus": "全部",
     "yakus": "个役",
-    "pointsError": "点数必须在 0 到 1,000,000 之间",
+
     "selectAll": "全选",
     "selectNone": "全不选"
   },
@@ -295,5 +294,21 @@
   },
   "orientation": {
     "rotatePrompt": "请将设备横屏以继续游戏！"
+  },
+  "error": {
+    "lobby": {
+      "playerCount": "玩家人数必须在 2 到 4 之间。",
+      "totalRound": "总局数必须是 1 或 2。",
+      "minHan": "起和番数必须在 1 到 13 之间。",
+      "timeout": "限时必须在 5 到 3600 秒之间。",
+      "tileSet": "所选牌张数不足 ({{count}} 张)，无法支持 {{players}} 人局（至少需要 {{min}} 张）。",
+      "initialPoints": "初始点数必须在 0 到 1,000,000 之间。",
+      "finishPoints": "终局点数必须在 0 到 1,000,000 之间。",
+      "riichiPoints": "立直棒点数必须在 0 到 1,000,000 之间。",
+      "honbaPoints": "本场棒点数必须在 0 到 1,000,000 之间。",
+      "ryuukyokuPoints": "不听罚符必须包含 2 个数值，且每个数值必须在 0 到 1,000,000 之间。",
+      "pointsRange": "点数上限必须在 0 到 1,000,000 之间。",
+      "generic": "无效的游戏配置。"
+    }
   }
 }

@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next';
+
 export const RabiErrorType = {
   AuthError: 'AUTH_ERROR',
   ServerError: 'SERVER_ERROR',
@@ -75,4 +77,27 @@ export class NotImplementedError extends RabiError {
     super(RabiErrorType.NotImplemented, detail);
     this.name = 'NotImplementedError';
   }
+}
+
+export function formatError(err: unknown, t: TFunction): string {
+  if (err instanceof RabiError) {
+    try {
+      const payload = JSON.parse(err.detail) as unknown;
+      if (
+        payload &&
+        typeof payload === 'object' &&
+        'key' in payload &&
+        typeof payload.key === 'string'
+      ) {
+        const key = payload.key;
+        const params = (('params' in payload && payload.params) ??
+          {}) as Record<string, unknown>;
+        return t(key, params);
+      }
+    } catch {
+      // Not a JSON error payload
+    }
+    return err.message;
+  }
+  return err instanceof Error ? err.message : String(err);
 }

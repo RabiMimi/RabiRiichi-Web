@@ -250,7 +250,7 @@ export function RoomConfigPanel({
       seconds < MIN_ACTION_TIMEOUT ||
       seconds > MAX_ACTION_TIMEOUT
     ) {
-      setTimeoutError(t('lobby.timeoutError'));
+      setTimeoutError(t('error.lobby.timeout'));
     } else {
       setTimeoutError(null);
     }
@@ -263,7 +263,7 @@ export function RoomConfigPanel({
     }
     const parsed = parseInt(val, 10);
     if (isNaN(parsed) || parsed < MIN_MIN_HAN || parsed > MAX_MIN_HAN) {
-      setMinHanError(t('lobby.minHanError'));
+      setMinHanError(t('error.lobby.minHan'));
     } else {
       setMinHanError(null);
     }
@@ -272,6 +272,7 @@ export function RoomConfigPanel({
   const validatePoints = (
     val: string,
     setErrorFunc: (err: string | null) => void,
+    errorKey: string,
   ) => {
     if (val === '') {
       setErrorFunc(null);
@@ -279,38 +280,46 @@ export function RoomConfigPanel({
     }
     const parsed = parseInt(val, 10);
     if (isNaN(parsed) || parsed < MIN_POINTS || parsed > MAX_POINTS) {
-      setErrorFunc(t('lobby.pointsError'));
+      setErrorFunc(t(errorKey));
     } else {
       setErrorFunc(null);
     }
   };
 
   const validateInitialPoints = (val: string) => {
-    validatePoints(val, setInitialPointsError);
+    validatePoints(val, setInitialPointsError, 'error.lobby.initialPoints');
   };
 
   const validateFinishPoints = (val: string) => {
-    validatePoints(val, setFinishPointsError);
+    validatePoints(val, setFinishPointsError, 'error.lobby.finishPoints');
   };
 
   const validateUpperPoints = (val: string) => {
-    validatePoints(val, setUpperPointsError);
+    validatePoints(val, setUpperPointsError, 'error.lobby.pointsRange');
   };
 
   const validateRiichiPoints = (val: string) => {
-    validatePoints(val, setRiichiPointsError);
+    validatePoints(val, setRiichiPointsError, 'error.lobby.riichiPoints');
   };
 
   const validateHonbaPoints = (val: string) => {
-    validatePoints(val, setHonbaPointsError);
+    validatePoints(val, setHonbaPointsError, 'error.lobby.honbaPoints');
   };
 
   const validateRyuukyokuPoints0 = (val: string) => {
-    validatePoints(val, setRyuukyokuPoints0Error);
+    validatePoints(
+      val,
+      setRyuukyokuPoints0Error,
+      'error.lobby.ryuukyokuPoints',
+    );
   };
 
   const validateRyuukyokuPoints1 = (val: string) => {
-    validatePoints(val, setRyuukyokuPoints1Error);
+    validatePoints(
+      val,
+      setRyuukyokuPoints1Error,
+      'error.lobby.ryuukyokuPoints',
+    );
   };
 
   const handleCreateClick = () => {

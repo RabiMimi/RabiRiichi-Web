@@ -38,8 +38,7 @@
     "rounds": "Rounds",
     "minHan": "Min Han",
     "actionTimeout": "Action Timeout",
-    "timeoutError": "Timeout must be between 5 and 3600 seconds",
-    "minHanError": "Min Han must be between 1 and 13",
+
     "defaultPlaceholder": "Default: {{value}}s",
     "initialPoints": "Starting Points",
     "finishPoints": "Target Points",
@@ -51,7 +50,7 @@
     "configureYakus": "Configure Yakus",
     "allYakus": "All",
     "yakus": "Yakus",
-    "pointsError": "Points must be between 0 and 1,000,000",
+
     "selectAll": "Select All",
     "selectNone": "Select None"
   },
@@ -295,5 +294,21 @@
   },
   "orientation": {
     "rotatePrompt": "Please rotate your device to landscape to play!"
+  },
+  "error": {
+    "lobby": {
+      "playerCount": "Player count must be between 2 and 4.",
+      "totalRound": "Total rounds must be 1 or 2.",
+      "minHan": "Min Han must be between 1 and 13.",
+      "timeout": "Timeout must be between 5 and 3600 seconds.",
+      "tileSet": "Selected tile set has insufficient tiles ({{count}}) for {{players}} players. At least {{min}} are required.",
+      "initialPoints": "Starting points must be between 0 and 1,000,000.",
+      "finishPoints": "Target points must be between 0 and 1,000,000.",
+      "riichiPoints": "Riichi points must be between 0 and 1,000,000.",
+      "honbaPoints": "Honba points must be between 0 and 1,000,000.",
+      "ryuukyokuPoints": "Ryuukyoku points must contain 2 values, each between 0 and 1,000,000.",
+      "pointsRange": "Points limit must be between 0 and 1,000,000.",
+      "generic": "Invalid game configuration."
+    }
   }
 }

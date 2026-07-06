@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { useSelf } from '../state/store';
+import { formatError } from '../lib';
 import type { IGameConfigMsg } from '../proto';
 import { RoomConfigPanel } from './RoomConfigPanel';
 import './ui.css';
@@ -19,7 +20,7 @@ export function LobbyScreen(): React.JSX.Element {
     try {
       await rabiriichi.createRoom(config);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create room');
+      setError(formatError(err, t));
     } finally {
       setIsLoading(false);
     }
@@ -39,7 +40,7 @@ export function LobbyScreen(): React.JSX.Element {
     try {
       await rabiriichi.joinRoom(roomId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to join room');
+      setError(formatError(err, t));
     } finally {
       setIsLoading(false);
     }
