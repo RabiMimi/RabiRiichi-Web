@@ -133,46 +133,17 @@ export function ResultPanel(): React.JSX.Element | null {
       <div className="result-dora-indicators-section">
         <div className="dora-indicator-row">
           <span className="dora-row-label">{t('result.dora')}</span>
-          <div className="dora-indicator-tiles">
-            {Array.from({ length: 5 }).map((_, idx) => {
-              const tileMsg = doras[idx];
-              const isRevealed = idx < doraCount;
-              if (isRevealed && tileMsg) {
-                const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-                return (
-                  <img
-                    key={`dora-${idx}`}
-                    src={getTileTexturePath(tileStr)}
-                    alt={tileStr}
-                    className="result-tile-img"
-                  />
-                );
-              }
-              return (
-                <img
-                  key={`dora-${idx}`}
-                  src={getTileTexturePath('back')}
-                  alt="back"
-                  className="result-tile-img"
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Uradora Indicator Row */}
-        {showUradoras && uradoras.length > 0 && (
-          <div className="dora-indicator-row">
-            <span className="dora-row-label">{t('result.uradora')}</span>
+          <div className="dora-indicator-tiles-container">
+            {/* Dora Indicators */}
             <div className="dora-indicator-tiles">
               {Array.from({ length: 5 }).map((_, idx) => {
-                const tileMsg = uradoras[idx];
+                const tileMsg = doras[idx];
                 const isRevealed = idx < doraCount;
                 if (isRevealed && tileMsg) {
                   const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
                   return (
                     <img
-                      key={`uradora-${idx}`}
+                      key={`dora-${idx}`}
                       src={getTileTexturePath(tileStr)}
                       alt={tileStr}
                       className="result-tile-img"
@@ -181,7 +152,7 @@ export function ResultPanel(): React.JSX.Element | null {
                 }
                 return (
                   <img
-                    key={`uradora-${idx}`}
+                    key={`dora-${idx}`}
                     src={getTileTexturePath('back')}
                     alt="back"
                     className="result-tile-img"
@@ -189,8 +160,40 @@ export function ResultPanel(): React.JSX.Element | null {
                 );
               })}
             </div>
+
+            {/* Uradora Indicators */}
+            {showUradoras && uradoras.length > 0 && (
+              <>
+                <span className="dora-separator">/</span>
+                <div className="dora-indicator-tiles">
+                  {Array.from({ length: 5 }).map((_, idx) => {
+                    const tileMsg = uradoras[idx];
+                    const isRevealed = idx < doraCount;
+                    if (isRevealed && tileMsg) {
+                      const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+                      return (
+                        <img
+                          key={`uradora-${idx}`}
+                          src={getTileTexturePath(tileStr)}
+                          alt={tileStr}
+                          className="result-tile-img"
+                        />
+                      );
+                    }
+                    return (
+                      <img
+                        key={`uradora-${idx}`}
+                        src={getTileTexturePath('back')}
+                        alt="back"
+                        className="result-tile-img"
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
     );
   };

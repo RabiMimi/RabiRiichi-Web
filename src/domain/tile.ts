@@ -144,3 +144,45 @@ export function stringToTiles(str: string): Tile[] {
   }
   return tiles;
 }
+
+/**
+ * Calculates the winning Dora target tile parameters based on a Dora indicator.
+ */
+export function getDoraTargetForIndicator(indicator: Tile): {
+  num: number;
+  suit: TileSuit;
+} {
+  const suit = indicator.suit;
+  let num = indicator.num;
+
+  if (suit === TileSuit.Z) {
+    if (num >= 1 && num <= 4) {
+      // Winds: East (1z) -> South (2z) -> West (3z) -> North (4z) -> East (1z)
+      num = num === 4 ? 1 : num + 1;
+    } else if (num >= 5 && num <= 7) {
+      // Dragons: White (5z) -> Green (6z) -> Red (7z) -> White (5z)
+      num = num === 7 ? 5 : num + 1;
+    }
+  } else if (suit !== TileSuit.Invalid) {
+    // Numbered suits: 1 -> 2 -> ... -> 9 -> 1
+    num = num === 9 ? 1 : num + 1;
+  }
+  return { num, suit };
+}
+
+/**
+ * Checks if a given tile is a Dora, given a set of active Dora indicators.
+ * A tile is Dora if it matches any indicator's target, or if it is an Akadora (red 5).
+ */
+export function checkIsDora(tile: Tile, indicators: readonly Tile[]): boolean {
+  if (tile.akadora) {
+    return true;
+  }
+  for (const ind of indicators) {
+    const target = getDoraTargetForIndicator(ind);
+    if (tile.suit === target.suit && tile.num === target.num) {
+      return true;
+    }
+  }
+  return false;
+}

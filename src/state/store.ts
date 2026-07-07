@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore, useMemo } from 'react';
 import { rabiriichi } from '../net/client';
 import type { ConnectionStatus, ActiveInquiry } from '../net/client';
 import type { PlayerModel, RoomModel } from '../domain/model';
@@ -216,6 +216,25 @@ export function useActiveComparisonTile(): string | null {
     getActiveComparisonTile,
     getActiveComparisonTile,
   );
+}
+
+export function useDoraIndicators(): Tile[] {
+  const room = useRoom();
+  return useMemo(() => {
+    if (!room?.info?.doras) return [];
+    const count = room.info.revealedDoraCount;
+    return room.info.doras
+      .slice(0, count)
+      .map((doraMsg) => {
+        if (doraMsg.tile === null || doraMsg.tile === undefined) return null;
+        try {
+          return Tile.fromByte(doraMsg.tile);
+        } catch {
+          return null;
+        }
+      })
+      .filter((t): t is Tile => t !== null);
+  }, [room]);
 }
 
 function resetForTest(): void {

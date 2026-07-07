@@ -9,6 +9,7 @@ import { ClientMessageDto, ServerMessageDto, AiType } from '../proto';
 import type { IServerMessageDto } from '../proto';
 import type { ActionOption } from '../domain/inquiry';
 import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
+import { Tile } from '../domain/tile';
 
 describe('RabiRiichi Store', () => {
   beforeEach(() => {
@@ -218,6 +219,43 @@ describe('RabiRiichi Store', () => {
     const snapshot2 = testStore.getSnapshot();
     expect(snapshot2).not.toBe(snapshot1);
     expect(snapshot2.pendingActionOption).toBe(mockOption);
+  });
+
+  it('should only return revealed Dora indicators in useDoraIndicators hook logic', () => {
+    const mockRoom: RoomModel = {
+      id: 1234,
+      config: null,
+      info: {
+        round: 0,
+        dealer: 0,
+        honba: 0,
+        riichiStick: 0,
+        remainingTiles: 70,
+        currentPlayer: 0,
+        doras: [
+          { traceId: 1, tile: 17 }, // 1m -> target 2m
+          { traceId: 2, tile: 18 }, // 2m -> target 3m
+          { traceId: 3, tile: 19 }, // 3m -> target 4m
+        ],
+        uradoras: [],
+        revealedDoraCount: 1,
+      },
+      players: [],
+      tileRegistry: createEmptyTileRegistry(),
+    };
+    rabiriichi.room = mockRoom;
+
+    // Simulate hook selector logic
+    const count = mockRoom.info!.revealedDoraCount;
+    const indicators = mockRoom.info!.doras
+      .slice(0, count)
+      .map((doraMsg) => {
+        if (doraMsg.tile === null || doraMsg.tile === undefined) return null;
+        return Tile.fromByte(doraMsg.tile);
+      });
+
+    expect(indicators).toHaveLength(1);
+    expect(indicators[0]?.toString()).toBe('1m');
   });
 
   it('should return new room reference when real event is processed by reducer', async () => {

@@ -13,10 +13,11 @@ import {
   useAnimationSpeed,
   useSelectedTileTraceId,
   useActiveComparisonTile,
+  useDoraIndicators,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import type { ActionOption } from '../domain/inquiry';
-import { Tile } from '../domain/tile';
+import { Tile, checkIsDora } from '../domain/tile';
 import {
   TILE_LIFT_IDLE,
   TILE_LIFT_SELECTED,
@@ -25,6 +26,10 @@ import {
 import { Logger } from '../lib/logger';
 
 const logger = new Logger('Tile3D');
+
+// Adjust these constants to change the Dora sliding sheen appearance
+export const DORA_SHEEN_WIDTH = 0.2; // Width of the diagonal reflection sheen (increase for wider/softer look)
+export const DORA_SHEEN_SPEED = 2.0;  // Speed of the sliding animation (increase for faster sliding)
 
 export type TileDisplayState =
   | 'hand'
@@ -37,14 +42,62 @@ function createMappedMaterial(
   mat: THREE.Material,
   frontTexture: THREE.Texture,
   backTexture: THREE.Texture,
+  isDora: boolean,
 ): THREE.Material {
   const matName = mat.name;
   if (matName === 'Front.001') {
-    return new THREE.MeshStandardMaterial({
+    const customMat = new THREE.MeshStandardMaterial({
       map: frontTexture,
       roughness: 0.15,
       metalness: 0.05,
     });
+
+    const userData = {
+      uTime: { value: 0 },
+      isDora: { value: isDora ? 1.0 : 0.0 },
+    };
+    customMat.userData = userData;
+
+    customMat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = userData.uTime;
+      shader.uniforms.uIsDora = userData.isDora;
+      shader.uniforms.uSheenWidth = { value: DORA_SHEEN_WIDTH };
+      shader.uniforms.uSheenSpeed = { value: DORA_SHEEN_SPEED };
+
+      shader.fragmentShader =
+        `
+        uniform float uTime;
+        uniform float uIsDora;
+        uniform float uSheenWidth;
+        uniform float uSheenSpeed;
+      ` + shader.fragmentShader;
+
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <dithering_fragment>',
+        `
+        #include <dithering_fragment>
+        
+        if (uIsDora > 0.5) {
+          #ifdef USE_MAP
+            vec2 uv = vMapUv;
+          #else
+            vec2 uv = vec2(0.5);
+          #endif
+          
+          // Conan's glasses sliding sheen sweep (diagonal: x + y)
+          float progress = mod(uTime * uSheenSpeed, 2.5) - 0.7;
+          float d = abs(uv.x + uv.y - progress);
+          
+          // Specular white sheen band
+          float sheen = smoothstep(uSheenWidth, 0.0, d) * 0.75;
+          
+          gl_FragColor.rgb += vec3(sheen);
+        }
+        `
+      );
+    };
+
+    return customMat;
   } else if (matName === 'Back.001') {
     return new THREE.MeshStandardMaterial({
       map: backTexture,
@@ -82,6 +135,22 @@ export function Tile3D({
   const isRiichiSelectMode = useIsRiichiSelectMode();
   const animationSpeed = useAnimationSpeed();
   const [isHovered, setIsHovered] = useState(false);
+
+  const doraIndicators = useDoraIndicators();
+  const isDora = useMemo(() => {
+    if (!tile) return false;
+    try {
+      const current = Tile.fromString(tile);
+      return checkIsDora(current, doraIndicators);
+    } catch {
+      return false;
+    }
+  }, [tile, doraIndicators]);
+
+  const isFaceVisible =
+    displayState === 'face' ||
+    displayState === 'hand' ||
+    displayState === 'sideways';
 
   const { viewport: threeViewport, size } = useThree();
   const factorX = (threeViewport.width / size.width) * 0.5;
@@ -154,24 +223,33 @@ export function Tile3D({
     return tex;
   }, [backTexture]);
 
-  // Clone the scene graph so this tile has its own material instances
-  const clone = useMemo(() => scene.clone(), [scene]);
-
-  // Apply materials to the cloned meshes
-  useMemo(() => {
-    clone.traverse((child) => {
+  // Clone the scene graph and apply materials so this tile has its own material instances
+  const clone = useMemo(() => {
+    const clonedScene = scene.clone();
+    const frontMats: THREE.Material[] = [];
+    clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const childMat = child.material as THREE.Material | THREE.Material[];
         if (Array.isArray(childMat)) {
-          child.material = childMat.map((mat) =>
-            createMappedMaterial(mat, clonedTexture, clonedBackTexture),
-          );
+          child.material = childMat.map((mat) => {
+            const mapped = createMappedMaterial(
+              mat,
+              clonedTexture,
+              clonedBackTexture,
+              isDora,
+            );
+            if (mat.name === 'Front.001') frontMats.push(mapped);
+            return mapped;
+          });
         } else {
-          child.material = createMappedMaterial(
+          const mapped = createMappedMaterial(
             childMat,
             clonedTexture,
             clonedBackTexture,
+            isDora,
           );
+          if (childMat.name === 'Front.001') frontMats.push(mapped);
+          child.material = mapped;
         }
 
         // Enable shadows
@@ -179,7 +257,9 @@ export function Tile3D({
         child.receiveShadow = true;
       }
     });
-  }, [clone, clonedTexture, clonedBackTexture]);
+    clonedScene.userData.frontMaterials = frontMats;
+    return clonedScene;
+  }, [scene, clonedTexture, clonedBackTexture, isDora]);
 
   // Determine rotation and Y-offset based on the display state
   const { rotation, yOffset } = useMemo(() => {
@@ -238,9 +318,24 @@ export function Tile3D({
   const prevHasSelection = useRef(false);
   const prevDimmed = useRef(false);
   const prevHighlighted = useRef(false);
+  const prevIsDora = useRef(false);
 
   // Animate position and rotation towards targets
   useFrame((state, delta) => {
+    const time = state.clock.getElapsedTime();
+    const frontMats = clone.userData.frontMaterials as THREE.Material[];
+    frontMats.forEach((mat) => {
+      interface CustomUserData {
+        uTime: { value: number };
+        isDora: { value: number };
+      }
+      const userData = mat.userData as Partial<CustomUserData>;
+      if (userData.uTime && userData.isDora) {
+        userData.uTime.value = time;
+        userData.isDora.value = isDora && isFaceVisible ? 1.0 : 0.0;
+      }
+    });
+
     if (groupRef.current) {
       // We make it frame-rate independent by incorporating delta:
       // lerpFactor = 1 - Math.exp(-speed * delta)
@@ -256,7 +351,6 @@ export function Tile3D({
     if (tileRef.current) {
       // Emissive glow for playable tiles and continuous pulse for winning tile
       if (isWinningTile) {
-        const time = state.clock.getElapsedTime();
         const pulse = 0.3 + Math.sin(time * 6.0) * 0.3; // pulse between 0.0 and 0.6
         tileRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh) {
@@ -278,7 +372,8 @@ export function Tile3D({
         prevSelected.current !== isSelected ||
         prevHasSelection.current !== hasTileSelectionActive ||
         prevDimmed.current !== isDimmed ||
-        prevHighlighted.current !== isHighlighted
+        prevHighlighted.current !== isHighlighted ||
+        prevIsDora.current !== isDora
       ) {
         prevPlayable.current = isPlayable;
         prevHovered.current = isHovered;
@@ -286,6 +381,7 @@ export function Tile3D({
         prevHasSelection.current = hasTileSelectionActive;
         prevDimmed.current = isDimmed;
         prevHighlighted.current = isHighlighted;
+        prevIsDora.current = isDora;
         applyTileAppearance(
           tileRef.current,
           displayState,
@@ -295,6 +391,7 @@ export function Tile3D({
           isHovered,
           isDimmed,
           isHighlighted,
+          isDora,
         );
       }
     }
@@ -740,7 +837,13 @@ function applyTileAppearance(
   isHovered: boolean,
   isDimmed: boolean,
   isHighlighted: boolean,
+  isDora: boolean,
 ): void {
+  const isFaceVisible =
+    displayState === 'face' ||
+    displayState === 'hand' ||
+    displayState === 'sideways';
+
   tileObject.traverse((child) => {
     if (child instanceof THREE.Mesh) {
       const childMat = child.material as THREE.Material | THREE.Material[];
@@ -760,6 +863,14 @@ function applyTileAppearance(
             mat.color.setHex(0xffffff);
           }
 
+          // Emissive base for Dora tiles (warm gold undertone)
+          let emissiveHex = 0x000000;
+          let emissiveInt = 0.0;
+          if (isDora && isFaceVisible) {
+            emissiveHex = 0x221a00;
+            emissiveInt = 0.6;
+          }
+
           // Glow logic
           if (isSelected || (isPlayable && isHovered)) {
             mat.emissive.setHex(0x333311);
@@ -771,8 +882,8 @@ function applyTileAppearance(
             mat.emissive.setHex(0x111111);
             mat.emissiveIntensity = 1.0;
           } else {
-            mat.emissive.setHex(0x000000);
-            mat.emissiveIntensity = 0.0;
+            mat.emissive.setHex(emissiveHex);
+            mat.emissiveIntensity = emissiveInt;
           }
         }
       });

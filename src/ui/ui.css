@@ -979,6 +979,22 @@
   gap: 6px;
 }
 
+.dora-indicator-tiles-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dora-separator {
+  color: #666;
+  font-size: 1.4rem;
+  font-weight: bold;
+  user-select: none;
+  margin: 0 4px;
+}
+
 /* Score Changes table */
 .result-score-changes {
   position: relative;

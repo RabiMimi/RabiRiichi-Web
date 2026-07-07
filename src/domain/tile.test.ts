@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { Tile, TileSuit, stringToTiles } from './tile';
+import {
+  Tile,
+  TileSuit,
+  stringToTiles,
+  getDoraTargetForIndicator,
+  checkIsDora,
+} from './tile';
 
 describe('Tile Model', () => {
   describe('Byte Round-trip', () => {
@@ -148,6 +154,67 @@ describe('Tile Model', () => {
         'Some tile suits not provided',
       );
       expect(() => stringToTiles('123a')).toThrow('Invalid tile suit');
+    });
+  });
+
+  describe('Dora Calculation & Checking', () => {
+    it('should calculate correct dora target from indicator', () => {
+      // Numbered suits
+      expect(getDoraTargetForIndicator(Tile.fromString('1m'))).toEqual({
+        num: 2,
+        suit: TileSuit.M,
+      });
+      expect(getDoraTargetForIndicator(Tile.fromString('9p'))).toEqual({
+        num: 1,
+        suit: TileSuit.P,
+      });
+      expect(getDoraTargetForIndicator(Tile.fromString('5s'))).toEqual({
+        num: 6,
+        suit: TileSuit.S,
+      });
+      expect(getDoraTargetForIndicator(Tile.fromString('r5s'))).toEqual({
+        num: 6,
+        suit: TileSuit.S,
+      });
+
+      // Winds (1z -> 2z -> 3z -> 4z -> 1z)
+      expect(getDoraTargetForIndicator(Tile.fromString('1z'))).toEqual({
+        num: 2,
+        suit: TileSuit.Z,
+      }); // E -> S
+      expect(getDoraTargetForIndicator(Tile.fromString('4z'))).toEqual({
+        num: 1,
+        suit: TileSuit.Z,
+      }); // N -> E
+
+      // Dragons (5z -> 6z -> 7z -> 5z)
+      expect(getDoraTargetForIndicator(Tile.fromString('5z'))).toEqual({
+        num: 6,
+        suit: TileSuit.Z,
+      }); // Haku -> Hatsu
+      expect(getDoraTargetForIndicator(Tile.fromString('7z'))).toEqual({
+        num: 5,
+        suit: TileSuit.Z,
+      }); // Chun -> Haku
+    });
+
+    it('should identify dora tiles correctly', () => {
+      const indicators = [Tile.fromString('1m'), Tile.fromString('5z')];
+
+      // Match target (2m is dora from 1m indicator)
+      expect(checkIsDora(Tile.fromString('2m'), indicators)).toBe(true);
+
+      // Match target (6z is hatsu, dora from 5z haku indicator)
+      expect(checkIsDora(Tile.fromString('6z'), indicators)).toBe(true);
+
+      // Akadora is always dora
+      expect(checkIsDora(Tile.fromString('r5s'), indicators)).toBe(true);
+      expect(checkIsDora(Tile.fromString('r5m'), indicators)).toBe(true);
+
+      // Normal non-matching tile is not dora
+      expect(checkIsDora(Tile.fromString('1m'), indicators)).toBe(false);
+      expect(checkIsDora(Tile.fromString('5m'), indicators)).toBe(false);
+      expect(checkIsDora(Tile.fromString('7z'), indicators)).toBe(false);
     });
   });
 });
