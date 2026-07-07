@@ -978,7 +978,14 @@ describe('Reducer - Events', () => {
               hand: {
                 jun: 1,
                 tenpaiWaits: [
-                  { winningTile: 23, remainingCount: 3, han: 1, fu: 30, yakuman: 0, points: 1000 },
+                  {
+                    winningTile: 23,
+                    remainingCount: 3,
+                    han: 1,
+                    fu: 30,
+                    yakuman: 0,
+                    points: 1000,
+                  },
                 ],
               },
             },
@@ -991,7 +998,14 @@ describe('Reducer - Events', () => {
     const nextState = applyEvent(state, eventMsg);
     const p0State = nextState.players.find((p) => p.seat === 0);
     expect(p0State?.gameState?.awaitedTiles).toEqual([
-      { winningTile: 23, remainingCount: 3, han: 1, fu: 30, yakuman: 0, points: 1000 },
+      {
+        winningTile: 23,
+        remainingCount: 3,
+        han: 1,
+        fu: 30,
+        yakuman: 0,
+        points: 1000,
+      },
     ]);
   });
 
