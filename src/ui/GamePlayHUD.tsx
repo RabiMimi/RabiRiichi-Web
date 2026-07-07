@@ -264,7 +264,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
         )}
 
       {/* 2D Permanent Tenpai/Furiten Badge Overlay (positioned near the hand) */}
-      {hasPermanentTenpai && (
+      {(hasPermanentTenpai || isFuriten) && (
         <div className="player-tenpai-badge-container permanent-badge">
           <div
             className={`tenpai-badge-3d ${isFuriten ? 'furiten' : ''}`}
@@ -274,7 +274,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
             {isFuriten ? t('hud.furiten') : t('hud.tenpai')}
           </div>
 
-          {showPermanentWaits && (
+          {showPermanentWaits && permanentAwaitedTiles.length > 0 && (
             <TenpaiWaitPanel
               awaitedTiles={permanentAwaitedTiles}
               className="badge-hover-panel"
