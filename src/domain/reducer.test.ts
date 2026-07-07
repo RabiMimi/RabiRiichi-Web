@@ -962,6 +962,39 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.remainingTiles).toBe(70);
   });
 
+  it('should handle syncGameStateEvent by hydrating tenpaiWaits', () => {
+    const state = createInitializedRoom();
+    const eventMsg = {
+      syncGameStateEvent: {
+        playerId: 0,
+        gameState: {
+          config: { playerCount: 2 },
+          info: { round: 2, dealer: 0 },
+          wall: { remaining: 70 },
+          players: [
+            {
+              id: 0,
+              points: 25000,
+              hand: {
+                jun: 1,
+                tenpaiWaits: [
+                  { winningTile: 23, remainingCount: 3, han: 1, fu: 30, yakuman: 0, points: 1000 },
+                ],
+              },
+            },
+            { id: 1, points: 25000 },
+          ],
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+    const p0State = nextState.players.find((p) => p.seat === 0);
+    expect(p0State?.gameState?.awaitedTiles).toEqual([
+      { winningTile: 23, remainingCount: 3, han: 1, fu: 30, yakuman: 0, points: 1000 },
+    ]);
+  });
+
   it('should ignore addKanEvent (Kakan) when preceded by kanEvent (Kakan)', () => {
     const state = createInitializedRoom();
     // Player 0 already has a Pon of 1m

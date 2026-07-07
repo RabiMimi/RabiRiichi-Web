@@ -90,6 +90,15 @@ export function hydrateFromGameState(
     }
 
     const handState = sp.hand;
+    const handWaits = (handState?.tenpaiWaits ?? []).map((ti) => ({
+      winningTile: ti.winningTile ?? 0,
+      remainingCount: ti.remainingCount ?? 0,
+      han: ti.han ?? 0,
+      fu: ti.fu ?? 0,
+      yakuman: ti.yakuman ?? 0,
+      points: ti.points ? Number(ti.points) : 0,
+    }));
+
     const gameState: PlayerGameState = {
       jun: handState?.jun ?? 0,
       points: sp.points ? Number(sp.points) : 0,
@@ -107,9 +116,11 @@ export function hydrateFromGameState(
         pendingTile: handState?.pendingTile ?? null,
       },
       agari: p.gameState?.agari ?? null,
-      ...(p.gameState?.awaitedTiles
-        ? { awaitedTiles: p.gameState.awaitedTiles }
-        : {}),
+      ...(handWaits.length > 0
+        ? { awaitedTiles: handWaits }
+        : p.gameState?.awaitedTiles
+          ? { awaitedTiles: p.gameState.awaitedTiles }
+          : {}),
     };
 
     return {
