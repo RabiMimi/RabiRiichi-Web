@@ -363,9 +363,12 @@ describe('Inquiry Mapping & Response Encoding', () => {
     };
 
     // The client derives remainingCount from visible tile kinds: one 18 is
-    // visible (so 4 - 1 = 3 remain), no 19 is visible (so 4 remain).
-    const visibleKinds = [18];
-    const mapped = mapInquiry(inquiryWithCandidates, visibleKinds);
+    // visible (so 4 - 1 = 3 remain), no 19 is visible (so 4 remain). With no
+    // tile-set counts supplied, the maximum falls back to 4 per kind.
+    const mapped = mapInquiry(inquiryWithCandidates, {
+      visibleKinds: [18],
+      tileSetCounts: new Map(),
+    });
 
     expect(mapped.playTile?.candidates).toBeDefined();
     expect(mapped.playTile?.candidates).toHaveLength(1);

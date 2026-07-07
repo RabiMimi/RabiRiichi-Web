@@ -2,19 +2,29 @@ import type {
   IGameTileMsg,
   IMenLikeMsg,
   IGameStateMsg,
+  IGameConfigMsg,
 } from '../proto/index.js';
 import type { RoomModel } from './model.js';
 
 /**
- * Number of copies of any tile kind in a standard set (four of each).
+ * Copies of a tile kind in a standard set, used only as a fallback when the
+ * configured tile set is unavailable. RabiRiichi allows arbitrary tile sets, so
+ * the real maximum is derived per-kind from `config.initialTiles`.
  */
-const MAX_TILE_COPIES = 4;
+const DEFAULT_TILE_COPIES = 4;
 
 /**
  * Mask that strips the akadora (red-five) bit so a red 5 counts as an ordinary 5
  * when comparing tile kinds. Mirrors the server's `Tile.NoDoraVal` (`& 0x7f`).
  */
 const TILE_KIND_MASK = 0x7f;
+
+/**
+ * How many copies of each tile kind (akadora-normalized) the configured tile set
+ * contains. Empty when the tile set is unknown, in which case the caller falls
+ * back to {@link DEFAULT_TILE_COPIES}.
+ */
+export type TileKindCounts = ReadonlyMap<number, number>;
 
 /**
  * A hand's tiles that are visible to (and counted by) the local player: the
@@ -67,22 +77,44 @@ export function collectVisibleTileKinds(
 }
 
 /**
+ * Builds the per-kind copy counts for the configured tile set. RabiRiichi allows
+ * an arbitrary `initialTiles` set, so the maximum number of any winning tile is
+ * however many copies of that kind the set contains (akadora normalized, so a
+ * red five counts toward its base five).
+ */
+export function buildTileSetCounts(
+  config: IGameConfigMsg | null | undefined,
+): TileKindCounts {
+  const counts = new Map<number, number>();
+  for (const byte of config?.initialTiles ?? []) {
+    if (byte <= 0) continue;
+    const kind = byte & TILE_KIND_MASK;
+    counts.set(kind, (counts.get(kind) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/**
  * How many copies of a winning tile are still unseen by the local player.
  *
  * Replaces the previously server-computed `TenpaiInfoMsg.remaining_count`: the
  * client has full visibility of everything the server counted, so it derives the
- * value itself. Equals `max(0, 4 - copies of that kind the player can see)`.
+ * value itself. Equals `max(0, tileSetCopies(kind) - copies the player sees)`,
+ * where the maximum comes from the configured tile set (or a default of 4 when
+ * the set is unknown).
  */
 export function countRemainingWinningTile(
   winningTileByte: number,
   visibleKinds: readonly number[],
+  maxCounts: TileKindCounts,
 ): number {
   const target = winningTileByte & TILE_KIND_MASK;
+  const max = maxCounts.get(target) ?? DEFAULT_TILE_COPIES;
   let seen = 0;
   for (const kind of visibleKinds) {
     if (kind === target) seen++;
   }
-  return Math.max(0, MAX_TILE_COPIES - seen);
+  return Math.max(0, max - seen);
 }
 
 /**

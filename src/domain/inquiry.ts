@@ -5,7 +5,24 @@ import type {
   IGameTileMsg,
 } from '../proto/index.js';
 import type { MappedTenpaiInfo } from './model.js';
-import { countRemainingWinningTile } from './tenpai.js';
+import { countRemainingWinningTile, type TileKindCounts } from './tenpai.js';
+
+/**
+ * Inputs needed to derive each discard candidate's winning-tile remaining count
+ * client-side (the server no longer sends it). See collectVisibleTileKindsFromRoom
+ * and buildTileSetCounts.
+ */
+export interface WaitCountContext {
+  /** Akadora-normalized kinds the local player can currently see. */
+  visibleKinds: readonly number[];
+  /** Per-kind maximums from the configured tile set. */
+  tileSetCounts: TileKindCounts;
+}
+
+const EMPTY_WAIT_CONTEXT: WaitCountContext = {
+  visibleKinds: [],
+  tileSetCounts: new Map(),
+};
 
 interface LongLike {
   toNumber(): number;
@@ -99,14 +116,14 @@ export interface MappedInquiry {
  * Maps a SinglePlayerInquiryMsg from the server into a clean structured
  * ActionOption tree for UI presentation.
  *
- * `visibleKinds` are the akadora-normalized tile kinds the local player can see
- * (see collectVisibleTileKindsFromRoom); they are used to derive each discard
- * candidate's winning-tile remaining count client-side.
+ * `waitContext` supplies what the client needs to derive each discard
+ * candidate's winning-tile remaining count (the server no longer sends it).
  */
 export function mapInquiry(
   inq: ISinglePlayerInquiryMsg,
-  visibleKinds: readonly number[] = [],
+  waitContext: WaitCountContext = EMPTY_WAIT_CONTEXT,
 ): MappedInquiry {
+  const { visibleKinds, tileSetCounts } = waitContext;
   const buttons: ActionOption[] = [];
   let playTile:
     | {
@@ -200,6 +217,7 @@ export function mapInquiry(
               remainingCount: countRemainingWinningTile(
                 winningTile,
                 visibleKinds,
+                tileSetCounts,
               ),
               han: ti.han ?? 0,
               fu: ti.fu ?? 0,
@@ -224,6 +242,7 @@ export function mapInquiry(
               remainingCount: countRemainingWinningTile(
                 winningTile,
                 visibleKinds,
+                tileSetCounts,
               ),
               han: ti.han ?? 0,
               fu: ti.fu ?? 0,

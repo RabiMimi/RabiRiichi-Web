@@ -50,6 +50,7 @@ import {
   type TileRegistry,
 } from './tileRegistry.js';
 import {
+  buildTileSetCounts,
   collectVisibleTileKinds,
   collectVisibleTileKindsFromRoom,
   collectVisibleTileKindsFromSnapshot,
@@ -115,8 +116,10 @@ export function hydrateFromGameState(
   }
 
   // The winning-tile "remaining" count is derived client-side (the server no
-  // longer sends it). Gather the tile kinds visible in this snapshot once.
+  // longer sends it). Gather the visible tile kinds and the per-kind maximums of
+  // the configured tile set once.
   const visibleKinds = collectVisibleTileKindsFromSnapshot(snapshot);
+  const tileSetCounts = buildTileSetCounts(snapshot.config);
 
   const updatedPlayers = players.map((p): PlayerModel => {
     if (p.seat === undefined) {
@@ -132,7 +135,11 @@ export function hydrateFromGameState(
       const winningTile = ti.winningTile ?? 0;
       return {
         winningTile,
-        remainingCount: countRemainingWinningTile(winningTile, visibleKinds),
+        remainingCount: countRemainingWinningTile(
+          winningTile,
+          visibleKinds,
+          tileSetCounts,
+        ),
         han: ti.han ?? 0,
         fu: ti.fu ?? 0,
         yakuman: ti.yakuman ?? 0,
@@ -911,6 +918,7 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
     ...collectVisibleTileKindsFromRoom(state),
     ...collectVisibleTileKinds(revealedHands, []),
   ];
+  const tileSetCounts = buildTileSetCounts(state.config);
 
   // Initialize agari delta state to trigger Draw result panel.
   // The actual points and delta values are updated by the subsequent applyScoreEvent.
@@ -963,7 +971,11 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       const waits = tenpaiWaitsByPlayer.get(p.seat) ?? [];
       const newWaits: MappedTenpaiInfo[] = waits.map((w) => ({
         winningTile: w,
-        remainingCount: countRemainingWinningTile(w, visibleKinds),
+        remainingCount: countRemainingWinningTile(
+          w,
+          visibleKinds,
+          tileSetCounts,
+        ),
         han: 0,
         fu: 0,
         yakuman: 0,
