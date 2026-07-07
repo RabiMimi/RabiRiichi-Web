@@ -1,6 +1,6 @@
 {
   "connect": {
-    "subtitle": "3D 浏览器麻将客户端",
+    "subtitle": "开源 3D 浏览器麻将客户端",
     "serverAddress": "服务器地址",
     "nickname": "昵称",
     "nicknamePlaceholder": "请输入昵称",
@@ -52,7 +52,9 @@
     "yakus": "个役",
 
     "selectAll": "全选",
-    "selectNone": "全不选"
+    "selectNone": "全不选",
+    "clientRepo": "客户端仓库 (Vite + TS)",
+    "serverRepo": "服务端仓库 (.NET)"
   },
   "playersOpt": {
     "2": "2人局",

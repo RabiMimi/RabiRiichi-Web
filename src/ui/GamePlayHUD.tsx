@@ -369,6 +369,8 @@ function HUDLeftPanel({
       </div>
 
       <div className="hud-buttons-row">
+        <FullscreenButton />
+
         <button
           type="button"
           className={`info-icon-btn camera-lock-btn ${isCameraLocked ? 'is-locked' : ''}`}
@@ -430,8 +432,6 @@ function HUDLeftPanel({
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
           </svg>
         </button>
-
-        <FullscreenButton />
 
         <button
           type="button"

@@ -582,7 +582,7 @@ function TileSpotlightParticles(): React.JSX.Element {
           />
         </bufferGeometry>
         <pointsMaterial
-          color="#ffdd66"
+          color="#ff7a99"
           size={0.09}
           sizeAttenuation
           transparent

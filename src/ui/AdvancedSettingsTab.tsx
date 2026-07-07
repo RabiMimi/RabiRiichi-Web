@@ -50,7 +50,7 @@ function ScoringOptionGroup({
         style={{
           margin: '0 0 4px 0',
           fontSize: '0.8rem',
-          color: '#ff9900',
+          color: '#ff7a99',
         }}
       >
         {t('advanced.scoringOption')}
@@ -326,7 +326,7 @@ export function AdvancedSettingsTab({
           style={{
             margin: '0 0 4px 0',
             fontSize: '0.8rem',
-            color: '#ff9900',
+            color: '#ff7a99',
           }}
         >
           {t('advanced.pointsDeductionPolicy')}

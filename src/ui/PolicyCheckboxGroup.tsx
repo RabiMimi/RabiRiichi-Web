@@ -30,7 +30,7 @@ export function PolicyCheckboxGroup({
 
   return (
     <div className="policy-group" style={{ fontSize: '0.75rem' }}>
-      <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', color: '#ff9900' }}>
+      <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', color: '#ff7a99' }}>
         {title}
       </h4>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>

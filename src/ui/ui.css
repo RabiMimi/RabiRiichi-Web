@@ -26,13 +26,16 @@
 }
 
 .ui-card {
-  background-color: #2a2a2a;
-  border: 2px solid #444;
-  border-radius: 12px;
+  background-color: rgba(18, 28, 50, 0.82);
+  border: 1px solid rgba(130, 170, 240, 0.25);
+  border-radius: 16px;
   padding: 32px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.65),
+    0 0 24px rgba(255, 122, 153, 0.04);
+  backdrop-filter: blur(16px);
   box-sizing: border-box;
   margin: auto;
 }
@@ -40,18 +43,21 @@
 .ui-title {
   margin: 0 0 4px 0;
   font-size: 2.5rem;
-  color: #ff9900;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff7a99 0%, #80deea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 1px;
 }
 
 .ui-subtitle {
   margin: 0 0 24px 0;
-  font-size: 1rem;
-  color: #aaa;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.6);
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
 }
 
 .ui-form {
@@ -84,7 +90,7 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #ff9900;
+  border-color: #ff7a99;
 }
 
 .form-group input:disabled {
@@ -138,7 +144,7 @@
 .form-group-inline input:focus,
 .form-group-inline select:focus {
   outline: none;
-  border-color: #ff9900;
+  border-color: #ff7a99;
 }
 
 .form-group-inline input:disabled,
@@ -173,7 +179,7 @@
 .settings-section-title {
   margin: 0;
   font-size: 0.95rem;
-  color: #ffaa22;
+  color: #ff7a99;
   border-bottom: 1px dashed #444;
   padding-bottom: 6px;
   text-align: left;
@@ -262,22 +268,26 @@
 }
 
 .primary-button {
-  background-color: #ff9900;
-  color: #111;
+  background: linear-gradient(135deg, #ff7a99 0%, #ff6b8b 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .primary-button:hover:not(:disabled) {
-  background-color: #ffaa22;
+  background: linear-gradient(135deg, #ff8da7 0%, #ff7a99 100%);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
 }
 
 .secondary-button {
-  background-color: #444;
+  background-color: rgba(255, 255, 255, 0.08);
   color: #eee;
-  border: 1px solid #555;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .secondary-button:hover:not(:disabled) {
-  background-color: #555;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .danger-button {
@@ -297,7 +307,7 @@
   font-family: 'Courier New', Courier, monospace;
   font-weight: bold;
   padding: 8px 10px !important;
-  color: #ff9900 !important;
+  color: #ff7a99 !important;
 }
 
 .room-id-input::placeholder {
@@ -360,7 +370,7 @@
 .room-id-highlight {
   font-size: 2rem;
   font-weight: bold;
-  color: #ff9900;
+  color: #ff7a99;
   display: block;
   margin-top: 8px;
 }
@@ -399,21 +409,21 @@
 }
 
 .player-card.is-me {
-  border-color: #ff9900;
-  background-color: #22201b;
+  border-color: #ff7a99;
+  background-color: rgba(255, 122, 153, 0.08);
 }
 
 .player-avatar-placeholder {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background-color: #333;
-  border: 2px solid #555;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 122, 153, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
   font-weight: bold;
-  color: #ff9900;
+  color: #ff7a99;
   font-size: 1.1rem;
   flex-shrink: 0;
 }
@@ -483,12 +493,12 @@
   justify-content: center;
   gap: 10px;
   max-width: 90vw;
-  background-color: rgba(10, 10, 10, 0.85);
+  background-color: rgba(18, 28, 50, 0.88);
   padding: 6px 16px;
   border-radius: 20px;
-  border: 1.5px solid rgba(255, 204, 0, 0.5);
+  border: 1px solid rgba(255, 122, 153, 0.35);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(10px);
   align-items: center;
 }
 
@@ -507,7 +517,7 @@
 
 .hud-btn:hover {
   transform: scale(1.1);
-  text-shadow: 0 0 8px #ffcc00;
+  filter: brightness(1.25);
 }
 
 .hud-btn:active {
@@ -525,7 +535,7 @@
   color: #ff66cc;
 }
 .hud-btn-riichi {
-  color: #ffcc00;
+  color: #ff7a99;
 }
 .hud-btn-agari {
   color: #ff3333;
@@ -554,8 +564,9 @@
 
 /* Sub-options panel */
 .action-hud-sub-options {
-  background-color: rgba(20, 20, 20, 0.95);
-  border: 1.5px solid rgba(255, 204, 0, 0.4);
+  background-color: rgba(18, 28, 50, 0.95);
+  border: 1px solid rgba(255, 122, 153, 0.4);
+  backdrop-filter: blur(10px);
   border-radius: 12px;
   padding: 12px 18px;
   display: flex;
@@ -579,9 +590,9 @@
 }
 
 .hud-sub-option-btn {
-  background-color: #222;
-  border: 1.5px solid #ffcc00;
-  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid #ff7a99;
+  border-radius: 8px;
   color: #fff;
   padding: 8px 16px;
   font-size: 1.1rem;
@@ -591,8 +602,8 @@
 }
 
 .hud-sub-option-btn:hover {
-  background-color: #ffcc00;
-  color: #000;
+  background-color: #ff7a99;
+  color: #fff;
 }
 
 .hud-cancel-btn {
@@ -614,13 +625,13 @@
 
 /* Riichi select mode overlay */
 .action-hud-message {
-  color: #ffcc00;
+  color: #80deea;
   font-size: 1.15rem;
   font-weight: bold;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
   margin-bottom: 8px;
   text-align: center;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.65);
   padding: 6px 16px;
   border-radius: 15px;
 }
@@ -646,8 +657,9 @@
 }
 
 .score-card {
-  background-color: rgba(20, 20, 20, 0.85);
-  border: 1.5px solid #444;
+  background-color: rgba(18, 28, 50, 0.82);
+  border: 1px solid rgba(130, 170, 240, 0.25);
+  backdrop-filter: blur(8px);
   border-radius: 8px;
   padding: 8px 16px;
   min-width: 180px;
@@ -660,8 +672,8 @@
 }
 
 .score-card.active-turn {
-  border-color: #ffcc00;
-  box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+  border-color: #ff7a99;
+  box-shadow: 0 0 12px rgba(255, 122, 153, 0.4);
 }
 
 .score-card-header {
@@ -683,7 +695,7 @@
 .player-points {
   font-size: 1.4rem;
   font-weight: bold;
-  color: #ff9900;
+  color: #80deea;
   text-align: right;
   font-family: 'Courier New', Courier, monospace;
 }
@@ -721,14 +733,17 @@
 }
 
 .result-panel {
-  background-color: #1e1e1e;
-  border: 2px solid #ffcc00;
-  border-radius: 16px;
+  background-color: rgba(18, 28, 50, 0.95);
+  border: 2px solid #ff7a99;
+  border-radius: 20px;
   width: 90%;
   max-width: 700px;
   max-height: 85vh;
   padding: 24px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.8),
+    0 0 32px rgba(255, 122, 153, 0.08);
+  backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -751,10 +766,12 @@
   position: relative;
   z-index: 1;
   font-size: 2.2rem;
-  color: #ffcc00;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff7a99 0%, #80deea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   text-align: center;
   margin: 0 0 4px 0;
-  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
   letter-spacing: 4px;
 }
 
@@ -849,7 +866,7 @@
 .winner-summary {
   margin-left: auto;
   font-weight: bold;
-  color: #ffcc00;
+  color: #ff7a99;
   font-size: 1.1rem;
 }
 
@@ -899,7 +916,7 @@
 }
 
 .result-tile-img.winning-tile {
-  border: 1.5px solid #ffcc00;
+  border: 1.5px solid #ff7a99;
 }
 
 .yaku-list {
@@ -949,7 +966,7 @@
 
 .dora-row-label {
   font-size: 0.8rem;
-  color: #ffcc00;
+  color: #80deea;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -1107,11 +1124,11 @@
 }
 
 .info-number {
-  color: #ffcc00;
+  color: #80deea;
   font-size: 1.05rem;
   font-weight: 800;
   margin: 0 2px;
-  text-shadow: 0 0 4px rgba(255, 204, 0, 0.3);
+  text-shadow: 0 0 4px rgba(128, 222, 234, 0.3);
 }
 
 .riichi-sticks-text {
@@ -1143,7 +1160,7 @@
 .dora-panel-title {
   font-size: 0.75rem;
   font-weight: bold;
-  color: #ffcc00;
+  color: #80deea;
   letter-spacing: 2px;
 }
 
@@ -1279,7 +1296,7 @@
 .room-config-panel h3 {
   margin: 0 0 4px 0;
   font-size: 1.1rem;
-  color: #ff9900;
+  color: #ff7a99;
   border-bottom: 1px solid #333;
   padding-bottom: 6px;
   text-align: left;
@@ -1299,7 +1316,7 @@
 
 .form-group select:focus {
   outline: none;
-  border-color: #ff9900;
+  border-color: #ff7a99;
 }
 
 .form-group select:disabled {
@@ -1354,8 +1371,8 @@
 }
 
 .yaku-modal-content {
-  background-color: #252525;
-  border: 2px solid #ff9900;
+  background-color: rgba(18, 28, 50, 0.95);
+  border: 2px solid #ff7a99;
   border-radius: 12px;
   padding: 24px;
   width: 90%;
@@ -1363,7 +1380,10 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(255, 122, 153, 0.05);
+  backdrop-filter: blur(16px);
   box-sizing: border-box;
   margin: auto;
 }
@@ -1379,7 +1399,7 @@
 
 .yaku-modal-content h3 {
   margin: 0;
-  color: #ff9900;
+  color: #ff7a99;
   font-size: 1.2rem;
 }
 
@@ -1413,7 +1433,7 @@
 .yaku-group h4 {
   margin: 0;
   font-size: 0.9rem;
-  color: #ffaa22;
+  color: #ff7a99;
   border-bottom: 1px solid #333;
   padding-bottom: 4px;
   text-align: left;
@@ -1450,7 +1470,7 @@
 
 .yaku-item:hover {
   background-color: #2a2a2a;
-  border-color: #ff9900;
+  border-color: #ff7a99;
   color: #fff;
 }
 
@@ -1477,8 +1497,8 @@
 }
 
 .info-icon-btn:hover {
-  border-color: #ff9900;
-  color: #ff9900;
+  border-color: #ff7a99;
+  color: #ff7a99;
   transform: scale(1.05);
 }
 
@@ -1509,8 +1529,8 @@
 }
 
 .game-info-modal-content {
-  background-color: #252525;
-  border: 2px solid #ff9900;
+  background-color: rgba(18, 28, 50, 0.95);
+  border: 2px solid #ff7a99;
   border-radius: 12px;
   padding: 24px;
   width: 90%;
@@ -1518,7 +1538,10 @@
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(255, 122, 153, 0.05);
+  backdrop-filter: blur(16px);
   box-sizing: border-box;
   margin: auto;
 }
@@ -1534,7 +1557,7 @@
 
 .game-info-modal-header h3 {
   margin: 0;
-  color: #ff9900;
+  color: #ff7a99;
   font-size: 1.2rem;
 }
 
@@ -1571,7 +1594,7 @@
 .game-info-subtitle {
   margin: 0;
   font-size: 1rem;
-  color: #ffaa22;
+  color: #ff7a99;
   border-bottom: 1px solid #333;
   padding-bottom: 6px;
 }
@@ -1640,7 +1663,7 @@
 
 .yama-tile-count {
   font-size: 0.75rem;
-  color: #ff9900;
+  color: #80deea;
   font-weight: bold;
   font-family: monospace;
 }
@@ -1678,9 +1701,9 @@
 }
 
 .tab-btn.active {
-  color: #ff9900;
-  background-color: #333;
-  box-shadow: inset 0 -2px 0 #ff9900;
+  color: #ff7a99;
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 -2px 0 #ff7a99;
 }
 
 /* Debug Tab Content styles */
@@ -1756,7 +1779,7 @@
 }
 
 .p-seat {
-  color: #ff9900;
+  color: #ff7a99;
   font-weight: bold;
 }
 
@@ -1827,7 +1850,7 @@
 }
 
 .text-badge {
-  color: #ffaa22;
+  color: #ff7a99;
   font-weight: bold;
 }
 
@@ -2160,7 +2183,7 @@
 .rotate-prompt-text {
   font-size: 1.2rem;
   font-weight: bold;
-  color: #ff9900;
+  color: #ff7a99;
   max-width: 80%;
   line-height: 1.5;
 }
@@ -2417,7 +2440,7 @@
 .rank-points {
   font-size: 1.4rem;
   font-weight: 600;
-  color: #ffcc00;
+  color: #ff7a99;
 }
 
 /* ==========================================
@@ -2426,8 +2449,8 @@
 
 /* Tenpai Wait Panel */
 .tenpai-wait-panel {
-  background-color: rgba(20, 20, 20, 0.92);
-  border: 1.5px solid rgba(255, 204, 0, 0.7);
+  background-color: rgba(18, 28, 50, 0.94);
+  border: 1.5px solid rgba(255, 122, 153, 0.7);
   border-radius: 8px;
   padding: 8px 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
@@ -2436,7 +2459,8 @@
   font-family: sans-serif;
   z-index: 100;
   pointer-events: none; /* Mouse hover passes through (except on indicator) */
-  min-width: 180px;
+  width: fit-content;
+  box-sizing: border-box;
 }
 
 /* Position for Hover Discard Waited Panel (Centered above action HUD) */
@@ -2479,7 +2503,7 @@
 }
 
 .tenpai-panel-title {
-  color: #ffcc00;
+  color: #ff7a99;
 }
 
 .furiten-badge {
@@ -2570,9 +2594,9 @@
   border-radius: 18px; /* Converts to pill shape instead of strict circle to fit 2 chars */
   padding: 0 8px; /* Horizontal padding for expansion */
   box-sizing: border-box;
-  background-color: rgba(20, 20, 20, 0.85);
-  border: 2px solid #ffcc00;
-  color: #ffcc00;
+  background-color: rgba(18, 28, 50, 0.85);
+  border: 2px solid #ff7a99;
+  color: #ff7a99;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2586,9 +2610,9 @@
 
 .tenpai-badge-3d:hover {
   transform: scale(1.1);
-  background-color: #ffcc00;
-  color: #111;
-  box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4);
+  background-color: #ff7a99;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(255, 122, 153, 0.4);
 }
 
 .tenpai-badge-3d.furiten {
@@ -2615,7 +2639,7 @@
 
 .player-tenpai-badge-container.permanent-badge {
   position: absolute;
-  bottom: 6vh;
+  bottom: 13vh;
   left: calc(50% - 24vw);
   z-index: 90;
 }
@@ -2627,4 +2651,65 @@
   left: 20px;
   z-index: 150;
   pointer-events: auto;
+}
+
+.floating-top-right {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 150;
+  pointer-events: auto;
+}
+
+.github-links-container {
+  display: flex;
+  gap: 8px;
+}
+
+.github-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.github-badge-tag {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  border-radius: 3px;
+  padding: 1px 3px;
+  line-height: 1;
+  text-transform: uppercase;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  font-family: sans-serif;
+}
+
+.github-badge-tag.client-tag {
+  background-color: #ff7a99;
+  color: #fff;
+}
+
+.github-badge-tag.server-tag {
+  background-color: #80deea;
+  color: #111;
+}
+
+.github-btn.client-btn:hover {
+  border-color: #ff7a99;
+  color: #ff7a99;
+  box-shadow: 0 4px 12px rgba(255, 122, 153, 0.35);
+  transform: scale(1.05);
+}
+
+.github-btn.server-btn:hover {
+  border-color: #80deea;
+  color: #80deea;
+  box-shadow: 0 4px 12px rgba(128, 222, 234, 0.35);
+  transform: scale(1.05);
 }

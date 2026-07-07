@@ -1,6 +1,6 @@
 {
   "connect": {
-    "subtitle": "3D browser mahjong client",
+    "subtitle": "Open Source 3D Browser Riichi Mahjong Client",
     "serverAddress": "Server Address",
     "nickname": "Nickname",
     "nicknamePlaceholder": "Enter your nickname",
@@ -52,7 +52,9 @@
     "yakus": "Yakus",
 
     "selectAll": "Select All",
-    "selectNone": "Select None"
+    "selectNone": "Select None",
+    "clientRepo": "Client Repo (Vite + TS)",
+    "serverRepo": "Server Repo (.NET)"
   },
   "playersOpt": {
     "2": "2-Player Game",

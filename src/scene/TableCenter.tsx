@@ -170,7 +170,7 @@ export function TableCenter(): React.JSX.Element | null {
               position={[0, 0.004, 0.3]}
               rotation={[-Math.PI / 2, 0, 0]}
               fontSize={0.1}
-              color={isTimerActive ? '#ffcc00' : '#ffffff'}
+              color={isTimerActive ? '#ff7a99' : '#ffffff'}
               anchorX="center"
               anchorY="middle"
               font={ROBOTO_FONT_PATH}

@@ -2,7 +2,7 @@ import type { Tile } from '../domain/tile';
 import type { IMenLikeMsg } from '../proto';
 
 export const TILE_MODEL_PATH = '/assets/tile.glb';
-export const TABLE_DIFFUSE_PATH = '/assets/table_diffuse.jpg';
+export const TABLE_DIFFUSE_PATH = '/assets/table_diffuse.webp';
 export const MIMI_PATH = '/assets/mimi.png';
 export const ROBOTO_FONT_PATH = '/assets/roboto.ttf';
 
