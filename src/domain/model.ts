@@ -65,6 +65,8 @@ export interface RoomModel {
   // the UI can still look up their info. See domain/tileRegistry.ts.
   tileRegistry: TileRegistry;
   ryuukyokuReason?: string | null;
+  gameEnded?: boolean;
+  endGamePoints?: number[] | null;
 }
 
 // Helper functions for seat math and player lookups

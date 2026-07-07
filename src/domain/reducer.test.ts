@@ -8,7 +8,7 @@ import {
 import type { RoomModel } from './model';
 import { createEmptyTileRegistry, getRegisteredTile } from './tileRegistry';
 import { getRiichiSidewaysTraceId } from './river';
-import { GameLogMsg } from '../proto';
+import { GameLogMsg, type IServerRoomStateMsg } from '../proto';
 import type { IEventMsg } from '../proto';
 import {
   UserStatus,
@@ -926,13 +926,17 @@ describe('Reducer - Events', () => {
   it('should handle stopGameEvent', () => {
     const state = createInitializedRoom();
     const eventMsg = {
-      stopGameEvent: {},
+      stopGameEvent: {
+        endGamePoints: [28000, 22000],
+      },
     };
 
     const nextState = applyEvent(state, eventMsg);
 
-    expect(nextState.info).toBeNull();
-    expect(nextState.players[0]?.gameState).toBeNull();
+    expect(nextState.gameEnded).toBe(true);
+    expect(nextState.endGamePoints).toEqual([28000, 22000]);
+    expect(nextState.info).not.toBeNull();
+    expect(nextState.players[0]?.gameState).not.toBeNull();
   });
 
   it('should handle syncGameStateEvent by hydrating', () => {
@@ -1255,6 +1259,31 @@ describe('Reducer - Room State', () => {
     expect(nextState?.players[0]?.nickname).toBe('AliceUpdated');
     expect(nextState?.players[0]?.gameState).not.toBeNull();
     expect(nextState?.players[0]?.gameState?.points).toBe(25000);
+  });
+
+  it('should preserve gameEnded and endGamePoints flags when applying room state', () => {
+    const initialState: RoomModel = {
+      ...createInitializedRoom(),
+      gameEnded: true,
+      endGamePoints: [30000, 20000],
+    };
+
+    const roomState: IServerRoomStateMsg = {
+      id: 1234,
+      players: [
+        {
+          id: 0,
+          nickname: 'Alice',
+          status: UserStatus.USER_STATUS_READY,
+          seat: 0,
+        },
+      ],
+    };
+
+    const nextState = applyRoomState(initialState, roomState);
+
+    expect(nextState?.gameEnded).toBe(true);
+    expect(nextState?.endGamePoints).toEqual([30000, 20000]);
   });
 });
 

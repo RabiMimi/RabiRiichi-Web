@@ -162,6 +162,10 @@
     "confirmWithTime": "确定 ({{seconds}}s)",
     "waitingForNext": "等待下一局...",
     "waitingForNextRound": "等待下一局开始...",
+    "finalTitle": "对局结束",
+    "returnToRoom": "返回房间",
+    "backToLobby": "返回大厅",
+    "showFinalResults": "查看最终成绩",
     "ryuukyoku": {
       "suufon_renda": "四风连打",
       "kyuushu_kyuuhai": "九种九牌",

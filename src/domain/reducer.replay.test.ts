@@ -4,7 +4,6 @@ import {
   createInitialRoomFromReplay,
 } from '../dev/replay.js';
 import { applyEvent } from './reducer.js';
-import type { RoomModel } from './model.js';
 import type { IGameLogMsg } from '../proto/index.js';
 import replayDataRaw from '../dev/fixtures/full_game.json';
 
@@ -22,12 +21,7 @@ describe('Reducer Integration - Replay Log', () => {
 
     expect(events.length).toBeGreaterThan(0);
 
-    let stateBeforeStop: RoomModel | null = null;
-
     for (const eventMsg of events) {
-      if (eventMsg.stopGameEvent) {
-        stateBeforeStop = state;
-      }
       state = applyEvent(state, eventMsg);
       for (const p of state.players) {
         if (p.gameState) {
@@ -40,20 +34,16 @@ describe('Reducer Integration - Replay Log', () => {
 
     // Verify final state (concluded)
     expect(state.players).toHaveLength(expectedPlayersCount);
-    expect(state.info).toBeNull();
-    for (const p of state.players) {
-      expect(p.gameState).toBeNull();
-    }
+    expect(state.gameEnded).toBe(true);
+    expect(state.endGamePoints).toBeDefined();
+    expect(state.endGamePoints).not.toBeNull();
 
-    // Verify active play state before stop
-    expect(stateBeforeStop).not.toBeNull();
-    if (!stateBeforeStop) return;
-    const activeState = stateBeforeStop;
-    expect(activeState.info).not.toBeNull();
+    // Verify info and player gameState are preserved after stop
+    expect(state.info).not.toBeNull();
 
     let totalPoints = 0;
     for (let i = 0; i < expectedPlayersCount; i++) {
-      const p = activeState.players.find((player) => player.seat === i);
+      const p = state.players.find((player) => player.seat === i);
       expect(p?.gameState).not.toBeNull();
       totalPoints += p?.gameState?.points ?? 0;
     }
@@ -74,12 +64,7 @@ describe('Reducer Integration - Replay Log', () => {
       let state = createInitialRoomFromReplay(replayData);
       const events = getEventsFromReplay(replayData, seat);
 
-      let stateBeforeStop: RoomModel | null = null;
-
       for (const eventMsg of events) {
-        if (eventMsg.stopGameEvent) {
-          stateBeforeStop = state;
-        }
         state = applyEvent(state, eventMsg);
         for (const p of state.players) {
           if (p.gameState) {
@@ -90,13 +75,12 @@ describe('Reducer Integration - Replay Log', () => {
         }
       }
 
-      // Verify that we successfully captured active state and points are conserved
-      expect(stateBeforeStop).not.toBeNull();
-      if (!stateBeforeStop) continue;
-      const activeState = stateBeforeStop;
+      // Verify that the final state preserves active structures and points are conserved
+      expect(state.gameEnded).toBe(true);
+      expect(state.info).not.toBeNull();
       let totalPoints = 0;
       for (let i = 0; i < numSeats; i++) {
-        const p = activeState.players.find((player) => player.seat === i);
+        const p = state.players.find((player) => player.seat === i);
         expect(p?.gameState).not.toBeNull();
         totalPoints += p?.gameState?.points ?? 0;
       }

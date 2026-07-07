@@ -12,6 +12,7 @@ import { Tile } from '../domain/tile';
 import { getTileTexturePath, MIMI_PATH } from '../scene/assets';
 import { type ActionOption } from '../domain/inquiry';
 import { ScoringType } from '../proto';
+import { FinalResultPanel } from './FinalResultPanel';
 import { Logger } from '../lib/logger';
 import { proceedReplay } from '../dev/replayDriver';
 import { getPlayerDisplayName } from '../domain/model';
@@ -27,6 +28,12 @@ export function ResultPanel(): React.JSX.Element | null {
   const resultAnimation = useResultAnimation();
 
   const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(8);
+  const [showFinalResults, setShowFinalResults] = React.useState(false);
+
+  const handleReturnToRoom = React.useCallback(() => {
+    setShowFinalResults(false);
+    rabiriichi.returnToRoom();
+  }, []);
 
   const submitAction = React.useCallback(
     async (action: ActionOption, choice?: number) => {
@@ -72,8 +79,10 @@ export function ResultPanel(): React.JSX.Element | null {
       void submitAction(proceedAction);
     } else if (isWaitingForProceed) {
       proceedReplay();
+    } else if (room?.gameEnded) {
+      setShowFinalResults(true);
     }
-  }, [proceedAction, isWaitingForProceed, submitAction]);
+  }, [proceedAction, isWaitingForProceed, submitAction, room?.gameEnded]);
 
   React.useEffect(() => {
     if (!isWaitingForProceed) return;
@@ -198,6 +207,10 @@ export function ResultPanel(): React.JSX.Element | null {
         {t('result.waitingForNextRound')}
       </div>
     );
+  }
+
+  if (showFinalResults) {
+    return <FinalResultPanel onReturnToRoom={handleReturnToRoom} />;
   }
 
   const showPanel =
@@ -425,11 +438,13 @@ export function ResultPanel(): React.JSX.Element | null {
           <button
             className="ui-button primary-button"
             onClick={handleProceed}
-            disabled={!canProceed}
+            disabled={!canProceed && !room?.gameEnded}
           >
-            {canProceed
-              ? t('result.confirmWithTime', { seconds: secondsLeft })
-              : t('result.waitingForNext')}
+            {room?.gameEnded
+              ? t('result.showFinalResults', 'Show Game Results')
+              : canProceed
+                ? t('result.confirmWithTime', { seconds: secondsLeft })
+                : t('result.waitingForNext')}
           </button>
         </div>
       </div>

@@ -2335,3 +2335,87 @@
   height: 36px;
   padding: 0;
 }
+
+/* Final Game Results styles */
+.final-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.final-rank-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  padding: 12px 16px;
+  border: 1px solid #3d3d3d;
+}
+
+.final-rank-card.rank-1 {
+  border-color: #ffd700;
+  background-color: rgba(255, 215, 0, 0.1);
+}
+.final-rank-card.rank-2 {
+  border-color: #c0c0c0;
+  background-color: rgba(192, 192, 192, 0.08);
+}
+.final-rank-card.rank-3 {
+  border-color: #cd7f32;
+  background-color: rgba(205, 127, 50, 0.06);
+}
+
+.rank-number {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #888;
+  width: 32px;
+  text-align: center;
+}
+
+.final-rank-card.rank-1 .rank-number {
+  color: #ffd700;
+}
+.final-rank-card.rank-2 .rank-number {
+  color: #c0c0c0;
+}
+.final-rank-card.rank-3 .rank-number {
+  color: #cd7f32;
+}
+
+.rank-avatar {
+  width: 48px;
+  height: 48px;
+  background-color: #444;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: 2px solid #555;
+}
+
+.final-rank-card.rank-1 .rank-avatar {
+  border-color: #ffd700;
+}
+
+.rank-details {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rank-name {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.rank-points {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #ffcc00;
+}

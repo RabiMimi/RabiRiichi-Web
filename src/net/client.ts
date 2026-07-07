@@ -511,6 +511,18 @@ export class RabiRiichiClient {
     sendUpdateRoom(client, userStatus);
   }
 
+  public returnToRoom(): void {
+    if (this.room) {
+      this.room = {
+        ...this.room,
+        info: null,
+        gameEnded: false,
+        endGamePoints: null,
+      };
+      this.onChange.emit();
+    }
+  }
+
   public setRiichiSelectMode(active: boolean): void {
     this.isRiichiSelectMode = active;
     this.onChange.emit();

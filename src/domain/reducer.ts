@@ -769,16 +769,13 @@ function handleNextGame(state: RoomModel, ev: INextGameEventMsg): RoomModel {
   };
 }
 
-function handleStopGame(state: RoomModel, _ev: IStopGameEventMsg): RoomModel {
+function handleStopGame(state: RoomModel, ev: IStopGameEventMsg): RoomModel {
   return {
     ...state,
-    info: null,
-    players: state.players.map(
-      (p): PlayerModel => ({
-        ...p,
-        gameState: null,
-      }),
-    ),
+    gameEnded: true,
+    endGamePoints: ev.endGamePoints
+      ? ev.endGamePoints.map((num) => Number(num))
+      : null,
   };
 }
 
@@ -1052,5 +1049,7 @@ export function applyRoomState(
     players,
     tileRegistry: state?.tileRegistry ?? createEmptyTileRegistry(),
     ryuukyokuReason: state?.ryuukyokuReason ?? null,
+    gameEnded: state?.gameEnded ?? false,
+    endGamePoints: state?.endGamePoints ?? null,
   };
 }

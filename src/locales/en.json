@@ -162,6 +162,10 @@
     "confirmWithTime": "Confirm ({{seconds}}s)",
     "waitingForNext": "Waiting...",
     "waitingForNextRound": "Waiting for the next round...",
+    "finalTitle": "Game Concluded",
+    "returnToRoom": "Return to Room",
+    "backToLobby": "Back to Lobby",
+    "showFinalResults": "Show Game Results",
     "ryuukyoku": {
       "suufon_renda": "Four Winds Discard Draw",
       "kyuushu_kyuuhai": "Nine Orphans Draw",
