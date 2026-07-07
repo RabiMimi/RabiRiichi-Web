@@ -169,7 +169,9 @@ export function RoomScreen(): React.JSX.Element | null {
                 <div
                   key={`empty-${index}`}
                   className={`player-card empty-seat ${
-                    showAiDropdown && index === firstEmptySeatIndex ? 'has-dropdown' : ''
+                    showAiDropdown && index === firstEmptySeatIndex
+                      ? 'has-dropdown'
+                      : ''
                   }`}
                 >
                   <div className="player-avatar-placeholder empty">?</div>
@@ -199,13 +201,17 @@ export function RoomScreen(): React.JSX.Element | null {
                           <div className="dropdown-menu">
                             <button
                               className="dropdown-item"
-                              onClick={() => void handleAddAi(AiType.AI_TYPE_DUMMY)}
+                              onClick={() =>
+                                void handleAddAi(AiType.AI_TYPE_DUMMY)
+                              }
                             >
                               {t('ai.type.AI_TYPE_DUMMY')}
                             </button>
                             <button
                               className="dropdown-item"
-                              onClick={() => void handleAddAi(AiType.AI_TYPE_RULE_BASED)}
+                              onClick={() =>
+                                void handleAddAi(AiType.AI_TYPE_RULE_BASED)
+                              }
                             >
                               {t('ai.type.AI_TYPE_RULE_BASED')}
                             </button>

@@ -1979,7 +1979,9 @@
   text-align: left;
   width: 100%;
   font-family: inherit;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .dropdown-item:hover {
