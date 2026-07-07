@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { Html } from '@react-three/drei';
 import { useTranslation } from 'react-i18next';
 import { useResultAnimation, useRoom } from '../state/store';
-import { isTsumoTile } from '../domain/model';
 
 /**
  * Full-table end-of-hand flourish shown before the result panel.
@@ -21,10 +20,10 @@ export function ResultAnimation3D(): React.JSX.Element | null {
     if (!resultAnimation || !room) return null;
 
     if (resultAnimation === 'agari') {
-      const winner = room.players.find((p) => p.gameState?.agari);
+      const winner = room.players.find((p) => p.gameState?.agari?.incoming);
       const agari = winner?.gameState?.agari;
       const text = agari
-        ? isTsumoTile(agari.incoming)
+        ? agari.isTsumo
           ? t('hud.action.tsumo')
           : t('hud.action.ron')
         : t('result.agari');

@@ -44,8 +44,26 @@ import {
   createEmptyTileRegistry,
   extractEventTiles,
   extractSnapshotTiles,
+  getRegisteredTile,
   mergeTilesIntoRegistry,
+  type TileRegistry,
 } from './tileRegistry.js';
+
+/**
+ * Restores a tile's face value from the registry when the incoming record hides
+ * it (`tile` is 0/undefined). The server hides opponents' concealed tiles in
+ * reconnection snapshots, which would otherwise turn an already-revealed winning
+ * hand into face-down "?" tiles. The registry retains the last known face, so we
+ * recover it here. Returns the original tile when nothing better is known.
+ */
+function resolveTileFace(
+  registry: TileRegistry,
+  tile: IGameTileMsg,
+): IGameTileMsg {
+  if (tile.tile && tile.tile > 0) return tile;
+  const known = getRegisteredTile(registry, tile.traceId);
+  return known?.tile ? { ...tile, tile: known.tile } : tile;
+}
 
 export function hydrateFromGameState(
   state: RoomModel,
@@ -65,6 +83,15 @@ export function hydrateFromGameState(
         revealedDoraCount: snapshot.wall?.doras?.length ?? 1,
       }
     : null;
+
+  // A snapshot is the authoritative full state. Merge its tiles into the
+  // existing registry (rather than starting empty) so faces revealed earlier in
+  // the round - e.g. a winner's hand from an AgariEvent - survive a reconnection
+  // snapshot that re-sends opponents' tiles face-down.
+  const tileRegistry = mergeTilesIntoRegistry(
+    state.tileRegistry,
+    extractSnapshotTiles(snapshot),
+  );
 
   // 2. Build Players
   let players = state.players;
@@ -110,7 +137,9 @@ export function hydrateFromGameState(
         [FuritenType.FURITEN_TYPE_TEMP]: handState?.isTempFuriten ?? false,
       },
       hand: {
-        freeTiles: handState?.freeTiles ?? [],
+        freeTiles: (handState?.freeTiles ?? []).map((t) =>
+          resolveTileFace(tileRegistry, t),
+        ),
         called: handState?.called ?? [],
         discarded: handState?.discarded ?? [],
         pendingTile: handState?.pendingTile ?? null,
@@ -129,13 +158,6 @@ export function hydrateFromGameState(
       gameState,
     };
   });
-
-  // A snapshot is the authoritative full state, so rebuild the tile registry
-  // from scratch rather than merging into a possibly-stale one.
-  const tileRegistry = mergeTilesIntoRegistry(
-    createEmptyTileRegistry(),
-    extractSnapshotTiles(snapshot),
-  );
 
   return {
     ...state,
@@ -632,6 +654,9 @@ function handleDealerFirstTurn(
 
 function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
   const incoming = ev.incoming;
+  // Authoritative win type from the server. Fall back to the tile-based check
+  // only for older logs that predate the is_tsumo flag.
+  const isTsumo = ev.isTsumo ?? isTsumoTile(incoming);
 
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (!p.gameState) return p;
@@ -639,17 +664,22 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
     const agariInfo = ev.agariInfos?.find((info) => info.playerId === p.seat);
     if (!agariInfo) return p;
 
-    const freeTiles =
+    const rawFreeTiles =
       agariInfo.freeTiles && agariInfo.freeTiles.length > 0
         ? agariInfo.freeTiles
         : p.gameState.hand.freeTiles;
+    // Resolve any hidden faces so a later reconnection snapshot cannot turn the
+    // revealed winning hand into "?" tiles (see resolveTileFace).
+    const freeTiles = rawFreeTiles.map((t) =>
+      resolveTileFace(state.tileRegistry, t),
+    );
 
     let finalFreeTiles = freeTiles;
     let finalPendingTile: IGameTileMsg | null = null;
 
     // For a tsumo, lift the self-drawn winning tile out of the hand and show it
     // as the pending tile so the win animation can highlight it separately.
-    if (incoming && isTsumoTile(incoming)) {
+    if (incoming && isTsumo) {
       finalPendingTile = incoming;
       finalFreeTiles = freeTiles.filter((t) => t.traceId !== incoming.traceId);
     }
@@ -657,6 +687,7 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
     const agariState: PlayerAgariState = {
       scores: agariInfo.scores ?? null,
       incoming: incoming ?? null,
+      isTsumo,
       gainPoints: p.gameState.agari?.gainPoints ?? 0,
       losePoints: p.gameState.agari?.losePoints ?? 0,
     };

@@ -809,6 +809,103 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.freeTiles).toHaveLength(2);
   });
 
+  it('records the server is_tsumo flag on a tsumo win', () => {
+    const state = createInitializedRoom();
+    // A self-drawn win: the incoming tile has no discardInfo and is_tsumo=true.
+    setFreeTiles(state, 0, [
+      { traceId: 10, tile: 17 },
+      { traceId: 50, tile: 19 },
+    ]);
+    const nextState = applyEvent(state, {
+      agariEvent: {
+        agariInfos: [{ playerId: 0, freeTiles: [{ traceId: 10, tile: 17 }] }],
+        incoming: { traceId: 50, tile: 19 },
+        isTsumo: true,
+      },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.agari?.isTsumo).toBe(true);
+    // The self-drawn tile is lifted out as the pending tile for the animation.
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(50);
+  });
+
+  it('records is_tsumo=false for a ron even if the tile lacks discardInfo', () => {
+    const state = createInitializedRoom();
+    // Regression for the chankan case: a claimed win whose incoming tile has no
+    // discardInfo on the wire must still be labelled ron, not tsumo.
+    const nextState = applyEvent(state, {
+      agariEvent: {
+        agariInfos: [{ playerId: 0, freeTiles: [{ traceId: 10, tile: 17 }] }],
+        incoming: { traceId: 50, tile: 19 }, // no discardInfo
+        isTsumo: false,
+      },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.agari?.isTsumo).toBe(false);
+    // A ron does not lift a pending tile.
+    expect(p0?.gameState?.hand.pendingTile).toBeNull();
+  });
+
+  it('keeps a revealed winning hand visible across a reconnection sync', () => {
+    // 1. Opponent (seat 0) wins by ron; their hand is revealed via agariInfo.
+    let state = createInitializedRoom();
+    state = applyEvent(state, {
+      agariEvent: {
+        agariInfos: [
+          {
+            playerId: 0,
+            freeTiles: [
+              { traceId: 10, tile: 17 },
+              { traceId: 11, tile: 18 },
+            ],
+          },
+        ],
+        incoming: { traceId: 50, tile: 19 },
+        isTsumo: false,
+      },
+    });
+    const revealed = state.players.find((p) => p.seat === 0);
+    expect(revealed?.gameState?.hand.freeTiles.map((t) => t.tile)).toEqual([
+      17, 18,
+    ]);
+
+    // 2. A reconnection snapshot re-sends the opponent's tiles face-down
+    //    (tile=0), which previously blanked the revealed hand to "?".
+    const snapshot: IGameStateMsg = {
+      config: state.config,
+      info: { round: 0, dealer: 0, honba: 0, currentPlayer: 0 },
+      wall: { remaining: 0, doras: [] },
+      players: [
+        {
+          id: 0,
+          points: 25000,
+          hand: {
+            freeTiles: [
+              { traceId: 10, tile: 0 },
+              { traceId: 11, tile: 0 },
+            ],
+            called: [],
+            discarded: [],
+          },
+        },
+        {
+          id: 1,
+          points: 25000,
+          hand: { freeTiles: [], called: [], discarded: [] },
+        },
+      ],
+    };
+    const synced = hydrateFromGameState(state, snapshot);
+
+    // The registry-resolved faces survive; the hand is not all "?".
+    const afterSync = synced.players.find((p) => p.seat === 0);
+    expect(afterSync?.gameState?.hand.freeTiles.map((t) => t.tile)).toEqual([
+      17, 18,
+    ]);
+  });
+
   it('should handle applyScoreEvent', () => {
     const state = createInitializedRoom();
     // Pre-populate agari for Player 0 (won) and Player 1 (lost) safely

@@ -16,6 +16,10 @@ export interface PlayerAgariState {
   losePoints: number;
   isNagashi?: boolean;
   isTenpai?: boolean;
+  // Authoritative win type from the server (AgariEventMsg.is_tsumo). Preferred
+  // over inferring from `incoming.discardInfo`, which is unreliable. Absent for
+  // ryuukyoku/noten agari states.
+  isTsumo?: boolean;
 }
 
 export interface PlayerHandState {

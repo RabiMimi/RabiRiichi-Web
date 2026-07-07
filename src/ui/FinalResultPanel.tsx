@@ -1,13 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRoom } from '../state/store';
-import { rabiriichi } from '../net/client';
 import { getPlayerDisplayName } from '../domain/model';
-import { AiType, UserStatus } from '../proto';
+import { AiType } from '../proto';
 import { MIMI_PATH } from '../scene/assets';
-import { Logger } from '../lib/logger';
-
-const logger = new Logger('FinalResultPanel');
 
 interface FinalResultPanelProps {
   onReturnToRoom: () => void;
@@ -28,16 +24,6 @@ export function FinalResultPanel({
     });
     return list.sort((a, b) => b.points - a.points);
   }, [room]);
-
-  const handleLeaveRoom = React.useCallback(() => {
-    void (async () => {
-      try {
-        await rabiriichi.updateRoom(UserStatus.USER_STATUS_NONE);
-      } catch (err) {
-        logger.error('Failed to leave room from final results:', err);
-      }
-    })();
-  }, []);
 
   if (!room) return null;
 
@@ -82,16 +68,11 @@ export function FinalResultPanel({
           style={{ flexDirection: 'row', gap: '12px' }}
         >
           <button
-            className="ui-button secondary-button"
+            className="ui-button primary-button"
             onClick={onReturnToRoom}
+            style={{ width: '100%' }}
           >
             {t('result.returnToRoom', 'Return to Room')}
-          </button>
-          <button
-            className="ui-button primary-button"
-            onClick={handleLeaveRoom}
-          >
-            {t('result.backToLobby', 'Back to Lobby')}
           </button>
         </div>
       </div>

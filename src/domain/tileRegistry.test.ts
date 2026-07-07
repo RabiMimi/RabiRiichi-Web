@@ -28,6 +28,26 @@ describe('mergeTilesIntoRegistry', () => {
     expect(getRegisteredTile(second, 1)?.discardInfo?.time).toBe(9);
   });
 
+  it('keeps a known face when a later record re-sends the tile face-down', () => {
+    // A winner's revealed tile, then the same tile re-sent hidden (tile=0) by a
+    // reconnection snapshot. The known face must survive (RabiRiichi#? "?" bug).
+    const revealed = mergeTilesIntoRegistry(createEmptyTileRegistry(), [
+      { traceId: 1, tile: 17 },
+    ]);
+    const afterHidden = mergeTilesIntoRegistry(revealed, [
+      { traceId: 1, tile: 0 },
+    ]);
+    expect(getRegisteredTile(afterHidden, 1)?.tile).toBe(17);
+  });
+
+  it('still lets a real face value overwrite a previous one', () => {
+    const first = mergeTilesIntoRegistry(createEmptyTileRegistry(), [
+      { traceId: 1, tile: 17 },
+    ]);
+    const second = mergeTilesIntoRegistry(first, [{ traceId: 1, tile: 18 }]);
+    expect(getRegisteredTile(second, 1)?.tile).toBe(18);
+  });
+
   it('ignores tiles with non-positive traceId (face-down placeholders)', () => {
     const registry = mergeTilesIntoRegistry(createEmptyTileRegistry(), [
       { traceId: -1, tile: 0 },

@@ -28,8 +28,8 @@ export function GameTable(): React.JSX.Element {
     // The winning tile is shared table-wide, so resolve it once here rather than
     // rescanning every player inside each PlayerArea3D.
     const winningTileTraceId =
-      room.players.find((p) => p.gameState?.agari)?.gameState?.agari?.incoming
-        ?.traceId ?? null;
+      room.players.find((p) => p.gameState?.agari?.incoming)?.gameState?.agari
+        ?.incoming?.traceId ?? null;
 
     return room.players.map((player) => {
       if (player.seat === undefined || !player.gameState) {

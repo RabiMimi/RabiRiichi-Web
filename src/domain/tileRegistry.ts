@@ -53,7 +53,15 @@ export function mergeTilesIntoRegistry(
   return next ?? registry;
 }
 
-/** Combines two records for the same tile, preserving known discard info. */
+/**
+ * Combines two records for the same tile, never losing information already
+ * known. Later records win field-by-field, except:
+ * - `discardInfo`: a known value is kept when the incoming record omits it.
+ * - `tile` (the face value): a known non-zero face is kept when the incoming
+ *   record hides it (`tile` 0/undefined). The server re-sends opponents' tiles
+ *   face-down after they were revealed (e.g. a winner's hand on reconnection);
+ *   preserving the known face here is what lets the UI keep showing it.
+ */
 function mergeTileRecords(
   existing: IGameTileMsg | undefined,
   incoming: IGameTileMsg,
@@ -64,6 +72,9 @@ function mergeTileRecords(
   const merged: IGameTileMsg = { ...existing, ...incoming };
   if (incoming.discardInfo == null && existing.discardInfo != null) {
     merged.discardInfo = existing.discardInfo;
+  }
+  if (!incoming.tile && existing.tile) {
+    merged.tile = existing.tile;
   }
   return merged;
 }
