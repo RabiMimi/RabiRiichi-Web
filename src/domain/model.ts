@@ -156,7 +156,9 @@ export function getPlayerDisplayName(
     const enumKey = AiType[player.aiType];
     if (enumKey) {
       const typeName = enumKey.replace('AI_TYPE_', '');
-      if (player.nickname === typeName) {
+      const cleanNick = player.nickname.replace(/_/g, '').toUpperCase();
+      const cleanType = typeName.replace(/_/g, '').toUpperCase();
+      if (cleanNick === cleanType) {
         return t(`ai.type.${enumKey}`);
       }
     }

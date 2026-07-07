@@ -1901,6 +1901,10 @@
   opacity: 0.6;
 }
 
+.player-card.empty-seat.has-dropdown {
+  opacity: 1;
+}
+
 .player-avatar-placeholder.empty {
   color: #888;
   border-color: #444;
@@ -1921,8 +1925,71 @@
   vertical-align: middle;
 }
 
-.add-ai-btn {
+.add-ai-container {
   margin-left: auto;
+  position: relative;
+}
+
+.add-ai-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add-ai-btn .arrow {
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+
+.dropdown-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  cursor: default;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background-color: #222;
+  border: 1px solid #444;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 101;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 4px 0;
+}
+
+.dropdown-item {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #ccc;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(255, 122, 153, 0.1);
+  color: #ff7a99;
+}
+
+.dropdown-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .mini-button {

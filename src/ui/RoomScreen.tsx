@@ -13,6 +13,7 @@ export function RoomScreen(): React.JSX.Element | null {
   const currentUser = useSelf();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAiDropdown, setShowAiDropdown] = useState(false);
 
   if (!room || !currentUser) {
     return null;
@@ -37,20 +38,17 @@ export function RoomScreen(): React.JSX.Element | null {
   });
   const firstEmptySeatIndex = seats.findIndex((p) => p === undefined);
 
-  const handleAddAi = async () => {
+  const handleAddAi = async (aiType: AiType) => {
     setError(null);
     setIsLoading(true);
+    setShowAiDropdown(false);
     try {
-      await rabiriichi.addAi(AiType.AI_TYPE_DUMMY);
+      await rabiriichi.addAi(aiType);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add AI');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const onAddAi = () => {
-    void handleAddAi();
   };
 
   const handleToggleReady = async () => {
@@ -168,7 +166,12 @@ export function RoomScreen(): React.JSX.Element | null {
               );
             } else {
               return (
-                <div key={`empty-${index}`} className="player-card empty-seat">
+                <div
+                  key={`empty-${index}`}
+                  className={`player-card empty-seat ${
+                    showAiDropdown && index === firstEmptySeatIndex ? 'has-dropdown' : ''
+                  }`}
+                >
                   <div className="player-avatar-placeholder empty">?</div>
                   <div className="player-details">
                     <div className="player-name empty-text">
@@ -179,13 +182,37 @@ export function RoomScreen(): React.JSX.Element | null {
                     </div>
                   </div>
                   {isOwner && index === firstEmptySeatIndex && (
-                    <button
-                      className="ui-button mini-button add-ai-btn"
-                      onClick={onAddAi}
-                      disabled={isLoading}
-                    >
-                      {t('room.addAi')}
-                    </button>
+                    <div className="add-ai-container">
+                      <button
+                        className="ui-button mini-button add-ai-btn"
+                        onClick={() => setShowAiDropdown((prev) => !prev)}
+                        disabled={isLoading}
+                      >
+                        {t('room.addAi')} <span className="arrow">▼</span>
+                      </button>
+                      {showAiDropdown && (
+                        <>
+                          <div
+                            className="dropdown-backdrop"
+                            onClick={() => setShowAiDropdown(false)}
+                          />
+                          <div className="dropdown-menu">
+                            <button
+                              className="dropdown-item"
+                              onClick={() => void handleAddAi(AiType.AI_TYPE_DUMMY)}
+                            >
+                              {t('ai.type.AI_TYPE_DUMMY')}
+                            </button>
+                            <button
+                              className="dropdown-item"
+                              onClick={() => void handleAddAi(AiType.AI_TYPE_RULE_BASED)}
+                            >
+                              {t('ai.type.AI_TYPE_RULE_BASED')}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               );

@@ -50,7 +50,6 @@
     "configureYakus": "Configure Yakus",
     "allYakus": "All",
     "yakus": "Yakus",
-
     "selectAll": "Select All",
     "selectNone": "Select None",
     "clientRepo": "Client Repo (Vite + TS)",
@@ -311,7 +310,8 @@
   "ai": {
     "type": {
       "AI_TYPE_NONE": "",
-      "AI_TYPE_DUMMY": "Drooling Rabbit"
+      "AI_TYPE_DUMMY": "Drooling Rabbit",
+      "AI_TYPE_RULE_BASED": "Nodocchi"
     }
   },
   "orientation": {
