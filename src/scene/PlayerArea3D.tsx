@@ -11,7 +11,7 @@ import type { TileRegistry } from '../domain/tileRegistry';
 import { Hand3D } from './Hand3D';
 import { River3D } from './River3D';
 import { Melds3D } from './Melds3D';
-import { getMeldsLeftEdge } from './assets';
+import { getHandShiftX } from './assets';
 import { useResultAnimation } from '../state/store';
 
 interface PlayerIndicator3DProps {
@@ -65,26 +65,13 @@ export function PlayerArea3D({
 }: PlayerArea3DProps): React.JSX.Element {
   const shiftX = useMemo(() => {
     const hand = player.gameState?.hand;
-    if (!hand || hand.called.length === 0) return 0;
-
-    const meldsLeftEdge = getMeldsLeftEdge(hand.called, seat);
-    const handMeldGap = 0.15;
-    const targetRightX = meldsLeftEdge - handMeldGap;
-
-    const spacing = 0.19;
-    const k = hand.freeTiles.length;
-    let rightMostX = 0;
-
-    if (k > 0) {
-      if (hand.pendingTile) {
-        rightMostX = ((k - 1) / 2 + 1) * spacing + 0.08;
-      } else {
-        rightMostX = ((k - 1) / 2) * spacing;
-      }
-    }
-
-    const calcShift = targetRightX - rightMostX;
-    return Math.min(0, calcShift);
+    if (!hand) return 0;
+    return getHandShiftX(
+      hand.called,
+      seat,
+      hand.freeTiles.length,
+      Boolean(hand.pendingTile),
+    );
   }, [player.gameState?.hand, seat]);
 
   const resultAnimation = useResultAnimation();

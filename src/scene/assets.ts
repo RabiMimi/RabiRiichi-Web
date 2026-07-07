@@ -113,16 +113,40 @@ export function getSafeKey(
 }
 
 /**
+ * Shared tile/meld layout constants (world units). These MUST stay in sync with
+ * the actual rendering in Melds3D.tsx and Hand3D.tsx, otherwise the auto-align
+ * shift will not match what is drawn (see RabiMimi/RabiRiichi#77).
+ */
+export const TILE_LAYOUT = {
+  /** Rightmost anchor where the called-meld group starts, growing leftward. */
+  meldsStartX: 2.3,
+  /** Width of a face/back tile lying flat. */
+  normalWidth: 0.18,
+  /** Width of a sideways (called) tile: it shows its length instead. */
+  sidewaysWidth: 0.24,
+  /** Gap between tiles within the same meld. */
+  tileGap: 0.005,
+  /** Gap between adjacent meld groups. */
+  meldGap: 0.08,
+  /** Center-to-center spacing of free hand tiles. */
+  handSpacing: 0.19,
+  /** Extra gap before the freshly drawn (pending) tile. */
+  pendingGap: 0.08,
+  /** Gap kept between the hand's right edge and the melds' left edge. */
+  handMeldGap: 0.15,
+} as const;
+
+/**
  * Calculates the left-most coordinate boundary of a player's called meld groups.
  */
 export function getMeldsLeftEdge(called: IMenLikeMsg[], seat: number): number {
-  const startX = 2.3;
+  const startX = TILE_LAYOUT.meldsStartX;
   if (called.length === 0) return startX;
 
-  const W_NORMAL = 0.18;
-  const W_SIDEWAYS = 0.24;
-  const gap = 0.005;
-  const meldGap = 0.08;
+  const W_NORMAL = TILE_LAYOUT.normalWidth;
+  const W_SIDEWAYS = TILE_LAYOUT.sidewaysWidth;
+  const gap = TILE_LAYOUT.tileGap;
+  const meldGap = TILE_LAYOUT.meldGap;
 
   let currentMeldRightX = startX;
 
@@ -162,4 +186,41 @@ export function getMeldsLeftEdge(called: IMenLikeMsg[], seat: number): number {
   }
 
   return currentMeldRightX + meldGap;
+}
+
+/**
+ * Computes how far left the free hand must slide so it never overlaps the
+ * player's called melds. Returns a non-positive X offset applied to the hand
+ * group (0 = no shift needed).
+ *
+ * The comparison uses the hand's right EDGE against the melds' left EDGE
+ * (getMeldsLeftEdge already returns a true edge). Comparing an edge against a
+ * tile center was the cause of the ~half-tile overlap in RabiMimi/RabiRiichi#77,
+ * which is most visible when a wide kan pushes the melds further left.
+ */
+export function getHandShiftX(
+  called: IMenLikeMsg[],
+  seat: number,
+  freeTileCount: number,
+  hasPendingTile: boolean,
+): number {
+  if (called.length === 0) return 0;
+
+  const targetRightEdge =
+    getMeldsLeftEdge(called, seat) - TILE_LAYOUT.handMeldGap;
+
+  const spacing = TILE_LAYOUT.handSpacing;
+  const halfTile = TILE_LAYOUT.normalWidth / 2;
+  const k = freeTileCount;
+
+  // Default when the hand is empty: only the pending tile (if any) matters.
+  let handRightEdge = -halfTile;
+  if (k > 0) {
+    const rightmostCenter = hasPendingTile
+      ? ((k - 1) / 2 + 1) * spacing + TILE_LAYOUT.pendingGap
+      : ((k - 1) / 2) * spacing;
+    handRightEdge = rightmostCenter + halfTile;
+  }
+
+  return Math.min(0, targetRightEdge - handRightEdge);
 }
