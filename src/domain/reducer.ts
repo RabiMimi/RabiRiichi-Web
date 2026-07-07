@@ -464,6 +464,14 @@ function handleKan(state: RoomModel, ev: IKanEventMsg): RoomModel {
       }
 
       const incomingTile = Tile.fromByte(incoming.tile ?? 0);
+      const updatedKan = { ...kan };
+      if (kan.tiles) {
+        updatedKan.tiles = kan.tiles.map((t) => ({
+          ...t,
+          source: TileSource.TILE_SOURCE_KAKAN,
+        }));
+      }
+
       called = called.map((m) => {
         const isMatchingPon = m.tiles?.every((t) => {
           const tileObj = Tile.fromByte(t.tile ?? 0);
@@ -473,7 +481,7 @@ function handleKan(state: RoomModel, ev: IKanEventMsg): RoomModel {
           );
         });
         if (isMatchingPon) {
-          return kan;
+          return updatedKan;
         }
         return m;
       });

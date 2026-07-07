@@ -582,12 +582,13 @@ describe('Reducer - Events', () => {
     };
 
     const nextState = applyEvent(state, eventMsg);
-
     const p0 = nextState.players.find((p) => p.seat === 0);
     expect(p0?.gameState?.hand.pendingTile).toBeNull();
     expect(p0?.gameState?.hand.called).toHaveLength(1);
     expect(p0?.gameState?.hand.called[0]?.tiles).toHaveLength(4);
     expect(p0?.gameState?.hand.called[0]?.tiles?.[3]?.traceId).toBe(12);
+    expect(p0?.gameState?.hand.called[0]?.tiles?.[0]?.source).toBe(TileSource.TILE_SOURCE_KAKAN);
+    expect(p0?.gameState?.hand.called[0]?.tiles?.[3]?.source).toBe(TileSource.TILE_SOURCE_KAKAN);
   });
 
   it('should handle nextPlayerEvent', () => {
@@ -1292,6 +1293,42 @@ describe('Reducer - Events', () => {
 
     expect(p1.gameState?.agari?.isTenpai).toBeFalsy();
   });
+
+  it('should sort revealed tiles in ryuukyokuEvent even if dummy tiles were in different order', () => {
+    const state = createInitializedRoom();
+    const alice = state.players.find((p) => p.seat === 0)!;
+    // Dummy tiles in hand are in order traceId 2, 1
+    alice.gameState!.hand.freeTiles = [
+      { traceId: 2, tile: 0 },
+      { traceId: 1, tile: 0 },
+    ];
+
+    const eventMsg = {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        endGameRyuukyoku: {
+          remainingPlayers: [0, 1],
+          nagashiManganPlayers: [],
+          tenpaiPlayers: [0],
+          // Revealed tiles are: traceId 1 is 17 (1m), traceId 2 is 18 (2m)
+          // Sorted order should be 17, 18 (traceId 1, 2)
+          revealedTiles: [
+            { traceId: 2, tile: 18, playerId: 0 },
+            { traceId: 1, tile: 17, playerId: 0 },
+          ],
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+    const p0 = nextState.players.find((p) => p.seat === 0)!;
+
+    expect(p0.gameState?.hand.freeTiles).toEqual([
+      { traceId: 1, tile: 17, playerId: 0 },
+      { traceId: 2, tile: 18, playerId: 0 },
+    ]);
+  });
+
 
   it('keeps the winner result through the full end-of-hand sequence', () => {
     // Regression: live order is agari -> applyScore -> conclude -> nextGame,
