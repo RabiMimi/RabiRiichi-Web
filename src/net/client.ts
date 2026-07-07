@@ -31,6 +31,7 @@ import {
   encodeInquiryResponse,
   getAutoResponse,
 } from '../domain/inquiry';
+import { collectVisibleTileKindsFromRoom } from '../domain/tenpai';
 import { type YakuInfo, YAKUS } from '../domain/yakus';
 import {
   updateRoom as sendUpdateRoom,
@@ -390,7 +391,10 @@ export class RabiRiichiClient {
     this.pendingActionOption = null;
     this.currentInquiry = {
       messageId: respondTo,
-      mapped: mapInquiry(inquiry),
+      mapped: mapInquiry(
+        inquiry,
+        this.room ? collectVisibleTileKindsFromRoom(this.room) : [],
+      ),
       original: inquiry,
     };
     this.logger.info(`Received inquiry ${respondTo}`);

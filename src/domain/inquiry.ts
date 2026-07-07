@@ -5,6 +5,7 @@ import type {
   IGameTileMsg,
 } from '../proto/index.js';
 import type { MappedTenpaiInfo } from './model.js';
+import { countRemainingWinningTile } from './tenpai.js';
 
 interface LongLike {
   toNumber(): number;
@@ -95,9 +96,17 @@ export interface MappedInquiry {
 }
 
 /**
- * Maps a SinglePlayerInquiryMsg from the server into a clean structured ActionOption tree for UI presentation.
+ * Maps a SinglePlayerInquiryMsg from the server into a clean structured
+ * ActionOption tree for UI presentation.
+ *
+ * `visibleKinds` are the akadora-normalized tile kinds the local player can see
+ * (see collectVisibleTileKindsFromRoom); they are used to derive each discard
+ * candidate's winning-tile remaining count client-side.
  */
-export function mapInquiry(inq: ISinglePlayerInquiryMsg): MappedInquiry {
+export function mapInquiry(
+  inq: ISinglePlayerInquiryMsg,
+  visibleKinds: readonly number[] = [],
+): MappedInquiry {
   const buttons: ActionOption[] = [];
   let playTile:
     | {
@@ -184,14 +193,20 @@ export function mapInquiry(inq: ISinglePlayerInquiryMsg): MappedInquiry {
         legalTiles: tiles.map((t: IGameTileMsg) => t.traceId ?? 0),
         candidates: candidates.map((c) => ({
           tileId: c.tile?.traceId ?? 0,
-          tenpaiInfos: (c.tenpaiInfos ?? []).map((ti) => ({
-            winningTile: ti.winningTile ?? 0,
-            remainingCount: ti.remainingCount ?? 0,
-            han: ti.han ?? 0,
-            fu: ti.fu ?? 0,
-            yakuman: ti.yakuman ?? 0,
-            points: safeToNumber(ti.points),
-          })),
+          tenpaiInfos: (c.tenpaiInfos ?? []).map((ti) => {
+            const winningTile = ti.winningTile ?? 0;
+            return {
+              winningTile,
+              remainingCount: countRemainingWinningTile(
+                winningTile,
+                visibleKinds,
+              ),
+              han: ti.han ?? 0,
+              fu: ti.fu ?? 0,
+              yakuman: ti.yakuman ?? 0,
+              points: safeToNumber(ti.points),
+            };
+          }),
         })),
       });
     } else if (action.playTileAction) {
@@ -202,14 +217,20 @@ export function mapInquiry(inq: ISinglePlayerInquiryMsg): MappedInquiry {
         legalTiles: tiles.map((t: IGameTileMsg) => t.traceId ?? 0),
         candidates: candidates.map((c) => ({
           tileId: c.tile?.traceId ?? 0,
-          tenpaiInfos: (c.tenpaiInfos ?? []).map((ti) => ({
-            winningTile: ti.winningTile ?? 0,
-            remainingCount: ti.remainingCount ?? 0,
-            han: ti.han ?? 0,
-            fu: ti.fu ?? 0,
-            yakuman: ti.yakuman ?? 0,
-            points: safeToNumber(ti.points),
-          })),
+          tenpaiInfos: (c.tenpaiInfos ?? []).map((ti) => {
+            const winningTile = ti.winningTile ?? 0;
+            return {
+              winningTile,
+              remainingCount: countRemainingWinningTile(
+                winningTile,
+                visibleKinds,
+              ),
+              han: ti.han ?? 0,
+              fu: ti.fu ?? 0,
+              yakuman: ti.yakuman ?? 0,
+              points: safeToNumber(ti.points),
+            };
+          }),
         })),
       };
     } else if (action.nextRoundAction) {

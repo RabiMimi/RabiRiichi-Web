@@ -330,7 +330,6 @@ describe('Inquiry Mapping & Response Encoding', () => {
                 tenpaiInfos: [
                   {
                     winningTile: 18,
-                    remainingCount: 3,
                     han: 1,
                     fu: 30,
                     yakuman: 0,
@@ -350,7 +349,6 @@ describe('Inquiry Mapping & Response Encoding', () => {
                 tenpaiInfos: [
                   {
                     winningTile: 19,
-                    remainingCount: 4,
                     han: 2,
                     fu: 40,
                     yakuman: 0,
@@ -364,7 +362,10 @@ describe('Inquiry Mapping & Response Encoding', () => {
       ],
     };
 
-    const mapped = mapInquiry(inquiryWithCandidates);
+    // The client derives remainingCount from visible tile kinds: one 18 is
+    // visible (so 4 - 1 = 3 remain), no 19 is visible (so 4 remain).
+    const visibleKinds = [18];
+    const mapped = mapInquiry(inquiryWithCandidates, visibleKinds);
 
     expect(mapped.playTile?.candidates).toBeDefined();
     expect(mapped.playTile?.candidates).toHaveLength(1);

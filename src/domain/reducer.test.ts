@@ -1072,17 +1072,18 @@ describe('Reducer - Events', () => {
         gameState: {
           config: { playerCount: 2 },
           info: { round: 2, dealer: 0 },
-          wall: { remaining: 70 },
           players: [
             {
               id: 0,
               points: 25000,
               hand: {
                 jun: 1,
+                // One copy of the winning tile (23) is visible in this player's
+                // own discards, so the derived remaining count is 4 - 1 = 3.
+                discarded: [{ traceId: 900, tile: 23 }],
                 tenpaiWaits: [
                   {
                     winningTile: 23,
-                    remainingCount: 3,
                     han: 1,
                     fu: 30,
                     yakuman: 0,
@@ -1295,10 +1296,12 @@ describe('Reducer - Events', () => {
       { traceId: 1, tile: 17, playerId: 0 },
       { traceId: 2, tile: 18, playerId: 0 },
     ]);
+    // remainingCount is derived client-side: each winning tile (17, 18) appears
+    // once in the revealed hand, so 4 - 1 = 3 copies remain.
     expect(p0.gameState?.awaitedTiles).toEqual([
       {
         winningTile: 17,
-        remainingCount: 0,
+        remainingCount: 3,
         han: 0,
         fu: 0,
         yakuman: 0,
@@ -1306,7 +1309,7 @@ describe('Reducer - Events', () => {
       },
       {
         winningTile: 18,
-        remainingCount: 0,
+        remainingCount: 3,
         han: 0,
         fu: 0,
         yakuman: 0,

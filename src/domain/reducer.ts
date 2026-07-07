@@ -49,6 +49,12 @@ import {
   mergeTilesIntoRegistry,
   type TileRegistry,
 } from './tileRegistry.js';
+import {
+  collectVisibleTileKinds,
+  collectVisibleTileKindsFromRoom,
+  collectVisibleTileKindsFromSnapshot,
+  countRemainingWinningTile,
+} from './tenpai.js';
 
 /**
  * Restores a tile's face value from the registry when the incoming record hides
@@ -108,6 +114,10 @@ export function hydrateFromGameState(
     }));
   }
 
+  // The winning-tile "remaining" count is derived client-side (the server no
+  // longer sends it). Gather the tile kinds visible in this snapshot once.
+  const visibleKinds = collectVisibleTileKindsFromSnapshot(snapshot);
+
   const updatedPlayers = players.map((p): PlayerModel => {
     if (p.seat === undefined) {
       return p;
@@ -118,14 +128,17 @@ export function hydrateFromGameState(
     }
 
     const handState = sp.hand;
-    const handWaits = (handState?.tenpaiWaits ?? []).map((ti) => ({
-      winningTile: ti.winningTile ?? 0,
-      remainingCount: ti.remainingCount ?? 0,
-      han: ti.han ?? 0,
-      fu: ti.fu ?? 0,
-      yakuman: ti.yakuman ?? 0,
-      points: ti.points ? Number(ti.points) : 0,
-    }));
+    const handWaits = (handState?.tenpaiWaits ?? []).map((ti) => {
+      const winningTile = ti.winningTile ?? 0;
+      return {
+        winningTile,
+        remainingCount: countRemainingWinningTile(winningTile, visibleKinds),
+        han: ti.han ?? 0,
+        fu: ti.fu ?? 0,
+        yakuman: ti.yakuman ?? 0,
+        points: ti.points ? Number(ti.points) : 0,
+      };
+    });
 
     const gameState: PlayerGameState = {
       jun: handState?.jun ?? 0,
@@ -888,6 +901,17 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
     }
   }
 
+  // Visible tile kinds for deriving winning-tile remaining counts (the server no
+  // longer sends them). At an exhaustive draw the revealed tenpai hands become
+  // visible too, so include them alongside the public discards/melds/doras.
+  const revealedHands = [...revealedByPlayer.values()].map((tiles) => ({
+    freeTiles: tiles,
+  }));
+  const visibleKinds = [
+    ...collectVisibleTileKindsFromRoom(state),
+    ...collectVisibleTileKinds(revealedHands, []),
+  ];
+
   // Initialize agari delta state to trigger Draw result panel.
   // The actual points and delta values are updated by the subsequent applyScoreEvent.
   const updatedPlayers = state.players.map((p): PlayerModel => {
@@ -939,7 +963,7 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       const waits = tenpaiWaitsByPlayer.get(p.seat) ?? [];
       const newWaits: MappedTenpaiInfo[] = waits.map((w) => ({
         winningTile: w,
-        remainingCount: 0,
+        remainingCount: countRemainingWinningTile(w, visibleKinds),
         han: 0,
         fu: 0,
         yakuman: 0,
