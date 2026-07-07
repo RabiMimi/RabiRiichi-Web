@@ -226,21 +226,65 @@ export function getHandShiftX(
 }
 
 /**
- * Asynchronously preloads all tile face and back images into the browser cache.
+ * Module-level cache that keeps the preloaded `Image` objects alive. Without
+ * holding these references the browser may garbage-collect the in-flight
+ * `Image` objects and abort their fetches, defeating the preload entirely.
  */
-export function preloadAllTileImages(): void {
-  if (typeof window === 'undefined' || typeof window.Image === 'undefined') {
-    return;
+const preloadedTileImages = new Map<string, HTMLImageElement>();
+let tileImagePreloadPromise: Promise<void> | null = null;
+
+/**
+ * Preloads and pre-decodes every tile image so DOM `<img>` tags in the in-game
+ * UI (meld/tenpai/result panels) paint instantly instead of fetching and
+ * decoding on first render.
+ *
+ * Idempotent: the work runs once and subsequent calls return the same promise.
+ * The returned promise resolves when all images are fetched and decoded; it can
+ * be awaited but never rejects (individual failures are ignored).
+ */
+export function preloadAllTileImages(): Promise<void> {
+  if (tileImagePreloadPromise) {
+    return tileImagePreloadPromise;
   }
+  if (typeof window === 'undefined' || typeof window.Image === 'undefined') {
+    tileImagePreloadPromise = Promise.resolve();
+    return tileImagePreloadPromise;
+  }
+
   const imagesToPreload = [
     ...VALID_TILE_STRINGS,
     'back',
     'blank',
     'front',
   ] as const;
-  for (const tile of imagesToPreload) {
+
+  const decodes = imagesToPreload.map((tile) => {
     const path = getTileTexturePath(tile);
     const img = new window.Image();
+    // Retain the reference so the fetch is not aborted by GC.
+    preloadedTileImages.set(path, img);
     img.src = path;
-  }
+    // decode() forces the browser to fetch AND decode the JPEG off the render
+    // path. Fall back to onload if decode() is unavailable or rejects (e.g. the
+    // image is not yet fully fetched in some engines).
+    const ready =
+      typeof img.decode === 'function'
+        ? img.decode().catch(() => undefined)
+        : new Promise<void>((resolve) => {
+            img.onload = (): void => resolve();
+            img.onerror = (): void => resolve();
+          });
+    return ready;
+  });
+
+  tileImagePreloadPromise = Promise.all(decodes).then(() => undefined);
+  return tileImagePreloadPromise;
+}
+
+/**
+ * Resets the preload cache. Used strictly in unit tests to avoid pollution.
+ */
+export function _resetPreloadCache(): void {
+  tileImagePreloadPromise = null;
+  preloadedTileImages.clear();
 }

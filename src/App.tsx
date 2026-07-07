@@ -16,6 +16,7 @@ import { RoomScreen } from './ui/RoomScreen';
 import { GamePlayHUD } from './ui/GamePlayHUD';
 import { ResultPanel } from './ui/ResultPanel';
 import { OrientationGuard } from './ui/OrientationGuard';
+import { FullscreenButton } from './ui/FullscreenButton';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import './App.css';
 
@@ -57,7 +58,7 @@ function App(): React.JSX.Element {
   const controlsRef = useRef<OrbitControlsImpl>(null);
 
   useEffect(() => {
-    preloadAllTileImages();
+    void preloadAllTileImages();
     const params = new URLSearchParams(window.location.search);
     let active = true;
     let stopReplayFn: (() => void) | null = null;
@@ -121,6 +122,7 @@ function App(): React.JSX.Element {
         />
       </Canvas>
       {renderUI()}
+      {!room?.info && <FullscreenButton className="floating-top-left" />}
     </div>
   );
 }

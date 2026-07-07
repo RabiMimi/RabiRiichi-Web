@@ -2619,3 +2619,12 @@
   left: calc(50% - 24vw);
   z-index: 90;
 }
+
+/* Floating Fullscreen button in Connect/Lobby screens */
+.floating-top-left {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 150;
+  pointer-events: auto;
+}

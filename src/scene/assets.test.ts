@@ -1,9 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { IMenLikeMsg, IGameTileMsg } from '../proto';
 import {
   getTileTexturePath,
   getMeldsLeftEdge,
   getHandShiftX,
+  preloadAllTileImages,
+  _resetPreloadCache,
   TILE_LAYOUT,
 } from './assets';
 import { Tile } from '../domain/tile';
@@ -169,5 +171,59 @@ describe('getHandShiftX overlap avoidance (RabiMimi/RabiRiichi#77)', () => {
     const shiftKan = getHandShiftX(kanHand, SEAT, k, false);
     expect(shiftPon).toBeLessThan(0);
     expect(shiftKan).toBeLessThan(shiftPon);
+  });
+});
+
+describe('preloadAllTileImages', () => {
+  const created: FakeImage[] = [];
+
+  class FakeImage {
+    src = '';
+    decode = vi.fn(() => Promise.resolve());
+    constructor() {
+      created.push(this);
+    }
+  }
+
+  beforeEach(() => {
+    created.length = 0;
+    vi.stubGlobal('Image', FakeImage);
+    vi.stubGlobal('window', {
+      Image: FakeImage,
+    });
+    _resetPreloadCache(); // Clear the module-level memoization cache!
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  // The preload promise is memoized at module scope, so all observable
+  // behaviour (warming, decoding, idempotency) is asserted from the single
+  // first invocation to keep the test order-independent.
+  it('warms + decodes each unique tile once and is idempotent', async () => {
+    const first = preloadAllTileImages();
+    // A second call returns the exact same memoized promise (no extra work).
+    expect(preloadAllTileImages()).toBe(first);
+    await first;
+
+    // 37 faces (red-fives included) + back/blank/front = 40 unique paths.
+    const uniquePaths = new Set(created.map((img) => img.src));
+    expect(uniquePaths.size).toBe(40);
+    expect(uniquePaths.has('/assets/hand_tiles/1m.jpg')).toBe(true);
+    expect(uniquePaths.has('/assets/hand_tiles/back.jpg')).toBe(true);
+    expect(uniquePaths.has('/assets/hand_tiles/blank.jpg')).toBe(true);
+    expect(uniquePaths.has('/assets/hand_tiles/front.jpg')).toBe(true);
+
+    // Every warmed image has a src (fetch started) and was decoded once.
+    for (const img of created) {
+      expect(img.src).not.toBe('');
+      expect(img.decode).toHaveBeenCalledTimes(1);
+    }
+
+    // Repeated calls after resolution do not create more images.
+    const countAfterFirst = created.length;
+    await preloadAllTileImages();
+    expect(created.length).toBe(countAfterFirst);
   });
 });

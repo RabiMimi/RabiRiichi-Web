@@ -19,6 +19,7 @@ import { getTileTexturePath } from '../scene/assets';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
 import { getWindKey, type MappedTenpaiInfo } from '../domain/model';
 import { GameInfoModal } from './GameInfoModal';
+import { FullscreenButton } from './FullscreenButton';
 
 function GameInfoPanel(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -429,6 +430,8 @@ function HUDLeftPanel({
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
           </svg>
         </button>
+
+        <FullscreenButton />
 
         <button
           type="button"
