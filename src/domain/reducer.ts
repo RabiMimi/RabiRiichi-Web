@@ -37,6 +37,7 @@ import type {
   GameInfo,
   PlayerGameState,
   PlayerAgariState,
+  MappedTenpaiInfo,
 } from './model.js';
 import { isTsumoTile } from './model.js';
 import { Tile } from './tile.js';
@@ -877,6 +878,16 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
     }
   }
 
+  // Group tenpai waits by player ID
+  const tenpaiWaitsByPlayer = new Map<number, number[]>();
+  if (_ev.endGameRyuukyoku?.tenpaiPlayersWaits) {
+    for (const tp of _ev.endGameRyuukyoku.tenpaiPlayersWaits) {
+      if (tp.playerId !== undefined && tp.playerId !== null && tp.waits) {
+        tenpaiWaitsByPlayer.set(tp.playerId, tp.waits);
+      }
+    }
+  }
+
   // Initialize agari delta state to trigger Draw result panel.
   // The actual points and delta values are updated by the subsequent applyScoreEvent.
   const updatedPlayers = state.players.map((p): PlayerModel => {
@@ -889,6 +900,8 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
 
     let agari = p.gameState.agari;
     let hand = p.gameState.hand;
+    const existingWaits = p.gameState.awaitedTiles;
+    let awaitedTiles = existingWaits;
 
     if (isNagashi) {
       agari = {
@@ -920,12 +933,20 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       if (pRevealed) {
         hand = {
           ...hand,
-          freeTiles: hand.freeTiles.map((t) => {
-            const rev = pRevealed.find((rt) => rt.traceId === t.traceId);
-            return rev ?? t;
-          }),
+          freeTiles: sortGameTiles(pRevealed),
         };
       }
+      const waits = tenpaiWaitsByPlayer.get(p.seat) ?? [];
+      const newWaits: MappedTenpaiInfo[] = waits.map((w) => ({
+        winningTile: w,
+        remainingCount: 0,
+        han: 0,
+        fu: 0,
+        yakuman: 0,
+        points: 0,
+      }));
+      awaitedTiles =
+        existingWaits && existingWaits.length > 0 ? existingWaits : newWaits;
     } else {
       agari = {
         gainPoints: agari?.gainPoints ?? 0,
@@ -939,6 +960,10 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
         ...p.gameState,
         agari,
         hand,
+        awaitedTiles:
+          isTenpai && awaitedTiles && awaitedTiles.length > 0
+            ? awaitedTiles
+            : undefined,
       },
     };
   });

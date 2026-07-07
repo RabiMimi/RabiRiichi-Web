@@ -45,7 +45,7 @@ export interface PlayerGameState {
   furiten: Partial<Record<FuritenType, boolean>>;
   hand: PlayerHandState;
   agari: PlayerAgariState | null;
-  awaitedTiles?: MappedTenpaiInfo[];
+  awaitedTiles?: MappedTenpaiInfo[] | undefined;
 }
 
 export interface PlayerModel {

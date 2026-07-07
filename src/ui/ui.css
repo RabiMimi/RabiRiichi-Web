@@ -909,6 +909,27 @@
   padding-left: 12px;
 }
 
+.result-tenpai-waits {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  background-color: #1a1a1a;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.tenpai-waits-label {
+  font-size: 0.9rem;
+  color: #aaa;
+  font-weight: bold;
+}
+
+.tenpai-waits-tiles {
+  display: flex;
+  gap: 4px;
+}
+
 .winning-tile-label {
   font-size: 0.85rem;
   color: #aaa;

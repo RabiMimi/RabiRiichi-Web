@@ -587,8 +587,12 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.called).toHaveLength(1);
     expect(p0?.gameState?.hand.called[0]?.tiles).toHaveLength(4);
     expect(p0?.gameState?.hand.called[0]?.tiles?.[3]?.traceId).toBe(12);
-    expect(p0?.gameState?.hand.called[0]?.tiles?.[0]?.source).toBe(TileSource.TILE_SOURCE_KAKAN);
-    expect(p0?.gameState?.hand.called[0]?.tiles?.[3]?.source).toBe(TileSource.TILE_SOURCE_KAKAN);
+    expect(p0?.gameState?.hand.called[0]?.tiles?.[0]?.source).toBe(
+      TileSource.TILE_SOURCE_KAKAN,
+    );
+    expect(p0?.gameState?.hand.called[0]?.tiles?.[3]?.source).toBe(
+      TileSource.TILE_SOURCE_KAKAN,
+    );
   });
 
   it('should handle nextPlayerEvent', () => {
@@ -1277,6 +1281,7 @@ describe('Reducer - Events', () => {
             { traceId: 1, tile: 17, playerId: 0 },
             { traceId: 2, tile: 18, playerId: 0 },
           ],
+          tenpaiPlayersWaits: [{ playerId: 0, waits: [17, 18] }],
         },
       },
     };
@@ -1290,8 +1295,27 @@ describe('Reducer - Events', () => {
       { traceId: 1, tile: 17, playerId: 0 },
       { traceId: 2, tile: 18, playerId: 0 },
     ]);
+    expect(p0.gameState?.awaitedTiles).toEqual([
+      {
+        winningTile: 17,
+        remainingCount: 0,
+        han: 0,
+        fu: 0,
+        yakuman: 0,
+        points: 0,
+      },
+      {
+        winningTile: 18,
+        remainingCount: 0,
+        han: 0,
+        fu: 0,
+        yakuman: 0,
+        points: 0,
+      },
+    ]);
 
     expect(p1.gameState?.agari?.isTenpai).toBeFalsy();
+    expect(p1.gameState?.awaitedTiles).toBeUndefined();
   });
 
   it('should sort revealed tiles in ryuukyokuEvent even if dummy tiles were in different order', () => {
@@ -1328,7 +1352,6 @@ describe('Reducer - Events', () => {
       { traceId: 2, tile: 18, playerId: 0 },
     ]);
   });
-
 
   it('keeps the winner result through the full end-of-hand sequence', () => {
     // Regression: live order is agari -> applyScore -> conclude -> nextGame,

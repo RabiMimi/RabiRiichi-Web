@@ -342,6 +342,30 @@ export function ResultPanel(): React.JSX.Element | null {
           </div>
         )}
 
+        {/* Show tenpai waits if in tenpai */}
+        {isTenpai &&
+          player.gameState?.awaitedTiles &&
+          player.gameState.awaitedTiles.length > 0 && (
+            <div className="result-tenpai-waits">
+              <span className="tenpai-waits-label">
+                {t('result.tenpaiWaits', 'Waits')}:
+              </span>
+              <div className="tenpai-waits-tiles">
+                {player.gameState.awaitedTiles.map((ti, idx) => {
+                  const tileStr = Tile.fromByte(ti.winningTile).toString();
+                  return (
+                    <img
+                      key={idx}
+                      src={getTileTexturePath(tileStr)}
+                      alt={tileStr}
+                      className="result-tile-img"
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
         {/* List of Yaku */}
         {!isNagashi && !isTenpai && (
           <div className="yaku-list">

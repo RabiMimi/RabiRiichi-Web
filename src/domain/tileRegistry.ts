@@ -116,6 +116,7 @@ export function extractEventTiles(eventMsg: IEventMsg): IGameTileMsg[] {
   }
   push(...(eventMsg.concludeGameEvent?.doras ?? []));
   push(...(eventMsg.concludeGameEvent?.uradoras ?? []));
+  push(...(eventMsg.ryuukyokuEvent?.endGameRyuukyoku?.revealedTiles ?? []));
 
   return tiles;
 }

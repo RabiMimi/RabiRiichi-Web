@@ -167,6 +167,7 @@
     "winnerBadge": "Winner",
     "winTile": "Win",
     "tenpai": "Tenpai",
+    "tenpaiWaits": "Waits",
     "scoreChangesTitle": "Score Changes",
     "confirmWithTime": "Confirm ({{seconds}}s)",
     "waitingForNext": "Waiting...",
