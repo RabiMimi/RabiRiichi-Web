@@ -186,3 +186,38 @@ export function checkIsDora(tile: Tile, indicators: readonly Tile[]): boolean {
   }
   return false;
 }
+
+/**
+ * Determines if discarding a specific tile will result in a Furiten state.
+ *
+ * @param tileVal The byte value of the tile being discarded.
+ * @param winningWaits The resulting winning waits (tenpai info winning tiles).
+ * @param discardedTiles The player's existing discard pile tiles (including claimed ones).
+ * @param isAlreadyFuriten Whether the player is already in a permanent furiten state.
+ */
+export function checkDiscardResultsInFuriten(
+  tileVal: number,
+  winningWaits: readonly number[],
+  discardedTiles: readonly number[],
+  isAlreadyFuriten: boolean,
+): boolean {
+  if (isAlreadyFuriten) {
+    return true;
+  }
+
+  const normalizedDiscard = tileVal & 0x7f;
+
+  for (const wait of winningWaits) {
+    const normalizedWait = wait & 0x7f;
+    // 1. If we discard a tile that matches one of our winning waits
+    if (normalizedDiscard === normalizedWait) {
+      return true;
+    }
+    // 2. If any of our winning waits is already in our discard pile
+    if (discardedTiles.some((d) => (d & 0x7f) === normalizedWait)) {
+      return true;
+    }
+  }
+
+  return false;
+}

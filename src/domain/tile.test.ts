@@ -5,6 +5,7 @@ import {
   stringToTiles,
   getDoraTargetForIndicator,
   checkIsDora,
+  checkDiscardResultsInFuriten,
 } from './tile';
 
 describe('Tile Model', () => {
@@ -215,6 +216,86 @@ describe('Tile Model', () => {
       expect(checkIsDora(Tile.fromString('1m'), indicators)).toBe(false);
       expect(checkIsDora(Tile.fromString('5m'), indicators)).toBe(false);
       expect(checkIsDora(Tile.fromString('7z'), indicators)).toBe(false);
+    });
+  });
+
+  describe('Discard Results In Furiten Calculation', () => {
+    const toByte = (str: string) => Tile.fromString(str).toByte();
+
+    it('should result in furiten if already permanently furiten', () => {
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('1m'),
+          [toByte('2m')],
+          [toByte('3m')],
+          true, // isAlreadyFuriten
+        ),
+      ).toBe(true);
+    });
+
+    it('should result in furiten if discarded tile is one of the winning waits', () => {
+      // Discarding 2m (the wait tile itself)
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('2m'),
+          [toByte('2m'), toByte('5m')],
+          [toByte('9m')],
+          false,
+        ),
+      ).toBe(true);
+
+      // Discarding r5m (akadora 5m) while waiting on 5m
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('r5m'),
+          [toByte('5m')],
+          [toByte('9m')],
+          false,
+        ),
+      ).toBe(true);
+
+      // Discarding 5m while waiting on r5m (highly unusual but theoretical wait)
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('5m'),
+          [toByte('r5m')],
+          [toByte('9m')],
+          false,
+        ),
+      ).toBe(true);
+    });
+
+    it('should result in furiten if any winning wait has already been discarded', () => {
+      // Winning wait 3m is in discards
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('1m'), // discard 1m
+          [toByte('3m'), toByte('6m')], // waiting on 3m/6m
+          [toByte('3m'), toByte('8s')], // discards has 3m
+          false,
+        ),
+      ).toBe(true);
+
+      // Winning wait 5s is in discards as r5s
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('1m'),
+          [toByte('5s')],
+          [toByte('r5s')],
+          false,
+        ),
+      ).toBe(true);
+    });
+
+    it('should not result in furiten if neither the discarded tile nor discards match any waits', () => {
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('1m'),
+          [toByte('2m'), toByte('5m')],
+          [toByte('9m'), toByte('8s')],
+          false,
+        ),
+      ).toBe(false);
     });
   });
 });

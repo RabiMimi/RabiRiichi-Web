@@ -132,3 +132,24 @@ export function extractSnapshotTiles(snapshot: IGameStateMsg): IGameTileMsg[] {
 
   return tiles;
 }
+
+/**
+ * Collects all tile bytes discarded by a specific player ID from the tile registry.
+ * This includes both visible discards and discards that were claimed by other players.
+ */
+export function getPlayerDiscardsFromRegistry(
+  registry: TileRegistry,
+  playerId: number,
+): number[] {
+  const discards: number[] = [];
+  for (const tile of registry.values()) {
+    if (
+      tile.discardInfo?.from === playerId &&
+      tile.tile !== null &&
+      tile.tile !== undefined
+    ) {
+      discards.push(tile.tile);
+    }
+  }
+  return discards;
+}

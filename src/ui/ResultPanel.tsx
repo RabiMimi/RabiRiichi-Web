@@ -170,7 +170,9 @@ export function ResultPanel(): React.JSX.Element | null {
                     const tileMsg = uradoras[idx];
                     const isRevealed = idx < doraCount;
                     if (isRevealed && tileMsg) {
-                      const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+                      const tileStr = Tile.fromByte(
+                        tileMsg.tile ?? 0,
+                      ).toString();
                       return (
                         <img
                           key={`uradora-${idx}`}

@@ -14,10 +14,18 @@ import {
   useSelectedTileTraceId,
   useActiveComparisonTile,
   useDoraIndicators,
+  useRoom,
+  useSelf,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
-import type { ActionOption } from '../domain/inquiry';
-import { Tile, checkIsDora } from '../domain/tile';
+import type { ActionOption, DiscardCandidate } from '../domain/inquiry';
+import {
+  Tile,
+  checkIsDora,
+  checkDiscardResultsInFuriten,
+} from '../domain/tile';
+import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
+import { FuritenType } from '../proto';
 import {
   TILE_LIFT_IDLE,
   TILE_LIFT_SELECTED,
@@ -29,7 +37,7 @@ const logger = new Logger('Tile3D');
 
 // Adjust these constants to change the Dora sliding sheen appearance
 export const DORA_SHEEN_WIDTH = 0.2; // Width of the diagonal reflection sheen (increase for wider/softer look)
-export const DORA_SHEEN_SPEED = 2.0;  // Speed of the sliding animation (increase for faster sliding)
+export const DORA_SHEEN_SPEED = 2.0; // Speed of the sliding animation (increase for faster sliding)
 
 export type TileDisplayState =
   | 'hand'
@@ -93,7 +101,7 @@ function createMappedMaterial(
           
           gl_FragColor.rgb += vec3(sheen);
         }
-        `
+        `,
       );
     };
 
@@ -191,6 +199,61 @@ export function Tile3D({
     activeComparisonTile && !isMatchingComparison && displayState !== 'hand',
   );
   const isHighlighted = Boolean(activeComparisonTile && isMatchingComparison);
+
+  const room = useRoom();
+  const currentUser = useSelf();
+  const selfPlayer = useMemo(() => {
+    if (!room || !currentUser) return null;
+    return room.players.find((p) => p.id === currentUser.id) ?? null;
+  }, [room, currentUser]);
+
+  const isFuritenDiscard = useMemo(() => {
+    if (!isPlayable || traceId === undefined || !room || !selfPlayer) {
+      return false;
+    }
+
+    let candidate: DiscardCandidate | undefined;
+
+    const playTileCandidates =
+      currentInquiry?.mapped.playTile?.candidates ?? [];
+    candidate = playTileCandidates.find((c) => c.tileId === traceId);
+
+    if (!candidate && currentInquiry) {
+      const riichiButton = currentInquiry.mapped.buttons.find(
+        (b) => b.type === 'riichi',
+      );
+      if (riichiButton) {
+        const riichiCandidates = riichiButton.candidates ?? [];
+        candidate = riichiCandidates.find((c) => c.tileId === traceId);
+      }
+    }
+
+    if (!candidate || candidate.tenpaiInfos.length === 0) {
+      return false;
+    }
+
+    const discards = getPlayerDiscardsFromRegistry(
+      room.tileRegistry,
+      selfPlayer.id,
+    );
+
+    const tileMsg = room.tileRegistry.get(traceId);
+    if (tileMsg?.tile == null) {
+      return false;
+    }
+
+    const winningWaits = candidate.tenpaiInfos.map((w) => w.winningTile);
+    const isAlreadyFuriten =
+      selfPlayer.gameState?.furiten[FuritenType.FURITEN_TYPE_DISCARD] ?? false;
+
+    return checkDiscardResultsInFuriten(
+      tileMsg.tile,
+      winningWaits,
+      discards,
+      isAlreadyFuriten,
+    );
+  }, [isPlayable, traceId, room, selfPlayer, currentInquiry]);
+
   // Load the shared GLTF model (cached by drei)
   const { scene } = useGLTF(TILE_MODEL_PATH);
 
@@ -319,6 +382,7 @@ export function Tile3D({
   const prevDimmed = useRef(false);
   const prevHighlighted = useRef(false);
   const prevIsDora = useRef(false);
+  const prevIsFuritenDiscard = useRef(false);
 
   // Animate position and rotation towards targets
   useFrame((state, delta) => {
@@ -373,7 +437,8 @@ export function Tile3D({
         prevHasSelection.current !== hasTileSelectionActive ||
         prevDimmed.current !== isDimmed ||
         prevHighlighted.current !== isHighlighted ||
-        prevIsDora.current !== isDora
+        prevIsDora.current !== isDora ||
+        prevIsFuritenDiscard.current !== isFuritenDiscard
       ) {
         prevPlayable.current = isPlayable;
         prevHovered.current = isHovered;
@@ -382,6 +447,7 @@ export function Tile3D({
         prevDimmed.current = isDimmed;
         prevHighlighted.current = isHighlighted;
         prevIsDora.current = isDora;
+        prevIsFuritenDiscard.current = isFuritenDiscard;
         applyTileAppearance(
           tileRef.current,
           displayState,
@@ -392,6 +458,7 @@ export function Tile3D({
           isDimmed,
           isHighlighted,
           isDora,
+          isFuritenDiscard,
         );
       }
     }
@@ -838,6 +905,7 @@ function applyTileAppearance(
   isDimmed: boolean,
   isHighlighted: boolean,
   isDora: boolean,
+  isFuritenDiscard = false,
 ): void {
   const isFaceVisible =
     displayState === 'face' ||
@@ -859,6 +927,8 @@ function applyTileAppearance(
             !isPlayable
           ) {
             mat.color.setHex(0x999999);
+          } else if (isFuritenDiscard) {
+            mat.color.setHex(0xffcccc); // Slightly red tint for furiten discard
           } else {
             mat.color.setHex(0xffffff);
           }

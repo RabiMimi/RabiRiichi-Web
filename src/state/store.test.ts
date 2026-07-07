@@ -247,12 +247,10 @@ describe('RabiRiichi Store', () => {
 
     // Simulate hook selector logic
     const count = mockRoom.info!.revealedDoraCount;
-    const indicators = mockRoom.info!.doras
-      .slice(0, count)
-      .map((doraMsg) => {
-        if (doraMsg.tile === null || doraMsg.tile === undefined) return null;
-        return Tile.fromByte(doraMsg.tile);
-      });
+    const indicators = mockRoom.info!.doras.slice(0, count).map((doraMsg) => {
+      if (doraMsg.tile === null || doraMsg.tile === undefined) return null;
+      return Tile.fromByte(doraMsg.tile);
+    });
 
     expect(indicators).toHaveLength(1);
     expect(indicators[0]?.toString()).toBe('1m');

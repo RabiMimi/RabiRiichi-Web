@@ -84,13 +84,11 @@ function GameInfoPanel(): React.JSX.Element | null {
 
 interface TenpaiWaitPanelProps {
   awaitedTiles: MappedTenpaiInfo[];
-  isFuriten: boolean;
   className?: string;
 }
 
 export function TenpaiWaitPanel({
   awaitedTiles,
-  isFuriten,
   className = '',
 }: TenpaiWaitPanelProps): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -98,11 +96,6 @@ export function TenpaiWaitPanel({
 
   return (
     <div className={`tenpai-wait-panel ${className}`}>
-      {isFuriten && (
-        <div className="tenpai-panel-header">
-          <span className="furiten-badge">{t('hud.furiten')}</span>
-        </div>
-      )}
       <div className="awaited-tiles-list horizontal">
         {awaitedTiles.map((ti, idx) => {
           const tileStr = Tile.fromByte(ti.winningTile).toString();
@@ -266,7 +259,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
         activeDiscardCandidate.tenpaiInfos.length > 0 && (
           <TenpaiWaitPanel
             awaitedTiles={activeDiscardCandidate.tenpaiInfos}
-            isFuriten={isFuriten}
             className={`hover-discard ${hasActionButtons ? 'with-buttons' : 'no-buttons'}`}
           />
         )}
@@ -285,7 +277,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
           {showPermanentWaits && (
             <TenpaiWaitPanel
               awaitedTiles={permanentAwaitedTiles}
-              isFuriten={isFuriten}
               className="badge-hover-panel"
             />
           )}
