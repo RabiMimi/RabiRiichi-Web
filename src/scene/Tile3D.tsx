@@ -12,9 +12,11 @@ import {
   useIsRiichiSelectMode,
   useAnimationSpeed,
   useSelectedTileTraceId,
+  useActiveComparisonTile,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import type { ActionOption } from '../domain/inquiry';
+import { Tile } from '../domain/tile';
 import {
   TILE_LIFT_IDLE,
   TILE_LIFT_SELECTED,
@@ -103,6 +105,23 @@ export function Tile3D({
   const { isPlayable, activeActionOption } = useMemo(() => {
     return checkPlayableState(currentInquiry, isRiichiSelectMode, traceId);
   }, [currentInquiry, isRiichiSelectMode, traceId]);
+
+  const activeComparisonTile = useActiveComparisonTile();
+  const isMatchingComparison = useMemo(() => {
+    if (!activeComparisonTile || !tile) return false;
+    try {
+      const active = Tile.fromString(activeComparisonTile);
+      const current = Tile.fromString(tile);
+      return active.suit === current.suit && active.num === current.num;
+    } catch {
+      return activeComparisonTile === tile;
+    }
+  }, [activeComparisonTile, tile]);
+
+  const isDimmed = Boolean(
+    activeComparisonTile && !isMatchingComparison && displayState !== 'hand',
+  );
+  const isHighlighted = Boolean(activeComparisonTile && isMatchingComparison);
   // Load the shared GLTF model (cached by drei)
   const { scene } = useGLTF(TILE_MODEL_PATH);
 
@@ -217,6 +236,8 @@ export function Tile3D({
   const prevHovered = useRef(false);
   const prevSelected = useRef(false);
   const prevHasSelection = useRef(false);
+  const prevDimmed = useRef(false);
+  const prevHighlighted = useRef(false);
 
   // Animate position and rotation towards targets
   useFrame((state, delta) => {
@@ -255,12 +276,16 @@ export function Tile3D({
         prevPlayable.current !== isPlayable ||
         prevHovered.current !== isHovered ||
         prevSelected.current !== isSelected ||
-        prevHasSelection.current !== hasTileSelectionActive
+        prevHasSelection.current !== hasTileSelectionActive ||
+        prevDimmed.current !== isDimmed ||
+        prevHighlighted.current !== isHighlighted
       ) {
         prevPlayable.current = isPlayable;
         prevHovered.current = isHovered;
         prevSelected.current = isSelected;
         prevHasSelection.current = hasTileSelectionActive;
+        prevDimmed.current = isDimmed;
+        prevHighlighted.current = isHighlighted;
         applyTileAppearance(
           tileRef.current,
           displayState,
@@ -268,6 +293,8 @@ export function Tile3D({
           isPlayable,
           isSelected,
           isHovered,
+          isDimmed,
+          isHighlighted,
         );
       }
     }
@@ -280,12 +307,18 @@ export function Tile3D({
         if (isPlayable && e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
           setIsHovered(true);
+          if (traceId !== undefined) {
+            rabiriichi.hoverTile(traceId);
+          }
         }
       }}
       onPointerOut={(e: ThreeEvent<PointerEvent>) => {
         if (isPlayable && e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
           setIsHovered(false);
+          if (traceId !== undefined) {
+            rabiriichi.hoverTile(null);
+          }
         }
       }}
       onPointerDown={(e: ThreeEvent<PointerEvent>) => {
@@ -608,6 +641,9 @@ function checkPlayableState(
         label: '打',
         actionIndex: mapped.playTile.actionIndex,
         legalTiles: mapped.playTile.legalTiles,
+        ...(mapped.playTile.candidates
+          ? { candidates: mapped.playTile.candidates }
+          : {}),
       };
     }
   }
@@ -702,6 +738,8 @@ function applyTileAppearance(
   isPlayable: boolean,
   isSelected: boolean,
   isHovered: boolean,
+  isDimmed: boolean,
+  isHighlighted: boolean,
 ): void {
   tileObject.traverse((child) => {
     if (child instanceof THREE.Mesh) {
@@ -710,7 +748,9 @@ function applyTileAppearance(
       mats.forEach((mat) => {
         if (mat instanceof THREE.MeshStandardMaterial) {
           // Dimming logic
-          if (
+          if (isDimmed) {
+            mat.color.setHex(0x999999);
+          } else if (
             displayState === 'hand' &&
             hasTileSelectionActive &&
             !isPlayable
@@ -723,10 +763,16 @@ function applyTileAppearance(
           // Glow logic
           if (isSelected || (isPlayable && isHovered)) {
             mat.emissive.setHex(0x333311);
+            mat.emissiveIntensity = 1.0;
+          } else if (isHighlighted) {
+            mat.emissive.setHex(0x111133);
+            mat.emissiveIntensity = 0.8;
           } else if (isPlayable) {
             mat.emissive.setHex(0x111111);
+            mat.emissiveIntensity = 1.0;
           } else {
             mat.emissive.setHex(0x000000);
+            mat.emissiveIntensity = 0.0;
           }
         }
       });

@@ -127,6 +127,13 @@
     "timerWaiting": "Waiting for others...",
     "declareRiichi": "Select a tile to discard for Riichi",
     "cancelRiichi": "Cancel Riichi",
+    "furiten": "Furiten",
+    "tilesRemaining": " left",
+    "han": " Han",
+    "points": "pts",
+    "yakuman": "Yakuman",
+    "tenpaiWaits": "Tenpai Waits",
+    "tenpai": "Ten",
     "action": {
       "chii": "Chii",
       "pon": "Pon",

@@ -25,6 +25,15 @@ export interface PlayerHandState {
   pendingTile: IGameTileMsg | null;
 }
 
+export interface MappedTenpaiInfo {
+  winningTile: number; // tile byte value
+  remainingCount: number;
+  han: number;
+  fu: number;
+  yakuman: number;
+  points: number;
+}
+
 export interface PlayerGameState {
   jun: number;
   points: number;
@@ -32,6 +41,7 @@ export interface PlayerGameState {
   furiten: Partial<Record<FuritenType, boolean>>;
   hand: PlayerHandState;
   agari: PlayerAgariState | null;
+  awaitedTiles?: MappedTenpaiInfo[];
 }
 
 export interface PlayerModel {

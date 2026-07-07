@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useRoom,
@@ -7,6 +7,8 @@ import {
   useActionTimeout,
   useCurrentInquiry,
   useIsCameraLocked,
+  useHoveredTileTraceId,
+  useSelectedTileTraceId,
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { rabiriichi } from '../net/client';
@@ -15,7 +17,7 @@ import { pollUntil } from '../lib';
 import { Tile } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
-import { getWindKey } from '../domain/model';
+import { getWindKey, type MappedTenpaiInfo } from '../domain/model';
 import { GameInfoModal } from './GameInfoModal';
 
 function GameInfoPanel(): React.JSX.Element | null {
@@ -79,6 +81,58 @@ function GameInfoPanel(): React.JSX.Element | null {
   );
 }
 
+interface TenpaiWaitPanelProps {
+  awaitedTiles: MappedTenpaiInfo[];
+  isFuriten: boolean;
+  className?: string;
+}
+
+export function TenpaiWaitPanel({
+  awaitedTiles,
+  isFuriten,
+  className = '',
+}: TenpaiWaitPanelProps): React.JSX.Element | null {
+  const { t } = useTranslation();
+  if (awaitedTiles.length === 0) return null;
+
+  return (
+    <div className={`tenpai-wait-panel ${className}`}>
+      {isFuriten && (
+        <div className="tenpai-panel-header">
+          <span className="furiten-badge">{t('hud.furiten')}</span>
+        </div>
+      )}
+      <div className="awaited-tiles-list horizontal">
+        {awaitedTiles.map((ti, idx) => {
+          const tileStr = Tile.fromByte(ti.winningTile).toString();
+          const imgSrc = getTileTexturePath(tileStr);
+          return (
+            <div key={idx} className="awaited-tile-card vertical">
+              <img src={imgSrc} alt={tileStr} className="awaited-tile-img" />
+              <div className="awaited-tile-info center">
+                <span className="remaining-count">
+                  {ti.remainingCount}
+                  {t('hud.tilesRemaining')}
+                </span>
+                <span className="han-points">
+                  {ti.yakuman > 0 ? (
+                    <span className="yakuman-text">{t('hud.yakuman')}</span>
+                  ) : (
+                    <span>
+                      {ti.han}
+                      {t('hud.han')}
+                    </span>
+                  )}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function GamePlayHUD(): React.JSX.Element | null {
   const { t } = useTranslation();
   const room = useRoom();
@@ -88,10 +142,52 @@ export function GamePlayHUD(): React.JSX.Element | null {
   const isCameraLocked = useIsCameraLocked();
 
   const currentInquiry = useCurrentInquiry();
+  const hoveredTraceId = useHoveredTileTraceId();
+  const selectedTraceId = useSelectedTileTraceId();
+  const activeTraceId = hoveredTraceId ?? selectedTraceId;
 
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showPermanentWaits, setShowPermanentWaits] = useState(false);
+
+  const selfPlayer = useMemo(() => {
+    if (!room || !currentUser) return null;
+    return room.players.find((p) => p.id === currentUser.id) ?? null;
+  }, [room, currentUser]);
+
+  const activeDiscardCandidate = useMemo(() => {
+    if (activeTraceId == null || !currentInquiry) return null;
+
+    const playTileCandidates = currentInquiry.mapped.playTile?.candidates ?? [];
+    let match = playTileCandidates.find((c) => c.tileId === activeTraceId);
+    if (match) return match;
+
+    const riichiButton = currentInquiry.mapped.buttons.find(
+      (b) => b.type === 'riichi',
+    );
+    if (riichiButton) {
+      const riichiCandidates = riichiButton.candidates ?? [];
+      match = riichiCandidates.find((c) => c.tileId === activeTraceId);
+      if (match) return match;
+    }
+
+    return null;
+  }, [activeTraceId, currentInquiry]);
+
+  const isFuriten = useMemo(() => {
+    if (!selfPlayer?.gameState?.furiten) return false;
+    return Object.values(selfPlayer.gameState.furiten).some(Boolean);
+  }, [selfPlayer]);
+  const permanentAwaitedTiles = useMemo(() => {
+    return selfPlayer?.gameState?.awaitedTiles ?? [];
+  }, [selfPlayer]);
+
+  const hasActionButtons = useMemo(() => {
+    return Boolean(currentInquiry && currentInquiry.mapped.buttons.length > 0);
+  }, [currentInquiry]);
+
+  const hasPermanentTenpai = permanentAwaitedTiles.length > 0;
 
   const handleExitGame = async () => {
     if (isExiting) return;
@@ -127,12 +223,11 @@ export function GamePlayHUD(): React.JSX.Element | null {
     setShowExitConfirm(true);
   };
 
-  if (!room?.info || !currentUser) {
+  if (!room?.info || !currentUser || !selfPlayer) {
     return null;
   }
 
-  const selfPlayer = room.players.find((p) => p.id === currentUser.id);
-  const selfSeat = selfPlayer?.seat;
+  const selfSeat = selfPlayer.seat;
 
   if (selfSeat === undefined) {
     return null;
@@ -164,6 +259,37 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
       {/* 2D Action HUD overlay buttons */}
       <ActionHUD />
+
+      {/* Discard Hover Tenpai Panel */}
+      {activeDiscardCandidate &&
+        activeDiscardCandidate.tenpaiInfos.length > 0 && (
+          <TenpaiWaitPanel
+            awaitedTiles={activeDiscardCandidate.tenpaiInfos}
+            isFuriten={isFuriten}
+            className={`hover-discard ${hasActionButtons ? 'with-buttons' : 'no-buttons'}`}
+          />
+        )}
+
+      {/* 2D Permanent Tenpai/Furiten Badge Overlay (positioned near the hand) */}
+      {hasPermanentTenpai && (
+        <div className="player-tenpai-badge-container permanent-badge">
+          <div
+            className={`tenpai-badge-3d ${isFuriten ? 'furiten' : ''}`}
+            onPointerOver={() => setShowPermanentWaits(true)}
+            onPointerOut={() => setShowPermanentWaits(false)}
+          >
+            {isFuriten ? t('hud.furiten') : t('hud.tenpai')}
+          </div>
+
+          {showPermanentWaits && (
+            <TenpaiWaitPanel
+              awaitedTiles={permanentAwaitedTiles}
+              isFuriten={isFuriten}
+              className="badge-hover-panel"
+            />
+          )}
+        </div>
+      )}
 
       {/* Game Info Modal */}
       <GameInfoModal

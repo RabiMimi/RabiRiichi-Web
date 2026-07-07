@@ -107,6 +107,9 @@ export function hydrateFromGameState(
         pendingTile: handState?.pendingTile ?? null,
       },
       agari: p.gameState?.agari ?? null,
+      ...(p.gameState?.awaitedTiles
+        ? { awaitedTiles: p.gameState.awaitedTiles }
+        : {}),
     };
 
     return {

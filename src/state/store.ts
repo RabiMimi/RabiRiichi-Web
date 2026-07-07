@@ -4,6 +4,7 @@ import type { ConnectionStatus, ActiveInquiry } from '../net/client';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import type { ActionOption } from '../domain/inquiry';
 import type { YakuInfo } from '../domain/yakus';
+import { Tile } from '../domain/tile';
 
 // Note: GameState is folded into RoomModel (specifically via RoomModel.info and players[].gameState)
 export interface RabiRiichiState {
@@ -19,6 +20,7 @@ export interface RabiRiichiState {
   timerActiveSeat: number | null;
   ping: number;
   selectedTileTraceId: number | null;
+  hoveredTileTraceId: number | null;
   isCameraLocked: boolean;
   resultAnimation: 'agari' | 'ryuukyoku' | null;
 }
@@ -44,6 +46,7 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.timerActiveSeat !== rabiriichi.timerActiveSeat ||
     lastSnapshot.ping !== rabiriichi.ping ||
     lastSnapshot.selectedTileTraceId !== rabiriichi.selectedTileTraceId ||
+    lastSnapshot.hoveredTileTraceId !== rabiriichi.hoveredTileTraceId ||
     lastSnapshot.isCameraLocked !== rabiriichi.isCameraLocked ||
     lastSnapshot.resultAnimation !== rabiriichi.resultAnimation
   ) {
@@ -60,6 +63,7 @@ function getSnapshot(): RabiRiichiState {
       timerActiveSeat: rabiriichi.timerActiveSeat,
       ping: rabiriichi.ping,
       selectedTileTraceId: rabiriichi.selectedTileTraceId,
+      hoveredTileTraceId: rabiriichi.hoveredTileTraceId,
       isCameraLocked: rabiriichi.isCameraLocked,
       resultAnimation: rabiriichi.resultAnimation,
     };
@@ -163,6 +167,16 @@ export function useSelectedTileTraceId(): number | null {
   );
 }
 
+const getHoveredTileTraceId = () => rabiriichi.hoveredTileTraceId;
+
+export function useHoveredTileTraceId(): number | null {
+  return useSyncExternalStore(
+    subscribe,
+    getHoveredTileTraceId,
+    getHoveredTileTraceId,
+  );
+}
+
 export function useIsCameraLocked(): boolean {
   return useSyncExternalStore(subscribe, getIsCameraLocked, getIsCameraLocked);
 }
@@ -178,6 +192,29 @@ export function useResultAnimation(): 'agari' | 'ryuukyoku' | null {
     subscribe,
     () => rabiriichi.resultAnimation,
     () => rabiriichi.resultAnimation,
+  );
+}
+
+const getActiveComparisonTile = (): string | null => {
+  const room = rabiriichi.room;
+  const hoveredTraceId = rabiriichi.hoveredTileTraceId;
+  const selectedTraceId = rabiriichi.selectedTileTraceId;
+  const traceId = hoveredTraceId ?? selectedTraceId;
+  if (traceId == null || !room?.tileRegistry) return null;
+  const tileMsg = room.tileRegistry.get(traceId);
+  if (tileMsg?.tile == null) return null;
+  try {
+    return Tile.fromByte(tileMsg.tile).toString();
+  } catch {
+    return null;
+  }
+};
+
+export function useActiveComparisonTile(): string | null {
+  return useSyncExternalStore(
+    subscribe,
+    getActiveComparisonTile,
+    getActiveComparisonTile,
   );
 }
 

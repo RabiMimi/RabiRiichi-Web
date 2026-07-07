@@ -4,6 +4,34 @@ import type {
   IMenLikeMsg,
   IGameTileMsg,
 } from '../proto/index.js';
+import type { MappedTenpaiInfo } from './model.js';
+
+interface LongLike {
+  toNumber(): number;
+}
+
+function isLongLike(val: unknown): val is LongLike {
+  return (
+    val != null &&
+    typeof val === 'object' &&
+    'toNumber' in val &&
+    typeof (val as Record<string, unknown>).toNumber === 'function'
+  );
+}
+
+function safeToNumber(val: unknown): number {
+  if (val == null) return 0;
+  if (typeof val === 'number') return val;
+  if (isLongLike(val)) {
+    return val.toNumber();
+  }
+  return Number(val);
+}
+
+export interface DiscardCandidate {
+  tileId: number; // traceId of candidate tile to discard
+  tenpaiInfos: MappedTenpaiInfo[];
+}
 
 export type InquiryOptionType =
   | 'skip'
@@ -44,12 +72,14 @@ export type ActionOption =
       label: string; // "立直"
       actionIndex: number;
       legalTiles: number[]; // Trace IDs of tiles that can be discarded
+      candidates?: DiscardCandidate[];
     }
   | {
       type: 'play-tile';
       label: string; // "打"
       actionIndex: number;
       legalTiles: number[]; // Trace IDs of tiles that can be discarded
+      candidates?: DiscardCandidate[];
     };
 
 export interface MappedInquiry {
@@ -60,6 +90,7 @@ export interface MappedInquiry {
   playTile?: {
     actionIndex: number;
     legalTiles: number[];
+    candidates?: DiscardCandidate[];
   };
 }
 
@@ -68,7 +99,13 @@ export interface MappedInquiry {
  */
 export function mapInquiry(inq: ISinglePlayerInquiryMsg): MappedInquiry {
   const buttons: ActionOption[] = [];
-  let playTile: { actionIndex: number; legalTiles: number[] } | undefined;
+  let playTile:
+    | {
+        actionIndex: number;
+        legalTiles: number[];
+        candidates?: DiscardCandidate[];
+      }
+    | undefined;
 
   const actions = inq.actions ?? [];
   for (let i = 0; i < actions.length; i++) {
@@ -139,17 +176,41 @@ export function mapInquiry(inq: ISinglePlayerInquiryMsg): MappedInquiry {
       });
     } else if (action.riichiAction) {
       const tiles = action.riichiAction.tiles ?? [];
+      const candidates = action.riichiAction.candidates ?? [];
       buttons.push({
         type: 'riichi',
         label: '立直',
         actionIndex: i,
         legalTiles: tiles.map((t: IGameTileMsg) => t.traceId ?? 0),
+        candidates: candidates.map((c) => ({
+          tileId: c.tile?.traceId ?? 0,
+          tenpaiInfos: (c.tenpaiInfos ?? []).map((ti) => ({
+            winningTile: ti.winningTile ?? 0,
+            remainingCount: ti.remainingCount ?? 0,
+            han: ti.han ?? 0,
+            fu: ti.fu ?? 0,
+            yakuman: ti.yakuman ?? 0,
+            points: safeToNumber(ti.points),
+          })),
+        })),
       });
     } else if (action.playTileAction) {
       const tiles = action.playTileAction.tiles ?? [];
+      const candidates = action.playTileAction.candidates ?? [];
       playTile = {
         actionIndex: i,
         legalTiles: tiles.map((t: IGameTileMsg) => t.traceId ?? 0),
+        candidates: candidates.map((c) => ({
+          tileId: c.tile?.traceId ?? 0,
+          tenpaiInfos: (c.tenpaiInfos ?? []).map((ti) => ({
+            winningTile: ti.winningTile ?? 0,
+            remainingCount: ti.remainingCount ?? 0,
+            han: ti.han ?? 0,
+            fu: ti.fu ?? 0,
+            yakuman: ti.yakuman ?? 0,
+            points: safeToNumber(ti.points),
+          })),
+        })),
       };
     } else if (action.nextRoundAction) {
       buttons.push({
@@ -247,6 +308,9 @@ export function flattenInquiry(mapped: MappedInquiry): FlatOption[] {
       label: '打',
       actionIndex: mapped.playTile.actionIndex,
       legalTiles: mapped.playTile.legalTiles,
+      ...(mapped.playTile.candidates
+        ? { candidates: mapped.playTile.candidates }
+        : {}),
     };
     for (const traceId of mapped.playTile.legalTiles) {
       options.push({

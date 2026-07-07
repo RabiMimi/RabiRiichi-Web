@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { GameTable } from './scene/GameTable';
 import { initRabiRiichi } from './net/client';
+import { preloadAllTileImages } from './scene/assets';
 import {
   useConnectionStatus,
   useSelf,
@@ -56,6 +57,7 @@ function App(): React.JSX.Element {
   const controlsRef = useRef<OrbitControlsImpl>(null);
 
   useEffect(() => {
+    preloadAllTileImages();
     const params = new URLSearchParams(window.location.search);
     let active = true;
     let stopReplayFn: (() => void) | null = null;

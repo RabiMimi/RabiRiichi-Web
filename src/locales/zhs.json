@@ -127,6 +127,13 @@
     "timerWaiting": "等待他人...",
     "declareRiichi": "请选择立直要切的牌",
     "cancelRiichi": "取消立直",
+    "furiten": "振听",
+    "tilesRemaining": "张",
+    "han": "番",
+    "points": "点",
+    "yakuman": "役满",
+    "tenpaiWaits": "听牌详情",
+    "tenpai": "听",
     "action": {
       "chii": "吃",
       "pon": "碰",

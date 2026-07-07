@@ -7,11 +7,11 @@ import {
   getPlayerDisplayName,
   shouldRevealHand,
 } from '../domain/model';
-import type { TileRegistry } from '../domain/tileRegistry';
 import { Hand3D } from './Hand3D';
 import { River3D } from './River3D';
 import { Melds3D } from './Melds3D';
 import { getHandShiftX } from './assets';
+import type { TileRegistry } from '../domain/tileRegistry';
 import { useResultAnimation } from '../state/store';
 
 interface PlayerIndicator3DProps {

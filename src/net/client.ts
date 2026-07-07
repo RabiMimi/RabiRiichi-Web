@@ -15,7 +15,7 @@ import type {
   ISinglePlayerInquiryMsg,
   IGameConfigMsg,
 } from '../proto';
-import type { PlayerModel, RoomModel } from '../domain/model';
+import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
 import { MessagePump } from './messagePump';
 import {
   DEFAULT_ACTION_TIMEOUT,
@@ -95,10 +95,16 @@ export class RabiRiichiClient {
   public isWaitingForProceed = false;
 
   public selectedTileTraceId: number | null = null;
+  public hoveredTileTraceId: number | null = null;
   public isCameraLocked = true;
 
   public selectTile(traceId: number | null): void {
     this.selectedTileTraceId = traceId;
+    this.onChange.emit();
+  }
+
+  public hoverTile(traceId: number | null): void {
+    this.hoveredTileTraceId = traceId;
     this.onChange.emit();
   }
 
@@ -307,6 +313,7 @@ export class RabiRiichiClient {
       this.isRiichiSelectMode = false;
       this.pendingActionOption = null;
       this.selectedTileTraceId = null;
+      this.hoveredTileTraceId = null;
     }
 
     const configTimeout =
@@ -533,12 +540,43 @@ export class RabiRiichiClient {
     this.onChange.emit();
   }
 
+  private setLocalPlayerAwaitedTiles(
+    waits: MappedTenpaiInfo[] | undefined,
+  ): void {
+    if (!this.room || !this.self) return;
+    const me = this.room.players.find((p) => p.id === this.self?.id);
+    if (me?.gameState) {
+      const nextGameState = { ...me.gameState };
+      if (waits && waits.length > 0) {
+        nextGameState.awaitedTiles = waits;
+      } else {
+        delete nextGameState.awaitedTiles;
+      }
+      me.gameState = nextGameState;
+      this.onChange.emit();
+    }
+  }
+
   public async submitInquiryResponse(
     action: ActionOption,
     choice?: number,
   ): Promise<void> {
     if (!this.currentInquiry) return;
     this.clearTimer();
+
+    if (
+      choice !== undefined &&
+      (action.type === 'play-tile' || action.type === 'riichi')
+    ) {
+      const candidates = action.candidates ?? [];
+      const match = candidates.find((c) => c.tileId === choice);
+      if (match && match.tenpaiInfos.length > 0) {
+        this.setLocalPlayerAwaitedTiles(match.tenpaiInfos);
+      } else {
+        this.setLocalPlayerAwaitedTiles(undefined);
+      }
+    }
+
     const responseDto = encodeInquiryResponse(
       this.currentInquiry.original,
       action,
@@ -564,6 +602,7 @@ export class RabiRiichiClient {
       this.isRiichiSelectMode = false;
       this.pendingActionOption = null;
       this.selectedTileTraceId = null;
+      this.hoveredTileTraceId = null;
       this.onChange.emit();
     }
   }
@@ -581,6 +620,7 @@ export class RabiRiichiClient {
     this.isRiichiSelectMode = false;
     this.pendingActionOption = null;
     this.selectedTileTraceId = null;
+    this.hoveredTileTraceId = null;
     this.clearTimer();
     this.clearResultAnimation();
     this.ping = -1;
@@ -667,6 +707,9 @@ export class RabiRiichiClient {
             label: '打',
             actionIndex: mapped.playTile.actionIndex,
             legalTiles: mapped.playTile.legalTiles,
+            ...(mapped.playTile.candidates
+              ? { candidates: mapped.playTile.candidates }
+              : {}),
           };
           void this.submitInquiryResponse(playTileAction, pendingTile.traceId);
           return;
@@ -682,6 +725,9 @@ export class RabiRiichiClient {
                 label: '打',
                 actionIndex: mapped.playTile.actionIndex,
                 legalTiles: mapped.playTile.legalTiles,
+                ...(mapped.playTile.candidates
+                  ? { candidates: mapped.playTile.candidates }
+                  : {}),
               };
               void this.submitInquiryResponse(playTileAction, lastTile.traceId);
               return;

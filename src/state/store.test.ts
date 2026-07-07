@@ -79,6 +79,7 @@ describe('RabiRiichi Store', () => {
       timerActiveSeat: null,
       ping: -1,
       selectedTileTraceId: null,
+      hoveredTileTraceId: null,
       isCameraLocked: true,
       resultAnimation: null,
     });

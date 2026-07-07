@@ -83,6 +83,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
       label: '立直',
       actionIndex: 3,
       legalTiles: [102],
+      candidates: [],
     });
 
     expect(mapped.buttons[3]).toEqual({
@@ -97,6 +98,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
     expect(mapped.playTile).toEqual({
       actionIndex: 1,
       legalTiles: [100, 101, 102],
+      candidates: [],
     });
   });
 
@@ -189,6 +191,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
           label: '打',
           actionIndex: 0,
           legalTiles: [42],
+          candidates: [],
         },
         choice: 42,
       });
@@ -313,5 +316,90 @@ describe('Inquiry Mapping & Response Encoding', () => {
       const resp = getAutoResponse(inq);
       expect(resp).toBeNull();
     });
+  });
+
+  it('should map candidates and tenpaiInfos for playTileAction and riichiAction', () => {
+    const inquiryWithCandidates: ISinglePlayerInquiryMsg = {
+      actions: [
+        {
+          playTileAction: {
+            tiles: [{ traceId: 100, tile: 17 }],
+            candidates: [
+              {
+                tile: { traceId: 100, tile: 17 },
+                tenpaiInfos: [
+                  {
+                    winningTile: 18,
+                    remainingCount: 3,
+                    han: 1,
+                    fu: 30,
+                    yakuman: 0,
+                    points: 1000,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          riichiAction: {
+            tiles: [{ traceId: 100, tile: 17 }],
+            candidates: [
+              {
+                tile: { traceId: 100, tile: 17 },
+                tenpaiInfos: [
+                  {
+                    winningTile: 19,
+                    remainingCount: 4,
+                    han: 2,
+                    fu: 40,
+                    yakuman: 0,
+                    points: 2000,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    const mapped = mapInquiry(inquiryWithCandidates);
+
+    expect(mapped.playTile?.candidates).toBeDefined();
+    expect(mapped.playTile?.candidates).toHaveLength(1);
+    expect(mapped.playTile?.candidates?.[0]).toEqual({
+      tileId: 100,
+      tenpaiInfos: [
+        {
+          winningTile: 18,
+          remainingCount: 3,
+          han: 1,
+          fu: 30,
+          yakuman: 0,
+          points: 1000,
+        },
+      ],
+    });
+
+    const riichiBtn = mapped.buttons.find((b) => b.type === 'riichi');
+    expect(riichiBtn).toBeDefined();
+    if (riichiBtn) {
+      expect(riichiBtn.candidates).toBeDefined();
+      expect(riichiBtn.candidates).toHaveLength(1);
+      expect(riichiBtn.candidates?.[0]).toEqual({
+        tileId: 100,
+        tenpaiInfos: [
+          {
+            winningTile: 19,
+            remainingCount: 4,
+            han: 2,
+            fu: 40,
+            yakuman: 0,
+            points: 2000,
+          },
+        ],
+      });
+    }
   });
 });

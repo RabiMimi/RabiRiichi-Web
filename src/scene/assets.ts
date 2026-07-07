@@ -224,3 +224,23 @@ export function getHandShiftX(
 
   return Math.min(0, targetRightEdge - handRightEdge);
 }
+
+/**
+ * Asynchronously preloads all tile face and back images into the browser cache.
+ */
+export function preloadAllTileImages(): void {
+  if (typeof window === 'undefined' || typeof window.Image === 'undefined') {
+    return;
+  }
+  const imagesToPreload = [
+    ...VALID_TILE_STRINGS,
+    'back',
+    'blank',
+    'front',
+  ] as const;
+  for (const tile of imagesToPreload) {
+    const path = getTileTexturePath(tile);
+    const img = new window.Image();
+    img.src = path;
+  }
+}
