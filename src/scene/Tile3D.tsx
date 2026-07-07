@@ -339,6 +339,10 @@ export function Tile3D({
   const targetPos = useMemo(() => new THREE.Vector3(), []);
   const targetRot = useMemo(() => new THREE.Quaternion(), []);
 
+  const isInteractive = useMemo(() => {
+    return isPlayable || displayState === 'hand';
+  }, [isPlayable, displayState]);
+
   // Set targets on prop changes (depend on numeric array elements to avoid ref comparison triggers)
   useEffect(() => {
     updateTargetPosition(
@@ -347,7 +351,7 @@ export function Tile3D({
       posY,
       posZ,
       yOffset,
-      isPlayable,
+      isInteractive,
       isDragging,
       isSelected,
       isHovered,
@@ -364,7 +368,7 @@ export function Tile3D({
     yOffset,
     targetPos,
     targetRot,
-    isPlayable,
+    isInteractive,
     isHovered,
     isSelected,
     isDragging,
@@ -468,7 +472,7 @@ export function Tile3D({
     <group
       ref={groupRef}
       onPointerOver={(e: ThreeEvent<PointerEvent>) => {
-        if (isPlayable && e.nativeEvent.pointerType === 'mouse') {
+        if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
           setIsHovered(true);
           if (traceId !== undefined) {
@@ -477,7 +481,7 @@ export function Tile3D({
         }
       }}
       onPointerOut={(e: ThreeEvent<PointerEvent>) => {
-        if (isPlayable && e.nativeEvent.pointerType === 'mouse') {
+        if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
           setIsHovered(false);
           if (traceId !== undefined) {
@@ -492,11 +496,7 @@ export function Tile3D({
         lastClientY.current = e.nativeEvent.clientY;
         const isMouse = e.nativeEvent.pointerType === 'mouse';
 
-        const isDragInteract =
-          isPlayable &&
-          traceId !== undefined &&
-          currentInquiry &&
-          activeActionOption;
+        const isDragInteract = isInteractive && traceId !== undefined;
 
         if (isDragInteract) {
           setIsDragging(true);
@@ -542,34 +542,42 @@ export function Tile3D({
             setDragOffsetZ(0);
 
             if (deltaY < -60) {
-              try {
-                void rabiriichi.submitInquiryResponse(
-                  activeActionOption,
-                  traceId,
-                );
-              } catch (err) {
-                logger.error(
-                  'Failed to submit tile discard choice via drag:',
-                  err,
-                );
+              if (isPlayable && activeActionOption) {
+                try {
+                  void rabiriichi.submitInquiryResponse(
+                    activeActionOption,
+                    traceId,
+                  );
+                } catch (err) {
+                  logger.error(
+                    'Failed to submit tile discard choice via drag:',
+                    err,
+                  );
+                }
+              } else {
+                rabiriichi.selectTile(traceId);
               }
             } else {
               // Tap behavior (using 15px threshold for drag vs tap)
               if (Math.abs(deltaY) < 15) {
                 if (isMouse) {
-                  try {
-                    void rabiriichi.submitInquiryResponse(
-                      activeActionOption,
-                      traceId,
-                    );
-                  } catch (err) {
-                    logger.error(
-                      'Failed to submit tile discard choice via mouse click:',
-                      err,
-                    );
+                  if (isPlayable && activeActionOption) {
+                    try {
+                      void rabiriichi.submitInquiryResponse(
+                        activeActionOption,
+                        traceId,
+                      );
+                    } catch (err) {
+                      logger.error(
+                        'Failed to submit tile discard choice via mouse click:',
+                        err,
+                      );
+                    }
+                  } else {
+                    rabiriichi.selectTile(traceId);
                   }
                 } else {
-                  if (isSelected) {
+                  if (isSelected && isPlayable && activeActionOption) {
                     try {
                       void rabiriichi.submitInquiryResponse(
                         activeActionOption,
@@ -868,7 +876,7 @@ function updateTargetPosition(
   posY: number,
   posZ: number,
   yOffset: number,
-  isPlayable: boolean,
+  isInteractive: boolean,
   isDragging: boolean,
   isSelected: boolean,
   isHovered: boolean,
@@ -878,7 +886,7 @@ function updateTargetPosition(
   let finalY = posY + yOffset;
   let finalZ = posZ;
 
-  if (isPlayable) {
+  if (isInteractive) {
     if (isDragging) {
       finalX += offsets.dragOffsetX;
       finalY += offsets.dragOffsetY;
@@ -912,6 +920,8 @@ function applyTileAppearance(
     displayState === 'hand' ||
     displayState === 'sideways';
 
+  const isInteractive = isPlayable || displayState === 'hand';
+
   tileObject.traverse((child) => {
     if (child instanceof THREE.Mesh) {
       const childMat = child.material as THREE.Material | THREE.Material[];
@@ -942,13 +952,13 @@ function applyTileAppearance(
           }
 
           // Glow logic
-          if (isSelected || (isPlayable && isHovered)) {
+          if (isSelected || (isInteractive && isHovered)) {
             mat.emissive.setHex(0x333311);
             mat.emissiveIntensity = 1.0;
           } else if (isHighlighted) {
             mat.emissive.setHex(0x111133);
             mat.emissiveIntensity = 0.8;
-          } else if (isPlayable) {
+          } else if (isInteractive) {
             mat.emissive.setHex(0x111111);
             mat.emissiveIntensity = 1.0;
           } else {
