@@ -399,6 +399,40 @@ export function flattenInquiry(mapped: MappedInquiry): FlatOption[] {
   return options;
 }
 
+export interface ActiveDiscardCandidate {
+  candidate: DiscardCandidate;
+  /** True when this tile will be discarded as a riichi declaration. */
+  isRiichi: boolean;
+}
+
+/**
+ * Finds the discard candidate for a hovered/selected tile, and whether it will
+ * be discarded as a riichi declaration.
+ *
+ * When the player is in riichi-select mode, the tile (if any) is being chosen
+ * for a riichi discard, so the riichi candidates are consulted and `isRiichi` is
+ * true (declaring riichi guarantees +1 yaku, which the 番缚 check must count).
+ * Otherwise it is a normal discard and the play-tile candidates are used.
+ */
+export function findActiveDiscardCandidate(
+  mapped: MappedInquiry,
+  traceId: number,
+  isRiichiSelectMode: boolean,
+): ActiveDiscardCandidate | null {
+  if (isRiichiSelectMode) {
+    const riichiButton = mapped.buttons.find((b) => b.type === 'riichi');
+    const candidate = riichiButton?.candidates?.find(
+      (c) => c.tileId === traceId,
+    );
+    return candidate ? { candidate, isRiichi: true } : null;
+  }
+
+  const candidate = mapped.playTile?.candidates?.find(
+    (c) => c.tileId === traceId,
+  );
+  return candidate ? { candidate, isRiichi: false } : null;
+}
+
 export function getAutoResponse(mapped: MappedInquiry): AutoResponse | null {
   const flatOptions = flattenInquiry(mapped);
   if (flatOptions.length === 1) {

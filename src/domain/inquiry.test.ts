@@ -5,6 +5,9 @@ import {
   mapInquiry,
   encodeInquiryResponse,
   getAutoResponse,
+  findActiveDiscardCandidate,
+  type MappedInquiry,
+  type DiscardCandidate,
 } from './inquiry.js';
 import { assert } from '../lib/assert.js';
 
@@ -409,5 +412,50 @@ describe('Inquiry Mapping & Response Encoding', () => {
         ],
       });
     }
+  });
+});
+
+describe('findActiveDiscardCandidate', () => {
+  const playCandidate: DiscardCandidate = { tileId: 100, tenpaiInfos: [] };
+  const riichiCandidate: DiscardCandidate = { tileId: 100, tenpaiInfos: [] };
+
+  const mapped: MappedInquiry = {
+    buttons: [
+      {
+        type: 'riichi',
+        label: '立直',
+        actionIndex: 1,
+        legalTiles: [100],
+        candidates: [riichiCandidate],
+      },
+    ],
+    playTile: {
+      actionIndex: 0,
+      legalTiles: [100],
+      candidates: [playCandidate],
+    },
+  };
+
+  it('treats the tile as a riichi discard in riichi-select mode', () => {
+    // Regression: the same tile appears in both the play-tile and riichi
+    // candidate lists. In riichi-select mode it must be counted as riichi
+    // (isRiichi=true) so the 番缚 check credits the guaranteed riichi yaku.
+    const result = findActiveDiscardCandidate(mapped, 100, true);
+    expect(result?.isRiichi).toBe(true);
+    expect(result?.candidate).toBe(riichiCandidate);
+  });
+
+  it('treats the tile as a normal discard when not in riichi mode', () => {
+    const result = findActiveDiscardCandidate(mapped, 100, false);
+    expect(result?.isRiichi).toBe(false);
+    expect(result?.candidate).toBe(playCandidate);
+  });
+
+  it('returns null for a tile that is not a riichi candidate in riichi mode', () => {
+    expect(findActiveDiscardCandidate(mapped, 999, true)).toBeNull();
+  });
+
+  it('returns null for an unknown tile in normal mode', () => {
+    expect(findActiveDiscardCandidate(mapped, 999, false)).toBeNull();
   });
 });

@@ -9,6 +9,7 @@ import {
   useIsCameraLocked,
   useHoveredTileTraceId,
   useSelectedTileTraceId,
+  useIsRiichiSelectMode,
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { rabiriichi } from '../net/client';
@@ -22,6 +23,7 @@ import {
   waitMeetsMinHan,
   type MappedTenpaiInfo,
 } from '../domain/model';
+import { findActiveDiscardCandidate } from '../domain/inquiry';
 import { GameInfoModal } from './GameInfoModal';
 import { FullscreenButton } from './FullscreenButton';
 
@@ -164,6 +166,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
   const hoveredTraceId = useHoveredTileTraceId();
   const selectedTraceId = useSelectedTileTraceId();
   const activeTraceId = hoveredTraceId ?? selectedTraceId;
+  const isRiichiSelectMode = useIsRiichiSelectMode();
 
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -177,24 +180,12 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
   const activeDiscardCandidate = useMemo(() => {
     if (activeTraceId == null || !currentInquiry) return null;
-
-    const playTileCandidates = currentInquiry.mapped.playTile?.candidates ?? [];
-    const playMatch = playTileCandidates.find(
-      (c) => c.tileId === activeTraceId,
+    return findActiveDiscardCandidate(
+      currentInquiry.mapped,
+      activeTraceId,
+      isRiichiSelectMode,
     );
-    if (playMatch) return { candidate: playMatch, isRiichi: false };
-
-    const riichiButton = currentInquiry.mapped.buttons.find(
-      (b) => b.type === 'riichi',
-    );
-    const riichiMatch = riichiButton?.candidates?.find(
-      (c) => c.tileId === activeTraceId,
-    );
-    // A riichi candidate guarantees +1 yaku (riichi) once declared.
-    if (riichiMatch) return { candidate: riichiMatch, isRiichi: true };
-
-    return null;
-  }, [activeTraceId, currentInquiry]);
+  }, [activeTraceId, currentInquiry, isRiichiSelectMode]);
 
   const minHan = room?.config?.minHan ?? 1;
 
