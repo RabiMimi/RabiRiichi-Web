@@ -217,13 +217,17 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     ? Number(state.config.pointThreshold.initialPoints)
     : 25000;
 
+  // beginGameEvent starts a new round of the CURRENT game (points accumulate
+  // across rounds) unless the previous game already ended, in which case this
+  // begins a brand-new game in the same room and points must reset.
+  const isNewGame = state.info === null || (state.gameEnded ?? false);
+
   const updatedPlayers = state.players.map((p): PlayerModel => {
-    // beginGameEvent fires at the start of every round, but points accumulate
-    // across the whole game. Preserve any existing points and only fall back to
-    // the configured initial value for the very first round (no prior state).
     const initialGameState: PlayerGameState = {
       jun: 0,
-      points: p.gameState?.points ?? initialPoints,
+      points: isNewGame
+        ? initialPoints
+        : (p.gameState?.points ?? initialPoints),
       riichiTileId: 0,
       furiten: {
         [FuritenType.FURITEN_TYPE_DISCARD]: false,
@@ -250,6 +254,10 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     info,
     players: updatedPlayers,
     ryuukyokuReason: null,
+    // Clear the previous game's end state once a new game begins.
+    gameEnded: false,
+    endGamePoints: null,
+    concludedPlayers: null,
   };
 }
 

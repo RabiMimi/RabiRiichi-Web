@@ -363,6 +363,36 @@ describe('Reducer - Events', () => {
     expect(nextState.players[1]?.gameState?.points).toBe(25000);
   });
 
+  it('resets points and clears end state when a new game begins after one ended', () => {
+    // Regression for RabiRiichi#86: starting a new game in the same room must
+    // NOT inherit the previous game's final scores.
+    const state = createInitializedRoom();
+    const p0 = state.players[0];
+    const p1 = state.players[1];
+    if (p0?.gameState) p0.gameState.points = 48000;
+    if (p1?.gameState) p1.gameState.points = 2000;
+    // Simulate the previous game having ended.
+    state.gameEnded = true;
+    state.endGamePoints = [48000, 2000];
+    state.concludedPlayers = state.players.map((p) => ({ ...p }));
+
+    // Simulate Return to Room action
+    state.info = null;
+    state.gameEnded = false;
+    state.endGamePoints = null;
+    state.concludedPlayers = null;
+
+    const nextState = applyEvent(state, {
+      beginGameEvent: { round: 0, dealer: 0, honba: 0 },
+    });
+
+    expect(nextState.players[0]?.gameState?.points).toBe(25000);
+    expect(nextState.players[1]?.gameState?.points).toBe(25000);
+    expect(nextState.gameEnded).toBe(false);
+    expect(nextState.endGamePoints).toBeNull();
+    expect(nextState.concludedPlayers).toBeNull();
+  });
+
   it('should handle dealHandEvent', () => {
     const state = createInitializedRoom();
     const eventMsg = {
