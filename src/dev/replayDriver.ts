@@ -1,5 +1,9 @@
 import { rabiriichi } from '../net/client';
-import { getEventsFromReplay, createInitialRoomFromReplay } from './replay';
+import {
+  getEventsFromReplay,
+  createInitialRoomFromReplay,
+  replayAccountId,
+} from './replay';
 import { UserStatus, AiType, type IEventMsg } from '../proto';
 import { Logger } from '../lib';
 
@@ -51,7 +55,9 @@ export async function startReplay(): Promise<void> {
 
   rabiriichi.dev.setConnectionStatus('connected');
   rabiriichi.dev.setSelf({
-    id: seat,
+    // Account id is deliberately distinct from the seat (see replayAccountId) so
+    // the seat<->account-id resolution (selfSeat) is genuinely exercised.
+    id: replayAccountId(seat),
     nickname: `Player ${seat}`,
     status: UserStatus.USER_STATUS_PLAYING,
     gameState: null,

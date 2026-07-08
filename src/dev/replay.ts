@@ -4,6 +4,19 @@ import type { RoomModel } from '../domain/model.js';
 import { createEmptyTileRegistry } from '../domain/tileRegistry.js';
 
 /**
+ * Offset that keeps replay account ids distinct from seat indices. Real account
+ * ids are never equal to seat indices, so the replay harness must mirror that to
+ * exercise seat-vs-account-id logic (e.g. the `selfSeat` bridge) instead of
+ * accidentally passing because id === seat.
+ */
+export const REPLAY_ACCOUNT_ID_OFFSET = 100;
+
+/** Maps a seat index to a synthetic replay account id (distinct from the seat). */
+export function replayAccountId(seat: number): number {
+  return seat + REPLAY_ACCOUNT_ID_OFFSET;
+}
+
+/**
  * Parses a JSON replay log and returns a list of events from the perspective of the given seat.
  */
 export function getEventsFromReplay(
@@ -32,7 +45,7 @@ export function createInitialRoomFromReplay(replayJson: unknown): RoomModel {
   const config = (logMsg as IGameLogMsg).config ?? null;
 
   const players = logMsg.playerLogs.map((_, i) => ({
-    id: i,
+    id: replayAccountId(i),
     nickname: `Player ${i}`,
     status: UserStatus.USER_STATUS_PLAYING,
     seat: i,
