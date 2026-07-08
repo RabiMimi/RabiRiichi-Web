@@ -13,6 +13,7 @@ import {
   GameStateMsg,
   GameConfigMsg,
   ScoreStorageMsg,
+  ScoringMsg,
   ServerRoomStateMsg,
   ServerPlayerStateMsg,
   PlayerStateMsg,
@@ -80,6 +81,7 @@ export {
   GameStateMsg,
   GameConfigMsg,
   ScoreStorageMsg,
+  ScoringMsg,
   ServerRoomStateMsg,
   ServerPlayerStateMsg,
   PlayerStateMsg,
@@ -181,3 +183,4 @@ export type IServerRoomStateResponse = ServerRoomStateResponse.$Properties;
 export type ICreateRoomRequest = CreateRoomRequest.$Properties;
 export type IGetInfoResponse = GetInfoResponse.$Properties;
 export type IAddAiRequest = AddAiRequest.$Properties;
+export type IScoringMsg = ScoringMsg.$Properties;

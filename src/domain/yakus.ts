@@ -1,3 +1,5 @@
+import { type IScoringMsg, ScoringType, ScoringOption } from '../proto';
+
 export interface YakuInfo {
   name: string;
   group: '1han' | '2han' | '3han' | '6han' | 'yakuman' | 'other';
@@ -76,4 +78,19 @@ export function buildAllowedYakusPayload(
   selected: ReadonlySet<string>,
 ): string[] {
   return Array.from(selected);
+}
+
+export function filterYakuListForDisplay(
+  rawYakuList: IScoringMsg[],
+  scoringOption: number | null | undefined,
+): IScoringMsg[] {
+  const isYakumanEnabled = scoringOption
+    ? !!(scoringOption & ScoringOption.SCORING_OPTION_YAKUMAN)
+    : true;
+  const hasYakuman = rawYakuList.some(
+    (y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN,
+  );
+  return isYakumanEnabled && hasYakuman
+    ? rawYakuList.filter((y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN)
+    : rawYakuList;
 }

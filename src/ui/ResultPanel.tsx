@@ -16,6 +16,7 @@ import { FinalResultPanel } from './FinalResultPanel';
 import { Logger } from '../lib/logger';
 import { proceedReplay } from '../dev/replayDriver';
 import { getPlayerDisplayName } from '../domain/model';
+import { filterYakuListForDisplay } from '../domain/yakus';
 
 const logger = new Logger('ResultPanel');
 
@@ -256,7 +257,11 @@ export function ResultPanel(): React.JSX.Element | null {
       }
     }
 
-    const yakuList = agari.scores?.items ?? [];
+    const rawYakuList = agari.scores?.items ?? [];
+    const yakuList = filterYakuListForDisplay(
+      rawYakuList,
+      room.config?.scoringOption,
+    );
 
     const handTiles = player.gameState?.hand.freeTiles ?? [];
     const calledMelds = player.gameState?.hand.called ?? [];
