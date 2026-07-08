@@ -1041,6 +1041,100 @@ describe('Reducer - Events', () => {
     expect(nextState.players[0]?.gameState).not.toBeNull();
   });
 
+  it('does not wipe the tile registry on stopGameEvent', () => {
+    // Regression for RabiRiichi#85.
+    let state = createInitializedRoom();
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 0,
+        discarded: {
+          traceId: 7,
+          tile: 21,
+          discardInfo: { from: 0, reason: 1, time: 5 },
+        },
+      },
+    });
+    expect(state.tileRegistry.size).toBeGreaterThan(0);
+
+    state = applyEvent(state, {
+      stopGameEvent: { endGamePoints: [28000, 22000] },
+    });
+
+    expect(state.gameEnded).toBe(true);
+    expect(getRegisteredTile(state.tileRegistry, 7)?.discardInfo?.time).toBe(5);
+  });
+
+  it('keeps the riichi tile sideways at game end after a reconnection', () => {
+    // RabiRiichi#85: after a reconnect the registry is rebuilt only from the
+    // snapshot, so wiping it on stopGameEvent leaves nothing to re-derive the
+    // sideways tile from.
+    let state = createInitializedRoom();
+
+    // Player 1 declares riichi (declaration tile 50, discarded at time 10).
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 1,
+        discarded: {
+          traceId: 50,
+          tile: 21,
+          discardInfo: { from: 1, reason: 1, time: 10 },
+        },
+        isRiichi: true,
+      },
+    });
+
+    // Reconnection: the server re-sends the full state as a snapshot. The riichi
+    // tile is carried in the snapshot hand with its discardInfo.time.
+    state = applyEvent(state, {
+      syncGameStateEvent: {
+        playerId: 0,
+        gameState: {
+          config: { playerCount: 2 },
+          info: { round: 0, dealer: 0, currentPlayer: 0 },
+          wall: { remaining: 60 },
+          players: [
+            { id: 0, points: 25000, hand: { freeTiles: [], discarded: [] } },
+            {
+              id: 1,
+              points: 24000,
+              hand: {
+                freeTiles: [],
+                discarded: [
+                  {
+                    traceId: 50,
+                    tile: 21,
+                    discardInfo: { from: 1, reason: 1, time: 10 },
+                  },
+                ],
+                riichiTile: {
+                  traceId: 50,
+                  tile: 21,
+                  discardInfo: { from: 1, reason: 1, time: 10 },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    // The game ends.
+    state = applyEvent(state, {
+      stopGameEvent: { endGamePoints: [26000, 24000] },
+    });
+
+    // The declaration tile is still rendered sideways.
+    const p1 = state.players.find((p) => p.seat === 1);
+    expect(p1?.gameState?.riichiTileId).toBe(50);
+    expect(
+      getRiichiSidewaysTraceId(
+        p1?.gameState?.hand.discarded ?? [],
+        p1?.gameState?.riichiTileId ?? 0,
+        state.tileRegistry,
+      ),
+    ).toBe(50);
+  });
+
   it('should handle syncGameStateEvent by hydrating', () => {
     const state = createInitializedRoom();
     const eventMsg = {

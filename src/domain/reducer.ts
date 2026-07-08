@@ -1032,7 +1032,9 @@ export function applyEvent(state: RoomModel, eventMsg: IEventMsg): RoomModel {
  * skipped here because `hydrateFromGameState` already rebuilds the registry.
  */
 function updateTileRegistry(state: RoomModel, eventMsg: IEventMsg): RoomModel {
-  if (eventMsg.beginGameEvent || eventMsg.stopGameEvent) {
+  // Not stopGameEvent: the result screen still needs the registry to render
+  // riichi tiles sideways (getRiichiSidewaysTraceId reads discardInfo.time).
+  if (eventMsg.beginGameEvent) {
     return { ...state, tileRegistry: createEmptyTileRegistry() };
   }
   if (eventMsg.syncGameStateEvent) {
