@@ -7,8 +7,10 @@ import {
   getWindKey,
   isTsumoTile,
   shouldRevealHand,
+  waitMeetsMinHan,
   type PlayerModel,
   type PlayerAgariState,
+  type MappedTenpaiInfo,
 } from './model';
 import { UserStatus, AiType } from '../proto';
 
@@ -166,5 +168,43 @@ describe('shouldRevealHand', () => {
   it('does not reveal when there is no agari', () => {
     expect(shouldRevealHand(null, false)).toBe(false);
     expect(shouldRevealHand(undefined, false)).toBe(false);
+  });
+});
+
+describe('waitMeetsMinHan', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 0,
+    yakuHan: 0,
+    fu: 30,
+    yakuman: 0,
+    points: 0,
+    ...over,
+  });
+
+  it('is unwinnable when yaku han is below minHan (dora does not count)', () => {
+    // 3 total han but all from dora (yakuHan 0) -> fails a 1-han requirement.
+    expect(waitMeetsMinHan(wait({ han: 3, yakuHan: 0 }), 1)).toBe(false);
+  });
+
+  it('is winnable when yaku han meets minHan', () => {
+    expect(waitMeetsMinHan(wait({ han: 1, yakuHan: 1 }), 1)).toBe(true);
+  });
+
+  it('always winnable with a yakuman regardless of yaku han', () => {
+    expect(waitMeetsMinHan(wait({ yakuman: 1, yakuHan: 0 }), 2)).toBe(true);
+  });
+
+  it('counts the riichi bonus yaku toward the requirement', () => {
+    const w = wait({ yakuHan: 0 });
+    expect(waitMeetsMinHan(w, 1, 0)).toBe(false);
+    expect(waitMeetsMinHan(w, 1, 1)).toBe(true);
+  });
+
+  it('riichi alone is not enough when minHan exceeds 1', () => {
+    // Only riichi (+1) against a 2-han requirement -> still 番缚.
+    expect(waitMeetsMinHan(wait({ yakuHan: 0 }), 2, 1)).toBe(false);
+    expect(waitMeetsMinHan(wait({ yakuHan: 1 }), 2, 1)).toBe(true);
   });
 });

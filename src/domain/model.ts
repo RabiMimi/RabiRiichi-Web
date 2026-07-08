@@ -33,6 +33,7 @@ export interface MappedTenpaiInfo {
   winningTile: number; // tile byte value
   remainingCount: number;
   han: number;
+  yakuHan: number; // han counting only yaku (excludes dora); for the 番缚 check
   fu: number;
   yakuman: number;
   points: number;
@@ -117,6 +118,20 @@ export function shouldRevealHand(
   const gainedPoints = agari.gainPoints > 0;
   const hasScores = agari.scores != null;
   return isTenpai || gainedPoints || hasScores;
+}
+
+/**
+ * Whether a wait can actually be won under the minimum-han (番缚) rule. A wait is
+ * winnable if it has a yakuman, or its guaranteed yaku han (excluding dora, plus
+ * any `bonusYaku` such as +1 for declaring riichi) meets `minHan`.
+ */
+export function waitMeetsMinHan(
+  info: MappedTenpaiInfo,
+  minHan: number,
+  bonusYaku = 0,
+): boolean {
+  if (info.yakuman > 0) return true;
+  return info.yakuHan + bonusYaku >= minHan;
 }
 
 export function getPlayerBySeat(

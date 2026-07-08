@@ -2689,6 +2689,20 @@
   font-weight: bold;
 }
 
+/* A wait that fails the minimum-han (番缚) requirement: cannot be won. */
+.awaited-tile-card.unwinnable {
+  opacity: 0.45;
+}
+
+.awaited-tile-card.unwinnable .awaited-tile-img {
+  filter: grayscale(1);
+}
+
+.yaku-required-text {
+  color: #ff5555;
+  font-weight: bold;
+}
+
 /* Player 3D Tenpai/Furiten Badge container */
 .player-tenpai-badge-container {
   position: relative;

@@ -41,6 +41,7 @@ import {
   StopGameEventMsg,
   SyncGameStateEventMsg,
   SinglePlayerInquiryMsg,
+  TenpaiInfoMsg,
   ServerVersionCheckMsg,
   ClientVersionCheckMsg,
   TwoWayHeartBeatMsg,
@@ -107,6 +108,7 @@ export {
   StopGameEventMsg,
   SyncGameStateEventMsg,
   SinglePlayerInquiryMsg,
+  TenpaiInfoMsg,
   ServerVersionCheckMsg,
   ClientVersionCheckMsg,
   TwoWayHeartBeatMsg,
@@ -167,6 +169,7 @@ export type IRyuukyokuEventMsg = RyuukyokuEventMsg.$Properties;
 export type IStopGameEventMsg = StopGameEventMsg.$Properties;
 export type ISyncGameStateEventMsg = SyncGameStateEventMsg.$Properties;
 export type ISinglePlayerInquiryMsg = SinglePlayerInquiryMsg.$Properties;
+export type ITenpaiInfoMsg = TenpaiInfoMsg.$Properties;
 export type IServerVersionCheckMsg = ServerVersionCheckMsg.$Properties;
 export type IClientVersionCheckMsg = ClientVersionCheckMsg.$Properties;
 export type ITwoWayHeartBeatMsg = TwoWayHeartBeatMsg.$Properties;

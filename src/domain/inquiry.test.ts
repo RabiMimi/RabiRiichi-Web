@@ -331,6 +331,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
                   {
                     winningTile: 18,
                     han: 1,
+                    yakuHan: 1,
                     fu: 30,
                     yakuman: 0,
                     points: 1000,
@@ -350,6 +351,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
                   {
                     winningTile: 19,
                     han: 2,
+                    yakuHan: 2,
                     fu: 40,
                     yakuman: 0,
                     points: 2000,
@@ -379,6 +381,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
           winningTile: 18,
           remainingCount: 3,
           han: 1,
+          yakuHan: 1,
           fu: 30,
           yakuman: 0,
           points: 1000,
@@ -398,6 +401,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
             winningTile: 19,
             remainingCount: 4,
             han: 2,
+            yakuHan: 2,
             fu: 40,
             yakuman: 0,
             points: 2000,

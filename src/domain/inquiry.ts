@@ -3,6 +3,7 @@ import type {
   ISinglePlayerInquiryMsg,
   IMenLikeMsg,
   IGameTileMsg,
+  ITenpaiInfoMsg,
 } from '../proto/index.js';
 import type { MappedTenpaiInfo } from './model.js';
 import { countRemainingWinningTile, type TileKindCounts } from './tenpai.js';
@@ -112,6 +113,41 @@ export interface MappedInquiry {
   };
 }
 
+/** Shape of a proto DiscardCandidateMsg (shared by play-tile and riichi). */
+interface ProtoDiscardCandidate {
+  tile?: IGameTileMsg | null;
+  tenpaiInfos?: ITenpaiInfoMsg[] | null;
+}
+
+/**
+ * Maps proto discard candidates (from either the play-tile or riichi action)
+ * into the client model, deriving each wait's remaining count.
+ */
+function mapDiscardCandidates(
+  candidates: ProtoDiscardCandidate[],
+  ctx: WaitCountContext,
+): DiscardCandidate[] {
+  return candidates.map((c) => ({
+    tileId: c.tile?.traceId ?? 0,
+    tenpaiInfos: (c.tenpaiInfos ?? []).map((ti) => {
+      const winningTile = ti.winningTile ?? 0;
+      return {
+        winningTile,
+        remainingCount: countRemainingWinningTile(
+          winningTile,
+          ctx.visibleKinds,
+          ctx.tileSetCounts,
+        ),
+        han: ti.han ?? 0,
+        yakuHan: ti.yakuHan ?? 0,
+        fu: ti.fu ?? 0,
+        yakuman: ti.yakuman ?? 0,
+        points: safeToNumber(ti.points),
+      };
+    }),
+  }));
+}
+
 /**
  * Maps a SinglePlayerInquiryMsg from the server into a clean structured
  * ActionOption tree for UI presentation.
@@ -123,7 +159,6 @@ export function mapInquiry(
   inq: ISinglePlayerInquiryMsg,
   waitContext: WaitCountContext = EMPTY_WAIT_CONTEXT,
 ): MappedInquiry {
-  const { visibleKinds, tileSetCounts } = waitContext;
   const buttons: ActionOption[] = [];
   let playTile:
     | {
@@ -208,24 +243,7 @@ export function mapInquiry(
         label: '立直',
         actionIndex: i,
         legalTiles: tiles.map((t: IGameTileMsg) => t.traceId ?? 0),
-        candidates: candidates.map((c) => ({
-          tileId: c.tile?.traceId ?? 0,
-          tenpaiInfos: (c.tenpaiInfos ?? []).map((ti) => {
-            const winningTile = ti.winningTile ?? 0;
-            return {
-              winningTile,
-              remainingCount: countRemainingWinningTile(
-                winningTile,
-                visibleKinds,
-                tileSetCounts,
-              ),
-              han: ti.han ?? 0,
-              fu: ti.fu ?? 0,
-              yakuman: ti.yakuman ?? 0,
-              points: safeToNumber(ti.points),
-            };
-          }),
-        })),
+        candidates: mapDiscardCandidates(candidates, waitContext),
       });
     } else if (action.playTileAction) {
       const tiles = action.playTileAction.tiles ?? [];
@@ -233,24 +251,7 @@ export function mapInquiry(
       playTile = {
         actionIndex: i,
         legalTiles: tiles.map((t: IGameTileMsg) => t.traceId ?? 0),
-        candidates: candidates.map((c) => ({
-          tileId: c.tile?.traceId ?? 0,
-          tenpaiInfos: (c.tenpaiInfos ?? []).map((ti) => {
-            const winningTile = ti.winningTile ?? 0;
-            return {
-              winningTile,
-              remainingCount: countRemainingWinningTile(
-                winningTile,
-                visibleKinds,
-                tileSetCounts,
-              ),
-              han: ti.han ?? 0,
-              fu: ti.fu ?? 0,
-              yakuman: ti.yakuman ?? 0,
-              points: safeToNumber(ti.points),
-            };
-          }),
-        })),
+        candidates: mapDiscardCandidates(candidates, waitContext),
       };
     } else if (action.nextRoundAction) {
       buttons.push({

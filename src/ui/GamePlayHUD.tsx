@@ -17,7 +17,11 @@ import { pollUntil } from '../lib';
 import { Tile } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
-import { getWindKey, type MappedTenpaiInfo } from '../domain/model';
+import {
+  getWindKey,
+  waitMeetsMinHan,
+  type MappedTenpaiInfo,
+} from '../domain/model';
 import { GameInfoModal } from './GameInfoModal';
 import { FullscreenButton } from './FullscreenButton';
 
@@ -85,11 +89,21 @@ function GameInfoPanel(): React.JSX.Element | null {
 interface TenpaiWaitPanelProps {
   awaitedTiles: MappedTenpaiInfo[];
   className?: string;
+  /** Minimum yaku han required to win (番缚), from game config. */
+  minHan?: number;
+  /**
+   * Extra guaranteed yaku han for these waits, on top of the server-reported
+   * yaku floor. Set to 1 for riichi-button candidates (declaring riichi adds a
+   * guaranteed yaku); 0 for normal discard previews.
+   */
+  bonusYaku?: number;
 }
 
 export function TenpaiWaitPanel({
   awaitedTiles,
   className = '',
+  minHan = 1,
+  bonusYaku = 0,
 }: TenpaiWaitPanelProps): React.JSX.Element | null {
   const { t } = useTranslation();
   if (awaitedTiles.length === 0) return null;
@@ -100,8 +114,15 @@ export function TenpaiWaitPanel({
         {awaitedTiles.map((ti, idx) => {
           const tileStr = Tile.fromByte(ti.winningTile).toString();
           const imgSrc = getTileTexturePath(tileStr);
+          const yakuBound = ti.yakuman > 0;
+          const meetsMinHan = waitMeetsMinHan(ti, minHan, bonusYaku);
           return (
-            <div key={idx} className="awaited-tile-card vertical">
+            <div
+              key={idx}
+              className={`awaited-tile-card vertical${
+                meetsMinHan ? '' : ' unwinnable'
+              }`}
+            >
               <img src={imgSrc} alt={tileStr} className="awaited-tile-img" />
               <div className="awaited-tile-info center">
                 <span className="remaining-count">
@@ -109,7 +130,11 @@ export function TenpaiWaitPanel({
                   {t('hud.tilesRemaining')}
                 </span>
                 <span className="han-points">
-                  {ti.yakuman > 0 ? (
+                  {!meetsMinHan ? (
+                    <span className="yaku-required-text">
+                      {t('hud.yakuRequired')}
+                    </span>
+                  ) : yakuBound ? (
                     <span className="yakuman-text">{t('hud.yakuman')}</span>
                   ) : (
                     <span>
@@ -154,20 +179,24 @@ export function GamePlayHUD(): React.JSX.Element | null {
     if (activeTraceId == null || !currentInquiry) return null;
 
     const playTileCandidates = currentInquiry.mapped.playTile?.candidates ?? [];
-    let match = playTileCandidates.find((c) => c.tileId === activeTraceId);
-    if (match) return match;
+    const playMatch = playTileCandidates.find(
+      (c) => c.tileId === activeTraceId,
+    );
+    if (playMatch) return { candidate: playMatch, isRiichi: false };
 
     const riichiButton = currentInquiry.mapped.buttons.find(
       (b) => b.type === 'riichi',
     );
-    if (riichiButton) {
-      const riichiCandidates = riichiButton.candidates ?? [];
-      match = riichiCandidates.find((c) => c.tileId === activeTraceId);
-      if (match) return match;
-    }
+    const riichiMatch = riichiButton?.candidates?.find(
+      (c) => c.tileId === activeTraceId,
+    );
+    // A riichi candidate guarantees +1 yaku (riichi) once declared.
+    if (riichiMatch) return { candidate: riichiMatch, isRiichi: true };
 
     return null;
   }, [activeTraceId, currentInquiry]);
+
+  const minHan = room?.config?.minHan ?? 1;
 
   const isFuriten = useMemo(() => {
     if (!selfPlayer?.gameState?.furiten) return false;
@@ -256,9 +285,11 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
       {/* Discard Hover Tenpai Panel */}
       {activeDiscardCandidate &&
-        activeDiscardCandidate.tenpaiInfos.length > 0 && (
+        activeDiscardCandidate.candidate.tenpaiInfos.length > 0 && (
           <TenpaiWaitPanel
-            awaitedTiles={activeDiscardCandidate.tenpaiInfos}
+            awaitedTiles={activeDiscardCandidate.candidate.tenpaiInfos}
+            minHan={minHan}
+            bonusYaku={activeDiscardCandidate.isRiichi ? 1 : 0}
             className={`hover-discard ${hasActionButtons ? 'with-buttons' : 'no-buttons'}`}
           />
         )}
@@ -277,6 +308,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
           {showPermanentWaits && permanentAwaitedTiles.length > 0 && (
             <TenpaiWaitPanel
               awaitedTiles={permanentAwaitedTiles}
+              minHan={minHan}
               className="badge-hover-panel"
             />
           )}
