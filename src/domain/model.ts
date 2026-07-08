@@ -81,6 +81,7 @@ export interface RoomModel {
   ryuukyokuReason?: string | null;
   gameEnded?: boolean;
   endGamePoints?: number[] | null;
+  concludedPlayers?: PlayerModel[] | null;
 }
 
 // Helper functions for seat math and player lookups

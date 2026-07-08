@@ -1039,6 +1039,7 @@ describe('Reducer - Events', () => {
     expect(nextState.endGamePoints).toEqual([28000, 22000]);
     expect(nextState.info).not.toBeNull();
     expect(nextState.players[0]?.gameState).not.toBeNull();
+    expect(nextState.concludedPlayers).toEqual(state.players);
   });
 
   it('does not wipe the tile registry on stopGameEvent', () => {
@@ -1562,11 +1563,13 @@ describe('Reducer - Room State', () => {
     expect(nextState?.players[0]?.gameState?.points).toBe(25000);
   });
 
-  it('should preserve gameEnded and endGamePoints flags when applying room state', () => {
+  it('should preserve gameEnded, endGamePoints and concludedPlayers flags when applying room state', () => {
+    const concludedPlayers = [...createInitializedRoom().players];
     const initialState: RoomModel = {
       ...createInitializedRoom(),
       gameEnded: true,
       endGamePoints: [30000, 20000],
+      concludedPlayers,
     };
 
     const roomState: IServerRoomStateMsg = {
@@ -1585,6 +1588,7 @@ describe('Reducer - Room State', () => {
 
     expect(nextState?.gameEnded).toBe(true);
     expect(nextState?.endGamePoints).toEqual([30000, 20000]);
+    expect(nextState?.concludedPlayers).toEqual(concludedPlayers);
   });
 });
 

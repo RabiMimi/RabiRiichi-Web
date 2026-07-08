@@ -850,6 +850,7 @@ function handleStopGame(state: RoomModel, ev: IStopGameEventMsg): RoomModel {
     endGamePoints: ev.endGamePoints
       ? ev.endGamePoints.map((num) => Number(num))
       : null,
+    concludedPlayers: state.players.map((p) => ({ ...p })),
   };
 }
 
@@ -1167,5 +1168,6 @@ export function applyRoomState(
     ryuukyokuReason: state?.ryuukyokuReason ?? null,
     gameEnded: state?.gameEnded ?? false,
     endGamePoints: state?.endGamePoints ?? null,
+    concludedPlayers: state?.concludedPlayers ?? null,
   };
 }

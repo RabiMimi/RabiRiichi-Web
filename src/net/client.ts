@@ -534,6 +534,7 @@ export class RabiRiichiClient {
         info: null,
         gameEnded: false,
         endGamePoints: null,
+        concludedPlayers: null,
       };
       this.onChange.emit();
     }

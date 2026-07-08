@@ -17,7 +17,8 @@ export function FinalResultPanel({
 
   const rankedPlayers = React.useMemo(() => {
     if (!room) return [];
-    const list = room.players.map((p) => {
+    const basePlayers = room.concludedPlayers ?? room.players;
+    const list = basePlayers.map((p) => {
       const seat = p.seat ?? 0;
       const points = room.endGamePoints?.[seat] ?? p.gameState?.points ?? 25000;
       return { player: p, points };
