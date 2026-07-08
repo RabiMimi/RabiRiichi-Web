@@ -4,6 +4,7 @@ import {
   createEmptyTileRegistry,
   extractEventTiles,
   extractSnapshotTiles,
+  getPlayerDiscardsFromRegistry,
   getRegisteredTile,
   mergeTilesIntoRegistry,
 } from './tileRegistry';
@@ -120,6 +121,38 @@ describe('extractEventTiles', () => {
 
   it('returns nothing for tile-less events', () => {
     expect(extractEventTiles({ nextPlayerEvent: { playerId: 1 } })).toEqual([]);
+  });
+});
+
+describe('getPlayerDiscardsFromRegistry', () => {
+  // discardInfo.from is a SEAT index (0..N-1), not an account id. The furiten
+  // predictor relies on looking up the self player's discards by seat; passing
+  // an account id here would return the wrong pile (RabiRiichi#? furiten bug).
+  const registry = mergeTilesIntoRegistry(createEmptyTileRegistry(), [
+    { traceId: 1, tile: 17, discardInfo: { from: 0, reason: 1, time: 1 } },
+    { traceId: 2, tile: 18, discardInfo: { from: 0, reason: 1, time: 2 } },
+    { traceId: 3, tile: 19, discardInfo: { from: 1, reason: 1, time: 3 } },
+    { traceId: 4, tile: 20 }, // still in hand / no discardInfo
+  ]);
+
+  it('returns only the discards for the given seat', () => {
+    expect(getPlayerDiscardsFromRegistry(registry, 0).sort()).toEqual([17, 18]);
+    expect(getPlayerDiscardsFromRegistry(registry, 1)).toEqual([19]);
+  });
+
+  it('returns nothing for a seat with no discards', () => {
+    expect(getPlayerDiscardsFromRegistry(registry, 2)).toEqual([]);
+  });
+
+  it('includes tiles claimed by others (discardInfo is preserved)', () => {
+    // A claimed tile keeps its original discardInfo.from, so it still counts
+    // as the original discarder's discard for furiten purposes.
+    const withClaimed = mergeTilesIntoRegistry(registry, [
+      { traceId: 5, tile: 21, discardInfo: { from: 0, reason: 1, time: 5 } },
+    ]);
+    expect(getPlayerDiscardsFromRegistry(withClaimed, 0).sort()).toEqual([
+      17, 18, 21,
+    ]);
   });
 });
 

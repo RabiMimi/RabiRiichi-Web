@@ -146,17 +146,22 @@ export function extractSnapshotTiles(snapshot: IGameStateMsg): IGameTileMsg[] {
 }
 
 /**
- * Collects all tile bytes discarded by a specific player ID from the tile registry.
- * This includes both visible discards and discards that were claimed by other players.
+ * Collects all tile bytes discarded by a specific seat from the tile registry.
+ * This includes both visible discards and discards that were claimed by other
+ * players (claimed tiles keep their original discardInfo, matching furiten
+ * rules).
+ *
+ * Note: discards are keyed by seat (`discardInfo.from`), which is the seat
+ * index (0..N-1), NOT the player's account id.
  */
 export function getPlayerDiscardsFromRegistry(
   registry: TileRegistry,
-  playerId: number,
+  seat: number,
 ): number[] {
   const discards: number[] = [];
   for (const tile of registry.values()) {
     if (
-      tile.discardInfo?.from === playerId &&
+      tile.discardInfo?.from === seat &&
       tile.tile !== null &&
       tile.tile !== undefined
     ) {

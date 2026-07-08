@@ -232,9 +232,14 @@ export function Tile3D({
       return false;
     }
 
+    // Discards in the tile registry are keyed by seat (discardInfo.from),
+    // not by account id. Use the player's seat to look up their own discards.
+    if (selfPlayer.seat === undefined) {
+      return false;
+    }
     const discards = getPlayerDiscardsFromRegistry(
       room.tileRegistry,
-      selfPlayer.id,
+      selfPlayer.seat,
     );
 
     const tileMsg = room.tileRegistry.get(traceId);
