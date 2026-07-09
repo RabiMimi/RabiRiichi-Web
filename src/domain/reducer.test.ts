@@ -1708,6 +1708,28 @@ describe('Reducer - Room State', () => {
     expect(nextState?.endGamePoints).toEqual([30000, 20000]);
     expect(nextState?.concludedPlayers).toEqual(concludedPlayers);
   });
+
+  it('should preserve gameId when applying room state', () => {
+    const initialState: RoomModel = {
+      ...createInitializedRoom(),
+      gameId: '20260709T120000-1001',
+    };
+
+    const roomState: IServerRoomStateMsg = {
+      id: 1234,
+      players: [
+        {
+          id: 0,
+          nickname: 'Alice',
+          status: UserStatus.USER_STATUS_READY,
+          seat: 0,
+        },
+      ],
+    };
+
+    const nextState = applyRoomState(initialState, roomState);
+    expect(nextState?.gameId).toBe('20260709T120000-1001');
+  });
 });
 
 describe('Reducer - Replay coverage (F3)', () => {

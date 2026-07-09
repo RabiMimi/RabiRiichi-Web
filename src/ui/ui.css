@@ -391,13 +391,6 @@
   margin-bottom: 24px;
 }
 
-/* While the Add AI dropdown is open, let it escape the (mobile) scroll clip so
-   it stays reachable for the lower seats. */
-.player-list.has-open-dropdown {
-  overflow: visible;
-  max-height: none;
-}
-
 @media (max-width: 480px) {
   .player-list {
     grid-template-columns: minmax(0, 1fr);
@@ -410,10 +403,6 @@
     overflow-y: auto;
     margin-bottom: 12px;
     padding-right: 4px;
-  }
-  .player-list.has-open-dropdown {
-    overflow: visible;
-    max-height: none;
   }
 }
 
@@ -2416,10 +2405,6 @@
     max-height: 140px;
     gap: 8px;
     margin-bottom: 12px;
-  }
-  .player-list.has-open-dropdown {
-    overflow: visible;
-    max-height: none;
   }
   .player-card {
     padding: 8px;

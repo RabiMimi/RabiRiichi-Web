@@ -1245,5 +1245,6 @@ export function applyRoomState(
     gameEnded: state?.gameEnded ?? false,
     endGamePoints: state?.endGamePoints ?? null,
     concludedPlayers: state?.concludedPlayers ?? null,
+    gameId: state?.gameId ?? null,
   };
 }
