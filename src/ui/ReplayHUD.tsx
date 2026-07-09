@@ -16,6 +16,9 @@ import {
   stopReplay,
   setReplayPerspective,
   seekToEvent,
+  getCurrentRoundIndex,
+  jumpToRound,
+  getRoundStartIndices,
 } from '../replay/replayDriver';
 import { GameInfoPanel } from './GamePlayHUD';
 import { FullscreenButton } from './FullscreenButton';
@@ -33,6 +36,24 @@ export function ReplayHUD(): React.JSX.Element | null {
 
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isForceCollapsed, setIsForceCollapsed] = useState(false);
+
+  const currentRoundIdx = getCurrentRoundIndex();
+  const roundStartIndices = getRoundStartIndices();
+  const hasPrevRound = currentRoundIdx > 0;
+  const hasNextRound = currentRoundIdx < roundStartIndices.length - 1;
+
+  const getRoundText = () => {
+    if (!room?.info) return '';
+    const { round, dealer, honba } = room.info;
+    const winds = ['east', 'south', 'west', 'north'];
+    const windKey = winds[round % 4] ?? 'east';
+    const windText = t(`hud.${windKey}`);
+    return t('hud.roundInfoTemplate', {
+      wind: windText,
+      round: dealer + 1,
+      honba: honba,
+    });
+  };
 
   if (!room || !currentUser) {
     return null;
@@ -273,6 +294,43 @@ export function ReplayHUD(): React.JSX.Element | null {
               >
                 <polygon points="4 4 14 12 4 20 4 4" />
                 <rect x="16" y="4" width="3" height="16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Round Navigation Jumper */}
+          <div className="round-navigation">
+            <button
+              type="button"
+              className="replay-btn prev-round-btn"
+              onClick={() => jumpToRound(currentRoundIdx - 1)}
+              disabled={!hasPrevRound}
+              title={t('replay.prevRound', 'Previous Round')}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="currentColor"
+              >
+                <polygon points="15.41 7.41 14 6 8 12 14 18 15.41 16.59 10.83 12 15.41 7.41" />
+              </svg>
+            </button>
+            <span className="round-navigation-label">{getRoundText()}</span>
+            <button
+              type="button"
+              className="replay-btn next-round-btn"
+              onClick={() => jumpToRound(currentRoundIdx + 1)}
+              disabled={!hasNextRound}
+              title={t('replay.nextRound', 'Next Round')}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="currentColor"
+              >
+                <polygon points="10 6 8.59 7.41 13.17 12 8.59 16.59 10 18 16 12 10 6" />
               </svg>
             </button>
           </div>

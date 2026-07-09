@@ -20,7 +20,11 @@ import { proceedReplay } from '../replay/replayDriver';
 import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
 
-function getLimitName(han: number, fu: number, scoringOption: number): string | null {
+function getLimitName(
+  han: number,
+  fu: number,
+  scoringOption: number,
+): string | null {
   if (han >= 11) return 'sanbaiman';
   if (han >= 8) return 'baiman';
   if (han >= 6) return 'haneman';
@@ -142,7 +146,8 @@ export function ResultPanel(): React.JSX.Element | null {
   const showUradoras = React.useMemo(() => {
     return (
       room?.players.some(
-        (p) => p.gameState?.agari?.scores != null && p.gameState.riichiTileId > 0,
+        (p) =>
+          p.gameState?.agari?.scores != null && p.gameState.riichiTileId > 0,
       ) ?? false
     );
   }, [room?.players]);
@@ -288,7 +293,9 @@ export function ResultPanel(): React.JSX.Element | null {
           if (result.yakuman > 1) {
             const key = `result.multipleYakuman_${result.yakuman}`;
             summaryText = t(key, {
-              defaultValue: t('result.multipleYakuman', { count: result.yakuman }),
+              defaultValue: t('result.multipleYakuman', {
+                count: result.yakuman,
+              }),
             });
           } else {
             summaryText = t('result.yakuman');
@@ -311,7 +318,10 @@ export function ResultPanel(): React.JSX.Element | null {
             fu: result.fu,
           });
         } else {
-          summaryText = t('result.fuAndHan', { fu: result.fu, han: result.han });
+          summaryText = t('result.fuAndHan', {
+            fu: result.fu,
+            han: result.han,
+          });
         }
       }
     }

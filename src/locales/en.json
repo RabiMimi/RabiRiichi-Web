@@ -118,6 +118,7 @@
     "honbaSuffix": " Honba",
     "riichiSuffix": " Riichi",
     "remainingTiles": "Wall Tiles: {{count}}",
+    "roundInfoTemplate": "{{wind}} {{round}} - {{honba}} Honba",
     "gameInfo": "Game Info",
     "tabLiveInfo": "Live Info",
     "tabConfig": "Config",

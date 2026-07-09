@@ -2932,6 +2932,26 @@
   transform: translateX(-50%) translateY(0); /* slide up */
 }
 
+/* Round Navigation Jumper */
+.round-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: rgba(30, 30, 30, 0.6);
+  border: 1px solid rgba(255, 122, 153, 0.3);
+  border-radius: 8px;
+  padding: 4px 16px;
+}
+
+.round-navigation-label {
+  color: #ff7a99;
+  font-weight: bold;
+  font-size: 0.95rem;
+  min-width: 140px;
+  text-align: center;
+  user-select: none;
+}
+
 /* Expand Tab handle */
 .toolbar-expand-tab {
   position: absolute;

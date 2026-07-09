@@ -119,6 +119,7 @@
     "honbaSuffix": "本场",
     "riichiSuffix": "立直棒",
     "remainingTiles": "牌山剩余: {{count}}",
+    "roundInfoTemplate": "{{wind}}{{round}}局{{honba}}本场",
     "gameInfo": "对局信息",
     "tabLiveInfo": "对局信息",
     "tabConfig": "对局配置",

@@ -19,6 +19,7 @@ let resolveEndBlock: (() => void) | null = null;
 let currentEvents: IEventMsg[] = [];
 let currentInitialRoom: RoomModel | null = null;
 let eventIdx = 0;
+let roundStartEventIndices: number[] = [];
 
 const replayState: { running: boolean; paused: boolean; singleStep: boolean } =
   {
@@ -69,6 +70,12 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
   currentEvents = getEventsFromReplay(replayData, perspectiveSeat);
   currentInitialRoom = createInitialRoomFromReplay(replayData);
   eventIdx = 0;
+  roundStartEventIndices = [];
+  for (let i = 0; i < currentEvents.length; i++) {
+    if (currentEvents[i]?.beginGameEvent) {
+      roundStartEventIndices.push(i);
+    }
+  }
 
   rabiriichi.replay.setIsReplay(true);
   rabiriichi.replay.setReplayPaused(false);
@@ -365,3 +372,39 @@ rabiriichi.onChange.subscribe(() => {
     stopReplay();
   }
 });
+
+export function getRoundStartIndices(): number[] {
+  return roundStartEventIndices;
+}
+
+export function getCurrentRoundIndex(): number {
+  const targetIdx = rabiriichi.replayProgress;
+  let currentRoundIdx = 0;
+  for (let i = 0; i < roundStartEventIndices.length; i++) {
+    const startIdx = roundStartEventIndices[i];
+    if (startIdx !== undefined && startIdx < targetIdx) {
+      currentRoundIdx = i;
+    } else {
+      break;
+    }
+  }
+  return currentRoundIdx;
+}
+
+export function jumpToRound(roundIdx: number): void {
+  if (roundIdx < 0 || roundIdx >= roundStartEventIndices.length) return;
+  const baseIdx = roundStartEventIndices[roundIdx];
+  if (baseIdx === undefined) return;
+  const targetEventIdx = baseIdx + 1;
+  seekToEvent(targetEventIdx);
+  pauseReplay();
+}
+
+export function pauseReplay(): void {
+  if (!replayState.running) return;
+  if (!replayState.paused) {
+    replayState.paused = true;
+    logger.info('Replay paused');
+    rabiriichi.replay.setReplayPaused(true);
+  }
+}
