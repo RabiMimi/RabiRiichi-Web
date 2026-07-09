@@ -26,6 +26,7 @@ import { ConnectionStatusIndicator } from './ConnectionStatus';
 import {
   getWindKey,
   waitMeetsMinHan,
+  displayHan,
   type MappedTenpaiInfo,
 } from '../domain/model';
 import { findActiveDiscardCandidate } from '../domain/inquiry';
@@ -147,7 +148,7 @@ export function TenpaiWaitPanel({
                     <span className="yakuman-text">{t('hud.yakuman')}</span>
                   ) : (
                     <span>
-                      {ti.han}
+                      {displayHan(ti, bonusYaku)}
                       {t('hud.han')}
                     </span>
                   )}

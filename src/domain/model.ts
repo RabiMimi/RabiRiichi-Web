@@ -162,6 +162,17 @@ export function waitMeetsMinHan(
 }
 
 /**
+ * Han value to display for a wait, folding in any guaranteed `bonusYaku`. Used
+ * for the riichi-select hover preview: those candidates are computed server-side
+ * before riichi is committed, so their `han` omits the riichi yaku and would show
+ * one han too few. Yakuman waits are counted separately and are not affected.
+ */
+export function displayHan(info: MappedTenpaiInfo, bonusYaku = 0): number {
+  if (info.yakuman > 0) return info.han;
+  return info.han + bonusYaku;
+}
+
+/**
  * Adds riichi's guaranteed +1 han to each wait. Used for the optimistic local
  * tenpai display when declaring riichi: the server computes those candidates
  * before riichi is committed, so their han/yakuHan omit the riichi yaku.

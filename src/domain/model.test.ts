@@ -8,6 +8,7 @@ import {
   isTsumoTile,
   shouldRevealHand,
   waitMeetsMinHan,
+  displayHan,
   applyRiichiBonusToWaits,
   deadWallRinshanCount,
   NUM_RINSHAN,
@@ -209,6 +210,32 @@ describe('waitMeetsMinHan', () => {
     // Only riichi (+1) against a 2-han requirement -> still 番缚.
     expect(waitMeetsMinHan(wait({ yakuHan: 0 }), 2, 1)).toBe(false);
     expect(waitMeetsMinHan(wait({ yakuHan: 1 }), 2, 1)).toBe(true);
+  });
+});
+
+describe('displayHan', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 0,
+    yakuHan: 0,
+    fu: 30,
+    yakuman: 0,
+    points: 0,
+    ...over,
+  });
+
+  it('returns the raw han when there is no bonus', () => {
+    expect(displayHan(wait({ han: 2 }))).toBe(2);
+  });
+
+  it('folds the riichi bonus into the displayed han', () => {
+    // Riichi-select preview: server-reported han omits the +1 for riichi.
+    expect(displayHan(wait({ han: 2 }), 1)).toBe(3);
+  });
+
+  it('ignores the bonus for yakuman waits', () => {
+    expect(displayHan(wait({ yakuman: 1, han: 0 }), 1)).toBe(0);
   });
 });
 
