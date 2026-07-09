@@ -802,7 +802,7 @@ describe('RabiRiichiClient', () => {
     const mockWS = await setupConnectedClient(client);
 
     // Reconnect: snapshot hydrated, no finished-round result in memory.
-    client.dev.setRoom(makeRoomWithAgari(false));
+    client.replay.setRoom(makeRoomWithAgari(false));
 
     sendNextRoundInquiry(mockWS, 11);
     await vi.advanceTimersByTimeAsync(0);
@@ -825,7 +825,7 @@ describe('RabiRiichiClient', () => {
     const mockWS = await setupConnectedClient(client);
 
     // Live play: the win was observed, so an agari result is in memory.
-    client.dev.setRoom(makeRoomWithAgari(true));
+    client.replay.setRoom(makeRoomWithAgari(true));
 
     sendNextRoundInquiry(mockWS, 11);
     await vi.advanceTimersByTimeAsync(0);
@@ -844,7 +844,7 @@ describe('RabiRiichiClient', () => {
     const mockWS = await setupConnectedClient(client);
 
     // Initial state: running game, no agari
-    client.dev.setRoom(makeRoomWithAgari(false));
+    client.replay.setRoom(makeRoomWithAgari(false));
 
     // Send mid-game ryuukyoku event
     sendServerMsg(mockWS, {

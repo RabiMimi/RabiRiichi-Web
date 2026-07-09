@@ -5,6 +5,7 @@ import { getTileTexturePath } from '../scene/assets';
 import { YAKUS } from '../domain/yakus';
 import { getWindKey, type RoomModel } from '../domain/model';
 import { UserStatus } from '../proto';
+import { CopyGameIdButton } from './CopyGameIdButton';
 import {
   RENCHAN_POLICIES,
   END_GAME_POLICIES,
@@ -143,21 +144,21 @@ export function GameInfoModal({
             className={`tab-btn ${activeTab === 'info' ? 'active' : ''}`}
             onClick={() => setActiveTab('info')}
           >
-            Live Info
+            {t('hud.tabLiveInfo')}
           </button>
           <button
             type="button"
             className={`tab-btn ${activeTab === 'config' ? 'active' : ''}`}
             onClick={() => setActiveTab('config')}
           >
-            Config
+            {t('hud.tabConfig')}
           </button>
           <button
             type="button"
             className={`tab-btn ${activeTab === 'yaku' ? 'active' : ''}`}
             onClick={() => setActiveTab('yaku')}
           >
-            Yaku & Yama
+            {t('hud.tabYakuYama')}
           </button>
         </div>
 
@@ -167,13 +168,31 @@ export function GameInfoModal({
             <div className="debug-tab-content">
               <div className="debug-grid">
                 <div className="debug-row">
-                  <span className="debug-label">Room ID:</span>
+                  <span className="debug-label">{t('hud.roomId')}:</span>
                   <span className="debug-val">{room.id}</span>
                 </div>
+                {room.gameId && (
+                  <div className="debug-row game-id-row">
+                    <span className="debug-label">{t('hud.gameId')}:</span>
+                    <span
+                      className="debug-val game-id-val"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      {room.gameId}
+                      <CopyGameIdButton gameId={room.gameId} />
+                    </span>
+                  </div>
+                )}
                 {info && (
                   <>
                     <div className="debug-row">
-                      <span className="debug-label">Round:</span>
+                      <span className="debug-label">
+                        {t('hud.roundLabel')}:
+                      </span>
                       <span className="debug-val">
                         {t(`hud.${getWindKey(info.round)}`)}
                         {t('hud.windSpace')}
@@ -198,7 +217,7 @@ export function GameInfoModal({
                       <span className="debug-val">{activePlayerJun}</span>
                     </div>
                     <div className="debug-row">
-                      <span className="debug-label">Wall:</span>
+                      <span className="debug-label">{t('hud.wallLabel')}:</span>
                       <span className="debug-val">
                         {t('hud.remainingTiles', {
                           count: info.remainingTiles,
@@ -206,14 +225,18 @@ export function GameInfoModal({
                       </span>
                     </div>
                     <div className="debug-row">
-                      <span className="debug-label">Honba:</span>
+                      <span className="debug-label">
+                        {t('hud.honbaLabel')}:
+                      </span>
                       <span className="debug-val">
                         {info.honba}
                         {t('hud.honbaSuffix')}
                       </span>
                     </div>
                     <div className="debug-row">
-                      <span className="debug-label">Riichi:</span>
+                      <span className="debug-label">
+                        {t('hud.riichiLabel')}:
+                      </span>
                       <span className="debug-val">
                         {info.riichiStick}
                         {t('hud.riichiSuffix')}
@@ -225,7 +248,7 @@ export function GameInfoModal({
 
               <div className="debug-section">
                 <h4 className="game-info-subtitle">
-                  Players ({players.length})
+                  {t('hud.playersCount', { count: players.length })}
                 </h4>
                 <div className="debug-players-list">
                   {players.map((p) => (
@@ -239,13 +262,14 @@ export function GameInfoModal({
                       </div>
                       <div className="player-state">
                         <span className="p-points">
-                          Points:{' '}
+                          {t('hud.pointsLabel')}:{' '}
                           {p.gameState?.points !== undefined
                             ? t('result.points', { count: p.gameState.points })
                             : 'N/A'}
                         </span>
                         <span className="p-status">
-                          Status: {t(getUserStatusTranslationKey(p.status))}
+                          {t('hud.statusLabel')}:{' '}
+                          {t(getUserStatusTranslationKey(p.status))}
                         </span>
                       </div>
                     </div>
@@ -272,13 +296,15 @@ export function GameInfoModal({
                   <span className="debug-val">{config.minHan}</span>
                 </div>
                 <div className="debug-row">
-                  <span className="debug-label">Seed:</span>
+                  <span className="debug-label">{t('lobby.seed')}:</span>
                   <span className="debug-val">
-                    {seedStr === '0' ? 'Auto' : seedStr}
+                    {seedStr === '0' ? t('lobby.auto') : seedStr}
                   </span>
                 </div>
                 <div className="debug-row">
-                  <span className="debug-label">Next Round Ack Timeout:</span>
+                  <span className="debug-label">
+                    {t('lobby.nextRoundAckTimeout')}:
+                  </span>
                   <span className="debug-val">
                     {config.nextRoundAckTimeout}s
                   </span>
@@ -294,7 +320,9 @@ export function GameInfoModal({
               </div>
 
               <div className="debug-section">
-                <h4 className="game-info-subtitle">Rules & Policies</h4>
+                <h4 className="game-info-subtitle">
+                  {t('hud.rulesAndPolicies')}
+                </h4>
                 <div className="debug-policies-grid">
                   <div className="policy-row">
                     <span className="p-label">

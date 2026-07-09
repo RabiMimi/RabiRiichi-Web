@@ -30,7 +30,10 @@
     "joinRoom": "Join Room",
     "joinRoomLabel": "Join Existing Room",
     "logout": "Logout",
+    "viewReplay": "View Replay",
     "roomSettings": "Room Settings",
+    "seed": "Seed",
+    "auto": "Auto",
     "gameSettings": "Game Settings",
     "pointsSettings": "Points Settings",
     "advancedSettings": "Advanced Settings",
@@ -116,6 +119,24 @@
     "riichiSuffix": " Riichi",
     "remainingTiles": "Wall Tiles: {{count}}",
     "gameInfo": "Game Info",
+    "tabLiveInfo": "Live Info",
+    "tabConfig": "Config",
+    "tabYakuYama": "Yaku & Yama",
+    "roomId": "Room ID",
+    "gameId": "Game ID",
+    "copyGameId": "Copy Game ID",
+    "copied": "Copied!",
+    "roundLabel": "Round",
+    "dealerLabel": "Dealer",
+    "activePlayerLabel": "Active Player",
+    "turnJunLabel": "Turn (Jun)",
+    "wallLabel": "Wall",
+    "honbaLabel": "Honba",
+    "riichiLabel": "Riichi",
+    "playersCount": "Players ({{count}})",
+    "pointsLabel": "Points",
+    "statusLabel": "Status",
+    "rulesAndPolicies": "Rules & Policies",
     "activePlayer": "Active Player",
     "turnJun": "Turn (Jun)",
     "exitGame": "Exit Game",
@@ -339,6 +360,56 @@
       "ryuukyokuPoints": "Ryuukyoku points must contain 2 values, each between 0 and 1,000,000.",
       "pointsRange": "Points limit must be between 0 and 1,000,000.",
       "generic": "Invalid game configuration."
+    },
+    "server": {
+      "InvalidArgument": {
+        "invalidGameId": "Invalid Game ID",
+        "invalidAiType": "Invalid or unsupported AI type",
+        "generic": "Invalid argument"
+      },
+      "NotFound": {
+        "replayNotFound": "Replay not found",
+        "playerNotFound": "Player not found in room",
+        "generic": "Not found"
+      },
+      "PermissionDenied": {
+        "onlyOwnerCanAddAi": "Only the room owner can add AI",
+        "onlyOwnerCanRemovePlayer": "Only the room owner can remove players",
+        "generic": "Permission denied"
+      },
+      "FailedPrecondition": {
+        "userNotInRoom": "User is not in a room",
+        "cannotRemovePlayer": "Cannot remove player from room",
+        "generic": "Failed precondition"
+      },
+      "ResourceExhausted": {
+        "serverBusy": "Server is busy",
+        "generic": "Resource exhausted"
+      },
+      "Internal": {
+        "cannotAddUser": "Cannot add user",
+        "cannotAddAi": "Cannot add AI to room",
+        "generic": "Internal server error"
+      },
+      "Unauthenticated": {
+        "userDoesNotExist": "User does not exist",
+        "generic": "Unauthenticated"
+      },
+      "generic": "Server error"
     }
+  },
+  "replay": {
+    "play": "Play",
+    "pause": "Pause",
+    "stepBackward": "Step Backward",
+    "stepForward": "Step Forward",
+    "perspective": "Perspective",
+    "modalTitle": "View Replay",
+    "gameIdLabel": "Game ID",
+    "gameIdPlaceholder": "Enter Game ID...",
+    "load": "Load",
+    "cancel": "Cancel",
+    "fetchError": "Failed to fetch replay: {{message}}",
+    "viewReplay": "View Replay"
   }
 }

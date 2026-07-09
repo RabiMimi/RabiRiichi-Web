@@ -85,6 +85,7 @@ export interface RoomModel {
   gameEnded?: boolean;
   endGamePoints?: number[] | null;
   concludedPlayers?: PlayerModel[] | null;
+  gameId?: string | null;
 }
 
 // Helper functions for seat math and player lookups

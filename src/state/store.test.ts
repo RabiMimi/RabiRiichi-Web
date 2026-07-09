@@ -83,6 +83,10 @@ describe('RabiRiichi Store', () => {
       hoveredTileTraceId: null,
       isCameraLocked: true,
       resultAnimation: null,
+      isReplay: false,
+      isReplayPaused: false,
+      replayProgress: 0,
+      replayTotal: 0,
     });
   });
 

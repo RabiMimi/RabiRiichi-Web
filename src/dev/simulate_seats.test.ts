@@ -1,6 +1,9 @@
 import { test } from 'vitest';
 import { rabiriichi } from '../net/client';
-import { getEventsFromReplay, createInitialRoomFromReplay } from './replay';
+import {
+  getEventsFromReplay,
+  createInitialRoomFromReplay,
+} from '../replay/replay';
 import { createEmptyTileRegistry } from '../domain/tileRegistry';
 import { getScreenPosition, getSeatRotation } from '../scene/seat';
 import { UserStatus, AiType } from '../proto';
@@ -11,8 +14,8 @@ const replayData = replayDataRaw as unknown as IGameLogMsg;
 
 test('simulate seats positioning output', () => {
   const seat = 1;
-  rabiriichi.dev.setConnectionStatus('connected');
-  rabiriichi.dev.setSelf({
+  rabiriichi.replay.setConnectionStatus('connected');
+  rabiriichi.replay.setSelf({
     id: seat,
     nickname: `Player ${seat}`,
     status: UserStatus.USER_STATUS_PLAYING,
@@ -21,13 +24,13 @@ test('simulate seats positioning output', () => {
   });
 
   const initialRoom = createInitialRoomFromReplay(replayData);
-  rabiriichi.dev.setRoom(initialRoom);
+  rabiriichi.replay.setRoom(initialRoom);
 
   const events = getEventsFromReplay(replayData, seat);
   console.log(`Loaded ${events.length} events.`);
 
   for (const eventMsg of events) {
-    rabiriichi.dev.handleGameEvent(eventMsg);
+    rabiriichi.replay.handleGameEvent(eventMsg);
   }
 
   const room = rabiriichi.room;
@@ -69,8 +72,8 @@ test('simulate seats positioning output', () => {
 });
 
 test('simulate 2-player positioning', () => {
-  rabiriichi.dev.setConnectionStatus('connected');
-  rabiriichi.dev.setSelf({
+  rabiriichi.replay.setConnectionStatus('connected');
+  rabiriichi.replay.setSelf({
     id: 123, // Me
     nickname: `Player 123`,
     status: UserStatus.USER_STATUS_PLAYING,
@@ -141,7 +144,7 @@ test('simulate 2-player positioning', () => {
     tileRegistry: createEmptyTileRegistry(),
   };
 
-  rabiriichi.dev.setRoom(room);
+  rabiriichi.replay.setRoom(room);
 
   const currentUser = rabiriichi.self;
   if (!currentUser) throw new Error('Self is null');

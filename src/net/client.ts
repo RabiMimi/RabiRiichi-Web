@@ -7,6 +7,7 @@ import {
   joinRoom,
   addAi,
   removeRoomPlayer,
+  getReplay,
 } from './requests';
 import { UserStatus, AiType } from '../proto';
 import type {
@@ -15,6 +16,7 @@ import type {
   IServerRoomStateMsg,
   ISinglePlayerInquiryMsg,
   IGameConfigMsg,
+  IGameLogMsg,
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
 import { MessagePump } from './messagePump';
@@ -98,6 +100,10 @@ export class RabiRiichiClient {
   public pendingActionOption: ActionOption | null = null;
   public animationSpeed = 1.0;
   public isWaitingForProceed = false;
+  public isReplay = false;
+  public isReplayPaused = false;
+  public replayProgress = 0;
+  public replayTotal = 0;
 
   public selectedTileTraceId: number | null = null;
   public hoveredTileTraceId: number | null = null;
@@ -129,8 +135,8 @@ export class RabiRiichiClient {
     this.onChange.emit();
   }
 
-  // Backdoor for development and testing helpers (e.g. replay driver, test mocks)
-  public readonly dev = {
+  // Backdoor for replay and testing helpers (e.g. replay driver, test mocks)
+  public readonly replay = {
     setConnectionStatus: (newStatus: ConnectionStatus) =>
       this.setConnectionStatus(newStatus),
     setSelf: (newSelf: PlayerModel | null) => {
@@ -144,6 +150,22 @@ export class RabiRiichiClient {
     handleGameEvent: (eventMsg: IEventMsg) => this.handleGameEvent(eventMsg),
     setWaitingForProceed: (waiting: boolean) => {
       this.isWaitingForProceed = waiting;
+      this.onChange.emit();
+    },
+    setIsReplay: (isReplay: boolean) => {
+      this.isReplay = isReplay;
+      this.onChange.emit();
+    },
+    setReplayPaused: (paused: boolean) => {
+      this.isReplayPaused = paused;
+      this.onChange.emit();
+    },
+    setReplayProgress: (progress: number) => {
+      this.replayProgress = progress;
+      this.onChange.emit();
+    },
+    setReplayTotal: (total: number) => {
+      this.replayTotal = total;
       this.onChange.emit();
     },
   };
@@ -171,12 +193,7 @@ export class RabiRiichiClient {
     this.room = null;
     this.currentInquiry = null;
     this.setConnectionStatus('connecting');
-    try {
-      await this.connectWS();
-    } catch (e) {
-      this.setConnectionStatus('disconnected');
-      throw e;
-    }
+    await this.connectWS();
   }
 
   private storeCredentials(): void {
@@ -208,25 +225,31 @@ export class RabiRiichiClient {
 
   private async connectWS(): Promise<void> {
     if (!this.wsurl) {
+      this.setConnectionStatus('disconnected');
       throw new NetworkError('No WS URL configured');
     }
     if (this._ws) {
       this._ws.close();
     }
     this.setConnectionStatus('connecting');
-    this._ws = this.accessToken
+    const ws = this.accessToken
       ? new RabiSocket(getUserWSUrl(this.wsurl), this.accessToken)
       : new RabiSocket(getPublicWSUrl(this.wsurl));
+    this._ws = ws;
 
     try {
-      await this._ws.handShake(this.updateUserInfo.bind(this));
-      this.messagePump.attach(this._ws);
+      await ws.handShake(this.updateUserInfo.bind(this));
+      if (this._ws !== ws) {
+        // This connection was superseded by a newer one while handshaking
+        ws.close();
+        return;
+      }
+      this.messagePump.attach(ws);
       this.storeCredentials();
-      this._ws.onPingUpdated.subscribe(this.pingListener);
-      this.ping = this._ws.ping;
+      ws.onPingUpdated.subscribe(this.pingListener);
+      this.ping = ws.ping;
       this.setConnectionStatus('connected');
 
-      const ws = this._ws;
       void ws.waitClose.then(() => {
         if (this._ws === ws) {
           this.setConnectionStatus('disconnected');
@@ -234,7 +257,10 @@ export class RabiRiichiClient {
         }
       });
     } catch (e) {
-      this.setConnectionStatus('disconnected');
+      if (this._ws === ws) {
+        this.setConnectionStatus('disconnected');
+        this._ws = null;
+      }
       throw e;
     }
   }
@@ -485,6 +511,12 @@ export class RabiRiichiClient {
     };
     this.accessToken = resp.accessToken ?? null;
     await this.connectWS();
+  }
+
+  public async fetchReplay(gameId: string): Promise<IGameLogMsg> {
+    this.logger.info(`Fetching replay: ${gameId}`);
+    const client = await this.getWSClient();
+    return getReplay(client, gameId);
   }
 
   public async refreshMyInfo(): Promise<void> {

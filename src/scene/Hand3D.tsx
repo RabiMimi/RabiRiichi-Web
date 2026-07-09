@@ -47,11 +47,14 @@ export function Hand3D({
         const isWinningTile =
           winningTileTraceId != null && tileMsg.traceId === winningTileTraceId;
 
+        const resolvedDisplayState =
+          displayState === 'face' && !tileStr ? 'opponent-hand' : displayState;
+
         return (
           <Tile3D
             key={getSafeKey(tileMsg.traceId, idx)}
             tile={tileStr}
-            displayState={displayState}
+            displayState={resolvedDisplayState}
             position={[x, 0, 0]}
             traceId={getSafeTraceId(tileMsg.traceId)}
             isWinningTile={isWinningTile}
@@ -72,11 +75,16 @@ export function Hand3D({
             winningTileTraceId != null &&
             pendingTile.traceId === winningTileTraceId;
 
+          const resolvedDisplayState =
+            displayState === 'face' && !tileStr
+              ? 'opponent-hand'
+              : displayState;
+
           return (
             <Tile3D
               key={getSafeKey(pendingTile.traceId, 'pending')}
               tile={tileStr}
-              displayState={displayState}
+              displayState={resolvedDisplayState}
               position={[x, 0, 0]}
               traceId={getSafeTraceId(pendingTile.traceId)}
               isWinningTile={isWinningTile}

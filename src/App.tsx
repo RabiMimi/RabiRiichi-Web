@@ -3,18 +3,21 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { useTranslation } from 'react-i18next';
 import { GameTable } from './scene/GameTable';
-import { initRabiRiichi } from './net/client';
+import { initRabiRiichi, rabiriichi } from './net/client';
 import { preloadAllTileImages } from './scene/assets';
 import {
   useConnectionStatus,
   useSelf,
   useRoom,
   useIsCameraLocked,
+  useIsReplay,
 } from './state/store';
 import { ConnectScreen } from './ui/ConnectScreen';
 import { LobbyScreen } from './ui/LobbyScreen';
 import { RoomScreen } from './ui/RoomScreen';
 import { GamePlayHUD } from './ui/GamePlayHUD';
+import { ReplayHUD } from './ui/ReplayHUD';
+import { startReplay, stopReplay } from './replay/replayDriver';
 import { ResultPanel } from './ui/ResultPanel';
 import { OrientationGuard } from './ui/OrientationGuard';
 import { FullscreenButton } from './ui/FullscreenButton';
@@ -58,6 +61,7 @@ function App(): React.JSX.Element {
   const currentUser = useSelf();
   const room = useRoom();
   const isCameraLocked = useIsCameraLocked();
+  const isReplay = useIsReplay();
   const controlsRef = useRef<OrbitControlsImpl>(null);
 
   useEffect(() => {
@@ -67,11 +71,11 @@ function App(): React.JSX.Element {
     let stopReplayFn: (() => void) | null = null;
 
     if (params.get('replay') === '1') {
-      import('./dev/replayDriver')
-        .then(({ startReplay, stopReplay }) => {
+      import('./dev/fixtures/full_game.json')
+        .then(({ default: replayData }) => {
           if (active) {
             stopReplayFn = stopReplay;
-            void startReplay();
+            void startReplay(replayData);
           }
         })
         .catch(console.error);
@@ -83,6 +87,8 @@ function App(): React.JSX.Element {
       active = false;
       if (stopReplayFn) {
         stopReplayFn();
+      } else {
+        rabiriichi.close();
       }
     };
   }, []);
@@ -90,6 +96,14 @@ function App(): React.JSX.Element {
   const renderUI = () => {
     if (connectionStatus !== 'connected' || !currentUser) {
       return <ConnectScreen />;
+    }
+    if (isReplay) {
+      return (
+        <>
+          <ReplayHUD />
+          <ResultPanel />
+        </>
+      );
     }
     if (!room) {
       return <LobbyScreen />;

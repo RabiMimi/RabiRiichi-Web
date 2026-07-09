@@ -27,7 +27,7 @@ import { findActiveDiscardCandidate } from '../domain/inquiry';
 import { GameInfoModal } from './GameInfoModal';
 import { FullscreenButton } from './FullscreenButton';
 
-function GameInfoPanel(): React.JSX.Element | null {
+export function GameInfoPanel(): React.JSX.Element | null {
   const { t } = useTranslation();
   const room = useRoom();
   if (!room?.info) return null;

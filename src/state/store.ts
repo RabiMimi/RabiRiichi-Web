@@ -23,6 +23,10 @@ export interface RabiRiichiState {
   hoveredTileTraceId: number | null;
   isCameraLocked: boolean;
   resultAnimation: 'agari' | 'ryuukyoku' | null;
+  isReplay: boolean;
+  isReplayPaused: boolean;
+  replayProgress: number;
+  replayTotal: number;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -48,7 +52,11 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.selectedTileTraceId !== rabiriichi.selectedTileTraceId ||
     lastSnapshot.hoveredTileTraceId !== rabiriichi.hoveredTileTraceId ||
     lastSnapshot.isCameraLocked !== rabiriichi.isCameraLocked ||
-    lastSnapshot.resultAnimation !== rabiriichi.resultAnimation
+    lastSnapshot.resultAnimation !== rabiriichi.resultAnimation ||
+    lastSnapshot.isReplay !== rabiriichi.isReplay ||
+    lastSnapshot.isReplayPaused !== rabiriichi.isReplayPaused ||
+    lastSnapshot.replayProgress !== rabiriichi.replayProgress ||
+    lastSnapshot.replayTotal !== rabiriichi.replayTotal
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -66,6 +74,10 @@ function getSnapshot(): RabiRiichiState {
       hoveredTileTraceId: rabiriichi.hoveredTileTraceId,
       isCameraLocked: rabiriichi.isCameraLocked,
       resultAnimation: rabiriichi.resultAnimation,
+      isReplay: rabiriichi.isReplay,
+      isReplayPaused: rabiriichi.isReplayPaused,
+      replayProgress: rabiriichi.replayProgress,
+      replayTotal: rabiriichi.replayTotal,
     };
   }
   return lastSnapshot;
@@ -79,6 +91,10 @@ const getIsRiichiSelectMode = () => rabiriichi.isRiichiSelectMode;
 const getPendingActionOption = () => rabiriichi.pendingActionOption;
 const getAnimationSpeed = () => rabiriichi.animationSpeed;
 const getIsWaitingForProceed = () => rabiriichi.isWaitingForProceed;
+const getIsReplay = () => rabiriichi.isReplay;
+const getIsReplayPaused = () => rabiriichi.isReplayPaused;
+const getReplayProgress = () => rabiriichi.replayProgress;
+const getReplayTotal = () => rabiriichi.replayTotal;
 
 export function useRabiRiichiState(): RabiRiichiState {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -94,6 +110,22 @@ export function useIsWaitingForProceed(): boolean {
     getIsWaitingForProceed,
     getIsWaitingForProceed,
   );
+}
+
+export function useIsReplay(): boolean {
+  return useSyncExternalStore(subscribe, getIsReplay, getIsReplay);
+}
+
+export function useIsReplayPaused(): boolean {
+  return useSyncExternalStore(subscribe, getIsReplayPaused, getIsReplayPaused);
+}
+
+export function useReplayProgress(): number {
+  return useSyncExternalStore(subscribe, getReplayProgress, getReplayProgress);
+}
+
+export function useReplayTotal(): number {
+  return useSyncExternalStore(subscribe, getReplayTotal, getReplayTotal);
 }
 
 export function useConnectionStatus(): ConnectionStatus {

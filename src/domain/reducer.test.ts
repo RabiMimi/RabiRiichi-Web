@@ -321,6 +321,7 @@ describe('Reducer - Events', () => {
         honba: 0,
         riichiStick: 0,
         remainingTiles: 122,
+        gameId: 'TEST-GAME-123',
       },
     };
 
@@ -333,6 +334,7 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.currentPlayer).toBe(0);
 
     expect(nextState.players[0]?.gameState?.points).toBe(25000);
+    expect(nextState.gameId).toBe('TEST-GAME-123');
   });
 
   it('preserves accumulated points across rounds on beginGameEvent', () => {

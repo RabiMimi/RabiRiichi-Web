@@ -13,7 +13,7 @@ import { Melds3D } from './Melds3D';
 import { NukiDora3D } from './NukiDora3D';
 import { getHandShiftX } from './assets';
 import type { TileRegistry } from '../domain/tileRegistry';
-import { useResultAnimation } from '../state/store';
+import { useResultAnimation, useIsReplay } from '../state/store';
 
 interface PlayerIndicator3DProps {
   player: PlayerModel;
@@ -77,12 +77,16 @@ export function PlayerArea3D({
 
   const resultAnimation = useResultAnimation();
 
+  const isReplay = useIsReplay();
   const isRevealed = useMemo(() => {
+    if (isReplay) {
+      return true;
+    }
     if (isLocal) {
       return Boolean(resultAnimation); // Lay local hand flat at round end
     }
     return shouldRevealHand(player.gameState?.agari, isLocal);
-  }, [isLocal, player.gameState?.agari, resultAnimation]);
+  }, [isLocal, player.gameState?.agari, resultAnimation, isReplay]);
 
   if (!player.gameState) {
     return <group />;

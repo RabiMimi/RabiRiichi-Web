@@ -4,6 +4,7 @@ import { useRoom } from '../state/store';
 import { getPlayerDisplayName } from '../domain/model';
 import { AiType } from '../proto';
 import { MIMI_PATH } from '../scene/assets';
+import { CopyGameIdButton } from './CopyGameIdButton';
 
 interface FinalResultPanelProps {
   onReturnToRoom: () => void;
@@ -39,9 +40,37 @@ export function FinalResultPanel({
           />
         </div>
         <div className="result-panel final-results-panel">
-          <h2 className="result-title">
-            {t('result.finalTitle', 'Game Concluded')}
-          </h2>
+          <div
+            className="result-header"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              alignItems: 'center',
+            }}
+          >
+            <h2 className="result-title" style={{ margin: 0 }}>
+              {t('result.finalTitle', 'Game Concluded')}
+            </h2>
+            {room.gameId && (
+              <div
+                className="final-game-id"
+                style={{
+                  color: '#aaa',
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span>
+                  {t('hud.gameId')}: {room.gameId}
+                </span>
+                <CopyGameIdButton gameId={room.gameId} />
+              </div>
+            )}
+          </div>
 
           <div className="result-content-scrollable">
             <div className="final-ranking-list">

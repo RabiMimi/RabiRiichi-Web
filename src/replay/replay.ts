@@ -25,7 +25,7 @@ export function getEventsFromReplay(
 ): IEventMsg[] {
   // Use protobufjs fromObject to get typed properties
   const logMsg = GameLogMsg.fromObject(replayJson as Record<string, unknown>);
-  const playerLog = logMsg.playerLogs[seat];
+  const playerLog = logMsg.playerLogs[seat] ?? logMsg.playerLogs[0];
   if (!playerLog) return [];
 
   const events: IEventMsg[] = [];
@@ -43,8 +43,9 @@ export function getEventsFromReplay(
 export function createInitialRoomFromReplay(replayJson: unknown): RoomModel {
   const logMsg = GameLogMsg.fromObject(replayJson as Record<string, unknown>);
   const config = (logMsg as IGameLogMsg).config ?? null;
+  const playerCount = config?.playerCount ?? 2;
 
-  const players = logMsg.playerLogs.map((_, i) => ({
+  const players = Array.from({ length: playerCount }, (_, i) => ({
     id: replayAccountId(i),
     nickname: `Player ${i}`,
     status: UserStatus.USER_STATUS_PLAYING,
@@ -59,5 +60,6 @@ export function createInitialRoomFromReplay(replayJson: unknown): RoomModel {
     info: null,
     players,
     tileRegistry: createEmptyTileRegistry(),
+    gameId: logMsg.gameId || null,
   };
 }

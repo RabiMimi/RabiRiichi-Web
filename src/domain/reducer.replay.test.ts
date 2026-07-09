@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getEventsFromReplay,
   createInitialRoomFromReplay,
-} from '../dev/replay.js';
+} from '../replay/replay.js';
 import { applyEvent } from './reducer.js';
 import type { IGameLogMsg } from '../proto/index.js';
 import replayDataRaw from '../dev/fixtures/full_game.json';

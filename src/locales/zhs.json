@@ -30,7 +30,10 @@
     "joinRoom": "加入房间",
     "joinRoomLabel": "加入已有房间",
     "logout": "登出",
+    "viewReplay": "观看回放",
     "roomSettings": "房间设置",
+    "seed": "随机数种子",
+    "auto": "自动",
     "gameSettings": "游戏设置",
     "pointsSettings": "点数设置",
     "advancedSettings": "高级设置",
@@ -117,6 +120,24 @@
     "riichiSuffix": "立直棒",
     "remainingTiles": "牌山剩余: {{count}}",
     "gameInfo": "对局信息",
+    "tabLiveInfo": "对局信息",
+    "tabConfig": "对局配置",
+    "tabYakuYama": "役种&牌山",
+    "roomId": "房间 ID",
+    "gameId": "对局 ID",
+    "copyGameId": "复制对局 ID",
+    "copied": "已复制！",
+    "roundLabel": "局数",
+    "dealerLabel": "庄家",
+    "activePlayerLabel": "当前玩家",
+    "turnJunLabel": "巡数",
+    "wallLabel": "牌山",
+    "honbaLabel": "本场",
+    "riichiLabel": "立直棒",
+    "playersCount": "玩家 ({{count}})",
+    "pointsLabel": "点数",
+    "statusLabel": "状态",
+    "rulesAndPolicies": "规则 & 策略",
     "activePlayer": "当前玩家",
     "turnJun": "当前巡数",
     "exitGame": "退出对局",
@@ -340,6 +361,56 @@
       "ryuukyokuPoints": "不听罚符必须包含 2 个数值，且每个数值必须在 0 到 1,000,000 之间。",
       "pointsRange": "点数上限必须在 0 到 1,000,000 之间。",
       "generic": "无效的游戏配置。"
+    },
+    "server": {
+      "InvalidArgument": {
+        "invalidGameId": "无效的对局 ID",
+        "invalidAiType": "无效或不支持的 AI 类型",
+        "generic": "参数错误"
+      },
+      "NotFound": {
+        "replayNotFound": "未找到回放",
+        "playerNotFound": "房间中未找到该玩家",
+        "generic": "未找到"
+      },
+      "PermissionDenied": {
+        "onlyOwnerCanAddAi": "只有房主可以添加 AI",
+        "onlyOwnerCanRemovePlayer": "只有房主可以移出玩家",
+        "generic": "权限拒绝"
+      },
+      "FailedPrecondition": {
+        "userNotInRoom": "玩家不在房间中",
+        "cannotRemovePlayer": "无法将玩家移出房间",
+        "generic": "前置条件失败"
+      },
+      "ResourceExhausted": {
+        "serverBusy": "服务器繁忙",
+        "generic": "资源耗尽"
+      },
+      "Internal": {
+        "cannotAddUser": "无法创建玩家",
+        "cannotAddAi": "无法向房间添加 AI",
+        "generic": "服务器内部错误"
+      },
+      "Unauthenticated": {
+        "userDoesNotExist": "用户不存在",
+        "generic": "未登录"
+      },
+      "generic": "服务器错误"
     }
+  },
+  "replay": {
+    "play": "播放",
+    "pause": "暂停",
+    "stepBackward": "单步后退",
+    "stepForward": "单步前进",
+    "perspective": "视角",
+    "modalTitle": "观看回放",
+    "gameIdLabel": "游戏 ID",
+    "gameIdPlaceholder": "输入游戏 ID...",
+    "load": "载入",
+    "cancel": "取消",
+    "fetchError": "获取回放失败: {{message}}",
+    "viewReplay": "观看回放"
   }
 }

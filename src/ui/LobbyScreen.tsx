@@ -5,6 +5,7 @@ import { useSelf } from '../state/store';
 import { formatError } from '../lib';
 import type { IGameConfigMsg } from '../proto';
 import { RoomConfigPanel } from './RoomConfigPanel';
+import { ReplayModal } from './ReplayModal';
 import './ui.css';
 
 export function LobbyScreen(): React.JSX.Element {
@@ -13,6 +14,7 @@ export function LobbyScreen(): React.JSX.Element {
   const [roomIdInput, setRoomIdInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isReplayModalOpen, setIsReplayModalOpen] = useState(false);
 
   const handleCreateRoom = async (config: IGameConfigMsg) => {
     setError(null);
@@ -183,6 +185,13 @@ export function LobbyScreen(): React.JSX.Element {
             </form>
 
             <button
+              onClick={() => setIsReplayModalOpen(true)}
+              className="ui-button secondary-button"
+              disabled={isLoading}
+            >
+              {t('lobby.viewReplay')}
+            </button>
+            <button
               onClick={handleLogout}
               className="ui-button danger-button"
               disabled={isLoading}
@@ -192,6 +201,9 @@ export function LobbyScreen(): React.JSX.Element {
           </div>
         </div>
       </div>
+      {isReplayModalOpen && (
+        <ReplayModal onClose={() => setIsReplayModalOpen(false)} />
+      )}
     </div>
   );
 }

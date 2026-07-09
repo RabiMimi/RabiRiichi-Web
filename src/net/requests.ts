@@ -7,6 +7,7 @@ import type {
   IGameConfigMsg,
   IGetInfoResponse,
   AiType,
+  IGameLogMsg,
 } from '../proto';
 import { RabiError, ServerError } from '../lib';
 import { type RabiSocket } from '../transport/rabiSocket';
@@ -136,5 +137,22 @@ export function removeRoomPlayer(
       },
     },
     (resp) => resp.roomState,
+  );
+}
+
+export function getReplay(
+  ws: RabiSocket,
+  gameId: string,
+): Promise<IGameLogMsg> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        getReplay: {
+          gameId,
+        },
+      },
+    },
+    (resp) => resp.replay,
   );
 }

@@ -189,6 +189,7 @@ export function hydrateFromGameState(
     info,
     players: updatedPlayers,
     tileRegistry,
+    gameId: snapshot.info?.gameId ?? state.gameId ?? null,
   };
 }
 
@@ -203,6 +204,7 @@ function sortGameTiles(tiles: IGameTileMsg[]): IGameTileMsg[] {
 }
 
 function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
+  const eventGameId = ev.gameId === '' ? null : ev.gameId;
   const info: GameInfo = {
     round: ev.round ?? 0,
     dealer: ev.dealer ?? 0,
@@ -261,6 +263,7 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     gameEnded: false,
     endGamePoints: null,
     concludedPlayers: null,
+    gameId: eventGameId ?? state.gameId ?? null,
   };
 }
 

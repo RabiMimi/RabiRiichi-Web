@@ -13,8 +13,9 @@ import { getTileTexturePath, MIMI_PATH } from '../scene/assets';
 import { type ActionOption } from '../domain/inquiry';
 import { ScoringType } from '../proto';
 import { FinalResultPanel } from './FinalResultPanel';
+
 import { Logger } from '../lib/logger';
-import { proceedReplay } from '../dev/replayDriver';
+import { proceedReplay } from '../replay/replayDriver';
 import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
 
