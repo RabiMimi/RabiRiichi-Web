@@ -480,7 +480,7 @@ export function Tile3D({
         if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
           setIsHovered(true);
-          if (traceId !== undefined) {
+          if (traceId !== undefined && displayState === 'hand') {
             rabiriichi.hoverTile(traceId);
           }
         }
@@ -489,7 +489,7 @@ export function Tile3D({
         if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
           setIsHovered(false);
-          if (traceId !== undefined) {
+          if (traceId !== undefined && displayState === 'hand') {
             rabiriichi.hoverTile(null);
           }
         }
