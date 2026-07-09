@@ -19,6 +19,24 @@ import { proceedReplay } from '../replay/replayDriver';
 import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
 
+function getLimitName(han: number, fu: number, scoringOption: number): string | null {
+  if (han >= 11) return 'sanbaiman';
+  if (han >= 8) return 'baiman';
+  if (han >= 6) return 'haneman';
+  if (han >= 5) return 'mangan';
+
+  const hasKiriage = (scoringOption & 1) !== 0;
+  let score = fu * (1 << (han + 2));
+  if (hasKiriage && score > 1900 && score < 2000) {
+    score = 2000;
+  }
+  if (score >= 2000) {
+    return 'mangan';
+  }
+
+  return null;
+}
+
 const logger = new Logger('ResultPanel');
 
 export function ResultPanel(): React.JSX.Element | null {
@@ -248,13 +266,46 @@ export function ResultPanel(): React.JSX.Element | null {
       summaryText = '';
     } else if (agari.scores?.result) {
       const result = agari.scores.result;
+      const isAotenjou =
+        room.config?.scoringOption != null &&
+        (room.config.scoringOption & 2) === 0;
+
       if (result.yakuman && result.yakuman > 0) {
-        summaryText =
-          result.yakuman > 1
-            ? t('result.multipleYakuman', { count: result.yakuman })
-            : t('result.yakuman');
+        if (result.kazoeYakuman && result.kazoeYakuman > 0 && !isAotenjou) {
+          const limitText = t('result.yakuman');
+          summaryText = t('result.limitPrefixedHanOnly', {
+            limit: limitText,
+            han: result.han,
+          });
+        } else {
+          if (result.yakuman > 1) {
+            const key = `result.multipleYakuman_${result.yakuman}`;
+            summaryText = t(key, {
+              defaultValue: t('result.multipleYakuman', { count: result.yakuman }),
+            });
+          } else {
+            summaryText = t('result.yakuman');
+          }
+        }
       } else {
-        summaryText = t('result.fuAndHan', { fu: result.fu, han: result.han });
+        const limit = isAotenjou
+          ? null
+          : getLimitName(
+              result.han ?? 0,
+              result.fu ?? 0,
+              room.config?.scoringOption ?? 0,
+            );
+
+        if (limit) {
+          const limitText = t(`result.${limit}`);
+          summaryText = t('result.limitPrefixed', {
+            limit: limitText,
+            han: result.han,
+            fu: result.fu,
+          });
+        } else {
+          summaryText = t('result.fuAndHan', { fu: result.fu, han: result.han });
+        }
       }
     }
 
