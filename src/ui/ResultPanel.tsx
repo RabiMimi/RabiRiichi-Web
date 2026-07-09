@@ -15,6 +15,7 @@ import { Tile } from '../domain/tile';
 import { getTileTexturePath, MIMI_PATH } from '../scene/assets';
 import { type ActionOption } from '../domain/inquiry';
 import { ScoringType } from '../proto';
+import type { IGameTileMsg } from '../proto';
 import { FinalResultPanel } from './FinalResultPanel';
 
 import { Logger } from '../lib/logger';
@@ -26,6 +27,40 @@ import {
 } from '../replay/replayDriver';
 import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
+
+/**
+ * Renders a fixed 5-wide indicator row for the settlement screen: each tile the
+ * server supplied shows its face; the remaining slots show tile backs. The
+ * server list is the single source of truth for which indicators apply, so no
+ * count or timing logic is re-derived here.
+ */
+function renderIndicatorTiles(
+  tiles: IGameTileMsg[],
+  keyPrefix: string,
+): React.JSX.Element[] {
+  return Array.from({ length: 5 }).map((_, idx) => {
+    const tileMsg = tiles[idx];
+    if (tileMsg) {
+      const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
+      return (
+        <img
+          key={`${keyPrefix}-${idx}`}
+          src={getTileTexturePath(tileStr)}
+          alt={tileStr}
+          className="result-tile-img"
+        />
+      );
+    }
+    return (
+      <img
+        key={`${keyPrefix}-${idx}`}
+        src={getTileTexturePath('back')}
+        alt="back"
+        className="result-tile-img"
+      />
+    );
+  });
+}
 
 function getLimitName(
   han: number,
@@ -191,10 +226,11 @@ export function ResultPanel(): React.JSX.Element | null {
   const renderDoraIndicators = () => {
     if (isDraw || !room?.info) return null;
 
-    const doraCount = room.info.revealedDoraCount;
-    const doras = room.info.doras;
-    const uradoras = room.info.uradoras;
-
+    // The server's ConcludeGameEvent already contains exactly the indicators
+    // that apply to this settlement (e.g. an open-kan's new dora is excluded for
+    // a ron winner). Render those lists verbatim — never re-derive which are
+    // revealed on the client.
+    const { doras, uradoras } = room.info;
     if (doras.length === 0) return null;
 
     return (
@@ -204,29 +240,7 @@ export function ResultPanel(): React.JSX.Element | null {
           <div className="dora-indicator-tiles-container">
             {/* Dora Indicators */}
             <div className="dora-indicator-tiles">
-              {Array.from({ length: 5 }).map((_, idx) => {
-                const tileMsg = doras[idx];
-                const isRevealed = idx < doraCount;
-                if (isRevealed && tileMsg) {
-                  const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-                  return (
-                    <img
-                      key={`dora-${idx}`}
-                      src={getTileTexturePath(tileStr)}
-                      alt={tileStr}
-                      className="result-tile-img"
-                    />
-                  );
-                }
-                return (
-                  <img
-                    key={`dora-${idx}`}
-                    src={getTileTexturePath('back')}
-                    alt="back"
-                    className="result-tile-img"
-                  />
-                );
-              })}
+              {renderIndicatorTiles(doras, 'dora')}
             </div>
 
             {/* Uradora Indicators */}
@@ -234,31 +248,7 @@ export function ResultPanel(): React.JSX.Element | null {
               <>
                 <span className="dora-separator">/</span>
                 <div className="dora-indicator-tiles">
-                  {Array.from({ length: 5 }).map((_, idx) => {
-                    const tileMsg = uradoras[idx];
-                    const isRevealed = idx < doraCount;
-                    if (isRevealed && tileMsg) {
-                      const tileStr = Tile.fromByte(
-                        tileMsg.tile ?? 0,
-                      ).toString();
-                      return (
-                        <img
-                          key={`uradora-${idx}`}
-                          src={getTileTexturePath(tileStr)}
-                          alt={tileStr}
-                          className="result-tile-img"
-                        />
-                      );
-                    }
-                    return (
-                      <img
-                        key={`uradora-${idx}`}
-                        src={getTileTexturePath('back')}
-                        alt="back"
-                        className="result-tile-img"
-                      />
-                    );
-                  })}
+                  {renderIndicatorTiles(uradoras, 'uradora')}
                 </div>
               </>
             )}

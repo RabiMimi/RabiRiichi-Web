@@ -89,7 +89,6 @@ export function hydrateFromGameState(
         currentPlayer: snapshot.info.currentPlayer ?? 0,
         doras: snapshot.wall?.doras ?? [],
         uradoras: [],
-        revealedDoraCount: snapshot.wall?.doras?.length ?? 1,
       }
     : null;
 
@@ -214,7 +213,6 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     currentPlayer: ev.dealer ?? 0,
     doras: [],
     uradoras: [],
-    revealedDoraCount: 0,
   };
   if (ev.initialWall) {
     info.initialWall = ev.initialWall;
@@ -660,7 +658,6 @@ function handleRevealDora(
     info: {
       ...state.info,
       doras: [...state.info.doras, ev.dora],
-      revealedDoraCount: state.info.revealedDoraCount + 1,
     },
   };
 }

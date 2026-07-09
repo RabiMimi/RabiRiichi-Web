@@ -145,7 +145,6 @@ export function collectVisibleTileKindsFromRoom(room: RoomModel): number[] {
   const hands: VisibleHand[] = room.players
     .map((p) => p.gameState?.hand)
     .filter((hand): hand is NonNullable<typeof hand> => hand != null);
-  const info = room.info;
-  const revealedDoras = info ? info.doras.slice(0, info.revealedDoraCount) : [];
+  const revealedDoras = room.info?.doras ?? [];
   return collectVisibleTileKinds(hands, revealedDoras);
 }

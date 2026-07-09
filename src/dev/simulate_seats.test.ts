@@ -95,7 +95,6 @@ test('simulate 2-player positioning', () => {
       currentPlayer: 0,
       doras: [],
       uradoras: [],
-      revealedDoraCount: 1,
     },
     players: [
       {

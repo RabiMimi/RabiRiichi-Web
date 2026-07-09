@@ -90,9 +90,13 @@ export interface GameInfo {
   riichiStick: number;
   remainingTiles: number;
   currentPlayer: number;
+  // Revealed dora / ura-dora indicators. During play only front doras arrive
+  // (one per RevealDoraEvent); at settlement ConcludeGameEvent replaces both
+  // lists with the authoritative set the server decided to show (already
+  // accounting for kan-dora timing). The arrays' own length is the count of
+  // revealed indicators — the client never maintains a separate counter.
   doras: IGameTileMsg[];
   uradoras: IGameTileMsg[];
-  revealedDoraCount: number;
   initialWall?: IGameTileMsg[];
 }
 

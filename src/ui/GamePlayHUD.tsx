@@ -38,8 +38,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
   const room = useRoom();
   if (!room?.info) return null;
 
-  const { doras, revealedDoraCount, round, dealer, honba, riichiStick } =
-    room.info;
+  const { doras, round, dealer, honba, riichiStick } = room.info;
 
   const windKey = getWindKey(round);
   const windTranslated = t(`hud.${windKey}`);
@@ -72,9 +71,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
             const doraTileMsg = idx < doras.length ? doras[idx] : null;
             let imgSrc = '/assets/hand_tiles/back.jpg';
 
-            const isRevealed = idx < revealedDoraCount;
-
-            if (isRevealed && doraTileMsg?.tile) {
+            if (doraTileMsg?.tile) {
               const tileStr = Tile.fromByte(doraTileMsg.tile).toString();
               imgSrc = getTileTexturePath(tileStr);
             }
@@ -83,7 +80,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
               <img
                 key={idx}
                 src={imgSrc}
-                alt={isRevealed && doraTileMsg ? 'Dora' : 'Locked'}
+                alt={doraTileMsg ? 'Dora' : 'Locked'}
                 className="dora-tile-img"
               />
             );

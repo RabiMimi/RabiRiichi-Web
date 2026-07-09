@@ -309,9 +309,7 @@ export function useDoraIndicators(): Tile[] {
   const room = useRoom();
   return useMemo(() => {
     if (!room?.info?.doras) return [];
-    const count = room.info.revealedDoraCount;
     return room.info.doras
-      .slice(0, count)
       .map((doraMsg) => {
         if (doraMsg.tile === null || doraMsg.tile === undefined) return null;
         try {

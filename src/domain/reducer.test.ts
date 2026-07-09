@@ -221,7 +221,6 @@ function createInitializedRoom(): RoomModel {
       currentPlayer: 0,
       doras: [],
       uradoras: [],
-      revealedDoraCount: 0,
     },
     players: [
       {
@@ -1075,6 +1074,35 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.doras[0]?.traceId).toBe(90);
     expect(nextState.info?.uradoras).toHaveLength(1);
     expect(nextState.info?.uradoras[0]?.traceId).toBe(91);
+  });
+
+  it('concludeGame replaces an open-kan dora reveal with the server list', () => {
+    // Regression: open kan reveals a new dora mid-hand, then that player rons.
+    // The kan dora must not count for the ron winner, so the server's
+    // ConcludeGameEvent omits it. The client must display exactly the server
+    // list, not the (larger) set accumulated by RevealDoraEvent during play.
+    let state = createInitializedRoom();
+
+    // Initial dora, then the extra open-kan dora revealed during play.
+    state = applyEvent(state, {
+      revealDoraEvent: { playerId: -1, dora: { traceId: 1, tile: 17 } },
+    });
+    state = applyEvent(state, {
+      revealDoraEvent: { playerId: -1, dora: { traceId: 2, tile: 18 } },
+    });
+    expect(state.info?.doras).toHaveLength(2);
+
+    // Server concludes the hand showing only the pre-kan dora for the winner.
+    state = applyEvent(state, {
+      concludeGameEvent: {
+        doras: [{ traceId: 1, tile: 17 }],
+        uradoras: [],
+      },
+    });
+
+    expect(state.info?.doras).toHaveLength(1);
+    expect(state.info?.doras[0]?.traceId).toBe(1);
+    expect(state.info?.uradoras).toHaveLength(0);
   });
 
   it('should handle nextGameEvent by advancing round metadata only', () => {

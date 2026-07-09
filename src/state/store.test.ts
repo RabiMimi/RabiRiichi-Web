@@ -230,7 +230,7 @@ describe('RabiRiichi Store', () => {
     expect(snapshot2.pendingActionOption).toBe(mockOption);
   });
 
-  it('should only return revealed Dora indicators in useDoraIndicators hook logic', () => {
+  it('maps every dora in room.info.doras in useDoraIndicators hook logic', () => {
     const mockRoom: RoomModel = {
       id: 1234,
       config: null,
@@ -241,13 +241,13 @@ describe('RabiRiichi Store', () => {
         riichiStick: 0,
         remainingTiles: 70,
         currentPlayer: 0,
+        // The doras list only ever contains already-revealed indicators, so the
+        // hook renders it verbatim (no slice-by-count).
         doras: [
-          { traceId: 1, tile: 17 }, // 1m -> target 2m
-          { traceId: 2, tile: 18 }, // 2m -> target 3m
-          { traceId: 3, tile: 19 }, // 3m -> target 4m
+          { traceId: 1, tile: 17 }, // 1m
+          { traceId: 2, tile: 18 }, // 2m
         ],
         uradoras: [],
-        revealedDoraCount: 1,
       },
       players: [],
       tileRegistry: createEmptyTileRegistry(),
@@ -255,14 +255,14 @@ describe('RabiRiichi Store', () => {
     rabiriichi.room = mockRoom;
 
     // Simulate hook selector logic
-    const count = mockRoom.info!.revealedDoraCount;
-    const indicators = mockRoom.info!.doras.slice(0, count).map((doraMsg) => {
+    const indicators = mockRoom.info!.doras.map((doraMsg) => {
       if (doraMsg.tile === null || doraMsg.tile === undefined) return null;
       return Tile.fromByte(doraMsg.tile);
     });
 
-    expect(indicators).toHaveLength(1);
+    expect(indicators).toHaveLength(2);
     expect(indicators[0]?.toString()).toBe('1m');
+    expect(indicators[1]?.toString()).toBe('2m');
   });
 
   it('should return new room reference when real event is processed by reducer', async () => {
