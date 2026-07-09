@@ -19,6 +19,7 @@ import type {
   IGameLogMsg,
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
+import { applyRiichiBonusToWaits } from '../domain/model';
 import { MessagePump } from './messagePump';
 import {
   DEFAULT_ACTION_TIMEOUT,
@@ -624,7 +625,13 @@ export class RabiRiichiClient {
       const candidates = action.candidates ?? [];
       const match = candidates.find((c) => c.tileId === choice);
       if (match && match.tenpaiInfos.length > 0) {
-        this.setLocalPlayerAwaitedTiles(match.tenpaiInfos);
+        // Riichi candidates are computed server-side before riichi is committed,
+        // so add its guaranteed +1 han for the optimistic pre-sync display.
+        const waits =
+          action.type === 'riichi'
+            ? applyRiichiBonusToWaits(match.tenpaiInfos)
+            : match.tenpaiInfos;
+        this.setLocalPlayerAwaitedTiles(waits);
       } else {
         this.setLocalPlayerAwaitedTiles(undefined);
       }

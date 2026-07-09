@@ -8,6 +8,7 @@ import {
   isTsumoTile,
   shouldRevealHand,
   waitMeetsMinHan,
+  applyRiichiBonusToWaits,
   type PlayerModel,
   type PlayerAgariState,
   type MappedTenpaiInfo,
@@ -206,5 +207,40 @@ describe('waitMeetsMinHan', () => {
     // Only riichi (+1) against a 2-han requirement -> still 番缚.
     expect(waitMeetsMinHan(wait({ yakuHan: 0 }), 2, 1)).toBe(false);
     expect(waitMeetsMinHan(wait({ yakuHan: 1 }), 2, 1)).toBe(true);
+  });
+});
+
+describe('applyRiichiBonusToWaits', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 0,
+    yakuHan: 0,
+    fu: 30,
+    yakuman: 0,
+    points: 0,
+    ...over,
+  });
+
+  it('adds +1 to han and yakuHan for each non-yakuman wait', () => {
+    const result = applyRiichiBonusToWaits([
+      wait({ han: 0, yakuHan: 0 }),
+      wait({ han: 2, yakuHan: 1 }),
+    ]);
+    expect(result[0]).toMatchObject({ han: 1, yakuHan: 1 });
+    expect(result[1]).toMatchObject({ han: 3, yakuHan: 2 });
+  });
+
+  it('leaves yakuman waits unchanged', () => {
+    const [result] = applyRiichiBonusToWaits([
+      wait({ yakuman: 1, yakuHan: 0 }),
+    ]);
+    expect(result).toMatchObject({ yakuman: 1, han: 0, yakuHan: 0 });
+  });
+
+  it('does not mutate the input', () => {
+    const input = wait({ han: 1, yakuHan: 1 });
+    applyRiichiBonusToWaits([input]);
+    expect(input).toMatchObject({ han: 1, yakuHan: 1 });
   });
 });

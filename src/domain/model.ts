@@ -137,6 +137,23 @@ export function waitMeetsMinHan(
   return info.yakuHan + bonusYaku >= minHan;
 }
 
+/**
+ * Adds riichi's guaranteed +1 han to each wait. Used for the optimistic local
+ * tenpai display when declaring riichi: the server computes those candidates
+ * before riichi is committed, so their han/yakuHan omit the riichi yaku.
+ * A later sync (computed with riichi committed) already includes it and will
+ * overwrite these, so this only fixes the pre-sync display.
+ */
+export function applyRiichiBonusToWaits(
+  waits: MappedTenpaiInfo[],
+): MappedTenpaiInfo[] {
+  return waits.map((info) =>
+    info.yakuman > 0
+      ? info
+      : { ...info, han: info.han + 1, yakuHan: info.yakuHan + 1 },
+  );
+}
+
 export function getPlayerBySeat(
   players: PlayerModel[],
   seat: number,
