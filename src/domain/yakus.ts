@@ -85,7 +85,7 @@ export function filterYakuListForDisplay(
   scoringOption: number | null | undefined,
 ): IScoringMsg[] {
   const isYakumanEnabled = scoringOption
-    ? !!(scoringOption & ScoringOption.SCORING_OPTION_YAKUMAN)
+    ? Boolean(scoringOption & ScoringOption.SCORING_OPTION_YAKUMAN)
     : true;
   const hasYakuman = rawYakuList.some(
     (y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN,

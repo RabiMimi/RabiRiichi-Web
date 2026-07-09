@@ -134,7 +134,9 @@ export function TenpaiWaitPanel({
                 <span className="han-points">
                   {!meetsMinHan ? (
                     <span className="yaku-required-text">
-                      {t('hud.yakuRequired')}
+                      {ti.yakuman === 0 && ti.yakuHan + bonusYaku === 0
+                        ? t('hud.yakuRequired')
+                        : t('hud.minHanRequired')}
                     </span>
                   ) : yakuBound ? (
                     <span className="yakuman-text">{t('hud.yakuman')}</span>
