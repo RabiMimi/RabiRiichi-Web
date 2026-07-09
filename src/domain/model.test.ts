@@ -5,9 +5,18 @@ import {
   getPlayerBySeat,
   getPlayerById,
   getWindKey,
+  isTsumoTile,
+  shouldRevealHand,
+  waitMeetsMinHan,
+  displayHan,
+  applyRiichiBonusToWaits,
+  deadWallRinshanCount,
+  NUM_RINSHAN,
   type PlayerModel,
+  type PlayerAgariState,
+  type MappedTenpaiInfo,
 } from './model';
-import { UserStatus } from '../proto';
+import { UserStatus, AiType, DoraOption } from '../proto';
 
 describe('Model seat math', () => {
   describe('2-player config', () => {
@@ -58,6 +67,7 @@ describe('Model lookups', () => {
       status: UserStatus.USER_STATUS_PLAYING,
       seat: 0,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     },
     {
       id: 102,
@@ -65,6 +75,7 @@ describe('Model lookups', () => {
       status: UserStatus.USER_STATUS_PLAYING,
       seat: 1,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     },
   ];
 
@@ -89,5 +100,200 @@ describe('Model wind conversion', () => {
     expect(getWindKey(3)).toBe('north');
     expect(getWindKey(4)).toBe('east');
     expect(getWindKey(7)).toBe('north');
+  });
+});
+
+describe('isTsumoTile', () => {
+  it('treats a tile without discardInfo as tsumo', () => {
+    expect(isTsumoTile({ traceId: 1, tile: 17 })).toBe(true);
+  });
+
+  it('treats a tile with discardInfo as ron (not tsumo)', () => {
+    expect(
+      isTsumoTile({
+        traceId: 1,
+        tile: 17,
+        discardInfo: { from: 2, reason: 1, time: 5 },
+      }),
+    ).toBe(false);
+  });
+
+  it('treats a discardInfo with from=0 as ron (from is never null on the wire)', () => {
+    expect(
+      isTsumoTile({
+        traceId: 1,
+        tile: 17,
+        discardInfo: { from: 0, reason: 1, time: 5 },
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false for null/undefined', () => {
+    expect(isTsumoTile(null)).toBe(false);
+    expect(isTsumoTile(undefined)).toBe(false);
+  });
+});
+
+describe('shouldRevealHand', () => {
+  const winner: PlayerAgariState = { gainPoints: 8000, losePoints: 0 };
+  const tenpai: PlayerAgariState = {
+    gainPoints: 1000,
+    losePoints: 0,
+    isTenpai: true,
+  };
+  const scoredOnly: PlayerAgariState = {
+    gainPoints: 0,
+    losePoints: 0,
+    scores: { items: [] },
+  };
+  // A noten player at a draw: reducer still assigns an (empty) agari state.
+  const noten: PlayerAgariState = { gainPoints: 0, losePoints: 3000 };
+
+  it('reveals a winner', () => {
+    expect(shouldRevealHand(winner, false)).toBe(true);
+  });
+
+  it('reveals a tenpai player at a draw', () => {
+    expect(shouldRevealHand(tenpai, false)).toBe(true);
+  });
+
+  it('reveals a player with a score breakdown', () => {
+    expect(shouldRevealHand(scoredOnly, false)).toBe(true);
+  });
+
+  it('does NOT reveal a noten player at a draw (even though agari is set)', () => {
+    expect(shouldRevealHand(noten, false)).toBe(false);
+  });
+
+  it('never reveals the local player', () => {
+    expect(shouldRevealHand(winner, true)).toBe(false);
+  });
+
+  it('does not reveal when there is no agari', () => {
+    expect(shouldRevealHand(null, false)).toBe(false);
+    expect(shouldRevealHand(undefined, false)).toBe(false);
+  });
+});
+
+describe('waitMeetsMinHan', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 0,
+    yakuHan: 0,
+    fu: 30,
+    yakuman: 0,
+    points: 0,
+    ...over,
+  });
+
+  it('is unwinnable when yaku han is below minHan (dora does not count)', () => {
+    // 3 total han but all from dora (yakuHan 0) -> fails a 1-han requirement.
+    expect(waitMeetsMinHan(wait({ han: 3, yakuHan: 0 }), 1)).toBe(false);
+  });
+
+  it('is winnable when yaku han meets minHan', () => {
+    expect(waitMeetsMinHan(wait({ han: 1, yakuHan: 1 }), 1)).toBe(true);
+  });
+
+  it('always winnable with a yakuman regardless of yaku han', () => {
+    expect(waitMeetsMinHan(wait({ yakuman: 1, yakuHan: 0 }), 2)).toBe(true);
+  });
+
+  it('counts the riichi bonus yaku toward the requirement', () => {
+    const w = wait({ yakuHan: 0 });
+    expect(waitMeetsMinHan(w, 1, 0)).toBe(false);
+    expect(waitMeetsMinHan(w, 1, 1)).toBe(true);
+  });
+
+  it('riichi alone is not enough when minHan exceeds 1', () => {
+    // Only riichi (+1) against a 2-han requirement -> still 番缚.
+    expect(waitMeetsMinHan(wait({ yakuHan: 0 }), 2, 1)).toBe(false);
+    expect(waitMeetsMinHan(wait({ yakuHan: 1 }), 2, 1)).toBe(true);
+  });
+});
+
+describe('displayHan', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 0,
+    yakuHan: 0,
+    fu: 30,
+    yakuman: 0,
+    points: 0,
+    ...over,
+  });
+
+  it('returns the raw han when there is no bonus', () => {
+    expect(displayHan(wait({ han: 2 }))).toBe(2);
+  });
+
+  it('folds the riichi bonus into the displayed han', () => {
+    // Riichi-select preview: server-reported han omits the +1 for riichi.
+    expect(displayHan(wait({ han: 2 }), 1)).toBe(3);
+  });
+
+  it('ignores the bonus for yakuman waits', () => {
+    expect(displayHan(wait({ yakuman: 1, han: 0 }), 1)).toBe(0);
+  });
+});
+
+describe('applyRiichiBonusToWaits', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 0,
+    yakuHan: 0,
+    fu: 30,
+    yakuman: 0,
+    points: 0,
+    ...over,
+  });
+
+  it('adds +1 to han and yakuHan for each non-yakuman wait', () => {
+    const result = applyRiichiBonusToWaits([
+      wait({ han: 0, yakuHan: 0 }),
+      wait({ han: 2, yakuHan: 1 }),
+    ]);
+    expect(result[0]).toMatchObject({ han: 1, yakuHan: 1 });
+    expect(result[1]).toMatchObject({ han: 3, yakuHan: 2 });
+  });
+
+  it('leaves yakuman waits unchanged', () => {
+    const [result] = applyRiichiBonusToWaits([
+      wait({ yakuman: 1, yakuHan: 0 }),
+    ]);
+    expect(result).toMatchObject({ yakuman: 1, han: 0, yakuHan: 0 });
+  });
+
+  it('does not mutate the input', () => {
+    const input = wait({ han: 1, yakuHan: 1 });
+    applyRiichiBonusToWaits([input]);
+    expect(input).toMatchObject({ han: 1, yakuHan: 1 });
+  });
+});
+
+describe('deadWallRinshanCount', () => {
+  const NORTH = 68; // suit Z(4) << 4 | 4
+  const NUKI = DoraOption.DORA_OPTION_NUKI_DORA;
+
+  it('returns base count for null config', () => {
+    expect(deadWallRinshanCount(null)).toBe(NUM_RINSHAN);
+  });
+
+  it('returns base count when nukidora is disabled', () => {
+    expect(
+      deadWallRinshanCount({ doraOption: 0, initialTiles: [NORTH, NORTH] }),
+    ).toBe(NUM_RINSHAN);
+  });
+
+  it('adds one rinshan per North when nukidora is enabled', () => {
+    expect(
+      deadWallRinshanCount({
+        doraOption: NUKI,
+        initialTiles: [NORTH, NORTH, NORTH, NORTH, 17, 18],
+      }),
+    ).toBe(NUM_RINSHAN + 4);
   });
 });

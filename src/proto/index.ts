@@ -13,6 +13,7 @@ import {
   GameStateMsg,
   GameConfigMsg,
   ScoreStorageMsg,
+  ScoringMsg,
   ServerRoomStateMsg,
   ServerPlayerStateMsg,
   PlayerStateMsg,
@@ -25,6 +26,9 @@ import {
   DiscardTileEventMsg,
   ClaimTileEventMsg,
   KanEventMsg,
+  NukiDoraEventMsg,
+  AddNukiDoraEventMsg,
+  NukiDoraActionMsg,
   NextPlayerEventMsg,
   IncreaseJunEventMsg,
   RevealDoraEventMsg,
@@ -41,6 +45,7 @@ import {
   StopGameEventMsg,
   SyncGameStateEventMsg,
   SinglePlayerInquiryMsg,
+  TenpaiInfoMsg,
   ServerVersionCheckMsg,
   ClientVersionCheckMsg,
   TwoWayHeartBeatMsg,
@@ -50,6 +55,18 @@ import {
   ServerResponse,
   ServerRoomStateResponse,
   CreateRoomRequest,
+  GetInfoResponse,
+  KuikaePolicy,
+  RiichiPolicy,
+  RyuukyokuTrigger,
+  RenchanPolicy,
+  EndGamePolicy,
+  DoraOption,
+  AgariOption,
+  ScoringOption,
+  PointsDeductionPolicy,
+  AiType,
+  AddAiRequest,
 } from '../generated/protos.js';
 
 export {
@@ -67,6 +84,7 @@ export {
   GameStateMsg,
   GameConfigMsg,
   ScoreStorageMsg,
+  ScoringMsg,
   ServerRoomStateMsg,
   ServerPlayerStateMsg,
   PlayerStateMsg,
@@ -79,6 +97,9 @@ export {
   DiscardTileEventMsg,
   ClaimTileEventMsg,
   KanEventMsg,
+  NukiDoraEventMsg,
+  AddNukiDoraEventMsg,
+  NukiDoraActionMsg,
   NextPlayerEventMsg,
   IncreaseJunEventMsg,
   RevealDoraEventMsg,
@@ -95,6 +116,7 @@ export {
   StopGameEventMsg,
   SyncGameStateEventMsg,
   SinglePlayerInquiryMsg,
+  TenpaiInfoMsg,
   ServerVersionCheckMsg,
   ClientVersionCheckMsg,
   TwoWayHeartBeatMsg,
@@ -104,6 +126,18 @@ export {
   ServerResponse,
   ServerRoomStateResponse,
   CreateRoomRequest,
+  GetInfoResponse,
+  KuikaePolicy,
+  RiichiPolicy,
+  RyuukyokuTrigger,
+  RenchanPolicy,
+  EndGamePolicy,
+  DoraOption,
+  AgariOption,
+  ScoringOption,
+  PointsDeductionPolicy,
+  AiType,
+  AddAiRequest,
 };
 
 export type IEventMsg = EventMsg.$Properties;
@@ -127,6 +161,9 @@ export type IDrawTileEventMsg = DrawTileEventMsg.$Properties;
 export type IDiscardTileEventMsg = DiscardTileEventMsg.$Properties;
 export type IClaimTileEventMsg = ClaimTileEventMsg.$Properties;
 export type IKanEventMsg = KanEventMsg.$Properties;
+export type INukiDoraEventMsg = NukiDoraEventMsg.$Properties;
+export type IAddNukiDoraEventMsg = AddNukiDoraEventMsg.$Properties;
+export type INukiDoraActionMsg = NukiDoraActionMsg.$Properties;
 export type INextPlayerEventMsg = NextPlayerEventMsg.$Properties;
 export type IIncreaseJunEventMsg = IncreaseJunEventMsg.$Properties;
 export type IRevealDoraEventMsg = RevealDoraEventMsg.$Properties;
@@ -143,6 +180,7 @@ export type IRyuukyokuEventMsg = RyuukyokuEventMsg.$Properties;
 export type IStopGameEventMsg = StopGameEventMsg.$Properties;
 export type ISyncGameStateEventMsg = SyncGameStateEventMsg.$Properties;
 export type ISinglePlayerInquiryMsg = SinglePlayerInquiryMsg.$Properties;
+export type ITenpaiInfoMsg = TenpaiInfoMsg.$Properties;
 export type IServerVersionCheckMsg = ServerVersionCheckMsg.$Properties;
 export type IClientVersionCheckMsg = ClientVersionCheckMsg.$Properties;
 export type ITwoWayHeartBeatMsg = TwoWayHeartBeatMsg.$Properties;
@@ -152,3 +190,6 @@ export type ICreateUserResponse = CreateUserResponse.$Properties;
 export type IServerResponse = ServerResponse.$Properties;
 export type IServerRoomStateResponse = ServerRoomStateResponse.$Properties;
 export type ICreateRoomRequest = CreateRoomRequest.$Properties;
+export type IGetInfoResponse = GetInfoResponse.$Properties;
+export type IAddAiRequest = AddAiRequest.$Properties;
+export type IScoringMsg = ScoringMsg.$Properties;

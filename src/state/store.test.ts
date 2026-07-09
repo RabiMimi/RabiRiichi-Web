@@ -3,10 +3,13 @@ import { rabiriichi } from '../net/client';
 import type { ActiveInquiry } from '../net/client';
 import { testStore } from './store';
 import type { RoomModel, PlayerModel } from '../domain/model';
+import { createEmptyTileRegistry } from '../domain/tileRegistry';
 import { MockWebSocket } from '../transport/mockWebSocket';
-import { ClientMessageDto, ServerMessageDto } from '../proto';
+import { ClientMessageDto, ServerMessageDto, AiType } from '../proto';
 import type { IServerMessageDto } from '../proto';
 import type { ActionOption } from '../domain/inquiry';
+import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
+import { Tile } from '../domain/tile';
 
 describe('RabiRiichi Store', () => {
   beforeEach(() => {
@@ -32,6 +35,31 @@ describe('RabiRiichi Store', () => {
     );
   }
 
+  function respondToGetInfo(ws: MockWebSocket) {
+    const getInfoCall = ws.send.mock.calls.find((call) => {
+      const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+      return Boolean(msg.clientRequest?.getInfo);
+    });
+    if (getInfoCall) {
+      const getInfoMsg = ClientMessageDto.decode(
+        new Uint8Array(getInfoCall[0]),
+      );
+      sendServerMsg(ws, {
+        id: 0,
+        respondTo: getInfoMsg.id,
+        serverResp: {
+          getInfo: {
+            game: 'rabiriichi',
+            gameVersion: CLIENT_VERSION,
+            server: 'dotnet',
+            serverVersion: MIN_SERVER_VERSION,
+            minClientVersion: CLIENT_VERSION,
+          },
+        },
+      });
+    }
+  }
+
   it('should initialize with default state', () => {
     expect(testStore.getConnectionStatus()).toBe('disconnected');
     expect(testStore.getSelf()).toBeNull();
@@ -51,6 +79,19 @@ describe('RabiRiichi Store', () => {
       actionTimeout: 0,
       timerActiveSeat: null,
       ping: -1,
+      selectedTileTraceId: null,
+      hoveredTileTraceId: null,
+      isCameraLocked: true,
+      resultAnimation: null,
+      isReplay: false,
+      isReplayPaused: false,
+      replayProgress: 0,
+      replayTotal: 0,
+      hasInMemoryResult: false,
+      autoAgari: false,
+      noCalls: false,
+      autoDiscard: false,
+      autoNuki: false,
     });
   });
 
@@ -116,6 +157,7 @@ describe('RabiRiichi Store', () => {
       config: null,
       info: null,
       players: [],
+      tileRegistry: createEmptyTileRegistry(),
     };
     rabiriichi.room = mockRoom;
     rabiriichi.onChange.emit();
@@ -133,6 +175,7 @@ describe('RabiRiichi Store', () => {
       nickname: 'Test',
       status: 1,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     };
     rabiriichi.self = mockSelf;
     rabiriichi.onChange.emit();
@@ -187,6 +230,41 @@ describe('RabiRiichi Store', () => {
     expect(snapshot2.pendingActionOption).toBe(mockOption);
   });
 
+  it('maps every dora in room.info.doras in useDoraIndicators hook logic', () => {
+    const mockRoom: RoomModel = {
+      id: 1234,
+      config: null,
+      info: {
+        round: 0,
+        dealer: 0,
+        honba: 0,
+        riichiStick: 0,
+        remainingTiles: 70,
+        currentPlayer: 0,
+        // The doras list only ever contains already-revealed indicators, so the
+        // hook renders it verbatim (no slice-by-count).
+        doras: [
+          { traceId: 1, tile: 17 }, // 1m
+          { traceId: 2, tile: 18 }, // 2m
+        ],
+        uradoras: [],
+      },
+      players: [],
+      tileRegistry: createEmptyTileRegistry(),
+    };
+    rabiriichi.room = mockRoom;
+
+    // Simulate hook selector logic
+    const indicators = mockRoom.info!.doras.map((doraMsg) => {
+      if (doraMsg.tile === null || doraMsg.tile === undefined) return null;
+      return Tile.fromByte(doraMsg.tile);
+    });
+
+    expect(indicators).toHaveLength(2);
+    expect(indicators[0]?.toString()).toBe('1m');
+    expect(indicators[1]?.toString()).toBe('2m');
+  });
+
   it('should return new room reference when real event is processed by reducer', async () => {
     vi.stubGlobal('WebSocket', MockWebSocket);
     MockWebSocket.instances = [];
@@ -218,11 +296,13 @@ describe('RabiRiichi Store', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS);
     await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
 

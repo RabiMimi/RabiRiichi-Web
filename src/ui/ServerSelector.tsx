@@ -1,19 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DEFAULT_SERVERS } from '../config/servers';
-
-interface SavedServer {
-  id: string;
-  name: string;
-  url: string;
-}
+import {
+  STORAGE_KEY_SERVER_SETTINGS,
+  type ServerSettings,
+  type SavedServer,
+} from '../domain/constants';
 
 interface ServerSelectorProps {
   onTargetUrlChange: (url: string) => void;
   isConnecting: boolean;
 }
 
-const STORAGE_KEY = 'rabiriichi_custom_servers';
+const loadServerSettings = (): ServerSettings => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
+    return stored ? (JSON.parse(stored) as ServerSettings) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveServerSettings = (settings: ServerSettings) => {
+  localStorage.setItem(STORAGE_KEY_SERVER_SETTINGS, JSON.stringify(settings));
+};
 
 export function ServerSelector({
   onTargetUrlChange,
@@ -22,17 +32,14 @@ export function ServerSelector({
   const { t } = useTranslation();
 
   const [customServers, setCustomServers] = useState<SavedServer[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? (JSON.parse(stored) as SavedServer[]) : [];
-    } catch {
-      return [];
-    }
+    return loadServerSettings().customServers ?? [];
   });
 
-  const [serverSelection, setServerSelection] = useState<string>(
-    DEFAULT_SERVERS[0]?.id ?? 'custom',
-  );
+  const [serverSelection, setServerSelection] = useState<string>(() => {
+    return (
+      loadServerSettings().selectedId ?? DEFAULT_SERVERS[0]?.id ?? 'custom'
+    );
+  });
 
   // Unified form state — pre-filled when a custom server is selected
   const [formName, setFormName] = useState('');
@@ -47,6 +54,9 @@ export function ServerSelector({
 
   const handleSelectionChange = (id: string) => {
     setServerSelection(id);
+    const settings = loadServerSettings();
+    settings.selectedId = id;
+    saveServerSettings(settings);
     const custom = customServers.find((s) => s.id === id);
     if (custom) {
       setFormName(custom.name);
@@ -89,8 +99,12 @@ export function ServerSelector({
     }
 
     setCustomServers(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     setServerSelection(savedId);
+
+    const settings = loadServerSettings();
+    settings.customServers = updated;
+    settings.selectedId = savedId;
+    saveServerSettings(settings);
   };
 
   const handleRemoveCustomServer = () => {
@@ -98,8 +112,13 @@ export function ServerSelector({
 
     const updated = customServers.filter((s) => s.id !== serverSelection);
     setCustomServers(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    setServerSelection(DEFAULT_SERVERS[0]?.id ?? 'custom');
+    const fallbackId = DEFAULT_SERVERS[0]?.id ?? 'custom';
+    setServerSelection(fallbackId);
+
+    const settings = loadServerSettings();
+    settings.customServers = updated;
+    settings.selectedId = fallbackId;
+    saveServerSettings(settings);
   };
 
   // Show the save form when adding a new custom server or editing an existing one

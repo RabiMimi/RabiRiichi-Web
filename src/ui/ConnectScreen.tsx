@@ -3,6 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { useConnectionStatus } from '../state/store';
 import { ServerSelector } from './ServerSelector';
+import { CLIENT_VERSION } from '../transport/constants';
+import {
+  STORAGE_KEY_SERVER_SETTINGS,
+  type ServerSettings,
+} from '../domain/constants';
 import './ui.css';
 
 export function ConnectScreen(): React.JSX.Element {
@@ -10,7 +15,15 @@ export function ConnectScreen(): React.JSX.Element {
   const connectionStatus = useConnectionStatus();
 
   const [targetUrl, setTargetUrl] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [nickname, setNickname] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
+      const settings = stored ? (JSON.parse(stored) as ServerSettings) : null;
+      return settings?.nickname ?? '';
+    } catch {
+      return '';
+    }
+  });
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,6 +45,19 @@ export function ConnectScreen(): React.JSX.Element {
       await rabiriichi.connect(targetUrl);
       // 2. Register user (which gets token and reconnects with token)
       await rabiriichi.registerUser(nickname.trim());
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
+        const settings: ServerSettings = stored
+          ? (JSON.parse(stored) as ServerSettings)
+          : {};
+        settings.nickname = nickname.trim();
+        localStorage.setItem(
+          STORAGE_KEY_SERVER_SETTINGS,
+          JSON.stringify(settings),
+        );
+      } catch {
+        // ignore
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       // Close client on error to clean up
@@ -47,7 +73,18 @@ export function ConnectScreen(): React.JSX.Element {
 
   return (
     <div className="ui-screen connect-screen">
-      <div className="ui-card connect-card">
+      <div className="ui-card connect-card" style={{ position: 'relative' }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: '8px',
+            left: '12px',
+            fontSize: '0.8rem',
+            color: '#666',
+          }}
+        >
+          v{CLIENT_VERSION}
+        </div>
         {/* Title row with language switcher */}
         <div
           style={{

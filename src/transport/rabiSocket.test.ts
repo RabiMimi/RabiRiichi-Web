@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { RabiSocket } from './rabiSocket';
 import { ClientMessageDto, ServerMessageDto } from '../proto';
+import { CLIENT_VERSION, MIN_SERVER_VERSION } from './constants';
 import type { IServerMessageDto } from '../proto';
 import { MockWebSocket } from './mockWebSocket';
 
@@ -119,8 +120,8 @@ describe('RabiSocket', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     }).finish();

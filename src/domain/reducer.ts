@@ -1,4 +1,10 @@
-import { UserStatus, FuritenType, TileSource } from '../proto/index.js';
+import {
+  UserStatus,
+  FuritenType,
+  TileSource,
+  AiType,
+  ScoringType,
+} from '../proto/index.js';
 import type {
   IGameStateMsg,
   IEventMsg,
@@ -8,6 +14,7 @@ import type {
   IDiscardTileEventMsg,
   IClaimTileEventMsg,
   IKanEventMsg,
+  IAddNukiDoraEventMsg,
   INextPlayerEventMsg,
   IIncreaseJunEventMsg,
   IRevealDoraEventMsg,
@@ -31,8 +38,41 @@ import type {
   GameInfo,
   PlayerGameState,
   PlayerAgariState,
+  MappedTenpaiInfo,
 } from './model.js';
+import { isTsumoTile } from './model.js';
 import { Tile } from './tile.js';
+import {
+  createEmptyTileRegistry,
+  extractEventTiles,
+  extractSnapshotTiles,
+  getRegisteredTile,
+  mergeTilesIntoRegistry,
+  type TileRegistry,
+} from './tileRegistry.js';
+import {
+  buildTileSetCounts,
+  collectVisibleTileKinds,
+  collectVisibleTileKindsFromRoom,
+  collectVisibleTileKindsFromSnapshot,
+  countRemainingWinningTile,
+} from './tenpai.js';
+
+/**
+ * Restores a tile's face value from the registry when the incoming record hides
+ * it (`tile` is 0/undefined). The server hides opponents' concealed tiles in
+ * reconnection snapshots, which would otherwise turn an already-revealed winning
+ * hand into face-down "?" tiles. The registry retains the last known face, so we
+ * recover it here. Returns the original tile when nothing better is known.
+ */
+function resolveTileFace(
+  registry: TileRegistry,
+  tile: IGameTileMsg,
+): IGameTileMsg {
+  if (tile.tile && tile.tile > 0) return tile;
+  const known = getRegisteredTile(registry, tile.traceId);
+  return known?.tile ? { ...tile, tile: known.tile } : tile;
+}
 
 export function hydrateFromGameState(
   state: RoomModel,
@@ -52,6 +92,15 @@ export function hydrateFromGameState(
       }
     : null;
 
+  // A snapshot is the authoritative full state. Merge its tiles into the
+  // existing registry (rather than starting empty) so faces revealed earlier in
+  // the round - e.g. a winner's hand from an AgariEvent - survive a reconnection
+  // snapshot that re-sends opponents' tiles face-down.
+  const tileRegistry = mergeTilesIntoRegistry(
+    state.tileRegistry,
+    extractSnapshotTiles(snapshot),
+  );
+
   // 2. Build Players
   let players = state.players;
 
@@ -62,8 +111,15 @@ export function hydrateFromGameState(
       status: UserStatus.USER_STATUS_PLAYING,
       seat: sp.id ?? 0,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     }));
   }
+
+  // The winning-tile "remaining" count is derived client-side (the server no
+  // longer sends it). Gather the visible tile kinds and the per-kind maximums of
+  // the configured tile set once.
+  const visibleKinds = collectVisibleTileKindsFromSnapshot(snapshot);
+  const tileSetCounts = buildTileSetCounts(snapshot.config);
 
   const updatedPlayers = players.map((p): PlayerModel => {
     if (p.seat === undefined) {
@@ -75,6 +131,23 @@ export function hydrateFromGameState(
     }
 
     const handState = sp.hand;
+    const handWaits = (handState?.tenpaiWaits ?? []).map((ti) => {
+      const winningTile = ti.winningTile ?? 0;
+      return {
+        winningTile,
+        remainingCount: countRemainingWinningTile(
+          winningTile,
+          visibleKinds,
+          tileSetCounts,
+        ),
+        han: ti.han ?? 0,
+        yakuHan: ti.yakuHan ?? 0,
+        fu: ti.fu ?? 0,
+        yakuman: ti.yakuman ?? 0,
+        points: ti.points ? Number(ti.points) : 0,
+      };
+    });
+
     const gameState: PlayerGameState = {
       jun: handState?.jun ?? 0,
       points: sp.points ? Number(sp.points) : 0,
@@ -86,12 +159,20 @@ export function hydrateFromGameState(
         [FuritenType.FURITEN_TYPE_TEMP]: handState?.isTempFuriten ?? false,
       },
       hand: {
-        freeTiles: handState?.freeTiles ?? [],
+        freeTiles: (handState?.freeTiles ?? []).map((t) =>
+          resolveTileFace(tileRegistry, t),
+        ),
         called: handState?.called ?? [],
         discarded: handState?.discarded ?? [],
         pendingTile: handState?.pendingTile ?? null,
+        nukiDora: handState?.nukiDora ?? [],
       },
       agari: p.gameState?.agari ?? null,
+      ...(handWaits.length > 0
+        ? { awaitedTiles: handWaits }
+        : p.gameState?.awaitedTiles
+          ? { awaitedTiles: p.gameState.awaitedTiles }
+          : {}),
     };
 
     return {
@@ -106,6 +187,8 @@ export function hydrateFromGameState(
     config: snapshot.config ?? null,
     info,
     players: updatedPlayers,
+    tileRegistry,
+    gameId: snapshot.info?.gameId ?? state.gameId ?? null,
   };
 }
 
@@ -120,6 +203,7 @@ function sortGameTiles(tiles: IGameTileMsg[]): IGameTileMsg[] {
 }
 
 function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
+  const eventGameId = ev.gameId === '' ? null : ev.gameId;
   const info: GameInfo = {
     round: ev.round ?? 0,
     dealer: ev.dealer ?? 0,
@@ -130,18 +214,25 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     doras: [],
     uradoras: [],
   };
+  if (ev.initialWall) {
+    info.initialWall = ev.initialWall;
+  }
 
   const initialPoints = state.config?.pointThreshold?.initialPoints
     ? Number(state.config.pointThreshold.initialPoints)
     : 25000;
 
+  // beginGameEvent starts a new round of the CURRENT game (points accumulate
+  // across rounds) unless the previous game already ended, in which case this
+  // begins a brand-new game in the same room and points must reset.
+  const isNewGame = state.info === null || (state.gameEnded ?? false);
+
   const updatedPlayers = state.players.map((p): PlayerModel => {
-    // beginGameEvent fires at the start of every round, but points accumulate
-    // across the whole game. Preserve any existing points and only fall back to
-    // the configured initial value for the very first round (no prior state).
     const initialGameState: PlayerGameState = {
       jun: 0,
-      points: p.gameState?.points ?? initialPoints,
+      points: isNewGame
+        ? initialPoints
+        : (p.gameState?.points ?? initialPoints),
       riichiTileId: 0,
       furiten: {
         [FuritenType.FURITEN_TYPE_DISCARD]: false,
@@ -153,6 +244,7 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
         called: [],
         discarded: [],
         pendingTile: null,
+        nukiDora: [],
       },
       agari: null,
     };
@@ -167,6 +259,12 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     ...state,
     info,
     players: updatedPlayers,
+    ryuukyokuReason: null,
+    // Clear the previous game's end state once a new game begins.
+    gameEnded: false,
+    endGamePoints: null,
+    concludedPlayers: null,
+    gameId: eventGameId ?? state.gameId ?? null,
   };
 }
 
@@ -403,6 +501,27 @@ function handleKan(state: RoomModel, ev: IKanEventMsg): RoomModel {
       }
 
       const incomingTile = Tile.fromByte(incoming.tile ?? 0);
+      const updatedKan = { ...kan };
+      if (kan.tiles) {
+        // The live KanEvent fires before the server upgrades the pon, so the
+        // added tile still carries formTime -1 while the 3 original pon tiles
+        // keep their (larger) pon-era formTime. The renderer stacks the tile
+        // with the max formTime, so force the added tile above the others to
+        // match the post-refresh snapshot and avoid rendering a 5th tile.
+        const maxFormTime = kan.tiles.reduce(
+          (max, t) => Math.max(max, t.formTime ?? 0),
+          0,
+        );
+        updatedKan.tiles = kan.tiles.map((t) => ({
+          ...t,
+          source: TileSource.TILE_SOURCE_KAKAN,
+          formTime:
+            t.traceId === incoming.traceId
+              ? maxFormTime + 1
+              : (t.formTime ?? null),
+        }));
+      }
+
       called = called.map((m) => {
         const isMatchingPon = m.tiles?.every((t) => {
           const tileObj = Tile.fromByte(t.tile ?? 0);
@@ -412,7 +531,7 @@ function handleKan(state: RoomModel, ev: IKanEventMsg): RoomModel {
           );
         });
         if (isMatchingPon) {
-          return kan;
+          return updatedKan;
         }
         return m;
       });
@@ -438,6 +557,43 @@ function handleKan(state: RoomModel, ev: IKanEventMsg): RoomModel {
           freeTiles: sortGameTiles(freeTiles),
           pendingTile,
           called,
+        },
+      },
+    };
+  });
+
+  return {
+    ...state,
+    players: updatedPlayers,
+  };
+}
+
+function handleNukiDora(state: RoomModel, ev: IAddNukiDoraEventMsg): RoomModel {
+  if (!ev.incoming) return state;
+  const incoming = ev.incoming;
+  const playerId = ev.playerId;
+
+  const updatedPlayers = state.players.map((p): PlayerModel => {
+    if (p.seat !== playerId || !p.gameState) return p;
+
+    let pendingTile = p.gameState.hand.pendingTile;
+    let freeTiles = p.gameState.hand.freeTiles;
+    if (pendingTile && pendingTile.traceId === incoming.traceId) {
+      pendingTile = null;
+    } else {
+      freeTiles = freeTiles.filter((t) => t.traceId !== incoming.traceId);
+    }
+
+    const nukiTile = { ...incoming, source: TileSource.TILE_SOURCE_NUKI };
+    return {
+      ...p,
+      gameState: {
+        ...p.gameState,
+        hand: {
+          ...p.gameState.hand,
+          freeTiles: sortGameTiles(freeTiles),
+          pendingTile,
+          nukiDora: [...p.gameState.hand.nukiDora, nukiTile],
         },
       },
     };
@@ -592,6 +748,9 @@ function handleDealerFirstTurn(
 
 function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
   const incoming = ev.incoming;
+  // Authoritative win type from the server. Fall back to the tile-based check
+  // only for older logs that predate the is_tsumo flag.
+  const isTsumo = ev.isTsumo ?? isTsumoTile(incoming);
 
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (!p.gameState) return p;
@@ -599,14 +758,30 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
     const agariInfo = ev.agariInfos?.find((info) => info.playerId === p.seat);
     if (!agariInfo) return p;
 
-    const freeTiles =
+    const rawFreeTiles =
       agariInfo.freeTiles && agariInfo.freeTiles.length > 0
         ? agariInfo.freeTiles
         : p.gameState.hand.freeTiles;
+    // Resolve any hidden faces so a later reconnection snapshot cannot turn the
+    // revealed winning hand into "?" tiles (see resolveTileFace).
+    const freeTiles = rawFreeTiles.map((t) =>
+      resolveTileFace(state.tileRegistry, t),
+    );
+
+    let finalFreeTiles = freeTiles;
+    let finalPendingTile: IGameTileMsg | null = null;
+
+    // For a tsumo, lift the self-drawn winning tile out of the hand and show it
+    // as the pending tile so the win animation can highlight it separately.
+    if (incoming && isTsumo) {
+      finalPendingTile = incoming;
+      finalFreeTiles = freeTiles.filter((t) => t.traceId !== incoming.traceId);
+    }
 
     const agariState: PlayerAgariState = {
       scores: agariInfo.scores ?? null,
       incoming: incoming ?? null,
+      isTsumo,
       gainPoints: p.gameState.agari?.gainPoints ?? 0,
       losePoints: p.gameState.agari?.losePoints ?? 0,
     };
@@ -617,8 +792,8 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
         ...p.gameState,
         hand: {
           ...p.gameState.hand,
-          freeTiles: sortGameTiles(freeTiles),
-          pendingTile: null,
+          freeTiles: sortGameTiles(finalFreeTiles),
+          pendingTile: finalPendingTile,
         },
         agari: agariState,
       },
@@ -733,16 +908,14 @@ function handleNextGame(state: RoomModel, ev: INextGameEventMsg): RoomModel {
   };
 }
 
-function handleStopGame(state: RoomModel, _ev: IStopGameEventMsg): RoomModel {
+function handleStopGame(state: RoomModel, ev: IStopGameEventMsg): RoomModel {
   return {
     ...state,
-    info: null,
-    players: state.players.map(
-      (p): PlayerModel => ({
-        ...p,
-        gameState: null,
-      }),
-    ),
+    gameEnded: true,
+    endGamePoints: ev.endGamePoints
+      ? ev.endGamePoints.map((num) => Number(num))
+      : null,
+    concludedPlayers: state.players.map((p) => ({ ...p })),
   };
 }
 
@@ -758,6 +931,8 @@ export const KNOWN_EVENTS = new Set([
   'claimTileEvent',
   'kanEvent',
   'addKanEvent',
+  'nukiDoraEvent',
+  'addNukiDoraEvent',
   'nextPlayerEvent',
   'increaseJunEvent',
   'revealDoraEvent',
@@ -779,19 +954,121 @@ export const KNOWN_EVENTS = new Set([
 ]);
 
 function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
+  // Group revealed tiles by player ID
+  const revealedByPlayer = new Map<number, IGameTileMsg[]>();
+  if (_ev.endGameRyuukyoku?.revealedTiles) {
+    for (const tile of _ev.endGameRyuukyoku.revealedTiles) {
+      if (tile.playerId !== undefined && tile.playerId !== null) {
+        const list = revealedByPlayer.get(tile.playerId) ?? [];
+        list.push(tile);
+        revealedByPlayer.set(tile.playerId, list);
+      }
+    }
+  }
+
+  // Group tenpai waits by player ID
+  const tenpaiWaitsByPlayer = new Map<number, number[]>();
+  if (_ev.endGameRyuukyoku?.tenpaiPlayersWaits) {
+    for (const tp of _ev.endGameRyuukyoku.tenpaiPlayersWaits) {
+      if (tp.playerId !== undefined && tp.playerId !== null && tp.waits) {
+        tenpaiWaitsByPlayer.set(tp.playerId, tp.waits);
+      }
+    }
+  }
+
+  // Visible tile kinds for deriving winning-tile remaining counts (the server no
+  // longer sends them). At an exhaustive draw the revealed tenpai hands become
+  // visible too, so include them alongside the public discards/melds/doras.
+  const revealedHands = [...revealedByPlayer.values()].map((tiles) => ({
+    freeTiles: tiles,
+  }));
+  const visibleKinds = [
+    ...collectVisibleTileKindsFromRoom(state),
+    ...collectVisibleTileKinds(revealedHands, []),
+  ];
+  const tileSetCounts = buildTileSetCounts(state.config);
+
   // Initialize agari delta state to trigger Draw result panel.
   // The actual points and delta values are updated by the subsequent applyScoreEvent.
   const updatedPlayers = state.players.map((p): PlayerModel => {
-    if (!p.gameState) return p;
+    if (!p.gameState || p.seat === undefined) return p;
+
+    const isNagashi =
+      _ev.endGameRyuukyoku?.nagashiManganPlayers?.includes(p.seat) ?? false;
+    const isTenpai =
+      _ev.endGameRyuukyoku?.tenpaiPlayers?.includes(p.seat) ?? false;
+
+    let agari = p.gameState.agari;
+    let hand = p.gameState.hand;
+    const existingWaits = p.gameState.awaitedTiles;
+    let awaitedTiles = existingWaits;
+
+    if (isNagashi) {
+      agari = {
+        gainPoints: agari?.gainPoints ?? 0,
+        losePoints: agari?.losePoints ?? 0,
+        isNagashi: true,
+        scores: {
+          items: [
+            {
+              Type: ScoringType.SCORING_TYPE_HAN,
+              Val: 5,
+              Src: 'NagashiMangan',
+            },
+          ],
+          result: {
+            han: 5,
+            fu: 30,
+            yakuman: 0,
+          },
+        },
+      };
+    } else if (isTenpai) {
+      agari = {
+        gainPoints: agari?.gainPoints ?? 0,
+        losePoints: agari?.losePoints ?? 0,
+        isTenpai: true,
+      };
+      const pRevealed = revealedByPlayer.get(p.seat);
+      if (pRevealed) {
+        hand = {
+          ...hand,
+          freeTiles: sortGameTiles(pRevealed),
+        };
+      }
+      const waits = tenpaiWaitsByPlayer.get(p.seat) ?? [];
+      const newWaits: MappedTenpaiInfo[] = waits.map((w) => ({
+        winningTile: w,
+        remainingCount: countRemainingWinningTile(
+          w,
+          visibleKinds,
+          tileSetCounts,
+        ),
+        han: 0,
+        yakuHan: 0,
+        fu: 0,
+        yakuman: 0,
+        points: 0,
+      }));
+      awaitedTiles =
+        existingWaits && existingWaits.length > 0 ? existingWaits : newWaits;
+    } else {
+      agari = {
+        gainPoints: agari?.gainPoints ?? 0,
+        losePoints: agari?.losePoints ?? 0,
+      };
+    }
 
     return {
       ...p,
       gameState: {
         ...p.gameState,
-        agari: {
-          gainPoints: p.gameState.agari?.gainPoints ?? 0,
-          losePoints: p.gameState.agari?.losePoints ?? 0,
-        },
+        agari,
+        hand,
+        awaitedTiles:
+          isTenpai && awaitedTiles && awaitedTiles.length > 0
+            ? awaitedTiles
+            : undefined,
       },
     };
   });
@@ -799,6 +1076,7 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
   return {
     ...state,
     players: updatedPlayers,
+    ryuukyokuReason: _ev.midGameRyuukyoku?.name ?? 'end_game_ryuukyoku',
   };
 }
 
@@ -811,6 +1089,36 @@ function handleSyncGameState(
 }
 
 export function applyEvent(state: RoomModel, eventMsg: IEventMsg): RoomModel {
+  const nextState = applyEventToState(state, eventMsg);
+  return updateTileRegistry(nextState, eventMsg);
+}
+
+/**
+ * Keeps `state.tileRegistry` in sync with the tiles referenced by an event.
+ *
+ * The registry is reset at round boundaries (a fresh hand reuses traceIds) and
+ * otherwise enriched with every tile the event mentioned. Snapshot events are
+ * skipped here because `hydrateFromGameState` already rebuilds the registry.
+ */
+function updateTileRegistry(state: RoomModel, eventMsg: IEventMsg): RoomModel {
+  // Not stopGameEvent: the result screen still needs the registry to render
+  // riichi tiles sideways (getRiichiSidewaysTraceId reads discardInfo.time).
+  if (eventMsg.beginGameEvent) {
+    return { ...state, tileRegistry: createEmptyTileRegistry() };
+  }
+  if (eventMsg.syncGameStateEvent) {
+    return state;
+  }
+  const tileRegistry = mergeTilesIntoRegistry(
+    state.tileRegistry,
+    extractEventTiles(eventMsg),
+  );
+  return tileRegistry === state.tileRegistry
+    ? state
+    : { ...state, tileRegistry };
+}
+
+function applyEventToState(state: RoomModel, eventMsg: IEventMsg): RoomModel {
   // Warn on unhandled event variants to catch gaps early (F3)
   if (import.meta.env.DEV) {
     const activeKeys = Object.keys(eventMsg).filter(
@@ -850,6 +1158,14 @@ export function applyEvent(state: RoomModel, eventMsg: IEventMsg): RoomModel {
   }
   if (eventMsg.addKanEvent) {
     return state;
+  }
+  if (eventMsg.nukiDoraEvent) {
+    // The set-aside is applied on addNukiDoraEvent (which the server only sends
+    // once the 搶拔北 window closes without a robber).
+    return state;
+  }
+  if (eventMsg.addNukiDoraEvent) {
+    return handleNukiDora(state, eventMsg.addNukiDoraEvent);
   }
   if (eventMsg.nextPlayerEvent) {
     return handleNextPlayer(state, eventMsg.nextPlayerEvent);
@@ -911,6 +1227,7 @@ export function applyRoomState(
       nickname: p.nickname ?? '',
       status: p.status ?? 0,
       gameState: existingPlayer?.gameState ?? null,
+      aiType: p.aiType ?? AiType.AI_TYPE_NONE,
     };
     if (p.seat !== null && p.seat !== undefined) {
       player.seat = p.seat;
@@ -923,5 +1240,11 @@ export function applyRoomState(
     config: msg.config ?? state?.config ?? null,
     info: state?.info ?? null,
     players,
+    tileRegistry: state?.tileRegistry ?? createEmptyTileRegistry(),
+    ryuukyokuReason: state?.ryuukyokuReason ?? null,
+    gameEnded: state?.gameEnded ?? false,
+    endGamePoints: state?.endGamePoints ?? null,
+    concludedPlayers: state?.concludedPlayers ?? null,
+    gameId: state?.gameId ?? null,
   };
 }

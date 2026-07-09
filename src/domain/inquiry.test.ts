@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { AgariType } from '../proto/index.js';
 import type { ISinglePlayerInquiryMsg } from '../proto/index.js';
-import { mapInquiry, encodeInquiryResponse } from './inquiry.js';
+import {
+  mapInquiry,
+  encodeInquiryResponse,
+  getAutoResponse,
+  findActiveDiscardCandidate,
+  type MappedInquiry,
+  type DiscardCandidate,
+} from './inquiry.js';
 import { assert } from '../lib/assert.js';
 
 describe('Inquiry Mapping & Response Encoding', () => {
@@ -79,6 +86,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
       label: '立直',
       actionIndex: 3,
       legalTiles: [102],
+      candidates: [],
     });
 
     expect(mapped.buttons[3]).toEqual({
@@ -93,6 +101,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
     expect(mapped.playTile).toEqual({
       actionIndex: 1,
       legalTiles: [100, 101, 102],
+      candidates: [],
     });
   });
 
@@ -165,5 +174,310 @@ describe('Inquiry Mapping & Response Encoding', () => {
     expect(() => {
       encodeInquiryResponse(mockInquiry, riichiButton, 101);
     }).toThrow('Tile traceId 101 not in riichi options');
+  });
+
+  it('should map and encode a nukidora action', () => {
+    const nukiInquiry: ISinglePlayerInquiryMsg = {
+      actions: [
+        { skipAction: {} },
+        { nukiDoraAction: { tiles: [{ traceId: 55, tile: 68 }] } },
+      ],
+    };
+    const mapped = mapInquiry(nukiInquiry);
+    const nukiButton = mapped.buttons.find((b) => b.type === 'nukidora');
+    assert(nukiButton, 'nukidora button should be defined');
+    expect(nukiButton).toEqual({
+      type: 'nukidora',
+      label: '拔北',
+      actionIndex: 1,
+      choiceIndex: 0,
+    });
+
+    // Submits the (interchangeable) North option index as a plain int.
+    const encoded = encodeInquiryResponse(nukiInquiry, nukiButton);
+    expect(encoded).toEqual({ index: 1, response: '0' });
+  });
+
+  describe('getAutoResponse', () => {
+    it('should return play-tile auto-response when only 1 legal tile and no buttons', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            playTileAction: {
+              tiles: [{ traceId: 42, tile: 17 }],
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toEqual({
+        action: {
+          type: 'play-tile',
+          label: '打',
+          actionIndex: 0,
+          legalTiles: [42],
+          candidates: [],
+        },
+        choice: 42,
+      });
+    });
+
+    it('should not auto-respond play-tile when multiple legal tiles exist', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            playTileAction: {
+              tiles: [
+                { traceId: 42, tile: 17 },
+                { traceId: 43, tile: 18 },
+              ],
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toBeNull();
+    });
+
+    it('should not auto-respond play-tile if buttons exist alongside single discard', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            skipAction: {},
+          },
+          {
+            playTileAction: {
+              tiles: [{ traceId: 42, tile: 17 }],
+            },
+          },
+          {
+            agariAction: {
+              type: AgariType.AGARI_TYPE_TSUMO,
+              incoming: { traceId: 42, tile: 17 },
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toBeNull();
+    });
+
+    it('should return auto-response for single button (non next-round)', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            chiiAction: {
+              tileGroups: [
+                {
+                  tiles: [
+                    { traceId: 100, tile: 17 },
+                    { traceId: 101, tile: 18 },
+                    { traceId: 200, tile: 19 },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toEqual({
+        action: {
+          type: 'chii',
+          label: '吃',
+          actionIndex: 0,
+          tileGroups: [
+            {
+              index: 0,
+              tiles: [
+                { traceId: 100, tile: 17 },
+                { traceId: 101, tile: 18 },
+                { traceId: 200, tile: 19 },
+              ],
+            },
+          ],
+        },
+        choice: 0,
+      });
+    });
+
+    it('should not auto-respond to next-round button', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            nextRoundAction: {},
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toBeNull();
+    });
+
+    it('should not auto-respond to single button if it has multiple group choices', () => {
+      const inq = mapInquiry({
+        actions: [
+          {
+            chiiAction: {
+              tileGroups: [
+                {
+                  tiles: [
+                    { traceId: 100, tile: 17 },
+                    { traceId: 101, tile: 18 },
+                    { traceId: 200, tile: 19 },
+                  ],
+                },
+                {
+                  tiles: [
+                    { traceId: 101, tile: 18 },
+                    { traceId: 102, tile: 19 },
+                    { traceId: 200, tile: 20 },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+      const resp = getAutoResponse(inq);
+      expect(resp).toBeNull();
+    });
+  });
+
+  it('should map candidates and tenpaiInfos for playTileAction and riichiAction', () => {
+    const inquiryWithCandidates: ISinglePlayerInquiryMsg = {
+      actions: [
+        {
+          playTileAction: {
+            tiles: [{ traceId: 100, tile: 17 }],
+            candidates: [
+              {
+                tile: { traceId: 100, tile: 17 },
+                tenpaiInfos: [
+                  {
+                    winningTile: 18,
+                    han: 1,
+                    yakuHan: 1,
+                    fu: 30,
+                    yakuman: 0,
+                    points: 1000,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          riichiAction: {
+            tiles: [{ traceId: 100, tile: 17 }],
+            candidates: [
+              {
+                tile: { traceId: 100, tile: 17 },
+                tenpaiInfos: [
+                  {
+                    winningTile: 19,
+                    han: 2,
+                    yakuHan: 2,
+                    fu: 40,
+                    yakuman: 0,
+                    points: 2000,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    // The client derives remainingCount from visible tile kinds: one 18 is
+    // visible (so 4 - 1 = 3 remain), no 19 is visible (so 4 remain). With no
+    // tile-set counts supplied, the maximum falls back to 4 per kind.
+    const mapped = mapInquiry(inquiryWithCandidates, {
+      visibleKinds: [18],
+      tileSetCounts: new Map(),
+    });
+
+    expect(mapped.playTile?.candidates).toBeDefined();
+    expect(mapped.playTile?.candidates).toHaveLength(1);
+    expect(mapped.playTile?.candidates?.[0]).toEqual({
+      tileId: 100,
+      tenpaiInfos: [
+        {
+          winningTile: 18,
+          remainingCount: 3,
+          han: 1,
+          yakuHan: 1,
+          fu: 30,
+          yakuman: 0,
+          points: 1000,
+        },
+      ],
+    });
+
+    const riichiBtn = mapped.buttons.find((b) => b.type === 'riichi');
+    expect(riichiBtn).toBeDefined();
+    if (riichiBtn) {
+      expect(riichiBtn.candidates).toBeDefined();
+      expect(riichiBtn.candidates).toHaveLength(1);
+      expect(riichiBtn.candidates?.[0]).toEqual({
+        tileId: 100,
+        tenpaiInfos: [
+          {
+            winningTile: 19,
+            remainingCount: 4,
+            han: 2,
+            yakuHan: 2,
+            fu: 40,
+            yakuman: 0,
+            points: 2000,
+          },
+        ],
+      });
+    }
+  });
+});
+
+describe('findActiveDiscardCandidate', () => {
+  const playCandidate: DiscardCandidate = { tileId: 100, tenpaiInfos: [] };
+  const riichiCandidate: DiscardCandidate = { tileId: 100, tenpaiInfos: [] };
+
+  const mapped: MappedInquiry = {
+    buttons: [
+      {
+        type: 'riichi',
+        label: '立直',
+        actionIndex: 1,
+        legalTiles: [100],
+        candidates: [riichiCandidate],
+      },
+    ],
+    playTile: {
+      actionIndex: 0,
+      legalTiles: [100],
+      candidates: [playCandidate],
+    },
+  };
+
+  it('treats the tile as a riichi discard in riichi-select mode', () => {
+    // Regression: the same tile appears in both the play-tile and riichi
+    // candidate lists. In riichi-select mode it must be counted as riichi
+    // (isRiichi=true) so the 番缚 check credits the guaranteed riichi yaku.
+    const result = findActiveDiscardCandidate(mapped, 100, true);
+    expect(result?.isRiichi).toBe(true);
+    expect(result?.candidate).toBe(riichiCandidate);
+  });
+
+  it('treats the tile as a normal discard when not in riichi mode', () => {
+    const result = findActiveDiscardCandidate(mapped, 100, false);
+    expect(result?.isRiichi).toBe(false);
+    expect(result?.candidate).toBe(playCandidate);
+  });
+
+  it('returns null for a tile that is not a riichi candidate in riichi mode', () => {
+    expect(findActiveDiscardCandidate(mapped, 999, true)).toBeNull();
+  });
+
+  it('returns null for an unknown tile in normal mode', () => {
+    expect(findActiveDiscardCandidate(mapped, 999, false)).toBeNull();
   });
 });

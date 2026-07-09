@@ -6,12 +6,15 @@ import {
   KNOWN_EVENTS,
 } from './reducer';
 import type { RoomModel } from './model';
-import { GameLogMsg } from '../proto';
+import { createEmptyTileRegistry, getRegisteredTile } from './tileRegistry';
+import { getRiichiSidewaysTraceId } from './river';
+import { GameLogMsg, type IServerRoomStateMsg } from '../proto';
 import type { IEventMsg } from '../proto';
 import {
   UserStatus,
   FuritenType,
   TileSource,
+  AiType,
   type IGameStateMsg,
   type IGameTileMsg,
   type IMenLikeMsg,
@@ -24,6 +27,7 @@ describe('Reducer - Hydration', () => {
       config: null,
       info: null,
       players: [],
+      tileRegistry: createEmptyTileRegistry(),
     };
 
     const snapshot: IGameStateMsg = {
@@ -126,6 +130,7 @@ describe('Reducer - Hydration', () => {
           status: UserStatus.USER_STATUS_READY,
           seat: 0,
           gameState: null,
+          aiType: AiType.AI_TYPE_NONE,
         },
         {
           id: 1002,
@@ -133,8 +138,10 @@ describe('Reducer - Hydration', () => {
           status: UserStatus.USER_STATUS_READY,
           seat: 1,
           gameState: null,
+          aiType: AiType.AI_TYPE_NONE,
         },
       ],
+      tileRegistry: createEmptyTileRegistry(),
     };
 
     const snapshot: IGameStateMsg = {
@@ -231,9 +238,11 @@ function createInitializedRoom(): RoomModel {
             called: [],
             discarded: [],
             pendingTile: null,
+            nukiDora: [],
           },
           agari: null,
         },
+        aiType: AiType.AI_TYPE_NONE,
       },
       {
         id: 102,
@@ -250,11 +259,14 @@ function createInitializedRoom(): RoomModel {
             called: [],
             discarded: [],
             pendingTile: null,
+            nukiDora: [],
           },
           agari: null,
         },
+        aiType: AiType.AI_TYPE_NONE,
       },
     ],
+    tileRegistry: createEmptyTileRegistry(),
   };
 }
 
@@ -308,6 +320,7 @@ describe('Reducer - Events', () => {
         honba: 0,
         riichiStick: 0,
         remainingTiles: 122,
+        gameId: 'TEST-GAME-123',
       },
     };
 
@@ -320,6 +333,7 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.currentPlayer).toBe(0);
 
     expect(nextState.players[0]?.gameState?.points).toBe(25000);
+    expect(nextState.gameId).toBe('TEST-GAME-123');
   });
 
   it('preserves accumulated points across rounds on beginGameEvent', () => {
@@ -350,6 +364,36 @@ describe('Reducer - Events', () => {
 
     expect(nextState.players[0]?.gameState?.points).toBe(25000);
     expect(nextState.players[1]?.gameState?.points).toBe(25000);
+  });
+
+  it('resets points and clears end state when a new game begins after one ended', () => {
+    // Regression for RabiRiichi#86: starting a new game in the same room must
+    // NOT inherit the previous game's final scores.
+    const state = createInitializedRoom();
+    const p0 = state.players[0];
+    const p1 = state.players[1];
+    if (p0?.gameState) p0.gameState.points = 48000;
+    if (p1?.gameState) p1.gameState.points = 2000;
+    // Simulate the previous game having ended.
+    state.gameEnded = true;
+    state.endGamePoints = [48000, 2000];
+    state.concludedPlayers = state.players.map((p) => ({ ...p }));
+
+    // Simulate Return to Room action
+    state.info = null;
+    state.gameEnded = false;
+    state.endGamePoints = null;
+    state.concludedPlayers = null;
+
+    const nextState = applyEvent(state, {
+      beginGameEvent: { round: 0, dealer: 0, honba: 0 },
+    });
+
+    expect(nextState.players[0]?.gameState?.points).toBe(25000);
+    expect(nextState.players[1]?.gameState?.points).toBe(25000);
+    expect(nextState.gameEnded).toBe(false);
+    expect(nextState.endGamePoints).toBeNull();
+    expect(nextState.concludedPlayers).toBeNull();
   });
 
   it('should handle dealHandEvent', () => {
@@ -541,13 +585,13 @@ describe('Reducer - Events', () => {
 
   it('should handle kanEvent (Kakan)', () => {
     const state = createInitializedRoom();
-    // Player 0 already has a Pon of 1m
+    // Player 0 already has a Pon of 1m (original tiles carry a pon-era formTime)
     setCalled(state, 0, [
       {
         tiles: [
-          { traceId: 10, tile: 17 },
-          { traceId: 11, tile: 17 },
-          { traceId: 99, tile: 17, discardInfo: { from: 1 } },
+          { traceId: 10, tile: 17, formTime: 5 },
+          { traceId: 11, tile: 17, formTime: 5 },
+          { traceId: 99, tile: 17, formTime: 5, discardInfo: { from: 1 } },
         ],
       },
     ]);
@@ -557,26 +601,111 @@ describe('Reducer - Events', () => {
     const eventMsg = {
       kanEvent: {
         playerId: 0,
+        // The live event fires before the server sets the added tile's
+        // formTime, so it still arrives with the default -1.
         kan: {
           tiles: [
-            { traceId: 10, tile: 17 },
-            { traceId: 11, tile: 17 },
-            { traceId: 99, tile: 17, discardInfo: { from: 1 } },
-            { traceId: 12, tile: 17 },
+            { traceId: 10, tile: 17, formTime: 5 },
+            { traceId: 11, tile: 17, formTime: 5 },
+            { traceId: 99, tile: 17, formTime: 5, discardInfo: { from: 1 } },
+            { traceId: 12, tile: 17, formTime: -1 },
           ],
         },
-        incoming: { traceId: 12, tile: 17 },
+        incoming: { traceId: 12, tile: 17, formTime: -1 },
         kanSource: TileSource.TILE_SOURCE_KAKAN,
       },
     };
 
     const nextState = applyEvent(state, eventMsg);
-
     const p0 = nextState.players.find((p) => p.seat === 0);
     expect(p0?.gameState?.hand.pendingTile).toBeNull();
     expect(p0?.gameState?.hand.called).toHaveLength(1);
     expect(p0?.gameState?.hand.called[0]?.tiles).toHaveLength(4);
     expect(p0?.gameState?.hand.called[0]?.tiles?.[3]?.traceId).toBe(12);
+    expect(p0?.gameState?.hand.called[0]?.tiles?.[0]?.source).toBe(
+      TileSource.TILE_SOURCE_KAKAN,
+    );
+    expect(p0?.gameState?.hand.called[0]?.tiles?.[3]?.source).toBe(
+      TileSource.TILE_SOURCE_KAKAN,
+    );
+    // The added tile must end up with the largest formTime so the renderer
+    // stacks it on the called tile instead of rendering a 5th tile.
+    const kakanTiles = p0?.gameState?.hand.called[0]?.tiles ?? [];
+    const addedTile = kakanTiles.find((t) => t.traceId === 12);
+    const maxFormTime = Math.max(...kakanTiles.map((t) => t.formTime ?? 0));
+    expect(addedTile?.formTime).toBe(maxFormTime);
+    expect(kakanTiles.filter((t) => t.formTime === maxFormTime)).toHaveLength(
+      1,
+    );
+  });
+
+  // North (北) is 4z = suit Z(4) << 4 | num 4 = 68.
+  const NORTH = 68;
+
+  it('should set aside a pulled North on addNukiDoraEvent (from pending)', () => {
+    const state = createInitializedRoom();
+    setPendingTile(state, 0, { traceId: 50, tile: NORTH });
+
+    const nextState = applyEvent(state, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 50, tile: NORTH } },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.pendingTile).toBeNull();
+    expect(p0?.gameState?.hand.nukiDora).toHaveLength(1);
+    expect(p0?.gameState?.hand.nukiDora[0]?.traceId).toBe(50);
+    expect(p0?.gameState?.hand.nukiDora[0]?.source).toBe(
+      TileSource.TILE_SOURCE_NUKI,
+    );
+  });
+
+  it('should set aside a pulled North on addNukiDoraEvent (from hand)', () => {
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [
+      { traceId: 60, tile: 17 },
+      { traceId: 61, tile: NORTH },
+    ]);
+
+    const nextState = applyEvent(state, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 61, tile: NORTH } },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.freeTiles.some((t) => t.traceId === 61)).toBe(
+      false,
+    );
+    expect(p0?.gameState?.hand.nukiDora.map((t) => t.traceId)).toEqual([61]);
+  });
+
+  it('should accumulate multiple pulled North tiles', () => {
+    const state = createInitializedRoom();
+    setPendingTile(state, 0, { traceId: 70, tile: NORTH });
+    let next = applyEvent(state, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 70, tile: NORTH } },
+    });
+    setPendingTile(next, 0, { traceId: 71, tile: NORTH });
+    next = applyEvent(next, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 71, tile: NORTH } },
+    });
+
+    const p0 = next.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.nukiDora.map((t) => t.traceId)).toEqual([
+      70, 71,
+    ]);
+  });
+
+  it('should not set aside on nukiDoraEvent (waits for addNukiDoraEvent)', () => {
+    const state = createInitializedRoom();
+    setPendingTile(state, 0, { traceId: 80, tile: NORTH });
+
+    const nextState = applyEvent(state, {
+      nukiDoraEvent: { playerId: 0, incoming: { traceId: 80, tile: NORTH } },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    // The chankan window hasn't resolved yet, so nothing is set aside.
+    expect(p0?.gameState?.hand.nukiDora).toHaveLength(0);
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(80);
   });
 
   it('should handle nextPlayerEvent', () => {
@@ -641,6 +770,105 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.riichiStick).toBe(1);
   });
 
+  it('keeps the riichi sideways tile after the declaration tile is called', () => {
+    // Player 1 declares riichi by discarding tile 50, then player 0 pons it,
+    // then player 1 discards tile 60. The sideways tile must move from 50 to 60.
+    let state = createInitializedRoom();
+
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 1,
+        discarded: {
+          traceId: 50,
+          tile: 21,
+          discardInfo: { from: 1, reason: 1, time: 10 },
+        },
+        isRiichi: true,
+      },
+    });
+
+    // Sanity: declaration tile is registered and currently the sideways tile.
+    expect(getRegisteredTile(state.tileRegistry, 50)?.discardInfo?.time).toBe(
+      10,
+    );
+    const riichiTileId = state.players[1]?.gameState?.riichiTileId ?? 0;
+    expect(riichiTileId).toBe(50);
+    expect(
+      getRiichiSidewaysTraceId(
+        state.players[1]?.gameState?.hand.discarded ?? [],
+        riichiTileId,
+        state.tileRegistry,
+      ),
+    ).toBe(50);
+
+    // Player 0 pons the riichi tile (50), removing it from player 1's river.
+    state = applyEvent(state, {
+      claimTileEvent: {
+        playerId: 0,
+        tile: {
+          traceId: 50,
+          tile: 21,
+          discardInfo: { from: 1, reason: 1, time: 10 },
+        },
+        group: {
+          tiles: [
+            { traceId: 40, tile: 21 },
+            { traceId: 41, tile: 21 },
+            { traceId: 50, tile: 21 },
+          ],
+        },
+        reason: 4,
+      },
+    });
+
+    const riverAfterClaim = state.players[1]?.gameState?.hand.discarded ?? [];
+    expect(riverAfterClaim.some((t) => t.traceId === 50)).toBe(false);
+    // The registry still remembers the called-away declaration tile.
+    expect(getRegisteredTile(state.tileRegistry, 50)?.discardInfo?.time).toBe(
+      10,
+    );
+
+    // Player 1 discards again (tile 60).
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 1,
+        discarded: {
+          traceId: 60,
+          tile: 22,
+          discardInfo: { from: 1, reason: 1, time: 20 },
+        },
+        isRiichi: false,
+      },
+    });
+
+    // riichiTileId still points at the original declaration (matches server).
+    expect(state.players[1]?.gameState?.riichiTileId).toBe(50);
+    // But the rendered sideways tile is now the next surviving discard, 60.
+    expect(
+      getRiichiSidewaysTraceId(
+        state.players[1]?.gameState?.hand.discarded ?? [],
+        state.players[1]?.gameState?.riichiTileId ?? 0,
+        state.tileRegistry,
+      ),
+    ).toBe(60);
+  });
+
+  it('clears the tile registry on beginGameEvent', () => {
+    let state = createInitializedRoom();
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 0,
+        discarded: { traceId: 7, tile: 21 },
+      },
+    });
+    expect(state.tileRegistry.size).toBeGreaterThan(0);
+
+    state = applyEvent(state, {
+      beginGameEvent: { round: 0, dealer: 0, remainingTiles: 70 },
+    });
+    expect(state.tileRegistry.size).toBe(0);
+  });
+
   it('should handle setFuritenEvent', () => {
     const state = createInitializedRoom();
     const eventMsg = {
@@ -699,6 +927,103 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.freeTiles).toHaveLength(2);
   });
 
+  it('records the server is_tsumo flag on a tsumo win', () => {
+    const state = createInitializedRoom();
+    // A self-drawn win: the incoming tile has no discardInfo and is_tsumo=true.
+    setFreeTiles(state, 0, [
+      { traceId: 10, tile: 17 },
+      { traceId: 50, tile: 19 },
+    ]);
+    const nextState = applyEvent(state, {
+      agariEvent: {
+        agariInfos: [{ playerId: 0, freeTiles: [{ traceId: 10, tile: 17 }] }],
+        incoming: { traceId: 50, tile: 19 },
+        isTsumo: true,
+      },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.agari?.isTsumo).toBe(true);
+    // The self-drawn tile is lifted out as the pending tile for the animation.
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(50);
+  });
+
+  it('records is_tsumo=false for a ron even if the tile lacks discardInfo', () => {
+    const state = createInitializedRoom();
+    // Regression for the chankan case: a claimed win whose incoming tile has no
+    // discardInfo on the wire must still be labelled ron, not tsumo.
+    const nextState = applyEvent(state, {
+      agariEvent: {
+        agariInfos: [{ playerId: 0, freeTiles: [{ traceId: 10, tile: 17 }] }],
+        incoming: { traceId: 50, tile: 19 }, // no discardInfo
+        isTsumo: false,
+      },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.agari?.isTsumo).toBe(false);
+    // A ron does not lift a pending tile.
+    expect(p0?.gameState?.hand.pendingTile).toBeNull();
+  });
+
+  it('keeps a revealed winning hand visible across a reconnection sync', () => {
+    // 1. Opponent (seat 0) wins by ron; their hand is revealed via agariInfo.
+    let state = createInitializedRoom();
+    state = applyEvent(state, {
+      agariEvent: {
+        agariInfos: [
+          {
+            playerId: 0,
+            freeTiles: [
+              { traceId: 10, tile: 17 },
+              { traceId: 11, tile: 18 },
+            ],
+          },
+        ],
+        incoming: { traceId: 50, tile: 19 },
+        isTsumo: false,
+      },
+    });
+    const revealed = state.players.find((p) => p.seat === 0);
+    expect(revealed?.gameState?.hand.freeTiles.map((t) => t.tile)).toEqual([
+      17, 18,
+    ]);
+
+    // 2. A reconnection snapshot re-sends the opponent's tiles face-down
+    //    (tile=0), which previously blanked the revealed hand to "?".
+    const snapshot: IGameStateMsg = {
+      config: state.config,
+      info: { round: 0, dealer: 0, honba: 0, currentPlayer: 0 },
+      wall: { remaining: 0, doras: [] },
+      players: [
+        {
+          id: 0,
+          points: 25000,
+          hand: {
+            freeTiles: [
+              { traceId: 10, tile: 0 },
+              { traceId: 11, tile: 0 },
+            ],
+            called: [],
+            discarded: [],
+          },
+        },
+        {
+          id: 1,
+          points: 25000,
+          hand: { freeTiles: [], called: [], discarded: [] },
+        },
+      ],
+    };
+    const synced = hydrateFromGameState(state, snapshot);
+
+    // The registry-resolved faces survive; the hand is not all "?".
+    const afterSync = synced.players.find((p) => p.seat === 0);
+    expect(afterSync?.gameState?.hand.freeTiles.map((t) => t.tile)).toEqual([
+      17, 18,
+    ]);
+  });
+
   it('should handle applyScoreEvent', () => {
     const state = createInitializedRoom();
     // Pre-populate agari for Player 0 (won) and Player 1 (lost) safely
@@ -749,6 +1074,35 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.doras[0]?.traceId).toBe(90);
     expect(nextState.info?.uradoras).toHaveLength(1);
     expect(nextState.info?.uradoras[0]?.traceId).toBe(91);
+  });
+
+  it('concludeGame replaces an open-kan dora reveal with the server list', () => {
+    // Regression: open kan reveals a new dora mid-hand, then that player rons.
+    // The kan dora must not count for the ron winner, so the server's
+    // ConcludeGameEvent omits it. The client must display exactly the server
+    // list, not the (larger) set accumulated by RevealDoraEvent during play.
+    let state = createInitializedRoom();
+
+    // Initial dora, then the extra open-kan dora revealed during play.
+    state = applyEvent(state, {
+      revealDoraEvent: { playerId: -1, dora: { traceId: 1, tile: 17 } },
+    });
+    state = applyEvent(state, {
+      revealDoraEvent: { playerId: -1, dora: { traceId: 2, tile: 18 } },
+    });
+    expect(state.info?.doras).toHaveLength(2);
+
+    // Server concludes the hand showing only the pre-kan dora for the winner.
+    state = applyEvent(state, {
+      concludeGameEvent: {
+        doras: [{ traceId: 1, tile: 17 }],
+        uradoras: [],
+      },
+    });
+
+    expect(state.info?.doras).toHaveLength(1);
+    expect(state.info?.doras[0]?.traceId).toBe(1);
+    expect(state.info?.uradoras).toHaveLength(0);
   });
 
   it('should handle nextGameEvent by advancing round metadata only', () => {
@@ -816,13 +1170,112 @@ describe('Reducer - Events', () => {
   it('should handle stopGameEvent', () => {
     const state = createInitializedRoom();
     const eventMsg = {
-      stopGameEvent: {},
+      stopGameEvent: {
+        endGamePoints: [28000, 22000],
+      },
     };
 
     const nextState = applyEvent(state, eventMsg);
 
-    expect(nextState.info).toBeNull();
-    expect(nextState.players[0]?.gameState).toBeNull();
+    expect(nextState.gameEnded).toBe(true);
+    expect(nextState.endGamePoints).toEqual([28000, 22000]);
+    expect(nextState.info).not.toBeNull();
+    expect(nextState.players[0]?.gameState).not.toBeNull();
+    expect(nextState.concludedPlayers).toEqual(state.players);
+  });
+
+  it('does not wipe the tile registry on stopGameEvent', () => {
+    // Regression for RabiRiichi#85.
+    let state = createInitializedRoom();
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 0,
+        discarded: {
+          traceId: 7,
+          tile: 21,
+          discardInfo: { from: 0, reason: 1, time: 5 },
+        },
+      },
+    });
+    expect(state.tileRegistry.size).toBeGreaterThan(0);
+
+    state = applyEvent(state, {
+      stopGameEvent: { endGamePoints: [28000, 22000] },
+    });
+
+    expect(state.gameEnded).toBe(true);
+    expect(getRegisteredTile(state.tileRegistry, 7)?.discardInfo?.time).toBe(5);
+  });
+
+  it('keeps the riichi tile sideways at game end after a reconnection', () => {
+    // RabiRiichi#85: after a reconnect the registry is rebuilt only from the
+    // snapshot, so wiping it on stopGameEvent leaves nothing to re-derive the
+    // sideways tile from.
+    let state = createInitializedRoom();
+
+    // Player 1 declares riichi (declaration tile 50, discarded at time 10).
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 1,
+        discarded: {
+          traceId: 50,
+          tile: 21,
+          discardInfo: { from: 1, reason: 1, time: 10 },
+        },
+        isRiichi: true,
+      },
+    });
+
+    // Reconnection: the server re-sends the full state as a snapshot. The riichi
+    // tile is carried in the snapshot hand with its discardInfo.time.
+    state = applyEvent(state, {
+      syncGameStateEvent: {
+        playerId: 0,
+        gameState: {
+          config: { playerCount: 2 },
+          info: { round: 0, dealer: 0, currentPlayer: 0 },
+          wall: { remaining: 60 },
+          players: [
+            { id: 0, points: 25000, hand: { freeTiles: [], discarded: [] } },
+            {
+              id: 1,
+              points: 24000,
+              hand: {
+                freeTiles: [],
+                discarded: [
+                  {
+                    traceId: 50,
+                    tile: 21,
+                    discardInfo: { from: 1, reason: 1, time: 10 },
+                  },
+                ],
+                riichiTile: {
+                  traceId: 50,
+                  tile: 21,
+                  discardInfo: { from: 1, reason: 1, time: 10 },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    // The game ends.
+    state = applyEvent(state, {
+      stopGameEvent: { endGamePoints: [26000, 24000] },
+    });
+
+    // The declaration tile is still rendered sideways.
+    const p1 = state.players.find((p) => p.seat === 1);
+    expect(p1?.gameState?.riichiTileId).toBe(50);
+    expect(
+      getRiichiSidewaysTraceId(
+        p1?.gameState?.hand.discarded ?? [],
+        p1?.gameState?.riichiTileId ?? 0,
+        state.tileRegistry,
+      ),
+    ).toBe(50);
   });
 
   it('should handle syncGameStateEvent by hydrating', () => {
@@ -846,6 +1299,56 @@ describe('Reducer - Events', () => {
 
     expect(nextState.info?.round).toBe(2);
     expect(nextState.info?.remainingTiles).toBe(70);
+  });
+
+  it('should handle syncGameStateEvent by hydrating tenpaiWaits', () => {
+    const state = createInitializedRoom();
+    const eventMsg = {
+      syncGameStateEvent: {
+        playerId: 0,
+        gameState: {
+          config: { playerCount: 2 },
+          info: { round: 2, dealer: 0 },
+          players: [
+            {
+              id: 0,
+              points: 25000,
+              hand: {
+                jun: 1,
+                // One copy of the winning tile (23) is visible in this player's
+                // own discards, so the derived remaining count is 4 - 1 = 3.
+                discarded: [{ traceId: 900, tile: 23 }],
+                tenpaiWaits: [
+                  {
+                    winningTile: 23,
+                    han: 1,
+                    yakuHan: 1,
+                    fu: 30,
+                    yakuman: 0,
+                    points: 1000,
+                  },
+                ],
+              },
+            },
+            { id: 1, points: 25000 },
+          ],
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+    const p0State = nextState.players.find((p) => p.seat === 0);
+    expect(p0State?.gameState?.awaitedTiles).toEqual([
+      {
+        winningTile: 23,
+        remainingCount: 3,
+        han: 1,
+        yakuHan: 1,
+        fu: 30,
+        yakuman: 0,
+        points: 1000,
+      },
+    ]);
   });
 
   it('should ignore addKanEvent (Kakan) when preceded by kanEvent (Kakan)', () => {
@@ -931,6 +1434,167 @@ describe('Reducer - Events', () => {
       expect(p.gameState?.agari?.losePoints).toBe(0);
       expect(p.gameState?.agari?.scores).toBeUndefined();
     }
+  });
+
+  it('should handle ryuukyokuEvent with midGameRyuukyoku reason', () => {
+    const state = createInitializedRoom();
+
+    const eventMsg = {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        midGameRyuukyoku: {
+          name: 'suufon_renda',
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+
+    expect(nextState.ryuukyokuReason).toBe('suufon_renda');
+  });
+
+  it('should reset ryuukyokuReason on beginGameEvent', () => {
+    const state = createInitializedRoom();
+    state.ryuukyokuReason = 'suufon_renda';
+
+    const eventMsg = {
+      beginGameEvent: {
+        round: 1,
+        dealer: 0,
+        honba: 0,
+        riichiStick: 0,
+        remainingTiles: 122,
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+
+    expect(nextState.ryuukyokuReason).toBeNull();
+  });
+
+  it('should handle ryuukyokuEvent with single or multiple Nagashi Mangan players', () => {
+    const state = createInitializedRoom();
+
+    const eventMsg = {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        endGameRyuukyoku: {
+          remainingPlayers: [0, 1],
+          nagashiManganPlayers: [0, 1],
+          tenpaiPlayers: [],
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    const p1 = nextState.players.find((p) => p.seat === 1);
+
+    expect(p0?.gameState?.agari).not.toBeNull();
+    expect(p0?.gameState?.agari?.isNagashi).toBe(true);
+    expect(p0?.gameState?.agari?.scores?.items?.[0]?.Src).toBe('NagashiMangan');
+    expect(p0?.gameState?.agari?.scores?.items?.[0]?.Val).toBe(5);
+
+    expect(p1?.gameState?.agari).not.toBeNull();
+    expect(p1?.gameState?.agari?.isNagashi).toBe(true);
+    expect(p1?.gameState?.agari?.scores?.items?.[0]?.Src).toBe('NagashiMangan');
+    expect(p1?.gameState?.agari?.scores?.items?.[0]?.Val).toBe(5);
+  });
+
+  it('should handle ryuukyokuEvent with tenpai players and reveal their hand tiles', () => {
+    const state = createInitializedRoom();
+    const alice = state.players.find((p) => p.seat === 0)!;
+    alice.gameState!.hand.freeTiles = [
+      { traceId: 1, tile: 0 },
+      { traceId: 2, tile: 0 },
+    ];
+
+    const eventMsg = {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        endGameRyuukyoku: {
+          remainingPlayers: [0, 1],
+          nagashiManganPlayers: [],
+          tenpaiPlayers: [0],
+          revealedTiles: [
+            { traceId: 1, tile: 17, playerId: 0 },
+            { traceId: 2, tile: 18, playerId: 0 },
+          ],
+          tenpaiPlayersWaits: [{ playerId: 0, waits: [17, 18] }],
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+    const p0 = nextState.players.find((p) => p.seat === 0)!;
+    const p1 = nextState.players.find((p) => p.seat === 1)!;
+
+    expect(p0.gameState?.agari?.isTenpai).toBe(true);
+    expect(p0.gameState?.hand.freeTiles).toEqual([
+      { traceId: 1, tile: 17, playerId: 0 },
+      { traceId: 2, tile: 18, playerId: 0 },
+    ]);
+    // remainingCount is derived client-side: each winning tile (17, 18) appears
+    // once in the revealed hand, so 4 - 1 = 3 copies remain.
+    expect(p0.gameState?.awaitedTiles).toEqual([
+      {
+        winningTile: 17,
+        remainingCount: 3,
+        han: 0,
+        yakuHan: 0,
+        fu: 0,
+        yakuman: 0,
+        points: 0,
+      },
+      {
+        winningTile: 18,
+        remainingCount: 3,
+        han: 0,
+        yakuHan: 0,
+        fu: 0,
+        yakuman: 0,
+        points: 0,
+      },
+    ]);
+
+    expect(p1.gameState?.agari?.isTenpai).toBeFalsy();
+    expect(p1.gameState?.awaitedTiles).toBeUndefined();
+  });
+
+  it('should sort revealed tiles in ryuukyokuEvent even if dummy tiles were in different order', () => {
+    const state = createInitializedRoom();
+    const alice = state.players.find((p) => p.seat === 0)!;
+    // Dummy tiles in hand are in order traceId 2, 1
+    alice.gameState!.hand.freeTiles = [
+      { traceId: 2, tile: 0 },
+      { traceId: 1, tile: 0 },
+    ];
+
+    const eventMsg = {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        endGameRyuukyoku: {
+          remainingPlayers: [0, 1],
+          nagashiManganPlayers: [],
+          tenpaiPlayers: [0],
+          // Revealed tiles are: traceId 1 is 17 (1m), traceId 2 is 18 (2m)
+          // Sorted order should be 17, 18 (traceId 1, 2)
+          revealedTiles: [
+            { traceId: 2, tile: 18, playerId: 0 },
+            { traceId: 1, tile: 17, playerId: 0 },
+          ],
+        },
+      },
+    };
+
+    const nextState = applyEvent(state, eventMsg);
+    const p0 = nextState.players.find((p) => p.seat === 0)!;
+
+    expect(p0.gameState?.hand.freeTiles).toEqual([
+      { traceId: 1, tile: 17, playerId: 0 },
+      { traceId: 2, tile: 18, playerId: 0 },
+    ]);
   });
 
   it('keeps the winner result through the full end-of-hand sequence', () => {
@@ -1044,6 +1708,56 @@ describe('Reducer - Room State', () => {
     expect(nextState?.players[0]?.gameState).not.toBeNull();
     expect(nextState?.players[0]?.gameState?.points).toBe(25000);
   });
+
+  it('should preserve gameEnded, endGamePoints and concludedPlayers flags when applying room state', () => {
+    const concludedPlayers = [...createInitializedRoom().players];
+    const initialState: RoomModel = {
+      ...createInitializedRoom(),
+      gameEnded: true,
+      endGamePoints: [30000, 20000],
+      concludedPlayers,
+    };
+
+    const roomState: IServerRoomStateMsg = {
+      id: 1234,
+      players: [
+        {
+          id: 0,
+          nickname: 'Alice',
+          status: UserStatus.USER_STATUS_READY,
+          seat: 0,
+        },
+      ],
+    };
+
+    const nextState = applyRoomState(initialState, roomState);
+
+    expect(nextState?.gameEnded).toBe(true);
+    expect(nextState?.endGamePoints).toEqual([30000, 20000]);
+    expect(nextState?.concludedPlayers).toEqual(concludedPlayers);
+  });
+
+  it('should preserve gameId when applying room state', () => {
+    const initialState: RoomModel = {
+      ...createInitializedRoom(),
+      gameId: '20260709T120000-1001',
+    };
+
+    const roomState: IServerRoomStateMsg = {
+      id: 1234,
+      players: [
+        {
+          id: 0,
+          nickname: 'Alice',
+          status: UserStatus.USER_STATUS_READY,
+          seat: 0,
+        },
+      ],
+    };
+
+    const nextState = applyRoomState(initialState, roomState);
+    expect(nextState?.gameId).toBe('20260709T120000-1001');
+  });
 });
 
 describe('Reducer - Replay coverage (F3)', () => {
@@ -1102,7 +1816,9 @@ describe('Reducer - Replay coverage (F3)', () => {
         status: UserStatus.USER_STATUS_PLAYING,
         seat,
         gameState: null,
+        aiType: AiType.AI_TYPE_NONE,
       })),
+      tileRegistry: createEmptyTileRegistry(),
     };
 
     expect(() => {

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { TileSource } from '../proto';
 import type { IMenLikeMsg, IGameTileMsg } from '../proto';
 import { Tile3D } from './Tile3D';
 import { Tile } from '../domain/tile';
@@ -81,10 +82,9 @@ export function Melds3D({
           });
           totalMeldWidth = currentX - tileGap;
         } else {
-          // We have a called tile. Check if Kakan.
           const isKakan =
             tiles.length === 4 &&
-            tiles.some((t) => t.formTime !== tiles[0]?.formTime);
+            tiles.some((t) => t.source === TileSource.TILE_SOURCE_KAKAN);
 
           let orderedTiles: IGameTileMsg[];
           let addedTile: IGameTileMsg | null = null;

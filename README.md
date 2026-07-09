@@ -7,6 +7,13 @@
 The web client of [RabiRiichi](https://github.com/RabiMimi/RabiRiichi), built as
 a 3D browser game on top of the open-source gRPC server implementation.
 
+## Servers
+
+| Environment | Address                                                    |
+| ----------- | ---------------------------------------------------------- |
+| Production  | [RabiRiichi 兔兔立直](https://riichi.rabimimi.com)         |
+| Development | [RabiRiichi-dev 兔兔开发](https://riichi-dev.rabimimi.com) |
+
 ## Tech Stack
 
 - **[Vite](https://vite.dev/)** — dev server and bundler.

@@ -144,3 +144,80 @@ export function stringToTiles(str: string): Tile[] {
   }
   return tiles;
 }
+
+/**
+ * Calculates the winning Dora target tile parameters based on a Dora indicator.
+ */
+export function getDoraTargetForIndicator(indicator: Tile): {
+  num: number;
+  suit: TileSuit;
+} {
+  const suit = indicator.suit;
+  let num = indicator.num;
+
+  if (suit === TileSuit.Z) {
+    if (num >= 1 && num <= 4) {
+      // Winds: East (1z) -> South (2z) -> West (3z) -> North (4z) -> East (1z)
+      num = num === 4 ? 1 : num + 1;
+    } else if (num >= 5 && num <= 7) {
+      // Dragons: White (5z) -> Green (6z) -> Red (7z) -> White (5z)
+      num = num === 7 ? 5 : num + 1;
+    }
+  } else if (suit !== TileSuit.Invalid) {
+    // Numbered suits: 1 -> 2 -> ... -> 9 -> 1
+    num = num === 9 ? 1 : num + 1;
+  }
+  return { num, suit };
+}
+
+/**
+ * Checks if a given tile is a Dora, given a set of active Dora indicators.
+ * A tile is Dora if it matches any indicator's target, or if it is an Akadora (red 5).
+ */
+export function checkIsDora(tile: Tile, indicators: readonly Tile[]): boolean {
+  if (tile.akadora) {
+    return true;
+  }
+  for (const ind of indicators) {
+    const target = getDoraTargetForIndicator(ind);
+    if (tile.suit === target.suit && tile.num === target.num) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Determines if discarding a specific tile will result in a Furiten state.
+ *
+ * @param tileVal The byte value of the tile being discarded.
+ * @param winningWaits The resulting winning waits (tenpai info winning tiles).
+ * @param discardedTiles The player's existing discard pile tiles (including claimed ones).
+ * @param isAlreadyFuriten Whether the player is already in a permanent furiten state.
+ */
+export function checkDiscardResultsInFuriten(
+  tileVal: number,
+  winningWaits: readonly number[],
+  discardedTiles: readonly number[],
+  isAlreadyFuriten: boolean,
+): boolean {
+  if (isAlreadyFuriten) {
+    return true;
+  }
+
+  const normalizedDiscard = tileVal & 0x7f;
+
+  for (const wait of winningWaits) {
+    const normalizedWait = wait & 0x7f;
+    // 1. If we discard a tile that matches one of our winning waits
+    if (normalizedDiscard === normalizedWait) {
+      return true;
+    }
+    // 2. If any of our winning waits is already in our discard pile
+    if (discardedTiles.some((d) => (d & 0x7f) === normalizedWait)) {
+      return true;
+    }
+  }
+
+  return false;
+}

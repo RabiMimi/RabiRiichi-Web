@@ -1,6 +1,6 @@
 {
   "connect": {
-    "subtitle": "3D browser mahjong client",
+    "subtitle": "Open Source 3D Browser Riichi Mahjong Client",
     "serverAddress": "Server Address",
     "nickname": "Nickname",
     "nicknamePlaceholder": "Enter your nickname",
@@ -9,11 +9,17 @@
     "urlError": "URL must start with ws:// or wss://",
     "nicknameError": "Nickname cannot be empty",
     "officialServer": "Rabimimi",
+    "devServer": "Rabimimi Dev ❤️",
     "localServer": "Local (localhost:5150)",
     "customServer": "Custom Server Address",
     "serverNamePlaceholder": "Enter server name",
     "saveServer": "Save Server",
-    "removeServer": "Remove Server"
+    "removeServer": "Remove Server",
+    "serverVersionUnsupported": "Server version is not supported",
+    "versionErrorServerTooOld": "Server version too old ({{serverVersion}} < {{minServerVersion}})",
+    "versionErrorClientTooOld": "Client version too old ({{clientVersion}} < {{minClientVersion}})",
+    "versionErrorMissingFields": "Missing version check fields",
+    "versionErrorValidationFailed": "Version validation failed"
   },
   "lobby": {
     "title": "Lobby",
@@ -24,15 +30,34 @@
     "joinRoom": "Join Room",
     "joinRoomLabel": "Join Existing Room",
     "logout": "Logout",
+    "viewReplay": "View Replay",
     "roomSettings": "Room Settings",
+    "seed": "Seed",
+    "auto": "Auto",
+    "gameSettings": "Game Settings",
+    "pointsSettings": "Points Settings",
     "advancedSettings": "Advanced Settings",
     "players": "Players",
     "rounds": "Rounds",
     "minHan": "Min Han",
     "actionTimeout": "Action Timeout",
-    "timeoutError": "Timeout must be between 5 and 3600 seconds",
-    "minHanError": "Min Han must be between 1 and 13",
-    "defaultPlaceholder": "Default: {{value}}s"
+    "nextRoundAckTimeout": "Result Timeout",
+    "defaultPlaceholder": "Default: {{value}}s",
+    "initialPoints": "Starting Points",
+    "finishPoints": "Target Points",
+    "upperPoints": "Tenpen Upper Limit",
+    "riichiPoints": "Riichi Points",
+    "honbaPoints": "Honba Points",
+    "ryuukyokuPoints": "Ryuukyoku Points",
+    "tileSet": "Tile Set",
+    "configureYakus": "Configure Yakus",
+    "allYakus": "All",
+    "yakus": "Yakus",
+    "selectAll": "Select All",
+    "selectNone": "Select None",
+    "clientRepo": "Client Repo (Vite + TS)",
+    "serverRepo": "Server Repo (.NET)",
+    "build": "Client Version: {{commit}}"
   },
   "playersOpt": {
     "2": "2-Player Game",
@@ -42,6 +67,20 @@
   "roundsOpt": {
     "1": "East Only (Tonpuu)",
     "2": "East-South (Hanchan)"
+  },
+  "tileSetOpt": {
+    "regular": "Regular (136 tiles)",
+    "sanma": "Sanma (108 tiles)",
+    "twoSets": "2 Sets (272 tiles)",
+    "onlySZ": "Only Sou & Honor (64 tiles)"
+  },
+  "yakuGroup": {
+    "1han": "1 Han",
+    "2han": "2 Han",
+    "3han": "3 Han",
+    "6han": "6 Han",
+    "yakuman": "Yakuman",
+    "other": "Other"
   },
   "hanOpt": {
     "1": "1 Han",
@@ -55,6 +94,9 @@
     "seat": "Seat: {{seat}}",
     "seatAssigning": "Assigning...",
     "updating": "Updating...",
+    "emptySeat": "Empty Seat",
+    "addAi": "Add AI",
+    "kickAi": "Kick",
     "status": {
       "ready": "Ready",
       "waiting": "Waiting",
@@ -76,14 +118,62 @@
     "honbaSuffix": " Honba",
     "riichiSuffix": " Riichi",
     "remainingTiles": "Wall Tiles: {{count}}",
+    "roundInfoTemplate": "{{wind}} {{round}} - {{honba}} Honba",
+    "gameInfo": "Game Info",
+    "tabLiveInfo": "Live Info",
+    "tabConfig": "Config",
+    "tabYakuYama": "Yaku & Yama",
+    "roomId": "Room ID",
+    "gameId": "Game ID",
+    "copyGameId": "Copy Game ID",
+    "copied": "Copied!",
+    "roundLabel": "Round",
+    "dealerLabel": "Dealer",
+    "activePlayerLabel": "Active Player",
+    "turnJunLabel": "Turn (Jun)",
+    "wallLabel": "Wall",
+    "honbaLabel": "Honba",
+    "riichiLabel": "Riichi",
+    "playersCount": "Players ({{count}})",
+    "pointsLabel": "Points",
+    "statusLabel": "Status",
+    "rulesAndPolicies": "Rules & Policies",
+    "activePlayer": "Active Player",
+    "turnJun": "Turn (Jun)",
+    "exitGame": "Exit Game",
+    "confirmExit": "Are you sure you want to exit the game?",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "lockCamera": "Lock Camera View",
+    "unlockCamera": "Unlock Camera View",
+    "allowedYakus": "Allowed Yakus",
+    "startingYama": "Starting Yama",
     "timerLabel": "Your Turn",
     "timerWaiting": "Waiting for others...",
     "declareRiichi": "Select a tile to discard for Riichi",
     "cancelRiichi": "Cancel Riichi",
+    "furiten": "Furiten",
+    "tilesRemaining": " left",
+    "han": " Han",
+    "points": "pts",
+    "yakuman": "Yakuman",
+    "yakuRequired": "No Yaku",
+    "minHanRequired": "Min Han Required",
+    "tenpaiWaits": "Tenpai Waits",
+    "tenpai": "Ten",
+    "autoAgari": "Auto Win",
+    "autoAgariDesc": "Automatically declare Win (Ron/Tsumo) when available",
+    "noCalls": "No Calls",
+    "noCallsDesc": "Never claim discards from other players (Chii/Pon/Kan)",
+    "autoDiscard": "Auto Discard",
+    "autoDiscardDesc": "Automatically discard drawn tile if no other actions are possible",
+    "autoNuki": "Auto Nuki",
+    "autoNukiDesc": "Automatically declare Kita (Nukidora) if available",
     "action": {
       "chii": "Chii",
       "pon": "Pon",
       "kan": "Kan",
+      "nukidora": "North",
       "riichi": "Riichi",
       "ron": "Ron",
       "tsumo": "Tsumo",
@@ -94,6 +184,10 @@
   "result": {
     "draw": "Draw",
     "agari": "Agari",
+    "dora": "Dora Indicator",
+    "uradora": "Ura Dora Indicator",
+    "mangan": "Mangan",
+    "river": "Discards",
     "winner": "Winner",
     "scoreChanges": "Score Changes",
     "confirm": "Confirm",
@@ -101,15 +195,37 @@
     "points": "{{count}} pts",
     "han": "{{count}} Han",
     "fu": "{{count}} Fu",
+    "haneman": "Haneman",
+    "baiman": "Baiman",
+    "sanbaiman": "Sanbaiman",
     "yakuman": "Yakuman",
     "multipleYakuman": "{{count}}x Yakuman",
-    "fuAndHan": "{{fu}} Fu {{han}} Han",
+    "multipleYakuman_2": "Double Yakuman",
+    "multipleYakuman_3": "Triple Yakuman",
+    "multipleYakuman_4": "Quadruple Yakuman",
+    "multipleYakuman_5": "Quintuple Yakuman",
+    "fuAndHan": "{{han}} Han {{fu}} Fu",
+    "limitPrefixed": "{{limit}} {{han}} Han {{fu}} Fu",
+    "limitPrefixedHanOnly": "{{limit}} {{han}} Han",
     "winnerBadge": "Winner",
     "winTile": "Win",
+    "tenpai": "Tenpai",
+    "tenpaiWaits": "Waits",
     "scoreChangesTitle": "Score Changes",
     "confirmWithTime": "Confirm ({{seconds}}s)",
     "waitingForNext": "Waiting...",
-    "waitingForNextRound": "Waiting for the next round..."
+    "waitingForNextRound": "Waiting for the next round...",
+    "finalTitle": "Game Concluded",
+    "returnToRoom": "Return to Room",
+    "showFinalResults": "Show Game Results",
+    "ryuukyoku": {
+      "suufon_renda": "Four Winds Discard Draw",
+      "kyuushu_kyuuhai": "Nine Orphans Draw",
+      "suucha_riichi": "Four Riichi Draw",
+      "triple_ron": "Triple Ron Draw",
+      "suukan_sanra": "Four Kan Draw",
+      "end_game_ryuukyoku": "Draw"
+    }
   },
   "advanced": {
     "renchanPolicy": "Renchan Policy",
@@ -121,6 +237,7 @@
     "scoringOption": "Scoring Options",
     "ryuukyokuTrigger": "Mid-Game Draws",
     "pointsDeductionPolicy": "Skill Points Deduction",
+    "none": "None",
     "renchan": {
       "dealerWin": "Dealer wins continuous turn",
       "dealerTenpai": "Dealer tenpai continuous turn",
@@ -150,20 +267,21 @@
       "kanUradora": "Kan Ura Dora",
       "instantDaiMinKan": "Instant Dora on Open Kan",
       "instantKaKan": "Instant Dora on Added Kan",
-      "instantAnKan": "Instant Dora on Closed Kan"
+      "instantAnKan": "Instant Dora on Closed Kan",
+      "nukiDora": "Nukidora (Pull North)"
     },
     "agari": {
-      "kuitan": "Allow Kuitan (Open Tanyao)",
-      "pao": "Enable Pao (Responsibility)",
+      "kuitan": "Allow Kuitan",
+      "pao": "Enable Pao",
       "nagashiMangan": "Enable Nagashi Mangan",
-      "firstWinner": "Enable Head Bump (No Multi-Win)"
+      "firstWinner": "Enable Head Bump"
     },
     "scoring": {
       "kiriageMangan": "Enable Kiriage Mangan",
-      "aotenjou": "Enable Aotenjou (Green Ceiling)",
+      "aotenjou": "Enable Aotenjou",
       "yakuman": "Enable Yakuman",
       "multipleYakuman": "Enable Multiple Yakuman",
-      "kazoeYakuman": "Enable Kazoe Yakuman (Counted)"
+      "kazoeYakuman": "Enable Kazoe Yakuman"
     },
     "ryuukyoku": {
       "suufonRenda": "Four Winds Discard Draw",
@@ -174,8 +292,8 @@
     },
     "deduction": {
       "alwaysAllow": "Always Allow",
-      "sufficientPoints": "Prevent Bust (Cannot drop below limit)",
-      "validPoints": "Bust Protection (Must start in range)",
+      "sufficientPoints": "Prevent Bust",
+      "validPoints": "Bust Protection",
       "alwaysBlock": "Always Block"
     }
   },
@@ -214,6 +332,7 @@
     "Akadora": "Red Dora",
     "Dora": "Dora",
     "Uradora": "Ura Dora",
+    "NukiDora": "Nukidora",
     "fu": "Fu",
     "Chiihou": "Earthly Hand",
     "Chinroutou": "All Terminals",
@@ -231,6 +350,92 @@
     "Tenhou": "Heavenly Hand",
     "Tsuuiisou": "All Honors",
     "IshiueSannen": "Four Years on a Stone",
-    "HelloWorld": "Hello World"
+    "HelloWorld": "Hello World",
+    "NagashiMangan": "Nagashi Mangan"
+  },
+  "ai": {
+    "type": {
+      "AI_TYPE_NONE": "",
+      "AI_TYPE_DUMMY": "Drooling Rabbit",
+      "AI_TYPE_RULE_BASED": "Nodocchi"
+    }
+  },
+  "orientation": {
+    "rotatePrompt": "Please rotate your device to landscape to play!"
+  },
+  "error": {
+    "lobby": {
+      "playerCount": "Player count must be between 2 and 4.",
+      "totalRound": "Total rounds must be 1 or 2.",
+      "minHan": "Min Han must be between 1 and 13.",
+      "timeout": "Timeout must be between 5 and 3600 seconds.",
+      "nextRoundAckTimeout": "Result timeout must be between 5 and 3600 seconds.",
+      "tileSet": "Selected tile set has insufficient tiles ({{count}}) for {{players}} players. At least {{min}} are required.",
+      "initialPoints": "Starting points must be between 0 and 1,000,000.",
+      "finishPoints": "Target points must be between 0 and 1,000,000.",
+      "riichiPoints": "Riichi points must be between 0 and 1,000,000.",
+      "honbaPoints": "Honba points must be between 0 and 1,000,000.",
+      "ryuukyokuPoints": "Ryuukyoku points must contain 2 values, each between 0 and 1,000,000.",
+      "pointsRange": "Points limit must be between 0 and 1,000,000.",
+      "generic": "Invalid game configuration."
+    },
+    "server": {
+      "InvalidArgument": {
+        "invalidGameId": "Invalid Game ID",
+        "invalidAiType": "Invalid or unsupported AI type",
+        "generic": "Invalid argument"
+      },
+      "NotFound": {
+        "replayNotFound": "Replay not found",
+        "playerNotFound": "Player not found in room",
+        "generic": "Not found"
+      },
+      "PermissionDenied": {
+        "onlyOwnerCanAddAi": "Only the room owner can add AI",
+        "onlyOwnerCanRemovePlayer": "Only the room owner can remove players",
+        "generic": "Permission denied"
+      },
+      "FailedPrecondition": {
+        "userNotInRoom": "User is not in a room",
+        "cannotRemovePlayer": "Cannot remove player from room",
+        "generic": "Failed precondition"
+      },
+      "ResourceExhausted": {
+        "serverBusy": "Server is busy",
+        "generic": "Resource exhausted"
+      },
+      "Internal": {
+        "cannotAddUser": "Cannot add user",
+        "cannotAddAi": "Cannot add AI to room",
+        "generic": "Internal server error"
+      },
+      "Unauthenticated": {
+        "userDoesNotExist": "User does not exist",
+        "generic": "Unauthenticated"
+      },
+      "generic": "Server error"
+    }
+  },
+  "replay": {
+    "play": "Play",
+    "pause": "Pause",
+    "stepBackward": "Step Backward",
+    "stepForward": "Step Forward",
+    "perspective": "Perspective",
+    "modalTitle": "View Replay",
+    "gameIdLabel": "Game ID",
+    "gameIdPlaceholder": "Enter Game ID...",
+    "load": "Load",
+    "cancel": "Cancel",
+    "fetchError": "Failed to fetch replay: {{message}}",
+    "viewReplay": "View Replay",
+    "initialWallTitle": "Initial Wall",
+    "legend": "Legend",
+    "initialHand": "Initial Hand",
+    "tileDrawn": "Drawn",
+    "tileInWall": "In Wall",
+    "noWallData": "Initial wall data is not available in this replay log.",
+    "wallSide": "{{side}} Wall",
+    "wanpai": "Dead Wall (Wanpai)"
   }
 }

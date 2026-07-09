@@ -70,11 +70,11 @@ export function TableCenter(): React.JSX.Element | null {
   );
   const activeRotation = getSeatRotation(activeScreenPos);
 
-  // Round wind texture (East = rounds 0-3, South = rounds 4-7, West = 8-11, North = 12-15)
-  const roundWindIdx = Math.floor(round / 4) % 4;
+  // Round wind texture (East = 0, South = 1, West = 2, North = 3)
+  const roundWindIdx = round % 4;
   const windTexture = [windE, windS, windW, windN][roundWindIdx] ?? windE;
 
-  const roundNum = (round % 4) + 1;
+  const roundNum = dealer + 1;
 
   return (
     // Slightly elevated above table top (y=0) to prevent z-fighting
@@ -167,10 +167,10 @@ export function TableCenter(): React.JSX.Element | null {
           <group key={p.id} rotation={[0, rotY, 0]}>
             {/* Score Text (centered horizontally, pushed inwards to avoid lines) */}
             <DreiText
-              position={[0, 0.004, 0.32]}
+              position={[0, 0.004, 0.3]}
               rotation={[-Math.PI / 2, 0, 0]}
-              fontSize={0.07}
-              color={isTimerActive ? '#ffcc00' : '#ffffff'}
+              fontSize={0.1}
+              color={isTimerActive ? '#ff7a99' : '#ffffff'}
               anchorX="center"
               anchorY="middle"
               font={ROBOTO_FONT_PATH}

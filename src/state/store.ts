@@ -1,8 +1,10 @@
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore, useMemo } from 'react';
 import { rabiriichi } from '../net/client';
 import type { ConnectionStatus, ActiveInquiry } from '../net/client';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import type { ActionOption } from '../domain/inquiry';
+import type { YakuInfo } from '../domain/yakus';
+import { Tile } from '../domain/tile';
 
 // Note: GameState is folded into RoomModel (specifically via RoomModel.info and players[].gameState)
 export interface RabiRiichiState {
@@ -17,6 +19,19 @@ export interface RabiRiichiState {
   actionTimeout: number;
   timerActiveSeat: number | null;
   ping: number;
+  selectedTileTraceId: number | null;
+  hoveredTileTraceId: number | null;
+  isCameraLocked: boolean;
+  resultAnimation: 'agari' | 'ryuukyoku' | null;
+  isReplay: boolean;
+  isReplayPaused: boolean;
+  replayProgress: number;
+  replayTotal: number;
+  hasInMemoryResult: boolean;
+  autoAgari: boolean;
+  noCalls: boolean;
+  autoDiscard: boolean;
+  autoNuki: boolean;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -38,7 +53,20 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.isWaitingForProceed !== rabiriichi.isWaitingForProceed ||
     lastSnapshot.actionTimeout !== rabiriichi.actionTimeout ||
     lastSnapshot.timerActiveSeat !== rabiriichi.timerActiveSeat ||
-    lastSnapshot.ping !== rabiriichi.ping
+    lastSnapshot.ping !== rabiriichi.ping ||
+    lastSnapshot.selectedTileTraceId !== rabiriichi.selectedTileTraceId ||
+    lastSnapshot.hoveredTileTraceId !== rabiriichi.hoveredTileTraceId ||
+    lastSnapshot.isCameraLocked !== rabiriichi.isCameraLocked ||
+    lastSnapshot.resultAnimation !== rabiriichi.resultAnimation ||
+    lastSnapshot.isReplay !== rabiriichi.isReplay ||
+    lastSnapshot.isReplayPaused !== rabiriichi.isReplayPaused ||
+    lastSnapshot.replayProgress !== rabiriichi.replayProgress ||
+    lastSnapshot.replayTotal !== rabiriichi.replayTotal ||
+    lastSnapshot.hasInMemoryResult !== rabiriichi.hasInMemoryResult ||
+    lastSnapshot.autoAgari !== rabiriichi.autoAgari ||
+    lastSnapshot.noCalls !== rabiriichi.noCalls ||
+    lastSnapshot.autoDiscard !== rabiriichi.autoDiscard ||
+    lastSnapshot.autoNuki !== rabiriichi.autoNuki
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -52,6 +80,19 @@ function getSnapshot(): RabiRiichiState {
       actionTimeout: rabiriichi.actionTimeout,
       timerActiveSeat: rabiriichi.timerActiveSeat,
       ping: rabiriichi.ping,
+      selectedTileTraceId: rabiriichi.selectedTileTraceId,
+      hoveredTileTraceId: rabiriichi.hoveredTileTraceId,
+      isCameraLocked: rabiriichi.isCameraLocked,
+      resultAnimation: rabiriichi.resultAnimation,
+      isReplay: rabiriichi.isReplay,
+      isReplayPaused: rabiriichi.isReplayPaused,
+      replayProgress: rabiriichi.replayProgress,
+      replayTotal: rabiriichi.replayTotal,
+      hasInMemoryResult: rabiriichi.hasInMemoryResult,
+      autoAgari: rabiriichi.autoAgari,
+      noCalls: rabiriichi.noCalls,
+      autoDiscard: rabiriichi.autoDiscard,
+      autoNuki: rabiriichi.autoNuki,
     };
   }
   return lastSnapshot;
@@ -65,6 +106,10 @@ const getIsRiichiSelectMode = () => rabiriichi.isRiichiSelectMode;
 const getPendingActionOption = () => rabiriichi.pendingActionOption;
 const getAnimationSpeed = () => rabiriichi.animationSpeed;
 const getIsWaitingForProceed = () => rabiriichi.isWaitingForProceed;
+const getIsReplay = () => rabiriichi.isReplay;
+const getIsReplayPaused = () => rabiriichi.isReplayPaused;
+const getReplayProgress = () => rabiriichi.replayProgress;
+const getReplayTotal = () => rabiriichi.replayTotal;
 
 export function useRabiRiichiState(): RabiRiichiState {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -80,6 +125,22 @@ export function useIsWaitingForProceed(): boolean {
     getIsWaitingForProceed,
     getIsWaitingForProceed,
   );
+}
+
+export function useIsReplay(): boolean {
+  return useSyncExternalStore(subscribe, getIsReplay, getIsReplay);
+}
+
+export function useIsReplayPaused(): boolean {
+  return useSyncExternalStore(subscribe, getIsReplayPaused, getIsReplayPaused);
+}
+
+export function useReplayProgress(): number {
+  return useSyncExternalStore(subscribe, getReplayProgress, getReplayProgress);
+}
+
+export function useReplayTotal(): number {
+  return useSyncExternalStore(subscribe, getReplayTotal, getReplayTotal);
 }
 
 export function useConnectionStatus(): ConnectionStatus {
@@ -140,6 +201,125 @@ export function useTimerActiveSeat(): number | null {
     () => rabiriichi.timerActiveSeat,
     () => rabiriichi.timerActiveSeat,
   );
+}
+
+const getSelectedTileTraceId = () => rabiriichi.selectedTileTraceId;
+const getIsCameraLocked = () => rabiriichi.isCameraLocked;
+
+export function useSelectedTileTraceId(): number | null {
+  return useSyncExternalStore(
+    subscribe,
+    getSelectedTileTraceId,
+    getSelectedTileTraceId,
+  );
+}
+
+const getHoveredTileTraceId = () => rabiriichi.hoveredTileTraceId;
+
+export function useHoveredTileTraceId(): number | null {
+  return useSyncExternalStore(
+    subscribe,
+    getHoveredTileTraceId,
+    getHoveredTileTraceId,
+  );
+}
+
+export function useIsCameraLocked(): boolean {
+  return useSyncExternalStore(subscribe, getIsCameraLocked, getIsCameraLocked);
+}
+
+const getAvailableYakus = () => rabiriichi.availableYakus;
+
+export function useAvailableYakus(): YakuInfo[] {
+  return useSyncExternalStore(subscribe, getAvailableYakus, getAvailableYakus);
+}
+
+export function useHasInMemoryResult(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.hasInMemoryResult,
+    () => rabiriichi.hasInMemoryResult,
+  );
+}
+
+export function useResultAnimation(): 'agari' | 'ryuukyoku' | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.resultAnimation,
+    () => rabiriichi.resultAnimation,
+  );
+}
+
+export function useAutoAgari(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.autoAgari,
+    () => rabiriichi.autoAgari,
+  );
+}
+
+export function useNoCalls(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.noCalls,
+    () => rabiriichi.noCalls,
+  );
+}
+
+export function useAutoDiscard(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.autoDiscard,
+    () => rabiriichi.autoDiscard,
+  );
+}
+
+export function useAutoNuki(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.autoNuki,
+    () => rabiriichi.autoNuki,
+  );
+}
+
+const getActiveComparisonTile = (): string | null => {
+  const room = rabiriichi.room;
+  const hoveredTraceId = rabiriichi.hoveredTileTraceId;
+  const selectedTraceId = rabiriichi.selectedTileTraceId;
+  const traceId = hoveredTraceId ?? selectedTraceId;
+  if (traceId == null || !room?.tileRegistry) return null;
+  const tileMsg = room.tileRegistry.get(traceId);
+  if (tileMsg?.tile == null) return null;
+  try {
+    return Tile.fromByte(tileMsg.tile).toString();
+  } catch {
+    return null;
+  }
+};
+
+export function useActiveComparisonTile(): string | null {
+  return useSyncExternalStore(
+    subscribe,
+    getActiveComparisonTile,
+    getActiveComparisonTile,
+  );
+}
+
+export function useDoraIndicators(): Tile[] {
+  const room = useRoom();
+  return useMemo(() => {
+    if (!room?.info?.doras) return [];
+    return room.info.doras
+      .map((doraMsg) => {
+        if (doraMsg.tile === null || doraMsg.tile === undefined) return null;
+        try {
+          return Tile.fromByte(doraMsg.tile);
+        } catch {
+          return null;
+        }
+      })
+      .filter((t): t is Tile => t !== null);
+  }, [room]);
 }
 
 function resetForTest(): void {

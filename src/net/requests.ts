@@ -5,6 +5,9 @@ import type {
   IServerResponse,
   IServerRoomStateResponse,
   IGameConfigMsg,
+  IGetInfoResponse,
+  AiType,
+  IGameLogMsg,
 } from '../proto';
 import { RabiError, ServerError } from '../lib';
 import { type RabiSocket } from '../transport/rabiSocket';
@@ -88,5 +91,68 @@ export function getUserInfo(ws: RabiSocket): Promise<IUserInfoResponse> {
       },
     },
     (resp) => resp.userInfo,
+  );
+}
+
+export function getInfo(ws: RabiSocket): Promise<IGetInfoResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        getInfo: {},
+      },
+    },
+    (resp) => resp.getInfo,
+  );
+}
+
+export function addAi(
+  ws: RabiSocket,
+  type: AiType,
+): Promise<IServerRoomStateResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        addAi: {
+          type,
+        },
+      },
+    },
+    (resp) => resp.roomState,
+  );
+}
+
+export function removeRoomPlayer(
+  ws: RabiSocket,
+  id: number,
+): Promise<IServerRoomStateResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        removeRoomPlayer: {
+          id,
+        },
+      },
+    },
+    (resp) => resp.roomState,
+  );
+}
+
+export function getReplay(
+  ws: RabiSocket,
+  gameId: string,
+): Promise<IGameLogMsg> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        getReplay: {
+          gameId,
+        },
+      },
+    },
+    (resp) => resp.replay,
   );
 }

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { useRoom, useSelf } from '../state/store';
-import { UserStatus } from '../proto';
+import { UserStatus, AiType } from '../proto';
 import { pollUntil } from '../lib';
+import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
 import './ui.css';
 
 export function RoomScreen(): React.JSX.Element | null {
@@ -12,6 +13,7 @@ export function RoomScreen(): React.JSX.Element | null {
   const currentUser = useSelf();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAiDropdown, setShowAiDropdown] = useState(false);
 
   if (!room || !currentUser) {
     return null;
@@ -20,6 +22,46 @@ export function RoomScreen(): React.JSX.Element | null {
   // Find our own player object in the room to check our status
   const myPlayer = room.players.find((p) => p.id === currentUser.id);
   const isReady = myPlayer?.status === UserStatus.USER_STATUS_READY;
+
+  const humanPlayers = room.players.filter(
+    (p) => p.aiType === AiType.AI_TYPE_NONE,
+  );
+  const sortedHumans = [...humanPlayers].sort(
+    (a, b) => (a.seat ?? 0) - (b.seat ?? 0),
+  );
+  const isOwner =
+    sortedHumans.length > 0 && sortedHumans[0]?.id === currentUser.id;
+
+  const maxPlayers = room.config?.playerCount ?? 4;
+  const seats = Array.from({ length: maxPlayers }, (_, index) => {
+    return room.players[index];
+  });
+  const firstEmptySeatIndex = seats.findIndex((p) => p === undefined);
+
+  const handleAddAi = async (aiType: AiType) => {
+    setError(null);
+    setIsLoading(true);
+    setShowAiDropdown(false);
+    try {
+      await rabiriichi.addAi(aiType);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add AI');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemovePlayer = async (id: number) => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await rabiriichi.removeRoomPlayer(id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove player');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleToggleReady = async () => {
     setError(null);
@@ -72,10 +114,12 @@ export function RoomScreen(): React.JSX.Element | null {
   };
 
   // Helper to render a placeholder avatar or initials
-  const renderAvatar = (nickname: string) => {
-    const initials = nickname.slice(0, 2).toUpperCase();
+  const renderAvatar = (player: PlayerModel) => {
+    const isAi = player.aiType !== AiType.AI_TYPE_NONE;
+    const displayName = getPlayerDisplayName(player, t);
+    const initials = isAi ? 'AI' : displayName.slice(0, 2).toUpperCase();
     return (
-      <div className="player-avatar-placeholder" title={nickname}>
+      <div className="player-avatar-placeholder" title={displayName}>
         {initials}
       </div>
     );
@@ -88,38 +132,121 @@ export function RoomScreen(): React.JSX.Element | null {
 
         {error && <div className="ui-error">{error}</div>}
 
-        <div className="player-list">
-          {room.players.map((player) => {
-            const playerIsReady =
-              player.status === UserStatus.USER_STATUS_READY;
-            const isMe = player.id === currentUser.id;
-            return (
-              <div
-                key={player.id}
-                className={`player-card ${isMe ? 'is-me' : ''}`}
-              >
-                {renderAvatar(player.nickname)}
-                <div className="player-details">
-                  <div className="player-name">
-                    {player.nickname} {isMe && `(${t('lobby.you')})`}
-                  </div>
-                  <div className="player-seat">
-                    {player.seat !== undefined
-                      ? t('room.seat', { seat: player.seat })
-                      : t('room.seatAssigning')}
-                  </div>
-                </div>
+        <div
+          className={`player-list ${showAiDropdown ? 'has-open-dropdown' : ''}`}
+        >
+          {seats.map((player, index) => {
+            if (player) {
+              const playerIsReady =
+                player.status === UserStatus.USER_STATUS_READY;
+              const isMe = player.id === currentUser.id;
+              return (
                 <div
-                  className={`player-status-badge ${
-                    playerIsReady ? 'ready' : 'waiting'
+                  key={player.id}
+                  className={`player-card ${isMe ? 'is-me' : ''} ${
+                    player.aiType !== AiType.AI_TYPE_NONE ? 'is-ai' : ''
                   }`}
                 >
-                  {playerIsReady
-                    ? t('room.status.ready')
-                    : t('room.status.waiting')}
+                  {renderAvatar(player)}
+                  <div className="player-details">
+                    <div className="player-name">
+                      {getPlayerDisplayName(player, t)}{' '}
+                      {isMe && `(${t('lobby.you')})`}
+                      {player.aiType !== AiType.AI_TYPE_NONE && (
+                        <span
+                          className="ai-badge-text"
+                          title={t(`ai.type.${player.aiType}`)}
+                        >
+                          AI
+                        </span>
+                      )}
+                    </div>
+                    <div className="player-seat">
+                      {t('room.seat', { seat: index })}
+                    </div>
+                  </div>
+                  <div
+                    className={`player-status-badge ${
+                      playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
+                        ? 'ready'
+                        : 'waiting'
+                    }`}
+                  >
+                    {playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
+                      ? t('room.status.ready')
+                      : t('room.status.waiting')}
+                  </div>
+                  {isOwner && player.aiType !== AiType.AI_TYPE_NONE && (
+                    <button
+                      className="ui-button mini-button kick-ai-btn"
+                      onClick={() => void handleRemovePlayer(player.id)}
+                      disabled={isLoading}
+                      title={t('room.kickAi')}
+                    >
+                      {t('room.kickAi')}
+                    </button>
+                  )}
                 </div>
-              </div>
-            );
+              );
+            } else {
+              return (
+                <div
+                  key={`empty-${index}`}
+                  className={`player-card empty-seat ${
+                    showAiDropdown && index === firstEmptySeatIndex
+                      ? 'has-dropdown'
+                      : ''
+                  }`}
+                >
+                  <div className="player-avatar-placeholder empty">?</div>
+                  <div className="player-details">
+                    <div className="player-name empty-text">
+                      {t('room.emptySeat')}
+                    </div>
+                    <div className="player-seat">
+                      {t('room.seat', { seat: index })}
+                    </div>
+                  </div>
+                  {isOwner && index === firstEmptySeatIndex && (
+                    <div className="add-ai-container">
+                      <button
+                        className="ui-button mini-button add-ai-btn"
+                        onClick={() => setShowAiDropdown((prev) => !prev)}
+                        disabled={isLoading}
+                      >
+                        {t('room.addAi')} <span className="arrow">▼</span>
+                      </button>
+                      {showAiDropdown && (
+                        <>
+                          <div
+                            className="dropdown-backdrop"
+                            onClick={() => setShowAiDropdown(false)}
+                          />
+                          <div className="dropdown-menu">
+                            <button
+                              className="dropdown-item"
+                              onClick={() =>
+                                void handleAddAi(AiType.AI_TYPE_DUMMY)
+                              }
+                            >
+                              {t('ai.type.AI_TYPE_DUMMY')}
+                            </button>
+                            <button
+                              className="dropdown-item"
+                              onClick={() =>
+                                void handleAddAi(AiType.AI_TYPE_RULE_BASED)
+                              }
+                            >
+                              {t('ai.type.AI_TYPE_RULE_BASED')}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            }
           })}
         </div>
 

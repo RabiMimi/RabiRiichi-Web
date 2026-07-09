@@ -1,6 +1,6 @@
 {
   "connect": {
-    "subtitle": "3D 浏览器麻将客户端",
+    "subtitle": "开源 3D 浏览器麻将客户端",
     "serverAddress": "服务器地址",
     "nickname": "昵称",
     "nicknamePlaceholder": "请输入昵称",
@@ -9,11 +9,17 @@
     "urlError": "服务器地址必须以 ws:// 或 wss:// 开头",
     "nicknameError": "昵称不能为空",
     "officialServer": "兔兔服",
+    "devServer": "兔兔开发❤️",
     "localServer": "本地服 (localhost:5150)",
     "customServer": "自定义服务器地址",
     "serverNamePlaceholder": "输入服务器名称",
     "saveServer": "保存服务器",
-    "removeServer": "删除服务器"
+    "removeServer": "删除服务器",
+    "serverVersionUnsupported": "服务器版本不支持",
+    "versionErrorServerTooOld": "服务器版本过旧 ({{serverVersion}} < {{minServerVersion}})",
+    "versionErrorClientTooOld": "客户端版本过旧 ({{clientVersion}} < {{minClientVersion}})",
+    "versionErrorMissingFields": "缺少版本校验字段",
+    "versionErrorValidationFailed": "版本校验失败"
   },
   "lobby": {
     "title": "大厅",
@@ -24,15 +30,35 @@
     "joinRoom": "加入房间",
     "joinRoomLabel": "加入已有房间",
     "logout": "登出",
+    "viewReplay": "观看回放",
     "roomSettings": "房间设置",
+    "seed": "随机数种子",
+    "auto": "自动",
+    "gameSettings": "游戏设置",
+    "pointsSettings": "点数设置",
     "advancedSettings": "高级设置",
     "players": "人数",
     "rounds": "局数",
     "minHan": "起和番数",
     "actionTimeout": "出牌限时",
-    "timeoutError": "限时必须在 5 到 3600 秒之间",
-    "minHanError": "起和番数必须在 1 到 13 之间",
-    "defaultPlaceholder": "默认：{{value}}秒"
+    "nextRoundAckTimeout": "结算限时",
+    "defaultPlaceholder": "默认：{{value}}秒",
+    "initialPoints": "初始点数",
+    "finishPoints": "终局点数",
+    "upperPoints": "天边上限",
+    "riichiPoints": "立直棒点数",
+    "honbaPoints": "本场棒点数",
+    "ryuukyokuPoints": "不听罚符",
+    "tileSet": "使用牌张",
+    "configureYakus": "配置役种",
+    "allYakus": "全部",
+    "yakus": "个役",
+
+    "selectAll": "全选",
+    "selectNone": "全不选",
+    "clientRepo": "客户端仓库 (Vite + TS)",
+    "serverRepo": "服务端仓库 (.NET)",
+    "build": "客户端版本: {{commit}}"
   },
   "playersOpt": {
     "2": "2人局",
@@ -42,6 +68,20 @@
   "roundsOpt": {
     "1": "东风战 (Tonpuu)",
     "2": "半庄战 (Hanchan)"
+  },
+  "tileSetOpt": {
+    "regular": "普通 (136张)",
+    "sanma": "三人麻将 (108张)",
+    "twoSets": "两副牌 (272张)",
+    "onlySZ": "仅条子与字牌 (64张)"
+  },
+  "yakuGroup": {
+    "1han": "1番",
+    "2han": "2番",
+    "3han": "3番",
+    "6han": "6番",
+    "yakuman": "役满",
+    "other": "其他"
   },
   "hanOpt": {
     "1": "1番",
@@ -55,6 +95,9 @@
     "seat": "席位: {{seat}}",
     "seatAssigning": "分配中...",
     "updating": "更新中...",
+    "emptySeat": "空位",
+    "addAi": "添加 AI",
+    "kickAi": "踢出",
     "status": {
       "ready": "已准备",
       "waiting": "等待中",
@@ -76,14 +119,62 @@
     "honbaSuffix": "本场",
     "riichiSuffix": "立直棒",
     "remainingTiles": "牌山剩余: {{count}}",
+    "roundInfoTemplate": "{{wind}}{{round}}局{{honba}}本场",
+    "gameInfo": "对局信息",
+    "tabLiveInfo": "对局信息",
+    "tabConfig": "对局配置",
+    "tabYakuYama": "役种&牌山",
+    "roomId": "房间 ID",
+    "gameId": "对局 ID",
+    "copyGameId": "复制对局 ID",
+    "copied": "已复制！",
+    "roundLabel": "局数",
+    "dealerLabel": "庄家",
+    "activePlayerLabel": "当前玩家",
+    "turnJunLabel": "巡数",
+    "wallLabel": "牌山",
+    "honbaLabel": "本场",
+    "riichiLabel": "立直棒",
+    "playersCount": "玩家 ({{count}})",
+    "pointsLabel": "点数",
+    "statusLabel": "状态",
+    "rulesAndPolicies": "规则 & 策略",
+    "activePlayer": "当前玩家",
+    "turnJun": "当前巡数",
+    "exitGame": "退出对局",
+    "confirmExit": "确定要退出对局吗？",
+    "confirm": "确定",
+    "cancel": "取消",
+    "lockCamera": "锁定视角",
+    "unlockCamera": "解锁视角",
+    "allowedYakus": "启用役种",
+    "startingYama": "初始牌山",
     "timerLabel": "出牌倒计时",
     "timerWaiting": "等待他人...",
     "declareRiichi": "请选择立直要切的牌",
     "cancelRiichi": "取消立直",
+    "furiten": "振听",
+    "tilesRemaining": "张",
+    "han": "番",
+    "points": "点",
+    "yakuman": "役满",
+    "yakuRequired": "无役",
+    "minHanRequired": "番缚",
+    "tenpaiWaits": "听牌详情",
+    "tenpai": "听",
+    "autoAgari": "和",
+    "autoAgariDesc": "自动和牌（荣和/自摸）",
+    "noCalls": "鸣",
+    "noCallsDesc": "自动跳过他人打牌时的鸣牌提示（不影响暗杠/加杠等自身出牌时的提示）",
+    "autoDiscard": "切",
+    "autoDiscardDesc": "摸牌后若无其他操作可选则自动摸切",
+    "autoNuki": "拔",
+    "autoNukiDesc": "自动拔北宝牌（在无和牌选项时）",
     "action": {
       "chii": "吃",
       "pon": "碰",
       "kan": "杠",
+      "nukidora": "拔北",
       "riichi": "立直",
       "ron": "荣和",
       "tsumo": "自摸",
@@ -94,6 +185,10 @@
   "result": {
     "draw": "流局",
     "agari": "和牌",
+    "dora": "宝牌指示牌",
+    "uradora": "里宝牌指示牌",
+    "mangan": "满贯",
+    "river": "牌河",
     "winner": "赢家",
     "scoreChanges": "点数变动",
     "confirm": "确定",
@@ -101,15 +196,37 @@
     "points": "{{count}} 点",
     "han": "{{count}} 番",
     "fu": "{{count}} 符",
+    "haneman": "跳满",
+    "baiman": "倍满",
+    "sanbaiman": "三倍满",
     "yakuman": "役满",
     "multipleYakuman": "{{count}}倍役满",
-    "fuAndHan": "{{fu}} 符 {{han}} 番",
+    "multipleYakuman_2": "双倍役满",
+    "multipleYakuman_3": "三倍役满",
+    "multipleYakuman_4": "四倍役满",
+    "multipleYakuman_5": "五倍役满",
+    "fuAndHan": "{{han}}番{{fu}}符",
+    "limitPrefixed": "{{limit}} {{han}}番{{fu}}符",
+    "limitPrefixedHanOnly": "{{limit}} {{han}}番",
     "winnerBadge": "和牌者",
-    "winTile": "胡",
+    "winTile": "和",
+    "tenpai": "听牌",
+    "tenpaiWaits": "听",
     "scoreChangesTitle": "点数收支",
     "confirmWithTime": "确定 ({{seconds}}s)",
     "waitingForNext": "等待下一局...",
-    "waitingForNextRound": "等待下一局开始..."
+    "waitingForNextRound": "等待下一局开始...",
+    "finalTitle": "对局结束",
+    "returnToRoom": "返回房间",
+    "showFinalResults": "查看最终成绩",
+    "ryuukyoku": {
+      "suufon_renda": "四风连打",
+      "kyuushu_kyuuhai": "九种九牌",
+      "suucha_riichi": "四家立直",
+      "triple_ron": "三家荣和",
+      "suukan_sanra": "四杠散了",
+      "end_game_ryuukyoku": "流局"
+    }
   },
   "advanced": {
     "renchanPolicy": "连庄策略",
@@ -121,6 +238,7 @@
     "scoringOption": "计分选项",
     "ryuukyokuTrigger": "中途流局",
     "pointsDeductionPolicy": "技能点数扣减",
+    "none": "无",
     "renchan": {
       "dealerWin": "庄家和牌连庄",
       "dealerTenpai": "庄家听牌连庄",
@@ -150,13 +268,14 @@
       "kanUradora": "杠里宝牌",
       "instantDaiMinKan": "大明杠宝牌即开",
       "instantKaKan": "加杠宝牌即开",
-      "instantAnKan": "暗杠宝牌即开"
+      "instantAnKan": "暗杠宝牌即开",
+      "nukiDora": "拔北宝牌"
     },
     "agari": {
-      "kuitan": "允许食断 (鸣牌断幺)",
-      "pao": "允许包牌 (大三元等)",
+      "kuitan": "允许食断",
+      "pao": "允许包牌",
       "nagashiMangan": "启用流局满贯",
-      "firstWinner": "启用头跳 (不允许一炮多响)"
+      "firstWinner": "启用头跳"
     },
     "scoring": {
       "kiriageMangan": "启用切上满贯",
@@ -174,7 +293,7 @@
     },
     "deduction": {
       "alwaysAllow": "总是允许扣减",
-      "sufficientPoints": "扣减后不低于最低分 (防止被飞)",
+      "sufficientPoints": "扣减后不低于最低分",
       "validPoints": "扣除前需在有效范围内",
       "alwaysBlock": "总是禁止扣减"
     }
@@ -214,6 +333,7 @@
     "Akadora": "红宝牌",
     "Dora": "宝牌",
     "Uradora": "里宝牌",
+    "NukiDora": "拔北宝牌",
     "fu": "符",
     "Chiihou": "地和",
     "Chinroutou": "清老头",
@@ -231,6 +351,92 @@
     "Tenhou": "天和",
     "Tsuuiisou": "字一色",
     "IshiueSannen": "石上三年",
-    "HelloWorld": "你好世界"
+    "HelloWorld": "你好世界",
+    "NagashiMangan": "流局满贯"
+  },
+  "ai": {
+    "type": {
+      "AI_TYPE_NONE": "",
+      "AI_TYPE_DUMMY": "口水兔",
+      "AI_TYPE_RULE_BASED": "小和和"
+    }
+  },
+  "orientation": {
+    "rotatePrompt": "请将设备横屏以继续游戏！"
+  },
+  "error": {
+    "lobby": {
+      "playerCount": "玩家人数必须在 2 到 4 之间。",
+      "totalRound": "总局数必须是 1 或 2。",
+      "minHan": "起和番数必须在 1 到 13 之间。",
+      "timeout": "限时必须在 5 到 3600 秒之间。",
+      "nextRoundAckTimeout": "结算限时必须在 5 到 3600 秒之间。",
+      "tileSet": "所选牌张数不足 ({{count}} 张)，无法支持 {{players}} 人局（至少需要 {{min}} 张）。",
+      "initialPoints": "初始点数必须在 0 到 1,000,000 之间。",
+      "finishPoints": "终局点数必须在 0 到 1,000,000 之间。",
+      "riichiPoints": "立直棒点数必须在 0 到 1,000,000 之间。",
+      "honbaPoints": "本场棒点数必须在 0 到 1,000,000 之间。",
+      "ryuukyokuPoints": "不听罚符必须包含 2 个数值，且每个数值必须在 0 到 1,000,000 之间。",
+      "pointsRange": "点数上限必须在 0 到 1,000,000 之间。",
+      "generic": "无效的游戏配置。"
+    },
+    "server": {
+      "InvalidArgument": {
+        "invalidGameId": "无效的对局 ID",
+        "invalidAiType": "无效或不支持的 AI 类型",
+        "generic": "参数错误"
+      },
+      "NotFound": {
+        "replayNotFound": "未找到回放",
+        "playerNotFound": "房间中未找到该玩家",
+        "generic": "未找到"
+      },
+      "PermissionDenied": {
+        "onlyOwnerCanAddAi": "只有房主可以添加 AI",
+        "onlyOwnerCanRemovePlayer": "只有房主可以移出玩家",
+        "generic": "权限拒绝"
+      },
+      "FailedPrecondition": {
+        "userNotInRoom": "玩家不在房间中",
+        "cannotRemovePlayer": "无法将玩家移出房间",
+        "generic": "前置条件失败"
+      },
+      "ResourceExhausted": {
+        "serverBusy": "服务器繁忙",
+        "generic": "资源耗尽"
+      },
+      "Internal": {
+        "cannotAddUser": "无法创建玩家",
+        "cannotAddAi": "无法向房间添加 AI",
+        "generic": "服务器内部错误"
+      },
+      "Unauthenticated": {
+        "userDoesNotExist": "用户不存在",
+        "generic": "未登录"
+      },
+      "generic": "服务器错误"
+    }
+  },
+  "replay": {
+    "play": "播放",
+    "pause": "暂停",
+    "stepBackward": "单步后退",
+    "stepForward": "单步前进",
+    "perspective": "视角",
+    "modalTitle": "观看回放",
+    "gameIdLabel": "游戏 ID",
+    "gameIdPlaceholder": "输入游戏 ID...",
+    "load": "载入",
+    "cancel": "取消",
+    "fetchError": "获取回放失败: {{message}}",
+    "viewReplay": "观看回放",
+    "initialWallTitle": "初始牌山",
+    "legend": "图例",
+    "initialHand": "配牌",
+    "tileDrawn": "已摸",
+    "tileInWall": "在牌山中",
+    "noWallData": "此对局记录中无初始牌山数据。",
+    "wallSide": "{{side}}家牌山",
+    "wanpai": "王牌"
   }
 }

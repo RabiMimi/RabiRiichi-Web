@@ -9,10 +9,34 @@ import {
 } from 'vitest';
 import { RabiRiichiClient, initRabiRiichi, rabiriichi } from './client';
 import { MockWebSocket } from '../transport/mockWebSocket';
-import { ClientMessageDto, ServerMessageDto, UserStatus } from '../proto';
+import {
+  ClientMessageDto,
+  ServerMessageDto,
+  UserStatus,
+  AiType,
+} from '../proto';
+import { TILE_SET_PRESETS } from '../domain/tilesets';
+import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
+import {
+  STORAGE_KEY_SERVER_SETTINGS,
+  type ServerSettings,
+} from '../domain/constants';
+
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
 import type { RoomModel } from '../domain/model';
+import { createEmptyTileRegistry } from '../domain/tileRegistry';
 import { mapInquiry } from '../domain/inquiry';
+
+function toNormalNumber(val: unknown): number {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'object' && 'toNumber' in val) {
+    const hasToNumber = val as { toNumber: () => number };
+    if (typeof hasToNumber.toNumber === 'function') {
+      return hasToNumber.toNumber();
+    }
+  }
+  return Number(val);
+}
 
 describe('RabiRiichiClient', () => {
   let mockLocalStorage: Record<string, string>;
@@ -50,6 +74,31 @@ describe('RabiRiichiClient', () => {
     );
   }
 
+  function respondToGetInfo(ws: MockWebSocket) {
+    const getInfoCall = ws.send.mock.calls.find((call) => {
+      const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+      return Boolean(msg.clientRequest?.getInfo);
+    });
+    if (getInfoCall) {
+      const getInfoMsg = ClientMessageDto.decode(
+        new Uint8Array(getInfoCall[0]),
+      );
+      sendServerMsg(ws, {
+        id: 0,
+        respondTo: getInfoMsg.id,
+        serverResp: {
+          getInfo: {
+            game: 'rabiriichi',
+            gameVersion: CLIENT_VERSION,
+            server: 'dotnet',
+            serverVersion: MIN_SERVER_VERSION,
+            minClientVersion: CLIENT_VERSION,
+          },
+        },
+      });
+    }
+  }
+
   async function setupConnectedClient(
     client: RabiRiichiClient,
   ): Promise<MockWebSocket> {
@@ -78,12 +127,14 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
 
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS);
     await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
     mockWS.send.mockClear();
@@ -123,12 +174,15 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
 
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS);
+    await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
 
     expect(client.self).toEqual({
@@ -136,11 +190,12 @@ describe('RabiRiichiClient', () => {
       nickname: 'TestUser',
       status: 1,
       gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
     });
 
     expect(setItemMock).toHaveBeenCalledWith(
-      'rabiriichi_url',
-      'ws://localhost:1234',
+      STORAGE_KEY_SERVER_SETTINGS,
+      JSON.stringify({ lastUrl: 'ws://localhost:1234' }),
     );
     expect(setItemMock).toHaveBeenCalledWith('rabiriichi_token', 'my-token');
 
@@ -211,12 +266,15 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
 
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS2);
+    await vi.advanceTimersByTimeAsync(0);
     await registerPromise;
 
     expect(client.accessToken).toBe('new-token');
@@ -251,11 +309,14 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS);
+    await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
 
     mockWS.send.mockClear();
@@ -288,7 +349,9 @@ describe('RabiRiichiClient', () => {
 
   it('should auto-connect using initRabiRiichi if credentials exist', async () => {
     vi.useFakeTimers();
-    mockLocalStorage.rabiriichi_url = 'ws://stored-url:5150';
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+      lastUrl: 'ws://stored-url:5150',
+    });
     mockLocalStorage.rabiriichi_token = 'stored-token';
 
     // Mock connect of global rabiriichi instance
@@ -308,7 +371,9 @@ describe('RabiRiichiClient', () => {
 
   it('should update room state and game state on socket messages', async () => {
     vi.useFakeTimers();
-    mockLocalStorage.rabiriichi_url = 'ws://localhost:5150';
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+      lastUrl: 'ws://localhost:5150',
+    });
     mockLocalStorage.rabiriichi_token = 'my-token';
 
     const client = new RabiRiichiClient();
@@ -346,12 +411,14 @@ describe('RabiRiichiClient', () => {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: '0.1.0.0',
-          minClientVersion: '0.1.0',
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
         },
       },
     });
 
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(serverMock);
     await vi.advanceTimersByTimeAsync(0);
     await connectPromise;
 
@@ -444,6 +511,85 @@ describe('RabiRiichiClient', () => {
           state: {
             id: 4321,
             config: { playerCount: 2 },
+            players: [
+              {
+                id: 123,
+                nickname: 'TestUser',
+                status: UserStatus.USER_STATUS_IN_ROOM,
+                seat: 0,
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    await createPromise;
+
+    expect(client.room).not.toBeNull();
+    expect(client.room?.id).toBe(4321);
+
+    client.close();
+    vi.useRealTimers();
+  });
+
+  it('should create room with custom configuration', async () => {
+    vi.useFakeTimers();
+    const client = new RabiRiichiClient();
+    const mockWS = await setupConnectedClient(client);
+
+    const sanmaTiles = TILE_SET_PRESETS.Sanma().map((t) => t.toByte());
+    const customConfig = {
+      playerCount: 3,
+      totalRound: 2,
+      minHan: 2,
+      gameplayActionTimeout: 15,
+      pointThreshold: {
+        initialPoints: 35000,
+        finishPoints: 40000,
+        validPointsRange: [0, 60000],
+      },
+      initialTiles: sanmaTiles,
+      allowedYakus: ['Riichi', 'Tanyao'],
+    };
+
+    const createPromise = client.createRoom(customConfig);
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(mockWS.send).toHaveBeenCalledTimes(1);
+    const reqBytes = mockWS.send.mock.calls[0]![0];
+    const reqMsg = ClientMessageDto.decode(new Uint8Array(reqBytes));
+    expect(reqMsg.clientRequest?.createRoom?.config).toBeDefined();
+
+    const sentConfig = reqMsg.clientRequest?.createRoom?.config;
+    expect(sentConfig?.playerCount).toBe(3);
+    expect(sentConfig?.totalRound).toBe(2);
+    expect(sentConfig?.minHan).toBe(2);
+    expect(sentConfig?.gameplayActionTimeout).toBe(15);
+    expect(toNormalNumber(sentConfig?.pointThreshold?.initialPoints)).toBe(
+      35000,
+    );
+    expect(toNormalNumber(sentConfig?.pointThreshold?.finishPoints)).toBe(
+      40000,
+    );
+    expect(
+      sentConfig?.pointThreshold?.validPointsRange?.map(toNormalNumber),
+    ).toEqual([0, 60000]);
+
+    expect(sentConfig?.initialTiles).toEqual(sanmaTiles);
+    expect(sentConfig?.allowedYakus).toEqual(['Riichi', 'Tanyao']);
+
+    // Respond with room state
+    sendServerMsg(mockWS, {
+      id: 11,
+      respondTo: reqMsg.id,
+      serverResp: {
+        roomState: {
+          state: {
+            id: 4321,
+            config: customConfig,
             players: [
               {
                 id: 123,
@@ -602,6 +748,50 @@ describe('RabiRiichiClient', () => {
     vi.useRealTimers();
   });
 
+  it('should defer to the server default (index -1) on inquiry timeout', async () => {
+    vi.useFakeTimers();
+    const client = new RabiRiichiClient();
+    const mockWS = await setupConnectedClient(client);
+
+    // A riichi self-draw offers both tsumo and a forced tsumogiri. The client
+    // must NOT pick a default itself; it should defer to the server default.
+    const mockInquiryMsg: ISinglePlayerInquiryMsg = {
+      actions: [
+        { playTileAction: { tiles: [{ traceId: 7, tile: 17 }] } },
+        { agariAction: {} },
+      ],
+    };
+    client.currentInquiry = {
+      messageId: 42,
+      mapped: mapInquiry(mockInquiryMsg),
+      original: mockInquiryMsg,
+    };
+
+    // Start the interactive countdown, then let it expire.
+    (
+      client as unknown as {
+        startTimer: (
+          seat: number,
+          seconds: number,
+          interactive: boolean,
+        ) => void;
+      }
+    ).startTimer(0, 1, true);
+    await vi.advanceTimersByTimeAsync(1100);
+
+    expect(mockWS.send).toHaveBeenCalledTimes(1);
+    const msgBytes = mockWS.send.mock.calls[0]![0];
+    const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+    expect(msg.respondTo).toBe(42);
+    // index = -1 is the server's "use default" sentinel.
+    expect(msg.clientMsg?.inquiryMsg?.index).toBe(-1);
+    expect(msg.clientMsg?.inquiryMsg?.response).toBe('');
+    expect(client.currentInquiry).toBeNull();
+
+    client.close();
+    vi.useRealTimers();
+  });
+
   function makeRoomWithAgari(hasAgari: boolean): RoomModel {
     return {
       id: 4321,
@@ -623,6 +813,7 @@ describe('RabiRiichiClient', () => {
               called: [],
               discarded: [],
               pendingTile: null,
+              nukiDora: [],
             },
             agari: hasAgari
               ? {
@@ -633,8 +824,10 @@ describe('RabiRiichiClient', () => {
                 }
               : null,
           },
+          aiType: AiType.AI_TYPE_NONE,
         },
       ],
+      tileRegistry: createEmptyTileRegistry(),
     };
   }
 
@@ -653,7 +846,7 @@ describe('RabiRiichiClient', () => {
     const mockWS = await setupConnectedClient(client);
 
     // Reconnect: snapshot hydrated, no finished-round result in memory.
-    client.dev.setRoom(makeRoomWithAgari(false));
+    client.replay.setRoom(makeRoomWithAgari(false));
 
     sendNextRoundInquiry(mockWS, 11);
     await vi.advanceTimersByTimeAsync(0);
@@ -676,7 +869,8 @@ describe('RabiRiichiClient', () => {
     const mockWS = await setupConnectedClient(client);
 
     // Live play: the win was observed, so an agari result is in memory.
-    client.dev.setRoom(makeRoomWithAgari(true));
+    client.replay.setRoom(makeRoomWithAgari(true));
+    client.replay.setHasInMemoryResult(true);
 
     sendNextRoundInquiry(mockWS, 11);
     await vi.advanceTimersByTimeAsync(0);
@@ -689,9 +883,68 @@ describe('RabiRiichiClient', () => {
     vi.useRealTimers();
   });
 
+  it('does NOT auto-ack the next-round inquiry after mid-game ryuukyoku', async () => {
+    vi.useFakeTimers();
+    const client = new RabiRiichiClient();
+    const mockWS = await setupConnectedClient(client);
+
+    // Initial state: running game, no agari
+    client.replay.setRoom(makeRoomWithAgari(false));
+
+    // Send mid-game ryuukyoku event
+    sendServerMsg(mockWS, {
+      event: {
+        ryuukyokuEvent: {
+          midGameRyuukyoku: {
+            name: 'suufon_renda',
+          },
+          scoreChange: [],
+        },
+      },
+    });
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Send ConcludeGameEvent
+    sendServerMsg(mockWS, {
+      event: {
+        concludeGameEvent: {
+          doras: [],
+          uradoras: [],
+        },
+      },
+    });
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Send NextGameEvent
+    sendServerMsg(mockWS, {
+      event: {
+        nextGameEvent: {
+          nextRound: 1,
+          nextDealer: 0,
+          nextHonba: 1,
+          riichiStick: 0,
+        },
+      },
+    });
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Send NextRoundAction inquiry
+    sendNextRoundInquiry(mockWS, 11);
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Should NOT auto-ack
+    expect(mockWS.send).not.toHaveBeenCalled();
+    expect(client.currentInquiry).not.toBeNull();
+
+    client.close();
+    vi.useRealTimers();
+  });
+
   it('should clear stored credentials and close connection on logout', async () => {
     vi.useFakeTimers();
-    mockLocalStorage.rabiriichi_url = 'ws://localhost:5150';
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+      lastUrl: 'ws://localhost:5150',
+    });
     mockLocalStorage.rabiriichi_token = 'my-token';
 
     const client = new RabiRiichiClient();
@@ -704,10 +957,214 @@ describe('RabiRiichiClient', () => {
 
     expect(client.accessToken).toBeNull();
     expect(client.wsurl).toBeNull();
-    expect(mockLocalStorage.rabiriichi_url).toBeUndefined();
+    expect(
+      (
+        JSON.parse(
+          mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] ?? '{}',
+        ) as ServerSettings
+      ).lastUrl,
+    ).toBeUndefined();
     expect(mockLocalStorage.rabiriichi_token).toBeUndefined();
     expect(client.connectionStatus).toBe('disconnected');
 
     vi.useRealTimers();
+  });
+
+  describe('Auto-play options', () => {
+    it('should auto-respond to agari option when autoAgari is enabled', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+      client.autoAgari = true;
+
+      // Send inquiry with skip (index 0) and agari (index 1)
+      sendServerMsg(mockWS, {
+        id: 11,
+        serverMsg: {
+          inquiry: {
+            inquiry: {
+              actions: [
+                { skipAction: {} },
+                { agariAction: { incoming: { tile: 17, traceId: 1 } } },
+              ],
+            },
+          },
+        },
+      });
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Client should auto-respond to agari (index 1)
+      expect(mockWS.send).toHaveBeenCalledTimes(1);
+      const msgBytes = mockWS.send.mock.calls[0]![0];
+      const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+      expect(msg.respondTo).toBe(11);
+      expect(msg.clientMsg?.inquiryMsg?.index).toBe(1);
+      expect(msg.clientMsg?.inquiryMsg?.response).toBe('{}');
+
+      client.close();
+      vi.useRealTimers();
+    });
+
+    it('should auto-respond to skip when noCalls is enabled and only calls/skip are present', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+      client.noCalls = true;
+
+      // Setup room state without playTile (not our turn)
+      client.replay.setRoom(makeRoomWithAgari(false));
+
+      // Send inquiry with skip (index 0) and pon (index 1)
+      sendServerMsg(mockWS, {
+        id: 11,
+        serverMsg: {
+          inquiry: {
+            inquiry: {
+              actions: [{ skipAction: {} }, { ponAction: { tileGroups: [] } }],
+            },
+          },
+        },
+      });
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Client should auto-respond with skip (index 0)
+      expect(mockWS.send).toHaveBeenCalledTimes(1);
+      const msgBytes = mockWS.send.mock.calls[0]![0];
+      const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+      expect(msg.respondTo).toBe(11);
+      expect(msg.clientMsg?.inquiryMsg?.index).toBe(0);
+      expect(msg.clientMsg?.inquiryMsg?.response).toBe('{}');
+
+      client.close();
+      vi.useRealTimers();
+    });
+
+    it('should auto-discard drawn tile when autoDiscard is enabled and only play-tile is available', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+      client.autoDiscard = true;
+
+      // Setup room where local player has a pending drawn tile
+      const room = makeRoomWithAgari(false);
+      if (room.players[0]?.gameState?.hand) {
+        room.players[0].gameState.hand.pendingTile = {
+          tile: 17,
+          traceId: 999,
+          playerId: 123,
+          source: 1, // TILE_SOURCE_WALL
+        };
+      }
+      client.replay.setRoom(room);
+
+      // Send inquiry with only play-tile action (index 0)
+      sendServerMsg(mockWS, {
+        id: 11,
+        serverMsg: {
+          inquiry: {
+            inquiry: {
+              actions: [
+                {
+                  playTileAction: {
+                    tiles: [
+                      { tile: 1, traceId: 101 },
+                      { tile: 2, traceId: 102 },
+                      { tile: 17, traceId: 999 },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      });
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Client should auto-discard the tile (index 0, response index 2)
+      expect(mockWS.send).toHaveBeenCalledTimes(1);
+      const msgBytes = mockWS.send.mock.calls[0]![0];
+      const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+      expect(msg.respondTo).toBe(11);
+      expect(msg.clientMsg?.inquiryMsg?.index).toBe(0);
+      expect(msg.clientMsg?.inquiryMsg?.response).toBe('2'); // index 2 in playTileAction.tiles (traceId 999)
+
+      client.close();
+      vi.useRealTimers();
+    });
+
+    it('should auto-respond to nukidora when autoNuki is enabled', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+      client.autoNuki = true;
+
+      // Send inquiry with skip (index 0) and nukidora (index 1)
+      sendServerMsg(mockWS, {
+        id: 11,
+        serverMsg: {
+          inquiry: {
+            inquiry: {
+              actions: [{ skipAction: {} }, { nukiDoraAction: { tiles: [] } }],
+            },
+          },
+        },
+      });
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Client should auto-respond with nukidora (index 1)
+      expect(mockWS.send).toHaveBeenCalledTimes(1);
+      const msgBytes = mockWS.send.mock.calls[0]![0];
+      const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+      expect(msg.respondTo).toBe(11);
+      expect(msg.clientMsg?.inquiryMsg?.index).toBe(1);
+      expect(msg.clientMsg?.inquiryMsg?.response).toBe('0'); // choiceIndex is 0 for nukidora
+
+      client.close();
+      vi.useRealTimers();
+    });
+
+    it('should reset auto-play properties to false when beginGameEvent is received', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+
+      // Initialize room
+      const room = makeRoomWithAgari(false);
+      client.replay.setRoom(room);
+
+      // Set toggles to true
+      client.autoAgari = true;
+      client.noCalls = true;
+      client.autoDiscard = true;
+      client.autoNuki = true;
+
+      // Send beginGameEvent
+      sendServerMsg(mockWS, {
+        id: 0,
+        event: {
+          beginGameEvent: {
+            round: 0,
+            dealer: 0,
+            honba: 0,
+            riichiStick: 0,
+            remainingTiles: 70,
+            gameId: 'test-game',
+          },
+        },
+      });
+
+      // Verification
+      expect(client.autoAgari).toBe(false);
+      expect(client.noCalls).toBe(false);
+      expect(client.autoDiscard).toBe(false);
+      expect(client.autoNuki).toBe(false);
+
+      client.close();
+      vi.useRealTimers();
+    });
   });
 });

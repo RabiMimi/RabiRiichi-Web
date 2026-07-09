@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { Tile, TileSuit, stringToTiles } from './tile';
+import {
+  Tile,
+  TileSuit,
+  stringToTiles,
+  getDoraTargetForIndicator,
+  checkIsDora,
+  checkDiscardResultsInFuriten,
+} from './tile';
 
 describe('Tile Model', () => {
   describe('Byte Round-trip', () => {
@@ -148,6 +155,147 @@ describe('Tile Model', () => {
         'Some tile suits not provided',
       );
       expect(() => stringToTiles('123a')).toThrow('Invalid tile suit');
+    });
+  });
+
+  describe('Dora Calculation & Checking', () => {
+    it('should calculate correct dora target from indicator', () => {
+      // Numbered suits
+      expect(getDoraTargetForIndicator(Tile.fromString('1m'))).toEqual({
+        num: 2,
+        suit: TileSuit.M,
+      });
+      expect(getDoraTargetForIndicator(Tile.fromString('9p'))).toEqual({
+        num: 1,
+        suit: TileSuit.P,
+      });
+      expect(getDoraTargetForIndicator(Tile.fromString('5s'))).toEqual({
+        num: 6,
+        suit: TileSuit.S,
+      });
+      expect(getDoraTargetForIndicator(Tile.fromString('r5s'))).toEqual({
+        num: 6,
+        suit: TileSuit.S,
+      });
+
+      // Winds (1z -> 2z -> 3z -> 4z -> 1z)
+      expect(getDoraTargetForIndicator(Tile.fromString('1z'))).toEqual({
+        num: 2,
+        suit: TileSuit.Z,
+      }); // E -> S
+      expect(getDoraTargetForIndicator(Tile.fromString('4z'))).toEqual({
+        num: 1,
+        suit: TileSuit.Z,
+      }); // N -> E
+
+      // Dragons (5z -> 6z -> 7z -> 5z)
+      expect(getDoraTargetForIndicator(Tile.fromString('5z'))).toEqual({
+        num: 6,
+        suit: TileSuit.Z,
+      }); // Haku -> Hatsu
+      expect(getDoraTargetForIndicator(Tile.fromString('7z'))).toEqual({
+        num: 5,
+        suit: TileSuit.Z,
+      }); // Chun -> Haku
+    });
+
+    it('should identify dora tiles correctly', () => {
+      const indicators = [Tile.fromString('1m'), Tile.fromString('5z')];
+
+      // Match target (2m is dora from 1m indicator)
+      expect(checkIsDora(Tile.fromString('2m'), indicators)).toBe(true);
+
+      // Match target (6z is hatsu, dora from 5z haku indicator)
+      expect(checkIsDora(Tile.fromString('6z'), indicators)).toBe(true);
+
+      // Akadora is always dora
+      expect(checkIsDora(Tile.fromString('r5s'), indicators)).toBe(true);
+      expect(checkIsDora(Tile.fromString('r5m'), indicators)).toBe(true);
+
+      // Normal non-matching tile is not dora
+      expect(checkIsDora(Tile.fromString('1m'), indicators)).toBe(false);
+      expect(checkIsDora(Tile.fromString('5m'), indicators)).toBe(false);
+      expect(checkIsDora(Tile.fromString('7z'), indicators)).toBe(false);
+    });
+  });
+
+  describe('Discard Results In Furiten Calculation', () => {
+    const toByte = (str: string) => Tile.fromString(str).toByte();
+
+    it('should result in furiten if already permanently furiten', () => {
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('1m'),
+          [toByte('2m')],
+          [toByte('3m')],
+          true, // isAlreadyFuriten
+        ),
+      ).toBe(true);
+    });
+
+    it('should result in furiten if discarded tile is one of the winning waits', () => {
+      // Discarding 2m (the wait tile itself)
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('2m'),
+          [toByte('2m'), toByte('5m')],
+          [toByte('9m')],
+          false,
+        ),
+      ).toBe(true);
+
+      // Discarding r5m (akadora 5m) while waiting on 5m
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('r5m'),
+          [toByte('5m')],
+          [toByte('9m')],
+          false,
+        ),
+      ).toBe(true);
+
+      // Discarding 5m while waiting on r5m (highly unusual but theoretical wait)
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('5m'),
+          [toByte('r5m')],
+          [toByte('9m')],
+          false,
+        ),
+      ).toBe(true);
+    });
+
+    it('should result in furiten if any winning wait has already been discarded', () => {
+      // Winning wait 3m is in discards
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('1m'), // discard 1m
+          [toByte('3m'), toByte('6m')], // waiting on 3m/6m
+          [toByte('3m'), toByte('8s')], // discards has 3m
+          false,
+        ),
+      ).toBe(true);
+
+      // Winning wait 5s is in discards as r5s
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('1m'),
+          [toByte('5s')],
+          [toByte('r5s')],
+          false,
+        ),
+      ).toBe(true);
+    });
+
+    it('should not result in furiten if neither the discarded tile nor discards match any waits', () => {
+      expect(
+        checkDiscardResultsInFuriten(
+          toByte('1m'),
+          [toByte('2m'), toByte('5m')],
+          [toByte('9m'), toByte('8s')],
+          false,
+        ),
+      ).toBe(false);
     });
   });
 });

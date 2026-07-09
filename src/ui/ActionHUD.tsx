@@ -73,6 +73,8 @@ export function ActionHUD(): React.JSX.Element | null {
         return t('hud.action.pon');
       case 'kan':
         return t('hud.action.kan');
+      case 'nukidora':
+        return t('hud.action.nukidora');
       case 'riichi':
         return t('hud.action.riichi');
       case 'agari':

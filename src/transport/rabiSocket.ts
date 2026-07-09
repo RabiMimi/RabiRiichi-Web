@@ -10,6 +10,7 @@ import { MessageRecord } from './messageRecord';
 import { ClientMessageWrapper } from './messageWrapper';
 import { CLIENT_NAME, WS_HEARTBEAT_INTERVAL } from './constants';
 import { Version, isServerSupported } from './version';
+import i18n from '../lib/i18n';
 
 export class RabiSocket {
   private readonly serverLog = new Logger('Server');
@@ -219,7 +220,29 @@ export class RabiSocket {
         if (!isServerSupported(versionCheck)) {
           this.close();
           this.onMessage.unsubscribe(listener);
-          return reject(new Error('Server version is not supported'));
+          let reason = i18n.t('connect.versionErrorValidationFailed');
+          if (!versionCheck.serverVersion || !versionCheck.minClientVersion) {
+            reason = i18n.t('connect.versionErrorMissingFields');
+          } else {
+            const serverVersion = new Version(versionCheck.serverVersion);
+            const minClientVersion = new Version(versionCheck.minClientVersion);
+            if (!serverVersion.isAtLeast(Version.MIN_SERVER_VERSION)) {
+              reason = i18n.t('connect.versionErrorServerTooOld', {
+                serverVersion: versionCheck.serverVersion,
+                minServerVersion: Version.MIN_SERVER_VERSION.toJSON(),
+              });
+            } else if (!Version.CLIENT_VERSION.isAtLeast(minClientVersion)) {
+              reason = i18n.t('connect.versionErrorClientTooOld', {
+                clientVersion: Version.CLIENT_VERSION.toJSON(),
+                minClientVersion: versionCheck.minClientVersion,
+              });
+            }
+          }
+          return reject(
+            new Error(
+              `${i18n.t('connect.serverVersionUnsupported')}: ${reason}`,
+            ),
+          );
         }
         const reply: IClientMessageDto = {
           clientMsg: {

@@ -1,6 +1,6 @@
 {
   "name": "rabiriichi-web",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -48,6 +48,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.0",
     "vite": "^8.1.0",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.9"
   },
   "allowScripts": {
