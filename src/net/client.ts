@@ -110,6 +110,7 @@ export class RabiRiichiClient {
   public selectedTileTraceId: number | null = null;
   public hoveredTileTraceId: number | null = null;
   public isCameraLocked = true;
+  public hasInMemoryResult = false;
 
   public selectTile(traceId: number | null): void {
     this.selectedTileTraceId = traceId;
@@ -168,6 +169,10 @@ export class RabiRiichiClient {
     },
     setReplayTotal: (total: number) => {
       this.replayTotal = total;
+      this.onChange.emit();
+    },
+    setHasInMemoryResult: (val: boolean) => {
+      this.hasInMemoryResult = val;
       this.onChange.emit();
     },
   };
@@ -381,11 +386,16 @@ export class RabiRiichiClient {
 
     if (gameEvent.agariEvent) {
       this.startResultAnimation('agari');
+      this.hasInMemoryResult = true;
     } else if (gameEvent.ryuukyokuEvent) {
       this.startResultAnimation('ryuukyoku');
+      this.hasInMemoryResult = true;
     } else if (gameEvent.beginGameEvent) {
       // A new hand cancels any lingering result animation from the prior hand.
       this.clearResultAnimation();
+      this.hasInMemoryResult = false;
+    } else if (gameEvent.syncGameStateEvent || gameEvent.stopGameEvent) {
+      this.hasInMemoryResult = false;
     }
 
     this.onChange.emit();
@@ -485,8 +495,7 @@ export class RabiRiichiClient {
       buttons.length === 1 && buttons[0]?.type === 'next-round';
     if (!isNextRoundOnly) return false;
 
-    const hasInMemoryResult =
-      this.room?.players.some((p) => p.gameState?.agari) ?? false;
+    const hasInMemoryResult = this.hasInMemoryResult;
     if (hasInMemoryResult) return false;
 
     this.logger.info('Auto-acknowledging next round after reconnect.');

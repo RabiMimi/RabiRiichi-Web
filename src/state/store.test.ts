@@ -87,6 +87,7 @@ describe('RabiRiichi Store', () => {
       isReplayPaused: false,
       replayProgress: 0,
       replayTotal: 0,
+      hasInMemoryResult: false,
     });
   });
 

@@ -6,6 +6,7 @@ import {
   useIsWaitingForProceed,
   useActionTimeout,
   useResultAnimation,
+  useHasInMemoryResult,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
@@ -46,6 +47,7 @@ export function ResultPanel(): React.JSX.Element | null {
   const isWaitingForProceed = useIsWaitingForProceed();
   const actionTimeout = useActionTimeout();
   const resultAnimation = useResultAnimation();
+  const hasInMemoryResult = useHasInMemoryResult();
 
   const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(8);
   const [showFinalResults, setShowFinalResults] = React.useState(false);
@@ -67,7 +69,12 @@ export function ResultPanel(): React.JSX.Element | null {
   );
 
   const playersWithResult = React.useMemo(() => {
-    return room ? room.players.filter((p) => p.gameState?.agari) : [];
+    return room
+      ? room.players.filter(
+          (p) =>
+            p.gameState?.agari?.scores != null || p.gameState?.agari?.isTenpai,
+        )
+      : [];
   }, [room]);
 
   const hasNagashiWinner = React.useMemo(() => {
@@ -135,7 +142,7 @@ export function ResultPanel(): React.JSX.Element | null {
   const showUradoras = React.useMemo(() => {
     return (
       room?.players.some(
-        (p) => p.gameState?.agari != null && p.gameState.riichiTileId > 0,
+        (p) => p.gameState?.agari?.scores != null && p.gameState.riichiTileId > 0,
       ) ?? false
     );
   }, [room?.players]);
@@ -224,7 +231,7 @@ export function ResultPanel(): React.JSX.Element | null {
   // finished-round result to display. The client auto-acks it (see client.ts);
   // meanwhile show a small notice rather than an empty result overlay.
   const isAwaitingNextRound =
-    hasNextRound && playersWithResult.length === 0 && !isWaitingForProceed;
+    hasNextRound && !hasInMemoryResult && !isWaitingForProceed;
 
   if (room && isAwaitingNextRound) {
     return (
@@ -509,13 +516,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
           <div className="result-content-scrollable">
             <div className="result-winners-container">
-              {playersWithResult
-                .filter(
-                  (p) =>
-                    p.gameState?.agari?.scores != null ||
-                    p.gameState?.agari?.isTenpai,
-                )
-                .map((w) => renderWinnerDetails(w))}
+              {playersWithResult.map((w) => renderWinnerDetails(w))}
             </div>
 
             {renderDoraIndicators()}

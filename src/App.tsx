@@ -125,6 +125,7 @@ function App(): React.JSX.Element {
       <Canvas
         camera={{ position: [0, 3.0, 3.4], fov: 50 }}
         style={{ zIndex: 1 }}
+        onPointerMissed={() => rabiriichi.selectTile(null)}
       >
         <CameraController controlsRef={controlsRef} />
         <GameTable />

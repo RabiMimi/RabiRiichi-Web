@@ -27,6 +27,7 @@ export interface RabiRiichiState {
   isReplayPaused: boolean;
   replayProgress: number;
   replayTotal: number;
+  hasInMemoryResult: boolean;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -56,7 +57,8 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.isReplay !== rabiriichi.isReplay ||
     lastSnapshot.isReplayPaused !== rabiriichi.isReplayPaused ||
     lastSnapshot.replayProgress !== rabiriichi.replayProgress ||
-    lastSnapshot.replayTotal !== rabiriichi.replayTotal
+    lastSnapshot.replayTotal !== rabiriichi.replayTotal ||
+    lastSnapshot.hasInMemoryResult !== rabiriichi.hasInMemoryResult
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -78,6 +80,7 @@ function getSnapshot(): RabiRiichiState {
       isReplayPaused: rabiriichi.isReplayPaused,
       replayProgress: rabiriichi.replayProgress,
       replayTotal: rabiriichi.replayTotal,
+      hasInMemoryResult: rabiriichi.hasInMemoryResult,
     };
   }
   return lastSnapshot;
@@ -217,6 +220,14 @@ const getAvailableYakus = () => rabiriichi.availableYakus;
 
 export function useAvailableYakus(): YakuInfo[] {
   return useSyncExternalStore(subscribe, getAvailableYakus, getAvailableYakus);
+}
+
+export function useHasInMemoryResult(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.hasInMemoryResult,
+    () => rabiriichi.hasInMemoryResult,
+  );
 }
 
 export function useResultAnimation(): 'agari' | 'ryuukyoku' | null {

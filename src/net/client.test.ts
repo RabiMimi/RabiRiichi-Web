@@ -870,6 +870,7 @@ describe('RabiRiichiClient', () => {
 
     // Live play: the win was observed, so an agari result is in memory.
     client.replay.setRoom(makeRoomWithAgari(true));
+    client.replay.setHasInMemoryResult(true);
 
     sendNextRoundInquiry(mockWS, 11);
     await vi.advanceTimersByTimeAsync(0);
