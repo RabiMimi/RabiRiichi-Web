@@ -7,6 +7,7 @@ import {
   useActionTimeout,
   useResultAnimation,
   useHasInMemoryResult,
+  useIsReplay,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
@@ -52,6 +53,7 @@ export function ResultPanel(): React.JSX.Element | null {
   const actionTimeout = useActionTimeout();
   const resultAnimation = useResultAnimation();
   const hasInMemoryResult = useHasInMemoryResult();
+  const isReplay = useIsReplay();
 
   const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(8);
   const [showFinalResults, setShowFinalResults] = React.useState(false);
@@ -236,7 +238,10 @@ export function ResultPanel(): React.JSX.Element | null {
   // finished-round result to display. The client auto-acks it (see client.ts);
   // meanwhile show a small notice rather than an empty result overlay.
   const isAwaitingNextRound =
-    hasNextRound && !hasInMemoryResult && !isWaitingForProceed;
+    !isReplay &&
+    hasNextRound &&
+    !hasInMemoryResult &&
+    !isWaitingForProceed;
 
   if (room && isAwaitingNextRound) {
     return (

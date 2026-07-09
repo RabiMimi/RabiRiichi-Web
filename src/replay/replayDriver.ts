@@ -348,6 +348,21 @@ export function seekToEvent(targetIdx: number): void {
 
   rabiriichi.replay.setRoom(room);
 
+  // Recalculate hasInMemoryResult for the seeked position
+  let hasResult = false;
+  for (let i = 0; i < targetIdx; i++) {
+    const ev = currentEvents[i];
+    if (ev) {
+      if (ev.agariEvent || ev.ryuukyokuEvent) {
+        hasResult = true;
+      }
+      if (ev.beginGameEvent) {
+        hasResult = false;
+      }
+    }
+  }
+  rabiriichi.replay.setHasInMemoryResult(hasResult);
+
   if (targetIdx > 0) {
     const lastEv = currentEvents[targetIdx - 1];
     if (lastEv) {
@@ -393,9 +408,22 @@ export function getCurrentRoundIndex(): number {
 
 export function jumpToRound(roundIdx: number): void {
   if (roundIdx < 0 || roundIdx >= roundStartEventIndices.length) return;
-  const baseIdx = roundStartEventIndices[roundIdx];
-  if (baseIdx === undefined) return;
-  const targetEventIdx = baseIdx + 1;
+  const beginIdx = roundStartEventIndices[roundIdx];
+  if (beginIdx === undefined) return;
+
+  // Scan forward to skip beginGameEvent and dealHandEvents to show dealt hands immediately
+  let targetEventIdx = beginIdx + 1;
+  while (targetEventIdx < currentEvents.length) {
+    const ev = currentEvents[targetEventIdx];
+    if (ev && !ev.beginGameEvent && !ev.dealHandEvent) {
+      break;
+    }
+    targetEventIdx++;
+  }
+  if (targetEventIdx >= currentEvents.length) {
+    targetEventIdx = beginIdx + 1;
+  }
+
   seekToEvent(targetEventIdx);
   pauseReplay();
 }

@@ -1,6 +1,6 @@
 import { GameLogMsg, UserStatus, AiType } from '../proto/index.js';
 import type { IEventMsg, IGameLogMsg } from '../proto/index.js';
-import type { RoomModel } from '../domain/model.js';
+import type { RoomModel, PlayerModel } from '../domain/model.js';
 import { createEmptyTileRegistry } from '../domain/tileRegistry.js';
 
 /**
@@ -45,14 +45,24 @@ export function createInitialRoomFromReplay(replayJson: unknown): RoomModel {
   const config = (logMsg as IGameLogMsg).config ?? null;
   const playerCount = config?.playerCount ?? 2;
 
-  const players = Array.from({ length: playerCount }, (_, i) => ({
-    id: replayAccountId(i),
-    nickname: `Player ${i}`,
-    status: UserStatus.USER_STATUS_PLAYING,
-    seat: i,
-    gameState: null,
-    aiType: AiType.AI_TYPE_NONE,
-  }));
+  const players: PlayerModel[] =
+    logMsg.players.length > 0
+      ? logMsg.players.map((p) => ({
+          id: p.id ?? replayAccountId(p.seat ?? 0),
+          nickname: p.nickname ?? `Player ${p.seat}`,
+          status: UserStatus.USER_STATUS_PLAYING,
+          seat: p.seat ?? 0,
+          gameState: null,
+          aiType: p.aiType ?? AiType.AI_TYPE_NONE,
+        }))
+      : Array.from({ length: playerCount }, (_, i) => ({
+          id: replayAccountId(i),
+          nickname: `Player ${i}`,
+          status: UserStatus.USER_STATUS_PLAYING,
+          seat: i,
+          gameState: null,
+          aiType: AiType.AI_TYPE_NONE,
+        }));
 
   return {
     id: 114514,
