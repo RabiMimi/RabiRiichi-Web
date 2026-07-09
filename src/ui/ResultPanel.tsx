@@ -8,6 +8,7 @@ import {
   useResultAnimation,
   useHasInMemoryResult,
   useIsReplay,
+  useReplayProgress,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
@@ -17,7 +18,12 @@ import { ScoringType } from '../proto';
 import { FinalResultPanel } from './FinalResultPanel';
 
 import { Logger } from '../lib/logger';
-import { proceedReplay } from '../replay/replayDriver';
+import {
+  proceedReplay,
+  getCurrentRoundIndex,
+  getRoundStartIndices,
+  jumpToRound,
+} from '../replay/replayDriver';
 import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
 
@@ -54,6 +60,15 @@ export function ResultPanel(): React.JSX.Element | null {
   const resultAnimation = useResultAnimation();
   const hasInMemoryResult = useHasInMemoryResult();
   const isReplay = useIsReplay();
+  const progress = useReplayProgress();
+
+  const currentRoundIdx = React.useMemo(() => {
+    return isReplay ? getCurrentRoundIndex() : 0;
+  }, [isReplay, progress]);
+
+  const roundStartIndices = React.useMemo(() => {
+    return isReplay ? getRoundStartIndices() : [];
+  }, [isReplay]);
 
   const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(8);
   const [showFinalResults, setShowFinalResults] = React.useState(false);
@@ -105,9 +120,19 @@ export function ResultPanel(): React.JSX.Element | null {
     );
   }, [currentInquiry]);
 
-  const canProceed = proceedAction != null || isWaitingForProceed;
+  const canProceed = isReplay
+    ? true
+    : (proceedAction != null || isWaitingForProceed);
 
   const handleProceed = React.useCallback(() => {
+    if (isReplay) {
+      if (currentRoundIdx < roundStartIndices.length - 1) {
+        jumpToRound(currentRoundIdx + 1);
+      } else {
+        setShowFinalResults(true);
+      }
+      return;
+    }
     if (proceedAction) {
       void submitAction(proceedAction);
     } else if (isWaitingForProceed) {
@@ -115,7 +140,7 @@ export function ResultPanel(): React.JSX.Element | null {
     } else if (room?.gameEnded) {
       setShowFinalResults(true);
     }
-  }, [proceedAction, isWaitingForProceed, submitAction, room?.gameEnded]);
+  }, [isReplay, currentRoundIdx, roundStartIndices, proceedAction, isWaitingForProceed, submitAction, room?.gameEnded]);
 
   React.useEffect(() => {
     if (!isWaitingForProceed) return;
@@ -238,10 +263,7 @@ export function ResultPanel(): React.JSX.Element | null {
   // finished-round result to display. The client auto-acks it (see client.ts);
   // meanwhile show a small notice rather than an empty result overlay.
   const isAwaitingNextRound =
-    !isReplay &&
-    hasNextRound &&
-    !hasInMemoryResult &&
-    !isWaitingForProceed;
+    !isReplay && hasNextRound && !hasInMemoryResult && !isWaitingForProceed;
 
   if (room && isAwaitingNextRound) {
     return (
@@ -549,9 +571,13 @@ export function ResultPanel(): React.JSX.Element | null {
             >
               {room?.gameEnded
                 ? t('result.showFinalResults', 'Show Game Results')
-                : canProceed
-                  ? t('result.confirmWithTime', { seconds: secondsLeft })
-                  : t('result.waitingForNext')}
+                : isReplay
+                  ? (currentRoundIdx < roundStartIndices.length - 1
+                    ? t('replay.nextRound', 'Next Round')
+                    : t('result.showFinalResults', 'Show Game Results'))
+                  : canProceed
+                    ? t('result.confirmWithTime', { seconds: secondsLeft })
+                    : t('result.waitingForNext')}
             </button>
           </div>
         </div>
