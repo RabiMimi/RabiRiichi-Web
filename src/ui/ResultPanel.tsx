@@ -573,7 +573,7 @@ export function ResultPanel(): React.JSX.Element | null {
                 ? t('result.showFinalResults', 'Show Game Results')
                 : isReplay
                   ? (currentRoundIdx < roundStartIndices.length - 1
-                    ? t('replay.nextRound', 'Next Round')
+                    ? t('result.nextRound', 'Next Round')
                     : t('result.showFinalResults', 'Show Game Results'))
                   : canProceed
                     ? t('result.confirmWithTime', { seconds: secondsLeft })
