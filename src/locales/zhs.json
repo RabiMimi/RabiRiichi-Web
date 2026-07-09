@@ -162,6 +162,14 @@
     "minHanRequired": "番缚",
     "tenpaiWaits": "听牌详情",
     "tenpai": "听",
+    "autoAgari": "和",
+    "autoAgariDesc": "自动和牌（荣和/自摸）",
+    "noCalls": "鸣",
+    "noCallsDesc": "自动跳过他人打牌时的鸣牌提示（不影响暗杠/加杠等自身出牌时的提示）",
+    "autoDiscard": "切",
+    "autoDiscardDesc": "摸牌后若无其他操作可选则自动摸切",
+    "autoNuki": "拔",
+    "autoNukiDesc": "自动拔北宝牌（在无和牌选项时）",
     "action": {
       "chii": "吃",
       "pon": "碰",
@@ -421,6 +429,14 @@
     "load": "载入",
     "cancel": "取消",
     "fetchError": "获取回放失败: {{message}}",
-    "viewReplay": "观看回放"
+    "viewReplay": "观看回放",
+    "initialWallTitle": "初始牌山",
+    "legend": "图例",
+    "initialHand": "配牌",
+    "tileDrawn": "已摸",
+    "tileInWall": "在牌山中",
+    "noWallData": "此对局记录中无初始牌山数据。",
+    "wallSide": "{{side}}家牌山",
+    "wanpai": "王牌"
   }
 }

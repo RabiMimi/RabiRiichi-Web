@@ -161,6 +161,14 @@
     "minHanRequired": "Min Han Required",
     "tenpaiWaits": "Tenpai Waits",
     "tenpai": "Ten",
+    "autoAgari": "Auto Win",
+    "autoAgariDesc": "Automatically declare Win (Ron/Tsumo) when available",
+    "noCalls": "No Calls",
+    "noCallsDesc": "Never claim discards from other players (Chii/Pon/Kan)",
+    "autoDiscard": "Auto Discard",
+    "autoDiscardDesc": "Automatically discard drawn tile if no other actions are possible",
+    "autoNuki": "Auto Nuki",
+    "autoNukiDesc": "Automatically declare Kita (Nukidora) if available",
     "action": {
       "chii": "Chii",
       "pon": "Pon",
@@ -420,6 +428,14 @@
     "load": "Load",
     "cancel": "Cancel",
     "fetchError": "Failed to fetch replay: {{message}}",
-    "viewReplay": "View Replay"
+    "viewReplay": "View Replay",
+    "initialWallTitle": "Initial Wall",
+    "legend": "Legend",
+    "initialHand": "Initial Hand",
+    "tileDrawn": "Drawn",
+    "tileInWall": "In Wall",
+    "noWallData": "Initial wall data is not available in this replay log.",
+    "wallSide": "{{side}} Wall",
+    "wanpai": "Dead Wall (Wanpai)"
   }
 }

@@ -82,12 +82,18 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
   replayState.paused = false;
   replayState.singleStep = false;
   rabiriichi.replay.setConnectionStatus('connected');
+  const selfPlayer = currentInitialRoom.players.find(
+    (p) => p.seat === perspectiveSeat,
+  );
+  const selfId = selfPlayer?.id ?? replayAccountId(perspectiveSeat);
+  const selfNickname = selfPlayer?.nickname ?? `Player ${perspectiveSeat}`;
+
   rabiriichi.replay.setSelf({
-    id: replayAccountId(perspectiveSeat),
-    nickname: `Player ${perspectiveSeat}`,
+    id: selfId,
+    nickname: selfNickname,
     status: UserStatus.USER_STATUS_PLAYING,
     gameState: null,
-    aiType: AiType.AI_TYPE_NONE,
+    aiType: selfPlayer?.aiType ?? AiType.AI_TYPE_NONE,
   });
 
   rabiriichi.replay.setRoom(currentInitialRoom);
@@ -187,14 +193,19 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
 }
 
 export function setReplayPerspective(seat: number): void {
-  if (!replayState.running) return;
+  if (!replayState.running || !rabiriichi.room) return;
   logger.info(`Switching replay perspective to seat ${seat}`);
+  const targetPlayer = rabiriichi.room.players.find((p) => p.seat === seat);
+  if (!targetPlayer) {
+    logger.warn(`Could not find player at seat ${seat} to switch perspective`);
+    return;
+  }
   rabiriichi.replay.setSelf({
-    id: replayAccountId(seat),
-    nickname: `Player ${seat}`,
+    id: targetPlayer.id,
+    nickname: targetPlayer.nickname,
     status: UserStatus.USER_STATUS_PLAYING,
     gameState: null,
-    aiType: AiType.AI_TYPE_NONE,
+    aiType: targetPlayer.aiType,
   });
 }
 
@@ -435,4 +446,18 @@ export function pauseReplay(): void {
     logger.info('Replay paused');
     rabiriichi.replay.setReplayPaused(true);
   }
+}
+
+export function getCurrentRoundEvents(): IEventMsg[] {
+  const roundIdx = getCurrentRoundIndex();
+  if (roundIdx < 0 || roundIdx >= roundStartEventIndices.length) return [];
+  const beginIdx = roundStartEventIndices[roundIdx];
+  if (beginIdx === undefined) return [];
+  const nextRoundIdx = roundIdx + 1;
+  const endIdx =
+    nextRoundIdx < roundStartEventIndices.length
+      ? roundStartEventIndices[nextRoundIdx]
+      : currentEvents.length;
+  if (endIdx === undefined) return [];
+  return currentEvents.slice(beginIdx, endIdx);
 }

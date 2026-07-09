@@ -28,6 +28,10 @@ export interface RabiRiichiState {
   replayProgress: number;
   replayTotal: number;
   hasInMemoryResult: boolean;
+  autoAgari: boolean;
+  noCalls: boolean;
+  autoDiscard: boolean;
+  autoNuki: boolean;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -58,7 +62,11 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.isReplayPaused !== rabiriichi.isReplayPaused ||
     lastSnapshot.replayProgress !== rabiriichi.replayProgress ||
     lastSnapshot.replayTotal !== rabiriichi.replayTotal ||
-    lastSnapshot.hasInMemoryResult !== rabiriichi.hasInMemoryResult
+    lastSnapshot.hasInMemoryResult !== rabiriichi.hasInMemoryResult ||
+    lastSnapshot.autoAgari !== rabiriichi.autoAgari ||
+    lastSnapshot.noCalls !== rabiriichi.noCalls ||
+    lastSnapshot.autoDiscard !== rabiriichi.autoDiscard ||
+    lastSnapshot.autoNuki !== rabiriichi.autoNuki
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -81,6 +89,10 @@ function getSnapshot(): RabiRiichiState {
       replayProgress: rabiriichi.replayProgress,
       replayTotal: rabiriichi.replayTotal,
       hasInMemoryResult: rabiriichi.hasInMemoryResult,
+      autoAgari: rabiriichi.autoAgari,
+      noCalls: rabiriichi.noCalls,
+      autoDiscard: rabiriichi.autoDiscard,
+      autoNuki: rabiriichi.autoNuki,
     };
   }
   return lastSnapshot;
@@ -235,6 +247,38 @@ export function useResultAnimation(): 'agari' | 'ryuukyoku' | null {
     subscribe,
     () => rabiriichi.resultAnimation,
     () => rabiriichi.resultAnimation,
+  );
+}
+
+export function useAutoAgari(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.autoAgari,
+    () => rabiriichi.autoAgari,
+  );
+}
+
+export function useNoCalls(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.noCalls,
+    () => rabiriichi.noCalls,
+  );
+}
+
+export function useAutoDiscard(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.autoDiscard,
+    () => rabiriichi.autoDiscard,
+  );
+}
+
+export function useAutoNuki(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.autoNuki,
+    () => rabiriichi.autoNuki,
   );
 }
 

@@ -10,6 +10,11 @@ import {
   useHoveredTileTraceId,
   useSelectedTileTraceId,
   useIsRiichiSelectMode,
+  useIsReplay,
+  useAutoAgari,
+  useNoCalls,
+  useAutoDiscard,
+  useAutoNuki,
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { rabiriichi } from '../net/client';
@@ -66,7 +71,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
             const doraTileMsg = idx < doras.length ? doras[idx] : null;
             let imgSrc = '/assets/hand_tiles/back.jpg';
 
-            const isRevealed = idx < (revealedDoraCount ?? 1);
+            const isRevealed = idx < revealedDoraCount;
 
             if (isRevealed && doraTileMsg?.tile) {
               const tileStr = Tile.fromByte(doraTileMsg.tile).toString();
@@ -347,6 +352,18 @@ function HUDLeftPanel({
   onInfoClick,
 }: HUDLeftPanelProps): React.JSX.Element {
   const { t } = useTranslation();
+  const isReplay = useIsReplay();
+  const autoAgari = useAutoAgari();
+  const noCalls = useNoCalls();
+  const autoDiscard = useAutoDiscard();
+  const autoNuki = useAutoNuki();
+  const room = useRoom();
+
+  const hasNukiDora =
+    room?.config?.doraOption !== null &&
+    room?.config?.doraOption !== undefined &&
+    (room.config.doraOption & 128) !== 0;
+
   return (
     <div className="left-hud-panel">
       {/* Game Info Panel (Doras + Round Info) */}
@@ -383,6 +400,58 @@ function HUDLeftPanel({
           <option value="8">x8.0</option>
         </select>
       </div>
+
+      {/* Auto-play Toggles Row */}
+      {!isReplay && (
+        <div className="auto-play-toggles-row">
+          <button
+            type="button"
+            className={`auto-toggle-btn ${autoAgari ? 'active' : ''}`}
+            onClick={() => rabiriichi.toggleAutoAgari()}
+            title={t(
+              'hud.autoAgariDesc',
+              'Automatically declare Win (Ron/Tsumo) when available',
+            )}
+          >
+            {t('hud.autoAgari', 'Win')}
+          </button>
+          <button
+            type="button"
+            className={`auto-toggle-btn ${noCalls ? 'active' : ''}`}
+            onClick={() => rabiriichi.toggleNoCalls()}
+            title={t(
+              'hud.noCallsDesc',
+              'Never claim discards from other players (Chii/Pon/Kan)',
+            )}
+          >
+            {t('hud.noCalls', 'No Calls')}
+          </button>
+          <button
+            type="button"
+            className={`auto-toggle-btn ${autoDiscard ? 'active' : ''}`}
+            onClick={() => rabiriichi.toggleAutoDiscard()}
+            title={t(
+              'hud.autoDiscardDesc',
+              'Automatically discard drawn tile if no other actions are possible',
+            )}
+          >
+            {t('hud.autoDiscard', 'Auto Discard')}
+          </button>
+          {hasNukiDora && (
+            <button
+              type="button"
+              className={`auto-toggle-btn ${autoNuki ? 'active' : ''}`}
+              onClick={() => rabiriichi.toggleAutoNuki()}
+              title={t(
+                'hud.autoNukiDesc',
+                'Automatically declare Kita (Nukidora) if available',
+              )}
+            >
+              {t('hud.autoNuki', 'Auto Nuki')}
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="hud-buttons-row">
         <FullscreenButton />

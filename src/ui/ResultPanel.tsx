@@ -63,6 +63,7 @@ export function ResultPanel(): React.JSX.Element | null {
   const progress = useReplayProgress();
 
   const currentRoundIdx = React.useMemo(() => {
+    void progress; // Reference to satisfy react-hooks/exhaustive-deps
     return isReplay ? getCurrentRoundIndex() : 0;
   }, [isReplay, progress]);
 
@@ -122,7 +123,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const canProceed = isReplay
     ? true
-    : (proceedAction != null || isWaitingForProceed);
+    : proceedAction != null || isWaitingForProceed;
 
   const handleProceed = React.useCallback(() => {
     if (isReplay) {
@@ -140,7 +141,15 @@ export function ResultPanel(): React.JSX.Element | null {
     } else if (room?.gameEnded) {
       setShowFinalResults(true);
     }
-  }, [isReplay, currentRoundIdx, roundStartIndices, proceedAction, isWaitingForProceed, submitAction, room?.gameEnded]);
+  }, [
+    isReplay,
+    currentRoundIdx,
+    roundStartIndices,
+    proceedAction,
+    isWaitingForProceed,
+    submitAction,
+    room?.gameEnded,
+  ]);
 
   React.useEffect(() => {
     if (!isWaitingForProceed) return;
@@ -183,8 +192,8 @@ export function ResultPanel(): React.JSX.Element | null {
     if (isDraw || !room?.info) return null;
 
     const doraCount = room.info.revealedDoraCount;
-    const doras = room.info.doras ?? [];
-    const uradoras = room.info.uradoras ?? [];
+    const doras = room.info.doras;
+    const uradoras = room.info.uradoras;
 
     if (doras.length === 0) return null;
 
@@ -298,11 +307,15 @@ export function ResultPanel(): React.JSX.Element | null {
       badgeText = t('result.tenpai');
     }
 
-    let summaryText = '';
+    let limitLabel: string | null = null;
+    let hanFuLabel = '';
+    let limitClass = '';
+
     if (isNagashi) {
-      summaryText = t('result.mangan');
+      limitLabel = t('result.mangan');
+      limitClass = 'limit-mangan';
     } else if (isTenpai) {
-      summaryText = '';
+      // nothing
     } else if (agari.scores?.result) {
       const result = agari.scores.result;
       const isAotenjou =
@@ -310,22 +323,20 @@ export function ResultPanel(): React.JSX.Element | null {
         (room.config.scoringOption & 2) === 0;
 
       if (result.yakuman && result.yakuman > 0) {
+        limitClass = 'limit-yakuman';
         if (result.kazoeYakuman && result.kazoeYakuman > 0 && !isAotenjou) {
-          const limitText = t('result.yakuman');
-          summaryText = t('result.limitPrefixedHanOnly', {
-            limit: limitText,
-            han: result.han,
-          });
+          limitLabel = t('result.yakuman');
+          hanFuLabel = t('result.han', { count: result.han });
         } else {
           if (result.yakuman > 1) {
             const key = `result.multipleYakuman_${result.yakuman}`;
-            summaryText = t(key, {
+            limitLabel = t(key, {
               defaultValue: t('result.multipleYakuman', {
                 count: result.yakuman,
               }),
             });
           } else {
-            summaryText = t('result.yakuman');
+            limitLabel = t('result.yakuman');
           }
         }
       } else {
@@ -338,14 +349,14 @@ export function ResultPanel(): React.JSX.Element | null {
             );
 
         if (limit) {
-          const limitText = t(`result.${limit}`);
-          summaryText = t('result.limitPrefixed', {
-            limit: limitText,
-            han: result.han,
+          limitLabel = t(`result.${limit}`);
+          limitClass = `limit-${limit}`;
+          hanFuLabel = t('result.fuAndHan', {
             fu: result.fu,
+            han: result.han,
           });
         } else {
-          summaryText = t('result.fuAndHan', {
+          hanFuLabel = t('result.fuAndHan', {
             fu: result.fu,
             han: result.han,
           });
@@ -393,7 +404,14 @@ export function ResultPanel(): React.JSX.Element | null {
               </div>
             )
           ) : (
-            <span className="winner-summary">{summaryText}</span>
+            <div className="winner-summary-row">
+              {limitLabel && (
+                <span className={`winner-limit-badge ${limitClass}`}>
+                  {limitLabel}
+                </span>
+              )}
+              {hanFuLabel && <span className="winner-hanfu">{hanFuLabel}</span>}
+            </div>
           )}
         </div>
 
@@ -567,14 +585,14 @@ export function ResultPanel(): React.JSX.Element | null {
             <button
               className="ui-button primary-button"
               onClick={handleProceed}
-              disabled={!canProceed && !room?.gameEnded}
+              disabled={!canProceed && !room.gameEnded}
             >
-              {room?.gameEnded
+              {room.gameEnded
                 ? t('result.showFinalResults', 'Show Game Results')
                 : isReplay
-                  ? (currentRoundIdx < roundStartIndices.length - 1
+                  ? currentRoundIdx < roundStartIndices.length - 1
                     ? t('result.nextRound', 'Next Round')
-                    : t('result.showFinalResults', 'Show Game Results'))
+                    : t('result.showFinalResults', 'Show Game Results')
                   : canProceed
                     ? t('result.confirmWithTime', { seconds: secondsLeft })
                     : t('result.waitingForNext')}

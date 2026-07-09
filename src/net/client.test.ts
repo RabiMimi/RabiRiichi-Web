@@ -969,4 +969,202 @@ describe('RabiRiichiClient', () => {
 
     vi.useRealTimers();
   });
+
+  describe('Auto-play options', () => {
+    it('should auto-respond to agari option when autoAgari is enabled', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+      client.autoAgari = true;
+
+      // Send inquiry with skip (index 0) and agari (index 1)
+      sendServerMsg(mockWS, {
+        id: 11,
+        serverMsg: {
+          inquiry: {
+            inquiry: {
+              actions: [
+                { skipAction: {} },
+                { agariAction: { incoming: { tile: 17, traceId: 1 } } },
+              ],
+            },
+          },
+        },
+      });
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Client should auto-respond to agari (index 1)
+      expect(mockWS.send).toHaveBeenCalledTimes(1);
+      const msgBytes = mockWS.send.mock.calls[0]![0];
+      const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+      expect(msg.respondTo).toBe(11);
+      expect(msg.clientMsg?.inquiryMsg?.index).toBe(1);
+      expect(msg.clientMsg?.inquiryMsg?.response).toBe('{}');
+
+      client.close();
+      vi.useRealTimers();
+    });
+
+    it('should auto-respond to skip when noCalls is enabled and only calls/skip are present', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+      client.noCalls = true;
+
+      // Setup room state without playTile (not our turn)
+      client.replay.setRoom(makeRoomWithAgari(false));
+
+      // Send inquiry with skip (index 0) and pon (index 1)
+      sendServerMsg(mockWS, {
+        id: 11,
+        serverMsg: {
+          inquiry: {
+            inquiry: {
+              actions: [{ skipAction: {} }, { ponAction: { tileGroups: [] } }],
+            },
+          },
+        },
+      });
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Client should auto-respond with skip (index 0)
+      expect(mockWS.send).toHaveBeenCalledTimes(1);
+      const msgBytes = mockWS.send.mock.calls[0]![0];
+      const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+      expect(msg.respondTo).toBe(11);
+      expect(msg.clientMsg?.inquiryMsg?.index).toBe(0);
+      expect(msg.clientMsg?.inquiryMsg?.response).toBe('{}');
+
+      client.close();
+      vi.useRealTimers();
+    });
+
+    it('should auto-discard drawn tile when autoDiscard is enabled and only play-tile is available', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+      client.autoDiscard = true;
+
+      // Setup room where local player has a pending drawn tile
+      const room = makeRoomWithAgari(false);
+      if (room.players[0]?.gameState?.hand) {
+        room.players[0].gameState.hand.pendingTile = {
+          tile: 17,
+          traceId: 999,
+          playerId: 123,
+          source: 1, // TILE_SOURCE_WALL
+        };
+      }
+      client.replay.setRoom(room);
+
+      // Send inquiry with only play-tile action (index 0)
+      sendServerMsg(mockWS, {
+        id: 11,
+        serverMsg: {
+          inquiry: {
+            inquiry: {
+              actions: [
+                {
+                  playTileAction: {
+                    tiles: [
+                      { tile: 1, traceId: 101 },
+                      { tile: 2, traceId: 102 },
+                      { tile: 17, traceId: 999 },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      });
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Client should auto-discard the tile (index 0, response index 2)
+      expect(mockWS.send).toHaveBeenCalledTimes(1);
+      const msgBytes = mockWS.send.mock.calls[0]![0];
+      const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+      expect(msg.respondTo).toBe(11);
+      expect(msg.clientMsg?.inquiryMsg?.index).toBe(0);
+      expect(msg.clientMsg?.inquiryMsg?.response).toBe('2'); // index 2 in playTileAction.tiles (traceId 999)
+
+      client.close();
+      vi.useRealTimers();
+    });
+
+    it('should auto-respond to nukidora when autoNuki is enabled', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+      client.autoNuki = true;
+
+      // Send inquiry with skip (index 0) and nukidora (index 1)
+      sendServerMsg(mockWS, {
+        id: 11,
+        serverMsg: {
+          inquiry: {
+            inquiry: {
+              actions: [{ skipAction: {} }, { nukiDoraAction: { tiles: [] } }],
+            },
+          },
+        },
+      });
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      // Client should auto-respond with nukidora (index 1)
+      expect(mockWS.send).toHaveBeenCalledTimes(1);
+      const msgBytes = mockWS.send.mock.calls[0]![0];
+      const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+      expect(msg.respondTo).toBe(11);
+      expect(msg.clientMsg?.inquiryMsg?.index).toBe(1);
+      expect(msg.clientMsg?.inquiryMsg?.response).toBe('0'); // choiceIndex is 0 for nukidora
+
+      client.close();
+      vi.useRealTimers();
+    });
+
+    it('should reset auto-play properties to false when beginGameEvent is received', async () => {
+      vi.useFakeTimers();
+      const client = new RabiRiichiClient();
+      const mockWS = await setupConnectedClient(client);
+
+      // Initialize room
+      const room = makeRoomWithAgari(false);
+      client.replay.setRoom(room);
+
+      // Set toggles to true
+      client.autoAgari = true;
+      client.noCalls = true;
+      client.autoDiscard = true;
+      client.autoNuki = true;
+
+      // Send beginGameEvent
+      sendServerMsg(mockWS, {
+        id: 0,
+        event: {
+          beginGameEvent: {
+            round: 0,
+            dealer: 0,
+            honba: 0,
+            riichiStick: 0,
+            remainingTiles: 70,
+            gameId: 'test-game',
+          },
+        },
+      });
+
+      // Verification
+      expect(client.autoAgari).toBe(false);
+      expect(client.noCalls).toBe(false);
+      expect(client.autoDiscard).toBe(false);
+      expect(client.autoNuki).toBe(false);
+
+      client.close();
+      vi.useRealTimers();
+    });
+  });
 });

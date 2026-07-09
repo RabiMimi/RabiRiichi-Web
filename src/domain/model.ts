@@ -6,8 +6,31 @@ import type {
   IScoreStorageMsg,
   IMenLikeMsg,
 } from '../proto/index.js';
-import { AiType } from '../proto/index.js';
+import { AiType, DoraOption } from '../proto/index.js';
 import type { TileRegistry } from './tileRegistry.js';
+
+// Dead-wall layout constants, mirroring the server (Wall.cs). The dead wall is
+// laid out at the end of the flattened initialWall as: NUM_DORA dora/ura stacks
+// (top=dora, bottom=ura) followed by the rinshan stacks.
+export const NUM_DORA = 5;
+export const NUM_RINSHAN = 4;
+// North (北) tile byte: suit Z(4) << 4 | num 4.
+const NORTH_TILE = 68;
+
+/**
+ * Number of rinshan (replacement) tiles in the dead wall. Matches the server:
+ * base NUM_RINSHAN, plus one per pullable North when nukidora is enabled.
+ */
+export function deadWallRinshanCount(config: IGameConfigMsg | null): number {
+  if (!config) return NUM_RINSHAN;
+  const nukidora =
+    ((config.doraOption ?? 0) & DoraOption.DORA_OPTION_NUKI_DORA) !== 0;
+  if (!nukidora) return NUM_RINSHAN;
+  const northCount = (config.initialTiles ?? []).filter(
+    (t) => t === NORTH_TILE,
+  ).length;
+  return NUM_RINSHAN + northCount;
+}
 
 export interface PlayerAgariState {
   scores?: IScoreStorageMsg | null;
@@ -70,6 +93,7 @@ export interface GameInfo {
   doras: IGameTileMsg[];
   uradoras: IGameTileMsg[];
   revealedDoraCount: number;
+  initialWall?: IGameTileMsg[];
 }
 
 export interface RoomModel {

@@ -23,6 +23,7 @@ import {
 import { GameInfoPanel } from './GamePlayHUD';
 import { FullscreenButton } from './FullscreenButton';
 import { GameInfoModal } from './GameInfoModal';
+import { InitialWallModal } from './InitialWallModal';
 
 export function ReplayHUD(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -35,6 +36,7 @@ export function ReplayHUD(): React.JSX.Element | null {
   const total = useReplayTotal();
 
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isWallOpen, setIsWallOpen] = useState(false);
   const [isForceCollapsed, setIsForceCollapsed] = useState(false);
 
   const currentRoundIdx = getCurrentRoundIndex();
@@ -168,6 +170,31 @@ export function ReplayHUD(): React.JSX.Element | null {
 
           <button
             type="button"
+            className="info-icon-btn"
+            onClick={() => setIsWallOpen(true)}
+            title={t('replay.initialWallTitle', 'Initial Wall & Doras')}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+              <line x1="15" y1="3" x2="15" y2="21"></line>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="3" y1="15" x2="21" y2="15"></line>
+            </svg>
+          </button>
+
+          <button
+            type="button"
             className="info-icon-btn exit-btn"
             onClick={() => stopReplay()}
             title={t('hud.exitGame')}
@@ -223,9 +250,9 @@ export function ReplayHUD(): React.JSX.Element | null {
           style={{
             display: 'flex',
             width: '100%',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             alignItems: 'center',
-            gap: '24px',
+            gap: '32px',
           }}
         >
           <div className="playback-buttons">
@@ -334,28 +361,27 @@ export function ReplayHUD(): React.JSX.Element | null {
               </svg>
             </button>
           </div>
+        </div>
 
-          <div className="perspective-selector">
-            <span className="perspective-label">
-              {t('replay.perspective')}:
-            </span>
-            <div className="perspective-buttons-group">
-              {players.map((p) => {
-                const isCurrent = currentUser.id === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className={`perspective-btn ${isCurrent ? 'active' : ''}`}
-                    onClick={() =>
-                      p.seat !== undefined && setReplayPerspective(p.seat)
-                    }
-                  >
-                    {p.nickname}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Player Perspective Selector (Move to separate row) */}
+        <div className="perspective-selector">
+          <span className="perspective-label">{t('replay.perspective')}:</span>
+          <div className="perspective-buttons-group">
+            {players.map((p) => {
+              const isCurrent = currentUser.id === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`perspective-btn ${isCurrent ? 'active' : ''}`}
+                  onClick={() =>
+                    p.seat !== undefined && setReplayPerspective(p.seat)
+                  }
+                >
+                  {p.nickname}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -364,6 +390,13 @@ export function ReplayHUD(): React.JSX.Element | null {
       <GameInfoModal
         isOpen={isInfoOpen}
         onClose={() => setIsInfoOpen(false)}
+        room={room}
+      />
+
+      {/* Initial Wall Modal */}
+      <InitialWallModal
+        isOpen={isWallOpen}
+        onClose={() => setIsWallOpen(false)}
         room={room}
       />
     </div>

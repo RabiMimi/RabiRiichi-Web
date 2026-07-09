@@ -216,6 +216,9 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     uradoras: [],
     revealedDoraCount: 0,
   };
+  if (ev.initialWall) {
+    info.initialWall = ev.initialWall;
+  }
 
   const initialPoints = state.config?.pointThreshold?.initialPoints
     ? Number(state.config.pointThreshold.initialPoints)

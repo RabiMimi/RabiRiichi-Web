@@ -9,11 +9,13 @@ import {
   shouldRevealHand,
   waitMeetsMinHan,
   applyRiichiBonusToWaits,
+  deadWallRinshanCount,
+  NUM_RINSHAN,
   type PlayerModel,
   type PlayerAgariState,
   type MappedTenpaiInfo,
 } from './model';
-import { UserStatus, AiType } from '../proto';
+import { UserStatus, AiType, DoraOption } from '../proto';
 
 describe('Model seat math', () => {
   describe('2-player config', () => {
@@ -242,5 +244,29 @@ describe('applyRiichiBonusToWaits', () => {
     const input = wait({ han: 1, yakuHan: 1 });
     applyRiichiBonusToWaits([input]);
     expect(input).toMatchObject({ han: 1, yakuHan: 1 });
+  });
+});
+
+describe('deadWallRinshanCount', () => {
+  const NORTH = 68; // suit Z(4) << 4 | 4
+  const NUKI = DoraOption.DORA_OPTION_NUKI_DORA;
+
+  it('returns base count for null config', () => {
+    expect(deadWallRinshanCount(null)).toBe(NUM_RINSHAN);
+  });
+
+  it('returns base count when nukidora is disabled', () => {
+    expect(
+      deadWallRinshanCount({ doraOption: 0, initialTiles: [NORTH, NORTH] }),
+    ).toBe(NUM_RINSHAN);
+  });
+
+  it('adds one rinshan per North when nukidora is enabled', () => {
+    expect(
+      deadWallRinshanCount({
+        doraOption: NUKI,
+        initialTiles: [NORTH, NORTH, NORTH, NORTH, 17, 18],
+      }),
+    ).toBe(NUM_RINSHAN + 4);
   });
 });

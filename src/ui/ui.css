@@ -857,7 +857,12 @@
   background-color: #00bcff;
 }
 
-.winner-details-card.nagashi-card .winner-summary {
+.winner-details-card.nagashi-card .winner-limit-badge {
+  background-color: #00e5ff;
+  color: #1a1a1a;
+}
+
+.winner-details-card.nagashi-card .winner-hanfu {
   color: #00e5ff;
 }
 
@@ -894,8 +899,8 @@
   color: #fff;
   font-size: 0.75rem;
   font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 3px 10px;
+  border-radius: 50px;
 }
 
 .winner-name {
@@ -903,8 +908,43 @@
   font-weight: bold;
 }
 
-.winner-summary {
+.winner-summary-row {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.winner-limit-badge {
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 50px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.winner-limit-badge.limit-mangan {
+  background-color: #ff7a99;
+}
+
+.winner-limit-badge.limit-haneman {
+  background-color: #8c7aff;
+}
+
+.winner-limit-badge.limit-baiman {
+  background-color: #ffb830;
+}
+
+.winner-limit-badge.limit-sanbaiman {
+  background-color: #ff6e30;
+}
+
+.winner-limit-badge.limit-yakuman {
+  background-color: #ff3333;
+}
+
+.winner-hanfu {
   font-weight: bold;
   color: #ff7a99;
   font-size: 1.1rem;
@@ -3234,4 +3274,225 @@
 .replay-controls-toolbar.force-collapsed .toolbar-expand-tab {
   color: #ff7a99 !important;
   border-color: #ff7a99 !important;
+}
+
+/* Initial Wall Modal Styles */
+.initial-wall-modal-content {
+  max-width: 920px;
+  width: 95%;
+  background-color: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(130, 170, 240, 0.4);
+}
+
+.initial-wall-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.initial-wall-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.color-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.8rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.legend-title {
+  font-weight: bold;
+  color: #888;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ccc;
+}
+
+.legend-color-box {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-seat-0 .legend-color-box {
+  background-color: rgba(74, 144, 226, 0.3);
+  border: 1.5px solid #4a90e2;
+}
+
+.legend-seat-1 .legend-color-box {
+  background-color: rgba(245, 166, 35, 0.3);
+  border: 1.5px solid #f5a623;
+}
+
+.legend-seat-2 .legend-color-box {
+  background-color: rgba(126, 211, 33, 0.3);
+  border: 1.5px solid #7ed321;
+}
+
+.legend-seat-3 .legend-color-box {
+  background-color: rgba(208, 2, 27, 0.3);
+  border: 1.5px solid #d0021b;
+}
+
+.legend-wanpai .legend-color-box {
+  background-color: rgba(139, 87, 42, 0.25);
+  border: 1.5px solid #8b572a;
+}
+
+.initial-wall-stacks-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+.wall-tile.wanpai {
+  outline: 1.5px dashed #d08a4a;
+  outline-offset: 1px;
+  box-shadow: 0 0 6px rgba(208, 138, 74, 0.6);
+}
+
+.wall-stack {
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 4px;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.15s ease;
+}
+
+.wall-stack:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(130, 170, 240, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.wall-tile {
+  width: 28px;
+  height: 38px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #e0e0e0;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+
+.wall-tile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.wall-tile.dimmed {
+  opacity: 0.25;
+}
+
+.wall-tile.initial-hand-seat-0 {
+  border: 2px solid #4a90e2;
+  box-shadow: 0 0 6px rgba(74, 144, 226, 0.5);
+}
+
+.wall-tile.initial-hand-seat-1 {
+  border: 2px solid #f5a623;
+  box-shadow: 0 0 6px rgba(245, 166, 35, 0.5);
+}
+
+.wall-tile.initial-hand-seat-2 {
+  border: 2px solid #7ed321;
+  box-shadow: 0 0 6px rgba(126, 211, 33, 0.5);
+}
+
+.wall-tile.initial-hand-seat-3 {
+  border: 2px solid #d0021b;
+  box-shadow: 0 0 6px rgba(208, 2, 27, 0.5);
+}
+
+.wall-tile-empty {
+  width: 28px;
+  height: 38px;
+  background-color: transparent;
+  flex-shrink: 0;
+}
+
+.no-wall-data {
+  text-align: center;
+  padding: 48px;
+  color: #777;
+  font-style: italic;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+/* Auto-play Toggles HUD Styling */
+.auto-play-toggles-row {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.auto-toggle-btn {
+  flex: 1;
+  background-color: rgba(20, 20, 20, 0.85);
+  border: 1.5px solid #444;
+  border-radius: 6px;
+  color: #888;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  text-align: center;
+  user-select: none;
+}
+
+.auto-toggle-btn:hover {
+  border-color: #ff7a99;
+  color: #ccc;
+  transform: translateY(-1px);
+}
+
+.auto-toggle-btn.active {
+  background-color: rgba(255, 122, 153, 0.15);
+  border-color: #ff7a99;
+  color: #ff7a99;
+  box-shadow:
+    0 0 10px rgba(255, 122, 153, 0.3),
+    inset 0 0 4px rgba(255, 122, 153, 0.2);
+  text-shadow: 0 0 4px rgba(255, 122, 153, 0.4);
+}
+
+.auto-toggle-btn:active {
+  transform: translateY(1px);
 }

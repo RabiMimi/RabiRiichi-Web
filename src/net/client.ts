@@ -102,6 +102,35 @@ export class RabiRiichiClient {
   public pendingActionOption: ActionOption | null = null;
   public animationSpeed = 1.0;
   public isWaitingForProceed = false;
+
+  public autoAgari = false;
+  public noCalls = false;
+  public autoDiscard = false;
+  public autoNuki = false;
+
+  public toggleAutoAgari(): void {
+    this.autoAgari = !this.autoAgari;
+    this.onChange.emit();
+    this.maybeAutoRespond();
+  }
+
+  public toggleNoCalls(): void {
+    this.noCalls = !this.noCalls;
+    this.onChange.emit();
+    this.maybeAutoRespond();
+  }
+
+  public toggleAutoDiscard(): void {
+    this.autoDiscard = !this.autoDiscard;
+    this.onChange.emit();
+    this.maybeAutoRespond();
+  }
+
+  public toggleAutoNuki(): void {
+    this.autoNuki = !this.autoNuki;
+    this.onChange.emit();
+    this.maybeAutoRespond();
+  }
   public isReplay = false;
   public isReplayPaused = false;
   public replayProgress = 0;
@@ -341,6 +370,12 @@ export class RabiRiichiClient {
       this.logger.warn('Received game event but not in a room');
       return;
     }
+    if (gameEvent.beginGameEvent) {
+      this.autoAgari = false;
+      this.noCalls = false;
+      this.autoDiscard = false;
+      this.autoNuki = false;
+    }
     this.room = applyEvent(this.room, gameEvent);
     this.logger.info(
       `Game event applied. Current player: ${this.room.info?.currentPlayer}`,
@@ -466,10 +501,73 @@ export class RabiRiichiClient {
     const inquiry = this.currentInquiry;
     if (!inquiry) return;
 
+    // 1. Check autoAgari (Ron or Tsumo)
+    if (this.autoAgari) {
+      const agariOpt = inquiry.mapped.buttons.find((b) => b.type === 'agari');
+      if (agariOpt) {
+        this.logger.info(`Auto Agari triggered: auto-responding with Agari`);
+        void this.submitInquiryResponse(agariOpt, undefined);
+        return;
+      }
+    }
+
+    // 2. Check autoNuki (automatically nuki dora if no agari option)
+    if (this.autoNuki) {
+      const nukiOpt = inquiry.mapped.buttons.find((b) => b.type === 'nukidora');
+      const hasAgari = inquiry.mapped.buttons.some((b) => b.type === 'agari');
+      if (nukiOpt && !hasAgari) {
+        this.logger.info(`Auto Nuki triggered: auto-responding with Nukidora`);
+        void this.submitInquiryResponse(nukiOpt, nukiOpt.choiceIndex);
+        return;
+      }
+    }
+
+    // 3. Check noCalls (never call tiles from other players. Skip if only calls + skip are present)
+    if (this.noCalls) {
+      const playTileAction = inquiry.mapped.playTile;
+      if (!playTileAction) {
+        const hasCalls = inquiry.mapped.buttons.some(
+          (b) => b.type === 'chii' || b.type === 'pon' || b.type === 'kan',
+        );
+        const hasAgari = inquiry.mapped.buttons.some((b) => b.type === 'agari');
+        const skipOpt = inquiry.mapped.buttons.find((b) => b.type === 'skip');
+        if (hasCalls && !hasAgari && skipOpt) {
+          this.logger.info(`No Calls active: auto-skipping call options`);
+          void this.submitInquiryResponse(skipOpt, undefined);
+          return;
+        }
+      }
+    }
+
+    // 4. Check autoDiscard (auto discard drawn tile if only play-tile is available, i.e. no buttons)
+    if (this.autoDiscard) {
+      const playTileAction = inquiry.mapped.playTile;
+      if (playTileAction && inquiry.mapped.buttons.length === 0) {
+        const me = this.room?.players.find((p) => p.id === this.self?.id);
+        const drawnTileId = me?.gameState?.hand.pendingTile?.traceId;
+        if (drawnTileId && playTileAction.legalTiles.includes(drawnTileId)) {
+          this.logger.info(
+            `Auto Discard active: auto-discarding drawn tile ${drawnTileId}`,
+          );
+          const option: ActionOption = {
+            type: 'play-tile',
+            label: '打',
+            actionIndex: playTileAction.actionIndex,
+            legalTiles: playTileAction.legalTiles,
+            ...(playTileAction.candidates
+              ? { candidates: playTileAction.candidates }
+              : {}),
+          };
+          void this.submitInquiryResponse(option, drawnTileId);
+          return;
+        }
+      }
+    }
+
     const response = getAutoResponse(inquiry.mapped);
     if (response) {
       this.logger.info(
-        `Auto-responding to inquiry: ${JSON.stringify(response)}`,
+        `Auto-responding to single-choice inquiry: ${JSON.stringify(response)}`,
       );
       void this.submitInquiryResponse(response.action, response.choice);
     }

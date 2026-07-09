@@ -88,6 +88,10 @@ describe('RabiRiichi Store', () => {
       replayProgress: 0,
       replayTotal: 0,
       hasInMemoryResult: false,
+      autoAgari: false,
+      noCalls: false,
+      autoDiscard: false,
+      autoNuki: false,
     });
   });
 
