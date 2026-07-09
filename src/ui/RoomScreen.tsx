@@ -51,6 +51,18 @@ export function RoomScreen(): React.JSX.Element | null {
     }
   };
 
+  const handleRemovePlayer = async (id: number) => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await rabiriichi.removeRoomPlayer(id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove player');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleToggleReady = async () => {
     setError(null);
     setIsLoading(true);
@@ -162,6 +174,16 @@ export function RoomScreen(): React.JSX.Element | null {
                       ? t('room.status.ready')
                       : t('room.status.waiting')}
                   </div>
+                  {isOwner && player.aiType !== AiType.AI_TYPE_NONE && (
+                    <button
+                      className="ui-button mini-button kick-ai-btn"
+                      onClick={() => void handleRemovePlayer(player.id)}
+                      disabled={isLoading}
+                      title={t('room.kickAi')}
+                    >
+                      {t('room.kickAi')}
+                    </button>
+                  )}
                 </div>
               );
             } else {

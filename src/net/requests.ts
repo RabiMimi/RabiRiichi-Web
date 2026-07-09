@@ -121,3 +121,20 @@ export function addAi(
     (resp) => resp.roomState,
   );
 }
+
+export function removeRoomPlayer(
+  ws: RabiSocket,
+  id: number,
+): Promise<IServerRoomStateResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        removeRoomPlayer: {
+          id,
+        },
+      },
+    },
+    (resp) => resp.roomState,
+  );
+}

@@ -6,6 +6,7 @@ import {
   createRoom,
   joinRoom,
   addAi,
+  removeRoomPlayer,
 } from './requests';
 import { UserStatus, AiType } from '../proto';
 import type {
@@ -516,6 +517,15 @@ export class RabiRiichiClient {
     this.logger.info(`Adding AI to room: ${type}`);
     const client = await this.getWSClient(true);
     const resp = await addAi(client, type);
+    if (resp.state) {
+      this.handleRoomState(resp.state);
+    }
+  }
+
+  public async removeRoomPlayer(id: number): Promise<void> {
+    this.logger.info(`Removing player from room: ${id}`);
+    const client = await this.getWSClient(true);
+    const resp = await removeRoomPlayer(client, id);
     if (resp.state) {
       this.handleRoomState(resp.state);
     }

@@ -93,6 +93,7 @@
     "updating": "更新中...",
     "emptySeat": "空位",
     "addAi": "添加 AI",
+    "kickAi": "踢出",
     "status": {
       "ready": "已准备",
       "waiting": "等待中",

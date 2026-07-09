@@ -92,6 +92,7 @@
     "updating": "Updating...",
     "emptySeat": "Empty Seat",
     "addAi": "Add AI",
+    "kickAi": "Kick",
     "status": {
       "ready": "Ready",
       "waiting": "Waiting",

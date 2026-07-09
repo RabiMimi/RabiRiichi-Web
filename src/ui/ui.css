@@ -2031,6 +2031,16 @@
   min-width: auto;
 }
 
+.kick-ai-btn {
+  margin-left: 8px;
+  background: #a33;
+  color: #fff;
+}
+
+.kick-ai-btn:hover:not(:disabled) {
+  background: #c44;
+}
+
 .player-plate-3d {
   display: flex;
   align-items: center;
