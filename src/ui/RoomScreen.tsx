@@ -132,7 +132,9 @@ export function RoomScreen(): React.JSX.Element | null {
 
         {error && <div className="ui-error">{error}</div>}
 
-        <div className="player-list">
+        <div
+          className={`player-list ${showAiDropdown ? 'has-open-dropdown' : ''}`}
+        >
           {seats.map((player, index) => {
             if (player) {
               const playerIsReady =
