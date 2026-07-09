@@ -13,6 +13,11 @@ import {
 export const DEFAULT_ACTION_TIMEOUT = 20;
 export const DEFAULT_NEXT_ROUND_ACK_TIMEOUT = 30;
 
+// Sentinel inquiry-response index meaning "use the server's default action".
+// Matches the server's InquiryResponse.Default (index = -1): any index < 0 makes
+// the server keep the action it flagged as default (e.g. tsumo on a riichi win).
+export const INQUIRY_DEFAULT_INDEX = -1;
+
 // How long the end-of-hand result animation (agari/ryuukyoku) plays before the
 // result panel is revealed. The next-round countdown runs independently during
 // this window, so it stays shorter than DEFAULT_NEXT_ROUND_ACK_TIMEOUT.

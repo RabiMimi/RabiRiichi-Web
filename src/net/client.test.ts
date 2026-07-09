@@ -748,6 +748,50 @@ describe('RabiRiichiClient', () => {
     vi.useRealTimers();
   });
 
+  it('should defer to the server default (index -1) on inquiry timeout', async () => {
+    vi.useFakeTimers();
+    const client = new RabiRiichiClient();
+    const mockWS = await setupConnectedClient(client);
+
+    // A riichi self-draw offers both tsumo and a forced tsumogiri. The client
+    // must NOT pick a default itself; it should defer to the server default.
+    const mockInquiryMsg: ISinglePlayerInquiryMsg = {
+      actions: [
+        { playTileAction: { tiles: [{ traceId: 7, tile: 17 }] } },
+        { agariAction: {} },
+      ],
+    };
+    client.currentInquiry = {
+      messageId: 42,
+      mapped: mapInquiry(mockInquiryMsg),
+      original: mockInquiryMsg,
+    };
+
+    // Start the interactive countdown, then let it expire.
+    (
+      client as unknown as {
+        startTimer: (
+          seat: number,
+          seconds: number,
+          interactive: boolean,
+        ) => void;
+      }
+    ).startTimer(0, 1, true);
+    await vi.advanceTimersByTimeAsync(1100);
+
+    expect(mockWS.send).toHaveBeenCalledTimes(1);
+    const msgBytes = mockWS.send.mock.calls[0]![0];
+    const msg = ClientMessageDto.decode(new Uint8Array(msgBytes));
+    expect(msg.respondTo).toBe(42);
+    // index = -1 is the server's "use default" sentinel.
+    expect(msg.clientMsg?.inquiryMsg?.index).toBe(-1);
+    expect(msg.clientMsg?.inquiryMsg?.response).toBe('');
+    expect(client.currentInquiry).toBeNull();
+
+    client.close();
+    vi.useRealTimers();
+  });
+
   function makeRoomWithAgari(hasAgari: boolean): RoomModel {
     return {
       id: 4321,

@@ -22,6 +22,7 @@ import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
 import { MessagePump } from './messagePump';
 import {
   DEFAULT_ACTION_TIMEOUT,
+  INQUIRY_DEFAULT_INDEX,
   RESULT_ANIMATION_DURATION_MS,
   STORAGE_KEY_SERVER_SETTINGS,
   type ServerSettings,
@@ -717,9 +718,9 @@ export class RabiRiichiClient {
         this.clearTimer();
         if (interactive) {
           this.logger.info(
-            'Inquiry timeout reached. Auto-submitting default action.',
+            'Inquiry timeout reached. Deferring to server default.',
           );
-          this.autoSubmitDefaultAction();
+          void this.submitServerDefault();
         }
       } else {
         const prevSec = Math.ceil(this.actionTimeout + tick);
@@ -741,67 +742,23 @@ export class RabiRiichiClient {
     this.onChange.emit();
   }
 
-  private autoSubmitDefaultAction(): void {
+  /**
+   * On timeout, defer to the server's default instead of computing our own.
+   * Sending index = -1 is the server's canonical "use default" sentinel
+   * (InquiryResponse.Default), which picks the action the server flagged as
+   * default (e.g. tsumo on a winning riichi draw) — avoiding a second, divergent
+   * default policy on the client.
+   */
+  private async submitServerDefault(): Promise<void> {
     if (!this.currentInquiry) return;
     try {
-      const mapped = this.currentInquiry.mapped;
-
-      if (mapped.playTile) {
-        const seat = this.selfSeat ?? 0;
-        const pendingTile = this.room?.players.find((p) => p.seat === seat)
-          ?.gameState?.hand.pendingTile;
-        if (
-          pendingTile?.traceId !== undefined &&
-          pendingTile?.traceId !== null
-        ) {
-          const playTileAction: ActionOption = {
-            type: 'play-tile',
-            label: '打',
-            actionIndex: mapped.playTile.actionIndex,
-            legalTiles: mapped.playTile.legalTiles,
-            ...(mapped.playTile.candidates
-              ? { candidates: mapped.playTile.candidates }
-              : {}),
-          };
-          void this.submitInquiryResponse(playTileAction, pendingTile.traceId);
-          return;
-        } else {
-          const freeTiles =
-            this.room?.players.find((p) => p.seat === seat)?.gameState?.hand
-              .freeTiles ?? [];
-          if (freeTiles.length > 0) {
-            const lastTile = freeTiles[freeTiles.length - 1];
-            if (lastTile?.traceId !== undefined && lastTile?.traceId !== null) {
-              const playTileAction: ActionOption = {
-                type: 'play-tile',
-                label: '打',
-                actionIndex: mapped.playTile.actionIndex,
-                legalTiles: mapped.playTile.legalTiles,
-                ...(mapped.playTile.candidates
-                  ? { candidates: mapped.playTile.candidates }
-                  : {}),
-              };
-              void this.submitInquiryResponse(playTileAction, lastTile.traceId);
-              return;
-            }
-          }
-        }
-      }
-
-      const skipAction = mapped.buttons.find(
-        (b) => b.type === 'skip' || b.type === 'ryuukyoku',
+      await this.respondInquiry(
+        this.currentInquiry.messageId,
+        INQUIRY_DEFAULT_INDEX,
+        '',
       );
-      if (skipAction) {
-        void this.submitInquiryResponse(skipAction);
-        return;
-      }
-
-      const firstButton = mapped.buttons[0];
-      if (firstButton) {
-        void this.submitInquiryResponse(firstButton);
-      }
     } catch (err) {
-      this.logger.error('Failed to auto-submit default action:', err);
+      this.logger.error('Failed to submit server default response:', err);
     }
   }
 }
