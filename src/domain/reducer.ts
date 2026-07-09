@@ -496,9 +496,22 @@ function handleKan(state: RoomModel, ev: IKanEventMsg): RoomModel {
       const incomingTile = Tile.fromByte(incoming.tile ?? 0);
       const updatedKan = { ...kan };
       if (kan.tiles) {
+        // The live KanEvent fires before the server upgrades the pon, so the
+        // added tile still carries formTime -1 while the 3 original pon tiles
+        // keep their (larger) pon-era formTime. The renderer stacks the tile
+        // with the max formTime, so force the added tile above the others to
+        // match the post-refresh snapshot and avoid rendering a 5th tile.
+        const maxFormTime = kan.tiles.reduce(
+          (max, t) => Math.max(max, t.formTime ?? 0),
+          0,
+        );
         updatedKan.tiles = kan.tiles.map((t) => ({
           ...t,
           source: TileSource.TILE_SOURCE_KAKAN,
+          formTime:
+            t.traceId === incoming.traceId
+              ? maxFormTime + 1
+              : (t.formTime ?? null),
         }));
       }
 

@@ -582,13 +582,13 @@ describe('Reducer - Events', () => {
 
   it('should handle kanEvent (Kakan)', () => {
     const state = createInitializedRoom();
-    // Player 0 already has a Pon of 1m
+    // Player 0 already has a Pon of 1m (original tiles carry a pon-era formTime)
     setCalled(state, 0, [
       {
         tiles: [
-          { traceId: 10, tile: 17 },
-          { traceId: 11, tile: 17 },
-          { traceId: 99, tile: 17, discardInfo: { from: 1 } },
+          { traceId: 10, tile: 17, formTime: 5 },
+          { traceId: 11, tile: 17, formTime: 5 },
+          { traceId: 99, tile: 17, formTime: 5, discardInfo: { from: 1 } },
         ],
       },
     ]);
@@ -598,15 +598,17 @@ describe('Reducer - Events', () => {
     const eventMsg = {
       kanEvent: {
         playerId: 0,
+        // The live event fires before the server sets the added tile's
+        // formTime, so it still arrives with the default -1.
         kan: {
           tiles: [
-            { traceId: 10, tile: 17 },
-            { traceId: 11, tile: 17 },
-            { traceId: 99, tile: 17, discardInfo: { from: 1 } },
-            { traceId: 12, tile: 17 },
+            { traceId: 10, tile: 17, formTime: 5 },
+            { traceId: 11, tile: 17, formTime: 5 },
+            { traceId: 99, tile: 17, formTime: 5, discardInfo: { from: 1 } },
+            { traceId: 12, tile: 17, formTime: -1 },
           ],
         },
-        incoming: { traceId: 12, tile: 17 },
+        incoming: { traceId: 12, tile: 17, formTime: -1 },
         kanSource: TileSource.TILE_SOURCE_KAKAN,
       },
     };
@@ -622,6 +624,15 @@ describe('Reducer - Events', () => {
     );
     expect(p0?.gameState?.hand.called[0]?.tiles?.[3]?.source).toBe(
       TileSource.TILE_SOURCE_KAKAN,
+    );
+    // The added tile must end up with the largest formTime so the renderer
+    // stacks it on the called tile instead of rendering a 5th tile.
+    const kakanTiles = p0?.gameState?.hand.called[0]?.tiles ?? [];
+    const addedTile = kakanTiles.find((t) => t.traceId === 12);
+    const maxFormTime = Math.max(...kakanTiles.map((t) => t.formTime ?? 0));
+    expect(addedTile?.formTime).toBe(maxFormTime);
+    expect(kakanTiles.filter((t) => t.formTime === maxFormTime)).toHaveLength(
+      1,
     );
   });
 
