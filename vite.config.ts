@@ -1,9 +1,27 @@
+import { execSync } from 'node:child_process';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Resolve the client's git commit hash at build time. Cloudflare Pages exposes
+// it as CF_PAGES_COMMIT_SHA; fall back to the local git checkout for dev builds.
+function resolveCommitHash(): string {
+  const fromEnv = process.env.CF_PAGES_COMMIT_SHA;
+  if (fromEnv) {
+    return fromEnv.slice(0, 7);
+  }
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'unknown';
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __COMMIT_HASH__: JSON.stringify(resolveCommitHash()),
+  },
   plugins: [
     react(),
     VitePWA({

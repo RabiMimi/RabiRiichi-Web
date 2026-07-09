@@ -335,6 +335,15 @@
   }
 }
 
+.build-info {
+  align-self: center;
+  font-size: 0.75rem;
+  color: #888;
+  font-family: monospace;
+  white-space: nowrap;
+  user-select: text;
+}
+
 /* Lobby Screen styles */
 .lobby-card {
   max-width: 960px;

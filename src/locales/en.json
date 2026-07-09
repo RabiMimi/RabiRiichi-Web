@@ -53,7 +53,8 @@
     "selectAll": "Select All",
     "selectNone": "Select None",
     "clientRepo": "Client Repo (Vite + TS)",
-    "serverRepo": "Server Repo (.NET)"
+    "serverRepo": "Server Repo (.NET)",
+    "build": "Client Version: {{commit}}"
   },
   "playersOpt": {
     "2": "2-Player Game",

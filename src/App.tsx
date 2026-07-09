@@ -18,6 +18,7 @@ import { GamePlayHUD } from './ui/GamePlayHUD';
 import { ResultPanel } from './ui/ResultPanel';
 import { OrientationGuard } from './ui/OrientationGuard';
 import { FullscreenButton } from './ui/FullscreenButton';
+import { COMMIT_HASH } from './lib';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import './App.css';
 
@@ -128,6 +129,9 @@ function App(): React.JSX.Element {
         <>
           <FullscreenButton className="floating-top-left" />
           <div className="floating-top-right github-links-container">
+            <span className="build-info">
+              {t('lobby.build', { commit: COMMIT_HASH })}
+            </span>
             <a
               href="https://github.com/RabiMimi/RabiRiichi-Web"
               target="_blank"
