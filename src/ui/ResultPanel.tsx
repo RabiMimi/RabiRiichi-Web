@@ -434,52 +434,58 @@ export function ResultPanel(): React.JSX.Element | null {
 
   return (
     <div className="result-overlay">
-      <div className="result-panel">
-        <h2 className="result-title">
-          {isDraw
-            ? hasNagashiWinner
-              ? t('yaku.NagashiMangan')
-              : room.ryuukyokuReason
-                ? t(`result.ryuukyoku.${room.ryuukyokuReason}`, {
-                    defaultValue: t('result.draw'),
-                  })
-                : t('result.draw')
-            : t('result.agari')}
-        </h2>
+      <div className="result-layout-container">
+        <div className="result-character-side">
+          <img
+            src={MIMI_PATH}
+            alt="mimi-avatar"
+            className="result-mimi-side-art"
+          />
+        </div>
+        <div className="result-panel">
+          <h2 className="result-title">
+            {isDraw
+              ? hasNagashiWinner
+                ? t('yaku.NagashiMangan')
+                : room.ryuukyokuReason
+                  ? t(`result.ryuukyoku.${room.ryuukyokuReason}`, {
+                      defaultValue: t('result.draw'),
+                    })
+                  : t('result.draw')
+              : t('result.agari')}
+          </h2>
 
-        {/* Background art element */}
-        <img src={MIMI_PATH} alt="mimi-avatar" className="result-mimi-art" />
+          <div className="result-content-scrollable">
+            <div className="result-winners-container">
+              {playersWithResult
+                .filter(
+                  (p) =>
+                    p.gameState?.agari?.scores != null ||
+                    p.gameState?.agari?.isTenpai,
+                )
+                .map((w) => renderWinnerDetails(w))}
+            </div>
 
-        <div className="result-content-scrollable">
-          <div className="result-winners-container">
-            {playersWithResult
-              .filter(
-                (p) =>
-                  p.gameState?.agari?.scores != null ||
-                  p.gameState?.agari?.isTenpai,
-              )
-              .map((w) => renderWinnerDetails(w))}
+            {renderDoraIndicators()}
+
+            {/* Score changes panel */}
+            {renderScoreChanges()}
           </div>
 
-          {renderDoraIndicators()}
-
-          {/* Score changes panel */}
-          {renderScoreChanges()}
-        </div>
-
-        {/* Proceed button */}
-        <div className="result-actions">
-          <button
-            className="ui-button primary-button"
-            onClick={handleProceed}
-            disabled={!canProceed && !room?.gameEnded}
-          >
-            {room?.gameEnded
-              ? t('result.showFinalResults', 'Show Game Results')
-              : canProceed
-                ? t('result.confirmWithTime', { seconds: secondsLeft })
-                : t('result.waitingForNext')}
-          </button>
+          {/* Proceed button */}
+          <div className="result-actions">
+            <button
+              className="ui-button primary-button"
+              onClick={handleProceed}
+              disabled={!canProceed && !room?.gameEnded}
+            >
+              {room?.gameEnded
+                ? t('result.showFinalResults', 'Show Game Results')
+                : canProceed
+                  ? t('result.confirmWithTime', { seconds: secondsLeft })
+                  : t('result.waitingForNext')}
+            </button>
+          </div>
         </div>
       </div>
     </div>
