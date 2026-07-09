@@ -10,6 +10,7 @@ import {
 import { Hand3D } from './Hand3D';
 import { River3D } from './River3D';
 import { Melds3D } from './Melds3D';
+import { NukiDora3D } from './NukiDora3D';
 import { getHandShiftX } from './assets';
 import type { TileRegistry } from '../domain/tileRegistry';
 import { useResultAnimation } from '../state/store';
@@ -117,6 +118,11 @@ export function PlayerArea3D({
       {/* Called Melds - pushed towards center */}
       <group position={[0, 0, -0.2]}>
         <Melds3D called={hand.called} seat={seat} playerCount={playerCount} />
+      </group>
+
+      {/* Pulled North (拔北) - its own row so it never widens the melds */}
+      <group position={[0, 0, -0.2]}>
+        <NukiDora3D nukiDora={hand.nukiDora} />
       </group>
     </group>
   );

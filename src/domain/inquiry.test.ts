@@ -176,6 +176,28 @@ describe('Inquiry Mapping & Response Encoding', () => {
     }).toThrow('Tile traceId 101 not in riichi options');
   });
 
+  it('should map and encode a nukidora action', () => {
+    const nukiInquiry: ISinglePlayerInquiryMsg = {
+      actions: [
+        { skipAction: {} },
+        { nukiDoraAction: { tiles: [{ traceId: 55, tile: 68 }] } },
+      ],
+    };
+    const mapped = mapInquiry(nukiInquiry);
+    const nukiButton = mapped.buttons.find((b) => b.type === 'nukidora');
+    assert(nukiButton, 'nukidora button should be defined');
+    expect(nukiButton).toEqual({
+      type: 'nukidora',
+      label: '拔北',
+      actionIndex: 1,
+      choiceIndex: 0,
+    });
+
+    // Submits the (interchangeable) North option index as a plain int.
+    const encoded = encodeInquiryResponse(nukiInquiry, nukiButton);
+    expect(encoded).toEqual({ index: 1, response: '0' });
+  });
+
   describe('getAutoResponse', () => {
     it('should return play-tile auto-response when only 1 legal tile and no buttons', () => {
       const inq = mapInquiry({

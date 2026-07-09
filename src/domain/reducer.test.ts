@@ -239,6 +239,7 @@ function createInitializedRoom(): RoomModel {
             called: [],
             discarded: [],
             pendingTile: null,
+            nukiDora: [],
           },
           agari: null,
         },
@@ -259,6 +260,7 @@ function createInitializedRoom(): RoomModel {
             called: [],
             discarded: [],
             pendingTile: null,
+            nukiDora: [],
           },
           agari: null,
         },
@@ -634,6 +636,75 @@ describe('Reducer - Events', () => {
     expect(kakanTiles.filter((t) => t.formTime === maxFormTime)).toHaveLength(
       1,
     );
+  });
+
+  // North (北) is 4z = suit Z(4) << 4 | num 4 = 68.
+  const NORTH = 68;
+
+  it('should set aside a pulled North on addNukiDoraEvent (from pending)', () => {
+    const state = createInitializedRoom();
+    setPendingTile(state, 0, { traceId: 50, tile: NORTH });
+
+    const nextState = applyEvent(state, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 50, tile: NORTH } },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.pendingTile).toBeNull();
+    expect(p0?.gameState?.hand.nukiDora).toHaveLength(1);
+    expect(p0?.gameState?.hand.nukiDora[0]?.traceId).toBe(50);
+    expect(p0?.gameState?.hand.nukiDora[0]?.source).toBe(
+      TileSource.TILE_SOURCE_NUKI,
+    );
+  });
+
+  it('should set aside a pulled North on addNukiDoraEvent (from hand)', () => {
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [
+      { traceId: 60, tile: 17 },
+      { traceId: 61, tile: NORTH },
+    ]);
+
+    const nextState = applyEvent(state, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 61, tile: NORTH } },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.freeTiles.some((t) => t.traceId === 61)).toBe(
+      false,
+    );
+    expect(p0?.gameState?.hand.nukiDora.map((t) => t.traceId)).toEqual([61]);
+  });
+
+  it('should accumulate multiple pulled North tiles', () => {
+    const state = createInitializedRoom();
+    setPendingTile(state, 0, { traceId: 70, tile: NORTH });
+    let next = applyEvent(state, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 70, tile: NORTH } },
+    });
+    setPendingTile(next, 0, { traceId: 71, tile: NORTH });
+    next = applyEvent(next, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 71, tile: NORTH } },
+    });
+
+    const p0 = next.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.nukiDora.map((t) => t.traceId)).toEqual([
+      70, 71,
+    ]);
+  });
+
+  it('should not set aside on nukiDoraEvent (waits for addNukiDoraEvent)', () => {
+    const state = createInitializedRoom();
+    setPendingTile(state, 0, { traceId: 80, tile: NORTH });
+
+    const nextState = applyEvent(state, {
+      nukiDoraEvent: { playerId: 0, incoming: { traceId: 80, tile: NORTH } },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    // The chankan window hasn't resolved yet, so nothing is set aside.
+    expect(p0?.gameState?.hand.nukiDora).toHaveLength(0);
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(80);
   });
 
   it('should handle nextPlayerEvent', () => {

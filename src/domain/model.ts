@@ -27,6 +27,8 @@ export interface PlayerHandState {
   called: IMenLikeMsg[];
   discarded: IGameTileMsg[];
   pendingTile: IGameTileMsg | null;
+  // North (北) tiles pulled aside as nukidora (三麻拔北).
+  nukiDora: IGameTileMsg[];
 }
 
 export interface MappedTenpaiInfo {

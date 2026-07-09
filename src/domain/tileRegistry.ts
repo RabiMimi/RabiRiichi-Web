@@ -108,6 +108,8 @@ export function extractEventTiles(eventMsg: IEventMsg): IGameTileMsg[] {
     ...(eventMsg.claimTileEvent?.group?.tiles ?? []),
   );
   push(eventMsg.kanEvent?.incoming, ...(eventMsg.kanEvent?.kan?.tiles ?? []));
+  push(eventMsg.nukiDoraEvent?.incoming);
+  push(eventMsg.addNukiDoraEvent?.incoming);
   push(eventMsg.revealDoraEvent?.dora);
   push(eventMsg.setRiichiEvent?.riichiTile);
   push(eventMsg.agariEvent?.incoming);
@@ -136,6 +138,7 @@ export function extractSnapshotTiles(snapshot: IGameStateMsg): IGameTileMsg[] {
     if (!hand) continue;
     push(...(hand.freeTiles ?? []));
     push(...(hand.discarded ?? []));
+    push(...(hand.nukiDora ?? []));
     push(hand.pendingTile, hand.riichiTile, hand.agariTile);
     for (const meld of hand.called ?? []) {
       push(...(meld.tiles ?? []));

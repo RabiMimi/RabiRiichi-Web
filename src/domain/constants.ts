@@ -100,6 +100,17 @@ export const FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK =
   RyuukyokuTrigger.RYUUKYOKU_TRIGGER_SUUCHA_RIICHI |
   RyuukyokuTrigger.RYUUKYOKU_TRIGGER_SANCHAHOU;
 
+// Nukidora (拔北) is a three-player rule. It is auto-enabled by default only
+// for 3-player games, but stays manually toggleable in any player count.
+export const THREE_PLAYER_DORA_OPTIONS_MASK = DoraOption.DORA_OPTION_NUKI_DORA;
+
+/** Dora options defaulted on for a given player count. */
+export function defaultDoraOptionForPlayerCount(playerCount: number): number {
+  return playerCount === 3
+    ? DEFAULT_DORA_OPTION | THREE_PLAYER_DORA_OPTIONS_MASK
+    : DEFAULT_DORA_OPTION;
+}
+
 // Storage Keys
 export const STORAGE_KEY_SERVER_SETTINGS = 'rabiriichi_server_settings';
 export const STORAGE_KEY_ROOM_CONFIG = 'rabiriichi_room_config';

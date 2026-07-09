@@ -58,6 +58,7 @@ export type InquiryOptionType =
   | 'chii'
   | 'pon'
   | 'kan'
+  | 'nukidora'
   | 'riichi'
   | 'play-tile'
   | 'ryuukyoku'
@@ -85,6 +86,13 @@ export type ActionOption =
       label: string; // "吃", "碰", "杠"
       actionIndex: number;
       tileGroups: TileGroupOption[];
+    }
+  | {
+      type: 'nukidora';
+      label: string; // "拔北" / "North"
+      actionIndex: number;
+      // All North tiles are interchangeable, so pulling submits the first option.
+      choiceIndex: number;
     }
   | {
       type: 'riichi';
@@ -235,6 +243,14 @@ export function mapInquiry(
           })),
         })),
       });
+    } else if (action.nukiDoraAction) {
+      buttons.push({
+        type: 'nukidora',
+        label: '拔北',
+        actionIndex: i,
+        // All North tiles are interchangeable; pull the first one.
+        choiceIndex: 0,
+      });
     } else if (action.riichiAction) {
       const tiles = action.riichiAction.tiles ?? [];
       const candidates = action.riichiAction.candidates ?? [];
@@ -301,6 +317,9 @@ export function encodeInquiryResponse(
       throw new Error(`Choice group index required for ${action.type}`);
     }
     responseStr = JSON.stringify(choice);
+  } else if (action.type === 'nukidora') {
+    // Single-choice action: submit the (interchangeable) North option index.
+    responseStr = JSON.stringify(choice ?? action.choiceIndex);
   } else if (action.type === 'riichi') {
     if (choice === undefined) {
       throw new Error(`Choice tile traceId required for riichi`);
@@ -384,6 +403,12 @@ export function flattenInquiry(mapped: MappedInquiry): FlatOption[] {
         }
         break;
       }
+      case 'nukidora':
+        options.push({
+          action: btn,
+          choice: btn.choiceIndex,
+        });
+        break;
       case 'skip':
       case 'agari':
       case 'ryuukyoku':

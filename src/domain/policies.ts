@@ -37,6 +37,7 @@ export const DORA_OPTIONS: PolicyOption[] = [
   { value: 16, labelKey: 'advanced.dora.instantDaiMinKan' },
   { value: 32, labelKey: 'advanced.dora.instantKaKan' },
   { value: 64, labelKey: 'advanced.dora.instantAnKan' },
+  { value: 128, labelKey: 'advanced.dora.nukiDora' },
 ];
 
 export const AGARI_OPTIONS: PolicyOption[] = [

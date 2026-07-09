@@ -102,7 +102,13 @@ test('simulate 2-player positioning', () => {
         seat: 1,
         gameState: {
           points: 25000,
-          hand: { freeTiles: [], called: [], discarded: [], pendingTile: null },
+          hand: {
+            freeTiles: [],
+            called: [],
+            discarded: [],
+            pendingTile: null,
+            nukiDora: [],
+          },
           furiten: {},
           riichiTileId: 0,
           jun: 0,
@@ -117,7 +123,13 @@ test('simulate 2-player positioning', () => {
         seat: 0,
         gameState: {
           points: 25000,
-          hand: { freeTiles: [], called: [], discarded: [], pendingTile: null },
+          hand: {
+            freeTiles: [],
+            called: [],
+            discarded: [],
+            pendingTile: null,
+            nukiDora: [],
+          },
           furiten: {},
           riichiTileId: 0,
           jun: 0,

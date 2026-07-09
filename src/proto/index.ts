@@ -26,6 +26,9 @@ import {
   DiscardTileEventMsg,
   ClaimTileEventMsg,
   KanEventMsg,
+  NukiDoraEventMsg,
+  AddNukiDoraEventMsg,
+  NukiDoraActionMsg,
   NextPlayerEventMsg,
   IncreaseJunEventMsg,
   RevealDoraEventMsg,
@@ -94,6 +97,9 @@ export {
   DiscardTileEventMsg,
   ClaimTileEventMsg,
   KanEventMsg,
+  NukiDoraEventMsg,
+  AddNukiDoraEventMsg,
+  NukiDoraActionMsg,
   NextPlayerEventMsg,
   IncreaseJunEventMsg,
   RevealDoraEventMsg,
@@ -155,6 +161,9 @@ export type IDrawTileEventMsg = DrawTileEventMsg.$Properties;
 export type IDiscardTileEventMsg = DiscardTileEventMsg.$Properties;
 export type IClaimTileEventMsg = ClaimTileEventMsg.$Properties;
 export type IKanEventMsg = KanEventMsg.$Properties;
+export type INukiDoraEventMsg = NukiDoraEventMsg.$Properties;
+export type IAddNukiDoraEventMsg = AddNukiDoraEventMsg.$Properties;
+export type INukiDoraActionMsg = NukiDoraActionMsg.$Properties;
 export type INextPlayerEventMsg = NextPlayerEventMsg.$Properties;
 export type IIncreaseJunEventMsg = IncreaseJunEventMsg.$Properties;
 export type IRevealDoraEventMsg = RevealDoraEventMsg.$Properties;

@@ -18,7 +18,8 @@ import {
   DEFAULT_END_GAME_POLICY,
   DEFAULT_KUIKAE_POLICY,
   DEFAULT_RIICHI_POLICY,
-  DEFAULT_DORA_OPTION,
+  defaultDoraOptionForPlayerCount,
+  THREE_PLAYER_DORA_OPTIONS_MASK,
   DEFAULT_AGARI_OPTION,
   DEFAULT_SCORING_OPTION,
   DEFAULT_RYUUKYOKU_TRIGGER,
@@ -185,9 +186,13 @@ export function RoomConfigPanel({
   const [riichiPolicy, setRiichiPolicy] = useState<number>(
     () => savedConfig?.riichiPolicy ?? DEFAULT_RIICHI_POLICY,
   );
-  const [doraOption, setDoraOption] = useState<number>(
-    () => savedConfig?.doraOption ?? DEFAULT_DORA_OPTION,
-  );
+  const [doraOption, setDoraOption] = useState<number>(() => {
+    if (savedConfig?.doraOption !== undefined) {
+      return savedConfig.doraOption;
+    }
+    const initialPlayerCount = savedConfig?.playerCount ?? DEFAULT_PLAYER_COUNT;
+    return defaultDoraOptionForPlayerCount(initialPlayerCount);
+  });
   const [agariOption, setAgariOption] = useState<number>(
     () => savedConfig?.agariOption ?? DEFAULT_AGARI_OPTION,
   );
@@ -214,6 +219,13 @@ export function RoomConfigPanel({
         (prev) => prev & ~FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK,
       );
     }
+    // Nukidora defaults on only for 3-player games; toggle the default with the
+    // player count while leaving other dora options untouched.
+    setDoraOption((prev) =>
+      count === 3
+        ? prev | THREE_PLAYER_DORA_OPTIONS_MASK
+        : prev & ~THREE_PLAYER_DORA_OPTIONS_MASK,
+    );
   };
 
   // Persist config to localStorage

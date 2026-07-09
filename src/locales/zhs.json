@@ -142,6 +142,7 @@
       "chii": "吃",
       "pon": "碰",
       "kan": "杠",
+      "nukidora": "拔北",
       "riichi": "立直",
       "ron": "荣和",
       "tsumo": "自摸",
@@ -226,7 +227,8 @@
       "kanUradora": "杠里宝牌",
       "instantDaiMinKan": "大明杠宝牌即开",
       "instantKaKan": "加杠宝牌即开",
-      "instantAnKan": "暗杠宝牌即开"
+      "instantAnKan": "暗杠宝牌即开",
+      "nukiDora": "拔北宝牌"
     },
     "agari": {
       "kuitan": "允许食断",
@@ -290,6 +292,7 @@
     "Akadora": "红宝牌",
     "Dora": "宝牌",
     "Uradora": "里宝牌",
+    "NukiDora": "拔北宝牌",
     "fu": "符",
     "Chiihou": "地和",
     "Chinroutou": "清老头",

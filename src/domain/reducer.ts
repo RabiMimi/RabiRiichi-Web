@@ -14,6 +14,7 @@ import type {
   IDiscardTileEventMsg,
   IClaimTileEventMsg,
   IKanEventMsg,
+  IAddNukiDoraEventMsg,
   INextPlayerEventMsg,
   IIncreaseJunEventMsg,
   IRevealDoraEventMsg,
@@ -165,6 +166,7 @@ export function hydrateFromGameState(
         called: handState?.called ?? [],
         discarded: handState?.discarded ?? [],
         pendingTile: handState?.pendingTile ?? null,
+        nukiDora: handState?.nukiDora ?? [],
       },
       agari: p.gameState?.agari ?? null,
       ...(handWaits.length > 0
@@ -239,6 +241,7 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
         called: [],
         discarded: [],
         pendingTile: null,
+        nukiDora: [],
       },
       agari: null,
     };
@@ -550,6 +553,43 @@ function handleKan(state: RoomModel, ev: IKanEventMsg): RoomModel {
           freeTiles: sortGameTiles(freeTiles),
           pendingTile,
           called,
+        },
+      },
+    };
+  });
+
+  return {
+    ...state,
+    players: updatedPlayers,
+  };
+}
+
+function handleNukiDora(state: RoomModel, ev: IAddNukiDoraEventMsg): RoomModel {
+  if (!ev.incoming) return state;
+  const incoming = ev.incoming;
+  const playerId = ev.playerId;
+
+  const updatedPlayers = state.players.map((p): PlayerModel => {
+    if (p.seat !== playerId || !p.gameState) return p;
+
+    let pendingTile = p.gameState.hand.pendingTile;
+    let freeTiles = p.gameState.hand.freeTiles;
+    if (pendingTile && pendingTile.traceId === incoming.traceId) {
+      pendingTile = null;
+    } else {
+      freeTiles = freeTiles.filter((t) => t.traceId !== incoming.traceId);
+    }
+
+    const nukiTile = { ...incoming, source: TileSource.TILE_SOURCE_NUKI };
+    return {
+      ...p,
+      gameState: {
+        ...p.gameState,
+        hand: {
+          ...p.gameState.hand,
+          freeTiles: sortGameTiles(freeTiles),
+          pendingTile,
+          nukiDora: [...p.gameState.hand.nukiDora, nukiTile],
         },
       },
     };
@@ -888,6 +928,8 @@ export const KNOWN_EVENTS = new Set([
   'claimTileEvent',
   'kanEvent',
   'addKanEvent',
+  'nukiDoraEvent',
+  'addNukiDoraEvent',
   'nextPlayerEvent',
   'increaseJunEvent',
   'revealDoraEvent',
@@ -1113,6 +1155,14 @@ function applyEventToState(state: RoomModel, eventMsg: IEventMsg): RoomModel {
   }
   if (eventMsg.addKanEvent) {
     return state;
+  }
+  if (eventMsg.nukiDoraEvent) {
+    // The set-aside is applied on addNukiDoraEvent (which the server only sends
+    // once the 搶拔北 window closes without a robber).
+    return state;
+  }
+  if (eventMsg.addNukiDoraEvent) {
+    return handleNukiDora(state, eventMsg.addNukiDoraEvent);
   }
   if (eventMsg.nextPlayerEvent) {
     return handleNextPlayer(state, eventMsg.nextPlayerEvent);

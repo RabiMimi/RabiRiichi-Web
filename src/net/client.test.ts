@@ -769,6 +769,7 @@ describe('RabiRiichiClient', () => {
               called: [],
               discarded: [],
               pendingTile: null,
+              nukiDora: [],
             },
             agari: hasAgari
               ? {

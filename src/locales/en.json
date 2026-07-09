@@ -141,6 +141,7 @@
       "chii": "Chii",
       "pon": "Pon",
       "kan": "Kan",
+      "nukidora": "North",
       "riichi": "Riichi",
       "ron": "Ron",
       "tsumo": "Tsumo",
@@ -225,7 +226,8 @@
       "kanUradora": "Kan Ura Dora",
       "instantDaiMinKan": "Instant Dora on Open Kan",
       "instantKaKan": "Instant Dora on Added Kan",
-      "instantAnKan": "Instant Dora on Closed Kan"
+      "instantAnKan": "Instant Dora on Closed Kan",
+      "nukiDora": "Nukidora (Pull North)"
     },
     "agari": {
       "kuitan": "Allow Kuitan",
@@ -289,6 +291,7 @@
     "Akadora": "Red Dora",
     "Dora": "Dora",
     "Uradora": "Ura Dora",
+    "NukiDora": "Nukidora",
     "fu": "Fu",
     "Chiihou": "Earthly Hand",
     "Chinroutou": "All Terminals",
