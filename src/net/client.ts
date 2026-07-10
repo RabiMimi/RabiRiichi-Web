@@ -1,5 +1,12 @@
-import { Logger, NetworkError, AuthError, RabiEvent } from '../lib';
+import {
+  Logger,
+  NetworkError,
+  AuthError,
+  RabiEvent,
+  waitTimeout,
+} from '../lib';
 import { RabiSocket } from '../transport/rabiSocket';
+import { WS_CONNECT_TIMEOUT } from '../transport/constants';
 import {
   createUser,
   getUserInfo,
@@ -274,7 +281,13 @@ export class RabiRiichiClient {
     this._ws = ws;
 
     try {
-      await ws.handShake(this.updateUserInfo.bind(this));
+      // Bound the open+handshake time. Without this, an unreachable server
+      // leaves the browser socket in CONNECTING for minutes and the UI stuck
+      // on "connecting". On timeout we close the doomed socket and reject.
+      await waitTimeout(
+        ws.handShake(this.updateUserInfo.bind(this)),
+        WS_CONNECT_TIMEOUT,
+      );
       if (this._ws !== ws) {
         // This connection was superseded by a newer one while handshaking
         ws.close();
@@ -293,6 +306,9 @@ export class RabiRiichiClient {
         }
       });
     } catch (e) {
+      // Close the (possibly still-opening) socket so a late open/error event
+      // from a timed-out connection can't resurrect stale state.
+      ws.close();
       if (this._ws === ws) {
         this.setConnectionStatus('disconnected');
         this._ws = null;
@@ -902,6 +918,8 @@ export async function initRabiRiichi(): Promise<void> {
     logger.info(`Auto-reconnection succeeded! Connected to ${url}`);
   } catch (err) {
     logger.error(`Auto-reconnection failed for URL ${url}`, err);
-    // Silent fail on auto-connect
+    // Silent fail on auto-connect, but ensure the UI is not left stuck in the
+    // "connecting" state: reset to disconnected so the connect form re-enables.
+    rabiriichi.close();
   }
 }
