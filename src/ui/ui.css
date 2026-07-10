@@ -1981,10 +1981,6 @@
   opacity: 0.6;
 }
 
-.player-card.empty-seat.has-dropdown {
-  opacity: 1;
-}
-
 .player-avatar-placeholder.empty {
   color: #888;
   border-color: #444;
@@ -2046,6 +2042,16 @@
   flex-direction: column;
   overflow: hidden;
   padding: 4px 0;
+}
+
+/* Portal-rendered variant: anchored to the viewport so the seat grid's
+   overflow scroll box cannot clip it. right + top/bottom are set inline from
+   the anchor button's position (see AddAiDropdown). */
+.dropdown-menu.portal {
+  position: fixed;
+  top: auto;
+  margin-top: 0;
+  max-width: 220px;
 }
 
 .dropdown-item {

@@ -5,6 +5,7 @@ import { useRoom, useSelf } from '../state/store';
 import { UserStatus, AiType } from '../proto';
 import { pollUntil } from '../lib';
 import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
+import { AddAiDropdown } from './AddAiDropdown';
 import './ui.css';
 
 export function RoomScreen(): React.JSX.Element | null {
@@ -13,7 +14,6 @@ export function RoomScreen(): React.JSX.Element | null {
   const currentUser = useSelf();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showAiDropdown, setShowAiDropdown] = useState(false);
 
   if (!room || !currentUser) {
     return null;
@@ -41,7 +41,6 @@ export function RoomScreen(): React.JSX.Element | null {
   const handleAddAi = async (aiType: AiType) => {
     setError(null);
     setIsLoading(true);
-    setShowAiDropdown(false);
     try {
       await rabiriichi.addAi(aiType);
     } catch (err) {
@@ -132,9 +131,7 @@ export function RoomScreen(): React.JSX.Element | null {
 
         {error && <div className="ui-error">{error}</div>}
 
-        <div
-          className={`player-list ${showAiDropdown ? 'has-open-dropdown' : ''}`}
-        >
+        <div className="player-list">
           {seats.map((player, index) => {
             if (player) {
               const playerIsReady =
@@ -190,14 +187,7 @@ export function RoomScreen(): React.JSX.Element | null {
               );
             } else {
               return (
-                <div
-                  key={`empty-${index}`}
-                  className={`player-card empty-seat ${
-                    showAiDropdown && index === firstEmptySeatIndex
-                      ? 'has-dropdown'
-                      : ''
-                  }`}
-                >
+                <div key={`empty-${index}`} className="player-card empty-seat">
                   <div className="player-avatar-placeholder empty">?</div>
                   <div className="player-details">
                     <div className="player-name empty-text">
@@ -208,41 +198,10 @@ export function RoomScreen(): React.JSX.Element | null {
                     </div>
                   </div>
                   {isOwner && index === firstEmptySeatIndex && (
-                    <div className="add-ai-container">
-                      <button
-                        className="ui-button mini-button add-ai-btn"
-                        onClick={() => setShowAiDropdown((prev) => !prev)}
-                        disabled={isLoading}
-                      >
-                        {t('room.addAi')} <span className="arrow">▼</span>
-                      </button>
-                      {showAiDropdown && (
-                        <>
-                          <div
-                            className="dropdown-backdrop"
-                            onClick={() => setShowAiDropdown(false)}
-                          />
-                          <div className="dropdown-menu">
-                            <button
-                              className="dropdown-item"
-                              onClick={() =>
-                                void handleAddAi(AiType.AI_TYPE_DUMMY)
-                              }
-                            >
-                              {t('ai.type.AI_TYPE_DUMMY')}
-                            </button>
-                            <button
-                              className="dropdown-item"
-                              onClick={() =>
-                                void handleAddAi(AiType.AI_TYPE_RULE_BASED)
-                              }
-                            >
-                              {t('ai.type.AI_TYPE_RULE_BASED')}
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    <AddAiDropdown
+                      disabled={isLoading}
+                      onSelect={(aiType) => void handleAddAi(aiType)}
+                    />
                   )}
                 </div>
               );
