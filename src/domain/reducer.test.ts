@@ -1059,6 +1059,72 @@ describe('Reducer - Events', () => {
     expect(p1?.gameState?.agari?.losePoints).toBe(3900);
   });
 
+  it('freezes a round-result snapshot on applyScore and keeps it if a player leaves', () => {
+    // Regression: the round result must stay static. When a player leaves mid
+    // result, a shrunken room-state snapshot arrives; the frozen result players
+    // captured at round conclusion must survive so nobody vanishes.
+    const state = createInitializedRoom();
+    const p0Raw = state.players[0];
+    const p1Raw = state.players[1];
+    if (p0Raw?.gameState && p1Raw?.gameState) {
+      p0Raw.gameState.agari = {
+        gainPoints: 0,
+        losePoints: 0,
+        scores: {},
+      };
+      p1Raw.gameState.agari = { gainPoints: 0, losePoints: 0 };
+    }
+
+    const settled = applyEvent(state, {
+      applyScoreEvent: {
+        scoreChange: [{ from: 102, to: 101, points: 3900, reason: 1 }],
+      },
+    });
+
+    // Snapshot captured for both players at conclusion.
+    expect(settled.roundResultPlayers).toHaveLength(2);
+
+    // Bob (102) leaves: the server pushes a room state with only Alice.
+    const afterLeave = applyRoomState(settled, {
+      id: 1234,
+      players: [
+        { id: 101, nickname: 'Alice', status: UserStatus.USER_STATUS_PLAYING },
+      ],
+    });
+
+    // Live players shrank, but the frozen result still lists both.
+    expect(afterLeave?.players).toHaveLength(1);
+    expect(afterLeave?.roundResultPlayers).toHaveLength(2);
+    expect(afterLeave?.roundResultPlayers?.map((p) => p.id)).toEqual([
+      101, 102,
+    ]);
+  });
+
+  it('freezes a round-result snapshot on ryuukyoku', () => {
+    const state = createInitializedRoom();
+    const nextState = applyEvent(state, {
+      ryuukyokuEvent: { scoreChange: [] },
+    });
+    expect(nextState.roundResultPlayers).toHaveLength(2);
+  });
+
+  it('clears the round-result snapshot when the next hand begins', () => {
+    const state: RoomModel = {
+      ...createInitializedRoom(),
+      roundResultPlayers: [...createInitializedRoom().players],
+    };
+    const nextState = applyEvent(state, {
+      beginGameEvent: {
+        round: 1,
+        dealer: 1,
+        honba: 0,
+        riichiStick: 0,
+        remainingTiles: 100,
+      },
+    });
+    expect(nextState.roundResultPlayers).toBeNull();
+  });
+
   it('should handle concludeGameEvent', () => {
     const state = createInitializedRoom();
     const eventMsg = {
