@@ -56,6 +56,7 @@
 
     "selectAll": "全选",
     "selectNone": "全不选",
+    "toggleAll": "全选/全不选",
     "clientRepo": "客户端仓库 (Vite + TS)",
     "serverRepo": "服务端仓库 (.NET)",
     "build": "客户端版本: {{commit}}"

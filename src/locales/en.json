@@ -55,6 +55,7 @@
     "yakus": "Yakus",
     "selectAll": "Select All",
     "selectNone": "Select None",
+    "toggleAll": "All/None",
     "clientRepo": "Client Repo (Vite + TS)",
     "serverRepo": "Server Repo (.NET)",
     "build": "Client Version: {{commit}}"
