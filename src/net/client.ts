@@ -562,10 +562,11 @@ export class RabiRiichiClient {
 
     const delay = this.getEventDelay(gameEvent);
     if (delay > 0 && !skipDelay) {
-      const isResult =
-        gameEvent.agariEvent ||
-        gameEvent.ryuukyokuEvent ||
-        gameEvent.concludeGameEvent;
+      const isResult = Boolean(
+        gameEvent.agariEvent ??
+        gameEvent.ryuukyokuEvent ??
+        gameEvent.concludeGameEvent,
+      );
       const speed = isResult ? 1 : this.animationSpeed;
       await new Promise<void>((resolve) => {
         setTimeout(resolve, delay / speed);
@@ -580,11 +581,7 @@ export class RabiRiichiClient {
     if (eventMsg.claimTileEvent || eventMsg.kanEvent) {
       return 400;
     }
-    if (
-      eventMsg.agariEvent ||
-      eventMsg.ryuukyokuEvent ||
-      eventMsg.concludeGameEvent
-    ) {
+    if (eventMsg.agariEvent || eventMsg.ryuukyokuEvent) {
       return 3000;
     }
     if (eventMsg.dealHandEvent) {
@@ -625,12 +622,16 @@ export class RabiRiichiClient {
     this.pendingActionOption = null;
     this.currentInquiry = {
       messageId: respondTo,
-      mapped: mapInquiry(inquiry, {
-        visibleKinds: this.room
-          ? collectVisibleTileKindsFromRoom(this.room)
-          : [],
-        tileSetCounts: buildTileSetCounts(this.room?.config),
-      }),
+      mapped: mapInquiry(
+        inquiry,
+        {
+          visibleKinds: this.room
+            ? collectVisibleTileKindsFromRoom(this.room)
+            : [],
+          tileSetCounts: buildTileSetCounts(this.room?.config),
+        },
+        this.selfSeat,
+      ),
       original: inquiry,
     };
     this.logger.info(`Received inquiry ${respondTo}`);

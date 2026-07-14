@@ -66,7 +66,7 @@ export type InquiryOptionType =
 
 export interface TileGroupOption {
   index: number; // Index in the action's tileGroups array
-  tiles: { traceId: number; tile: number }[]; // Tiles in the group
+  tiles: { traceId: number; tile: number; isCalled?: boolean }[]; // Tiles in the group
 }
 
 export type ActionOption =
@@ -166,6 +166,7 @@ function mapDiscardCandidates(
 export function mapInquiry(
   inq: ISinglePlayerInquiryMsg,
   waitContext: WaitCountContext = EMPTY_WAIT_CONTEXT,
+  selfSeat?: number,
 ): MappedInquiry {
   const buttons: ActionOption[] = [];
   let playTile:
@@ -212,6 +213,10 @@ export function mapInquiry(
           tiles: (g.tiles ?? []).map((t: IGameTileMsg) => ({
             traceId: t.traceId ?? 0,
             tile: t.tile ?? 0,
+            isCalled:
+              t.discardInfo && selfSeat !== undefined
+                ? t.discardInfo.from !== selfSeat
+                : false,
           })),
         })),
       });
@@ -226,6 +231,10 @@ export function mapInquiry(
           tiles: (g.tiles ?? []).map((t: IGameTileMsg) => ({
             traceId: t.traceId ?? 0,
             tile: t.tile ?? 0,
+            isCalled:
+              t.discardInfo && selfSeat !== undefined
+                ? t.discardInfo.from !== selfSeat
+                : false,
           })),
         })),
       });
@@ -240,6 +249,10 @@ export function mapInquiry(
           tiles: (g.tiles ?? []).map((t: IGameTileMsg) => ({
             traceId: t.traceId ?? 0,
             tile: t.tile ?? 0,
+            isCalled:
+              t.discardInfo && selfSeat !== undefined
+                ? t.discardInfo.from !== selfSeat
+                : false,
           })),
         })),
       });
@@ -467,6 +480,30 @@ export function getAutoResponse(mapped: MappedInquiry): AutoResponse | null {
         action: opt.action,
         ...(opt.choice !== undefined ? { choice: opt.choice } : {}),
       };
+    }
+  }
+  return null;
+}
+
+export function getClaimTargetTileId(
+  mapped: MappedInquiry | null,
+): number | null {
+  if (!mapped) return null;
+  for (const button of mapped.buttons) {
+    if (button.type === 'agari' && button.incomingTileId != null) {
+      return button.incomingTileId;
+    }
+    if (
+      button.type === 'chii' ||
+      button.type === 'pon' ||
+      button.type === 'kan'
+    ) {
+      for (const group of button.tileGroups) {
+        const calledTile = group.tiles.find((t) => t.isCalled);
+        if (calledTile) {
+          return calledTile.traceId;
+        }
+      }
     }
   }
   return null;

@@ -960,7 +960,7 @@ describe('RabiRiichiClient', () => {
         },
       },
     });
-    await vi.advanceTimersByTimeAsync(3000);
+    await vi.advanceTimersByTimeAsync(0);
 
     // Send NextGameEvent
     sendServerMsg(mockWS, {

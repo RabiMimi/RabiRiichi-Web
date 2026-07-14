@@ -6,6 +6,7 @@ import {
   encodeInquiryResponse,
   getAutoResponse,
   findActiveDiscardCandidate,
+  getClaimTargetTileId,
   type MappedInquiry,
   type DiscardCandidate,
 } from './inquiry.js';
@@ -73,9 +74,9 @@ describe('Inquiry Mapping & Response Encoding', () => {
         {
           index: 0,
           tiles: [
-            { traceId: 100, tile: 17 },
-            { traceId: 101, tile: 18 },
-            { traceId: 200, tile: 19 },
+            { traceId: 100, tile: 17, isCalled: false },
+            { traceId: 101, tile: 18, isCalled: false },
+            { traceId: 200, tile: 19, isCalled: false },
           ],
         },
       ],
@@ -290,9 +291,9 @@ describe('Inquiry Mapping & Response Encoding', () => {
             {
               index: 0,
               tiles: [
-                { traceId: 100, tile: 17 },
-                { traceId: 101, tile: 18 },
-                { traceId: 200, tile: 19 },
+                { traceId: 100, tile: 17, isCalled: false },
+                { traceId: 101, tile: 18, isCalled: false },
+                { traceId: 200, tile: 19, isCalled: false },
               ],
             },
           ],
@@ -479,5 +480,67 @@ describe('findActiveDiscardCandidate', () => {
 
   it('returns null for an unknown tile in normal mode', () => {
     expect(findActiveDiscardCandidate(mapped, 999, false)).toBeNull();
+  });
+});
+
+describe('getClaimTargetTileId', () => {
+  it('should map isCalled correctly and identify claim target tile ID', () => {
+    const claimInquiry: ISinglePlayerInquiryMsg = {
+      actions: [
+        {
+          ponAction: {
+            tileGroups: [
+              {
+                tiles: [
+                  { traceId: 100, tile: 17 }, // own
+                  { traceId: 101, tile: 17 }, // own
+                  {
+                    traceId: 200,
+                    tile: 17,
+                    discardInfo: { from: 1 }, // from another player
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    // Case 1: selfSeat = 0, so tile 200 is claimed from seat 1 (isCalled should be true)
+    const mapped = mapInquiry(claimInquiry, undefined, 0);
+    const ponBtn = mapped.buttons[0];
+    assert(ponBtn);
+    if (ponBtn.type !== 'pon') throw new Error('Expected pon action');
+    expect(ponBtn.tileGroups[0]?.tiles[2]?.isCalled).toBe(true);
+    expect(ponBtn.tileGroups[0]?.tiles[0]?.isCalled).toBe(false);
+
+    const targetId = getClaimTargetTileId(mapped);
+    expect(targetId).toBe(200);
+
+    // Case 2: if selfSeat = 1, then the tile is discarded by ourselves (should not be marked as isCalled)
+    const mappedSelf = mapInquiry(claimInquiry, undefined, 1);
+    const ponBtnSelf = mappedSelf.buttons[0];
+    assert(ponBtnSelf);
+    if (ponBtnSelf.type !== 'pon') throw new Error('Expected pon action');
+    expect(ponBtnSelf.tileGroups[0]?.tiles[2]?.isCalled).toBe(false);
+    expect(getClaimTargetTileId(mappedSelf)).toBeNull();
+  });
+
+  it('should identify Ron target tile ID from agari incomingTileId', () => {
+    const ronInquiry: ISinglePlayerInquiryMsg = {
+      actions: [
+        {
+          agariAction: {
+            type: AgariType.AGARI_TYPE_RON,
+            incoming: { traceId: 300, tile: 18 },
+          },
+        },
+      ],
+    };
+
+    const mapped = mapInquiry(ronInquiry);
+    const targetId = getClaimTargetTileId(mapped);
+    expect(targetId).toBe(300);
   });
 });

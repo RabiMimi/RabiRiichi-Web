@@ -333,6 +333,21 @@ export function useDoraIndicators(): Tile[] {
   }, [room]);
 }
 
+import { getClaimTargetTileId } from '../domain/inquiry';
+
+function getClaimTargetTileIdSelector(): number | null {
+  const state = getSnapshot();
+  return getClaimTargetTileId(state.currentInquiry?.mapped ?? null);
+}
+
+export function useClaimTargetTileId(): number | null {
+  return useSyncExternalStore(
+    subscribe,
+    getClaimTargetTileIdSelector,
+    getClaimTargetTileIdSelector,
+  );
+}
+
 function resetForTest(): void {
   lastSnapshot = null;
 }

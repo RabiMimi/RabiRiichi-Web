@@ -21,6 +21,7 @@ import {
   useDoraIndicators,
   useRoom,
   useSelf,
+  useClaimTargetTileId,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import type { ActionOption, DiscardCandidate } from '../domain/inquiry';
@@ -173,7 +174,28 @@ export function Tile3D({
   const animationSpeed = useAnimationSpeed();
   const [isHovered, setIsHovered] = useState(false);
 
+  const room = useRoom();
   const doraIndicators = useDoraIndicators();
+  const claimTargetTileId = useClaimTargetTileId();
+  const isClaimTarget = useMemo(() => {
+    if (claimTargetTileId == null) return false;
+    if (traceId === claimTargetTileId) return true;
+
+    if (area === 'meld' && room) {
+      for (const player of room.players) {
+        const melds = player.gameState?.hand.called ?? [];
+        for (const meld of melds) {
+          const tiles = meld.tiles ?? [];
+          const hasTarget = tiles.some((t) => t.traceId === claimTargetTileId);
+          const hasSelf = tiles.some((t) => t.traceId === traceId);
+          if (hasTarget && hasSelf) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }, [claimTargetTileId, traceId, area, room]);
   const isDora = useMemo(() => {
     if (!tile) return false;
     try {
@@ -234,7 +256,6 @@ export function Tile3D({
   );
   const isHighlighted = Boolean(activeComparisonTile && isMatchingComparison);
 
-  const room = useRoom();
   const currentUser = useSelf();
   const selfPlayer = useMemo(() => {
     if (!room || !currentUser) return null;
@@ -426,6 +447,7 @@ export function Tile3D({
   const prevHighlighted = useRef(false);
   const prevIsDora = useRef(false);
   const prevIsFuritenDiscard = useRef(false);
+  const prevShowGlow = useRef(false);
 
   // Animate position and rotation towards targets
   useFrame((state, delta) => {
@@ -519,9 +541,13 @@ export function Tile3D({
     }
 
     if (tileRef.current) {
-      // Emissive glow for playable tiles and continuous pulse for winning tile
-      if (isWinningTile) {
+      const showGlow = isWinningTile || isClaimTarget;
+      const glowChanged = prevShowGlow.current !== showGlow;
+      prevShowGlow.current = showGlow;
+
+      if (showGlow) {
         const pulse = 0.3 + Math.sin(time * 6.0) * 0.3; // pulse between 0.0 and 0.6
+        const glowColor = isWinningTile ? 0xffaa00 : 0x33ffcc;
         tileRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             const childMat = child.material as
@@ -530,13 +556,14 @@ export function Tile3D({
             const mats = Array.isArray(childMat) ? childMat : [childMat];
             mats.forEach((mat) => {
               if (mat instanceof THREE.MeshStandardMaterial) {
-                mat.emissive.setHex(0xffaa00); // Gold glow
+                mat.emissive.setHex(glowColor);
                 mat.emissiveIntensity = pulse;
               }
             });
           }
         });
       } else if (
+        glowChanged ||
         prevPlayable.current !== isPlayable ||
         prevHovered.current !== isHovered ||
         prevSelected.current !== isSelected ||
