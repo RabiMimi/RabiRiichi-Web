@@ -34,7 +34,9 @@ import {
   INQUIRY_DEFAULT_INDEX,
   RESULT_ANIMATION_DURATION_MS,
   STORAGE_KEY_SERVER_SETTINGS,
+  STORAGE_KEY_CLIENT_SETTINGS,
   type ServerSettings,
+  type ClientSettings,
 } from '../domain/constants';
 import { applyEvent, applyRoomState } from '../domain/reducer';
 import {
@@ -78,6 +80,17 @@ function getUserWSUrl(baseUrl: string): string {
     }
     return new URL('/ws/connect', baseUrl).href;
   }
+}
+
+// Parses persisted client settings from a raw localStorage string. Returns an
+// empty object for missing/corrupt data so callers can merge safely.
+function parseClientSettings(raw: string | null): ClientSettings {
+  if (!raw) return {};
+  const parsed: unknown = JSON.parse(raw);
+  if (typeof parsed !== 'object' || parsed === null) return {};
+  // ClientSettings has only optional fields, so any object satisfies it; unknown
+  // extra keys are harmless.
+  return parsed;
 }
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
@@ -181,6 +194,23 @@ export class RabiRiichiClient {
   public setAnimationSpeed(speed: number): void {
     this.animationSpeed = speed;
     this.onChange.emit();
+
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY_CLIENT_SETTINGS);
+        const settings = parseClientSettings(stored);
+        settings.animationSpeed = speed;
+        localStorage.setItem(
+          STORAGE_KEY_CLIENT_SETTINGS,
+          JSON.stringify(settings),
+        );
+      } catch (err) {
+        this.logger.error(
+          'Failed to save client settings to localStorage:',
+          err,
+        );
+      }
+    }
   }
 
   // Backdoor for replay and testing helpers (e.g. replay driver, test mocks)
@@ -227,6 +257,21 @@ export class RabiRiichiClient {
     this.messagePump.subscribeGameEvent(this.handleGameEvent.bind(this));
     this.messagePump.subscribeInquiry(this.handleInquiry.bind(this));
     this.messagePump.subscribeChatMessage(this.handleChatMessage.bind(this));
+
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY_CLIENT_SETTINGS);
+        const settings = parseClientSettings(stored);
+        if (typeof settings.animationSpeed === 'number') {
+          this.animationSpeed = settings.animationSpeed;
+        }
+      } catch (err) {
+        this.logger.error(
+          'Failed to load client settings from localStorage:',
+          err,
+        );
+      }
+    }
   }
 
   public showStickerLocally(senderId: number, sticker: string): void {

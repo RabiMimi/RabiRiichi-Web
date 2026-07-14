@@ -437,7 +437,7 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(50);
   });
 
-  it('should handle addTileEvent', () => {
+  it('should handle addTileEvent (doing nothing, visually deferred)', () => {
     const state = createInitializedRoom();
     // Pre-populate pending tile safely
     setPendingTile(state, 0, { traceId: 50, tile: 21 });
@@ -451,9 +451,9 @@ describe('Reducer - Events', () => {
     const nextState = applyEvent(state, eventMsg);
 
     const p0 = nextState.players.find((p) => p.seat === 0);
-    expect(p0?.gameState?.hand.pendingTile).toBeNull();
-    expect(p0?.gameState?.hand.freeTiles).toHaveLength(1);
-    expect(p0?.gameState?.hand.freeTiles[0]?.traceId).toBe(50);
+    expect(p0?.gameState?.hand.pendingTile).not.toBeNull();
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(50);
+    expect(p0?.gameState?.hand.freeTiles).toHaveLength(0);
   });
 
   it('should handle discardTileEvent (tsumogiri / discard pending)', () => {
@@ -583,6 +583,56 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.called[0]?.tiles).toHaveLength(4);
   });
 
+  it('should fold a surviving pending tile into the hand on the next (rinshan) draw', () => {
+    // Regression: draw X, ankan on four OTHER tiles (X stays pending), then draw
+    // the rinshan replacement Y. Because the ankan did not consume X, the merge
+    // is deferred; the rinshan draw must fold X into freeTiles before it
+    // overwrites the pending slot with Y, otherwise X is silently lost.
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [
+      { traceId: 10, tile: 17 },
+      { traceId: 11, tile: 17 },
+      { traceId: 12, tile: 17 },
+      { traceId: 13, tile: 17 },
+    ]);
+    // Drawn tile X (5m) that is NOT part of the kan.
+    setPendingTile(state, 0, { traceId: 50, tile: 21 });
+
+    const afterKan = applyEvent(state, {
+      kanEvent: {
+        playerId: 0,
+        kan: {
+          tiles: [
+            { traceId: 10, tile: 17 },
+            { traceId: 11, tile: 17 },
+            { traceId: 12, tile: 17 },
+            { traceId: 13, tile: 17 },
+          ],
+        },
+        incoming: { traceId: 13, tile: 17 },
+        kanSource: TileSource.TILE_SOURCE_ANKAN,
+      },
+    });
+
+    // Kan on other tiles leaves X pending (merge deferred).
+    const p0AfterKan = afterKan.players.find((p) => p.seat === 0);
+    expect(p0AfterKan?.gameState?.hand.pendingTile?.traceId).toBe(50);
+
+    // Rinshan replacement draw Y (6m).
+    const afterDraw = applyEvent(afterKan, {
+      drawTileEvent: {
+        playerId: 0,
+        source: TileSource.TILE_SOURCE_WANPAI,
+        tile: { traceId: 51, tile: 22 },
+      },
+    });
+
+    const p0 = afterDraw.players.find((p) => p.seat === 0);
+    // X must now live in the hand, Y is the new pending tile.
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(51);
+    expect(p0?.gameState?.hand.freeTiles.map((t) => t.traceId)).toContain(50);
+  });
+
   it('should handle kanEvent (Kakan)', () => {
     const state = createInitializedRoom();
     // Player 0 already has a Pon of 1m (original tiles carry a pon-era formTime)
@@ -675,6 +725,38 @@ describe('Reducer - Events', () => {
       false,
     );
     expect(p0?.gameState?.hand.nukiDora.map((t) => t.traceId)).toEqual([61]);
+  });
+
+  it('should preserve the pending drawn tile across a nuki on a hand tile', () => {
+    // Regression: draw X, nuki a North already in hand (X stays pending), then
+    // draw the rinshan replacement. X must survive into the hand.
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [
+      { traceId: 60, tile: 17 },
+      { traceId: 61, tile: NORTH },
+    ]);
+    setPendingTile(state, 0, { traceId: 50, tile: 21 }); // drawn X (5m)
+
+    const afterNuki = applyEvent(state, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 61, tile: NORTH } },
+    });
+    // Nuki on a hand tile leaves X pending.
+    expect(
+      afterNuki.players.find((p) => p.seat === 0)?.gameState?.hand.pendingTile
+        ?.traceId,
+    ).toBe(50);
+
+    const afterDraw = applyEvent(afterNuki, {
+      drawTileEvent: {
+        playerId: 0,
+        source: TileSource.TILE_SOURCE_WANPAI,
+        tile: { traceId: 51, tile: 22 },
+      },
+    });
+
+    const p0 = afterDraw.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(51);
+    expect(p0?.gameState?.hand.freeTiles.map((t) => t.traceId)).toContain(50);
   });
 
   it('should accumulate multiple pulled North tiles', () => {
@@ -1626,6 +1708,33 @@ describe('Reducer - Events', () => {
 
     expect(p1.gameState?.agari?.isTenpai).toBeFalsy();
     expect(p1.gameState?.awaitedTiles).toBeUndefined();
+  });
+
+  it('should clear a pending drawn tile for a noten player on ryuukyoku', () => {
+    // Regression: the player who drew the last wall tile still holds a pending
+    // tile when the wall exhausts. A noten player never goes through the tenpai
+    // reveal branch, so the pending tile must still be folded into the hand and
+    // cleared, otherwise it lingers at the draw position.
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [{ traceId: 10, tile: 17 }]);
+    setPendingTile(state, 0, { traceId: 50, tile: 21 });
+
+    const nextState = applyEvent(state, {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        endGameRyuukyoku: {
+          remainingPlayers: [0, 1],
+          nagashiManganPlayers: [],
+          tenpaiPlayers: [1], // seat 0 is noten
+        },
+      },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.pendingTile).toBeNull();
+    expect(p0?.gameState?.hand.freeTiles.map((t) => t.traceId)).toEqual([
+      10, 50,
+    ]);
   });
 
   it('should sort revealed tiles in ryuukyokuEvent even if dummy tiles were in different order', () => {

@@ -2,7 +2,7 @@ import React from 'react';
 import type { IGameTileMsg } from '../proto';
 import { Tile3D } from './Tile3D';
 import { Tile } from '../domain/tile';
-import { getSafeKey } from './assets';
+import { getSafeKey, getSafeTraceId } from './assets';
 import { getRiichiSidewaysTraceId } from '../domain/river';
 import {
   createEmptyTileRegistry,
@@ -93,6 +93,8 @@ export function River3D({
                         displayState={isRiichi ? 'sideways' : 'face'}
                         position={[x, 0, z]}
                         isWinningTile={isWinningTile}
+                        area="river"
+                        traceId={getSafeTraceId(tileMsg.traceId)}
                       />
                     );
                   })}

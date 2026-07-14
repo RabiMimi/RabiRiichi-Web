@@ -8,6 +8,11 @@ import {
   VALID_TILE_STRINGS,
 } from './assets';
 import {
+  saveTilePose,
+  getAndClearTilePose,
+  type TileArea,
+} from './tileTransitionRegistry';
+import {
   useCurrentInquiry,
   useIsRiichiSelectMode,
   useAnimationSpeed,
@@ -23,6 +28,7 @@ import {
   Tile,
   checkIsDora,
   checkDiscardResultsInFuriten,
+  isTileUnknown,
 } from '../domain/tile';
 import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
 import { FuritenType } from '../proto';
@@ -122,6 +128,27 @@ function createMappedMaterial(
   return mat;
 }
 
+// Pre-allocated temporary variables to avoid per-frame GC allocations
+const tempV3 = new THREE.Vector3();
+const tempQ = new THREE.Quaternion();
+const tempParentRot = new THREE.Quaternion();
+const tempTargetWorldPos = new THREE.Vector3();
+const tempTargetWorldRot = new THREE.Quaternion();
+const tempCurrentWorldPos = new THREE.Vector3();
+const tempCurrentWorldRot = new THREE.Quaternion();
+const tempLocalRot = new THREE.Quaternion();
+
+interface ActiveTransition {
+  startWorldPos: THREE.Vector3;
+  startWorldRot: THREE.Quaternion;
+  duration: number;
+  elapsed: number;
+}
+
+function easeInOutQuad(x: number): number {
+  return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+}
+
 interface Tile3DProps {
   tile: string | null; // e.g. '1m', 'r5s', 'back', or null for back
   displayState?: TileDisplayState;
@@ -129,6 +156,7 @@ interface Tile3DProps {
   onClick?: () => void;
   traceId?: number | undefined;
   isWinningTile?: boolean;
+  area?: TileArea;
 }
 
 export function Tile3D({
@@ -138,6 +166,7 @@ export function Tile3D({
   onClick,
   traceId,
   isWinningTile = false,
+  area = 'ui',
 }: Tile3DProps): React.JSX.Element {
   const currentInquiry = useCurrentInquiry();
   const isRiichiSelectMode = useIsRiichiSelectMode();
@@ -154,6 +183,8 @@ export function Tile3D({
       return false;
     }
   }, [tile, doraIndicators]);
+
+  const activeTransition = useRef<ActiveTransition | null>(null);
 
   const isFaceVisible =
     displayState === 'face' ||
@@ -196,7 +227,10 @@ export function Tile3D({
   }, [activeComparisonTile, tile]);
 
   const isDimmed = Boolean(
-    activeComparisonTile && !isMatchingComparison && displayState !== 'hand',
+    activeComparisonTile &&
+    !isMatchingComparison &&
+    displayState !== 'hand' &&
+    !isTileUnknown(tile),
   );
   const isHighlighted = Boolean(activeComparisonTile && isMatchingComparison);
 
@@ -410,15 +444,78 @@ export function Tile3D({
     });
 
     if (groupRef.current) {
-      // We make it frame-rate independent by incorporating delta:
-      // lerpFactor = 1 - Math.exp(-speed * delta)
-      const factor = isFirstFrame.current
-        ? 1
-        : 1 - Math.exp(-12 * animationSpeed * delta);
-      isFirstFrame.current = false;
+      if (isFirstFrame.current) {
+        isFirstFrame.current = false;
+        if (traceId !== undefined) {
+          const lastPose = getAndClearTilePose(traceId);
+          const isAllowedTransition =
+            lastPose &&
+            ((lastPose.area === 'hand' && area === 'river') ||
+              (lastPose.area === 'river' && area === 'meld') ||
+              (lastPose.area === 'hand' && area === 'meld'));
 
-      groupRef.current.position.lerp(targetPos, factor);
-      groupRef.current.quaternion.slerp(targetRot, factor);
+          if (lastPose && isAllowedTransition && groupRef.current.parent) {
+            activeTransition.current = {
+              startWorldPos: lastPose.worldPosition.clone(),
+              startWorldRot: lastPose.worldQuaternion.clone(),
+              duration: 0.4, // 0.4 seconds duration
+              elapsed: 0,
+            };
+          } else {
+            groupRef.current.position.copy(targetPos);
+            groupRef.current.quaternion.copy(targetRot);
+          }
+        } else {
+          groupRef.current.position.copy(targetPos);
+          groupRef.current.quaternion.copy(targetRot);
+        }
+      }
+
+      const transition = activeTransition.current;
+      if (transition && groupRef.current.parent) {
+        const parentGroup = groupRef.current.parent;
+        parentGroup.updateMatrixWorld(true);
+
+        transition.elapsed += delta * animationSpeed;
+        const progress = Math.min(1, transition.elapsed / transition.duration);
+        const easedT = easeInOutQuad(progress);
+
+        // 1. Calculate current target world position & rotation for this frame
+        tempTargetWorldPos.copy(targetPos);
+        parentGroup.localToWorld(tempTargetWorldPos);
+
+        parentGroup.getWorldQuaternion(tempParentRot);
+        tempTargetWorldRot.copy(tempParentRot).multiply(targetRot);
+
+        // 2. Interpolate world position
+        tempCurrentWorldPos.lerpVectors(
+          transition.startWorldPos,
+          tempTargetWorldPos,
+          easedT,
+        );
+
+        // 3. Interpolate world rotation
+        tempCurrentWorldRot.slerpQuaternions(
+          transition.startWorldRot,
+          tempTargetWorldRot,
+          easedT,
+        );
+
+        // 4. Convert back to local space and apply
+        parentGroup.worldToLocal(tempCurrentWorldPos);
+        groupRef.current.position.copy(tempCurrentWorldPos);
+
+        tempLocalRot.copy(tempParentRot).invert().multiply(tempCurrentWorldRot);
+        groupRef.current.quaternion.copy(tempLocalRot);
+
+        if (progress >= 1) {
+          activeTransition.current = null; // finished transition
+        }
+      } else {
+        const factor = 1 - Math.exp(-12 * animationSpeed * delta);
+        groupRef.current.position.lerp(targetPos, factor);
+        groupRef.current.quaternion.slerp(targetRot, factor);
+      }
     }
 
     if (tileRef.current) {
@@ -470,6 +567,13 @@ export function Tile3D({
           isFuritenDiscard,
         );
       }
+    }
+
+    // Save world pose at the end of the frame for future transitions (remounts)
+    if (groupRef.current && traceId !== undefined) {
+      groupRef.current.getWorldPosition(tempV3);
+      groupRef.current.getWorldQuaternion(tempQ);
+      saveTilePose(traceId, tempV3, tempQ, area);
     }
   });
 
@@ -733,6 +837,8 @@ function TileSpotlightParticles(): React.JSX.Element {
   const pointsRef = useRef<THREE.Points>(null);
   const [sim] = useState(() => new FountainSim());
 
+  const animationSpeed = useAnimationSpeed();
+
   useFrame((_state, delta) => {
     // Cancel the tile group's rotation so +Y stays world-up for the jet.
     if (groupRef.current?.parent) {
@@ -745,7 +851,7 @@ function TileSpotlightParticles(): React.JSX.Element {
       | undefined;
     if (!posAttr) return;
 
-    sim.step(Math.min(delta, 0.05));
+    sim.step(Math.min(delta * animationSpeed, 0.05 * animationSpeed));
     posAttr.needsUpdate = true;
   });
 

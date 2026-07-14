@@ -191,6 +191,7 @@ export function Melds3D({
             displayState={displayState}
             position={[x, 0, z]}
             traceId={getSafeTraceId(tileMsg.traceId)}
+            area="meld"
           />
         );
       })}

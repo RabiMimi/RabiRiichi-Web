@@ -58,6 +58,7 @@ export function Hand3D({
             position={[x, 0, 0]}
             traceId={getSafeTraceId(tileMsg.traceId)}
             isWinningTile={isWinningTile}
+            area="hand"
           />
         );
       })}
@@ -88,6 +89,7 @@ export function Hand3D({
               position={[x, 0, 0]}
               traceId={getSafeTraceId(pendingTile.traceId)}
               isWinningTile={isWinningTile}
+              area="hand"
             />
           );
         })()}

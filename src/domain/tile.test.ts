@@ -6,6 +6,7 @@ import {
   getDoraTargetForIndicator,
   checkIsDora,
   checkDiscardResultsInFuriten,
+  isTileUnknown,
 } from './tile';
 
 describe('Tile Model', () => {
@@ -296,6 +297,35 @@ describe('Tile Model', () => {
           false,
         ),
       ).toBe(false);
+    });
+  });
+
+  describe('isTileUnknown', () => {
+    it('should identify null or undefined as unknown', () => {
+      expect(isTileUnknown(null)).toBe(true);
+      expect(isTileUnknown(undefined)).toBe(true);
+    });
+
+    it('should identify numeric 0 as unknown', () => {
+      expect(isTileUnknown(0)).toBe(true);
+      expect(isTileUnknown(0x00)).toBe(true);
+      expect(isTileUnknown(21)).toBe(false); // some valid tile byte
+    });
+
+    it('should identify special strings like back, blank, 0x, and anything with x as unknown', () => {
+      expect(isTileUnknown('back')).toBe(true);
+      expect(isTileUnknown('blank')).toBe(true);
+      expect(isTileUnknown('0x')).toBe(true);
+      expect(isTileUnknown('1x')).toBe(true);
+      expect(isTileUnknown('1m')).toBe(false);
+      expect(isTileUnknown('r5s')).toBe(false);
+    });
+
+    it('should identify Tile objects with Invalid suit as unknown', () => {
+      expect(isTileUnknown(new Tile(0, TileSuit.Invalid))).toBe(true);
+      expect(isTileUnknown(new Tile(5, TileSuit.Invalid))).toBe(true);
+      expect(isTileUnknown(new Tile(1, TileSuit.M))).toBe(false);
+      expect(isTileUnknown(Tile.Back)).toBe(true);
     });
   });
 });

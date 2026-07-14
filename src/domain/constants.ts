@@ -119,6 +119,7 @@ export function defaultDoraOptionForPlayerCount(playerCount: number): number {
 // Storage Keys
 export const STORAGE_KEY_SERVER_SETTINGS = 'rabiriichi_server_settings';
 export const STORAGE_KEY_ROOM_CONFIG = 'rabiriichi_room_config';
+export const STORAGE_KEY_CLIENT_SETTINGS = 'rabiriichi_client_settings';
 
 export interface SavedServer {
   id: string;
@@ -131,4 +132,8 @@ export interface ServerSettings {
   customServers?: SavedServer[];
   lastUrl?: string;
   nickname?: string;
+}
+
+export interface ClientSettings {
+  animationSpeed?: number;
 }

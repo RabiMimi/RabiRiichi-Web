@@ -23,7 +23,9 @@ import {
 } from '../transport/constants';
 import {
   STORAGE_KEY_SERVER_SETTINGS,
+  STORAGE_KEY_CLIENT_SETTINGS,
   type ServerSettings,
+  type ClientSettings,
 } from '../domain/constants';
 
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
@@ -1210,6 +1212,30 @@ describe('RabiRiichiClient', () => {
 
       client.close();
       vi.useRealTimers();
+    });
+  });
+
+  describe('Client Settings Persistence', () => {
+    it('should load animation speed from localStorage on creation', () => {
+      mockLocalStorage[STORAGE_KEY_CLIENT_SETTINGS] = JSON.stringify({
+        animationSpeed: 1.5,
+      });
+
+      const client = new RabiRiichiClient();
+      expect(client.animationSpeed).toBe(1.5);
+    });
+
+    it('should save animation speed to localStorage when set', () => {
+      const client = new RabiRiichiClient();
+      expect(client.animationSpeed).toBe(1.0); // Default
+
+      client.setAnimationSpeed(2.5);
+      expect(client.animationSpeed).toBe(2.5);
+
+      const saved = JSON.parse(
+        mockLocalStorage[STORAGE_KEY_CLIENT_SETTINGS] ?? '{}',
+      ) as ClientSettings;
+      expect(saved.animationSpeed).toBe(2.5);
     });
   });
 });

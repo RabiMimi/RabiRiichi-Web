@@ -37,11 +37,12 @@ import type {
   PlayerModel,
   GameInfo,
   PlayerGameState,
+  PlayerHandState,
   PlayerAgariState,
   MappedTenpaiInfo,
 } from './model.js';
 import { isTsumoTile } from './model.js';
-import { Tile } from './tile.js';
+import { Tile, isTileUnknown } from './tile.js';
 import {
   createEmptyTileRegistry,
   extractEventTiles,
@@ -69,9 +70,11 @@ function resolveTileFace(
   registry: TileRegistry,
   tile: IGameTileMsg,
 ): IGameTileMsg {
-  if (tile.tile && tile.tile > 0) return tile;
+  if (!isTileUnknown(tile.tile)) return tile;
   const known = getRegisteredTile(registry, tile.traceId);
-  return known?.tile ? { ...tile, tile: known.tile } : tile;
+  return known && typeof known.tile === 'number' && known.tile > 0
+    ? { ...tile, tile: known.tile }
+    : tile;
 }
 
 export function hydrateFromGameState(
@@ -202,6 +205,20 @@ function sortGameTiles(tiles: IGameTileMsg[]): IGameTileMsg[] {
   });
 }
 
+// Folds a still-pending drawn tile into the sorted free tiles. This mirrors the
+// server's `Hand.AddPending`, which we defer visually (see handleAddTile). Call
+// this whenever a pending tile survives a turn (e.g. an ankan/nuki on other
+// tiles triggers a rinshan draw) so the drawn tile is not silently dropped when
+// the next pendingTile arrives.
+function mergePendingIntoFree(hand: PlayerHandState): PlayerHandState {
+  if (!hand.pendingTile) return hand;
+  return {
+    ...hand,
+    freeTiles: sortGameTiles([...hand.freeTiles, hand.pendingTile]),
+    pendingTile: null,
+  };
+}
+
 function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
   const eventGameId = ev.gameId === '' ? null : ev.gameId;
   const info: GameInfo = {
@@ -318,12 +335,16 @@ function handleDrawTile(state: RoomModel, ev: IDrawTileEventMsg): RoomModel {
 
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (p.seat !== ev.playerId || !p.gameState) return p;
+    // A leftover pendingTile means the previous draw survived the turn (e.g. an
+    // ankan/nuki on other tiles). Fold it into freeTiles before this new draw
+    // overwrites the slot, otherwise the earlier drawn tile is lost.
+    const hand = mergePendingIntoFree(p.gameState.hand);
     return {
       ...p,
       gameState: {
         ...p.gameState,
         hand: {
-          ...p.gameState.hand,
+          ...hand,
           pendingTile: ev.tile ?? null,
         },
       },
@@ -337,30 +358,14 @@ function handleDrawTile(state: RoomModel, ev: IDrawTileEventMsg): RoomModel {
   };
 }
 
-function handleAddTile(state: RoomModel, ev: IAddTileEventMsg): RoomModel {
-  const updatedPlayers = state.players.map((p): PlayerModel => {
-    if (p.seat !== ev.playerId || !p.gameState) return p;
-    const pending = p.gameState.hand.pendingTile;
-    if (!pending) return p;
-
-    const freeTiles = [...p.gameState.hand.freeTiles, pending];
-    return {
-      ...p,
-      gameState: {
-        ...p.gameState,
-        hand: {
-          ...p.gameState.hand,
-          freeTiles: sortGameTiles(freeTiles),
-          pendingTile: null,
-        },
-      },
-    };
-  });
-
-  return {
-    ...state,
-    players: updatedPlayers,
-  };
+function handleAddTile(state: RoomModel, _ev: IAddTileEventMsg): RoomModel {
+  // Visual deferral: Do not merge the pending drawn tile into freeTiles
+  // immediately. The merge happens once the tile's fate is known: in
+  // handleDiscardTile (discard), handleKan/handleNukiDora (consumed by the
+  // meld/nuki), handleDrawTile (a follow-up rinshan draw for the same turn), or
+  // handleRyuukyoku (round exhausts). This keeps the drawn tile at the "just
+  // drawn" position until its outcome is resolved.
+  return state;
 }
 
 function handleDiscardTile(
@@ -1004,7 +1009,9 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       _ev.endGameRyuukyoku?.tenpaiPlayers?.includes(p.seat) ?? false;
 
     let agari = p.gameState.agari;
-    let hand = p.gameState.hand;
+    // The round is over: fold any still-pending drawn tile back into the hand
+    // for every player so no drawn tile is left dangling at the draw position.
+    let hand = mergePendingIntoFree(p.gameState.hand);
     const existingWaits = p.gameState.awaitedTiles;
     let awaitedTiles = existingWaits;
 
@@ -1036,6 +1043,7 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       };
       const pRevealed = revealedByPlayer.get(p.seat);
       if (pRevealed) {
+        // Authoritative revealed tenpai hand already includes the drawn tile.
         hand = {
           ...hand,
           freeTiles: sortGameTiles(pRevealed),

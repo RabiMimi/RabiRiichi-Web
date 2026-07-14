@@ -1,4 +1,4 @@
-import type { Tile } from '../domain/tile';
+import { type Tile, isTileUnknown } from '../domain/tile';
 import type { IMenLikeMsg } from '../proto';
 
 export const TILE_MODEL_PATH = '/assets/tile.glb';
@@ -65,7 +65,7 @@ export function getTileTexturePath(tile: string | Tile | null): string {
   }
 
   // If it represents a back/invalid tile
-  if (tileStr === '0x' || tileStr.includes('x')) {
+  if (isTileUnknown(tileStr)) {
     return '/assets/hand_tiles/blank.jpg';
   }
 
