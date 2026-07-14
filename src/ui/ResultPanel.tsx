@@ -217,12 +217,12 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const showUradoras = React.useMemo(() => {
     return (
-      room?.players.some(
+      resultPlayers.some(
         (p) =>
           p.gameState?.agari?.scores != null && p.gameState.riichiTileId > 0,
       ) ?? false
     );
-  }, [room?.players]);
+  }, [resultPlayers]);
 
   const renderDoraIndicators = () => {
     if (isDraw || !room?.info) return null;
@@ -313,17 +313,18 @@ export function ResultPanel(): React.JSX.Element | null {
         room.config?.scoringOption != null &&
         (room.config.scoringOption & 2) === 0;
 
-      if (result.yakuman && result.yakuman > 0) {
+      if (result.finalYakuman && result.finalYakuman > 0) {
         limitClass = 'limit-yakuman';
         if (result.kazoeYakuman && result.kazoeYakuman > 0 && !isAotenjou) {
           limitLabel = t('result.yakuman');
           hanFuLabel = t('result.han', { count: result.han });
         } else {
-          if (result.yakuman > 1) {
-            const key = `result.multipleYakuman_${result.yakuman}`;
+          const yakumanCount = result.finalYakuman;
+          if (yakumanCount > 1) {
+            const key = `result.multipleYakuman_${yakumanCount}`;
             limitLabel = t(key, {
               defaultValue: t('result.multipleYakuman', {
-                count: result.yakuman,
+                count: yakumanCount,
               }),
             });
           } else {
