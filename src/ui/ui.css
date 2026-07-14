@@ -3569,7 +3569,9 @@
   padding: 12px 6px;
   cursor: pointer;
   outline: none;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
   box-shadow: -4px 0 10px rgba(0, 0, 0, 0.4);
 }
 
@@ -3610,7 +3612,10 @@
   padding: 4px;
   cursor: pointer;
   border-radius: 6px;
-  transition: transform 0.2s, border-color 0.2s, background-color 0.2s;
+  transition:
+    transform 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3745,7 +3750,8 @@
 }
 
 .sticker-bubble-3d.local.animate-pop {
-  animation: pop-bounce-local 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: pop-bounce-local 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+    forwards;
 }
 
 @keyframes pop-bounce-local {
@@ -3775,7 +3781,8 @@
 }
 
 .sticker-bubble-3d.local.animate-close {
-  animation: pop-close-local 0.25s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+  animation: pop-close-local 0.25s cubic-bezier(0.6, -0.28, 0.735, 0.045)
+    forwards;
 }
 
 @keyframes pop-close-local {

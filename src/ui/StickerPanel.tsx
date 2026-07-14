@@ -32,7 +32,11 @@ export function StickerPanel(): React.JSX.Element | null {
         type="button"
         className="sticker-panel-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        title={isOpen ? t('sticker.collapse', 'Hide Stickers') : t('sticker.expand', 'Show Stickers')}
+        title={
+          isOpen
+            ? t('sticker.collapse', 'Hide Stickers')
+            : t('sticker.expand', 'Show Stickers')
+        }
       >
         {isOpen ? '▶' : '◀'}
       </button>

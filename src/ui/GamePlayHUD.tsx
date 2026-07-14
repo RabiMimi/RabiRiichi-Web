@@ -206,7 +206,12 @@ export function GamePlayHUD(): React.JSX.Element | null {
   }, [selfPlayer]);
 
   const isFuritenDiscard = useMemo(() => {
-    if (!activeDiscardCandidate || activeTraceId == null || !room || !selfPlayer) {
+    if (
+      !activeDiscardCandidate ||
+      activeTraceId == null ||
+      !room ||
+      !selfPlayer
+    ) {
       return false;
     }
 
@@ -223,7 +228,9 @@ export function GamePlayHUD(): React.JSX.Element | null {
       return false;
     }
 
-    const winningWaits = activeDiscardCandidate.candidate.tenpaiInfos.map((w) => w.winningTile);
+    const winningWaits = activeDiscardCandidate.candidate.tenpaiInfos.map(
+      (w) => w.winningTile,
+    );
     const isAlreadyFuriten =
       selfPlayer.gameState?.furiten[FuritenType.FURITEN_TYPE_DISCARD] ?? false;
 

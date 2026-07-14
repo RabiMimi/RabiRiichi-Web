@@ -13,7 +13,11 @@ import { Melds3D } from './Melds3D';
 import { NukiDora3D } from './NukiDora3D';
 import { getHandShiftX } from './assets';
 import type { TileRegistry } from '../domain/tileRegistry';
-import { useResultAnimation, useIsReplay, useActiveStickers } from '../state/store';
+import {
+  useResultAnimation,
+  useIsReplay,
+  useActiveStickers,
+} from '../state/store';
 import { StickerBubble } from '../ui/StickerBubble';
 
 interface PlayerIndicator3DProps {
