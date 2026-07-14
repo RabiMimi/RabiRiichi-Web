@@ -7,6 +7,7 @@ import { pollUntil } from '../lib';
 import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
 import { AddAiDropdown } from './AddAiDropdown';
 import { StickerBubble } from './StickerBubble';
+import { Tooltip } from './Tooltip';
 import './ui.css';
 
 export function RoomScreen(): React.JSX.Element | null {
@@ -120,9 +121,9 @@ export function RoomScreen(): React.JSX.Element | null {
     const displayName = getPlayerDisplayName(player, t);
     const initials = isAi ? 'AI' : displayName.slice(0, 2).toUpperCase();
     return (
-      <div className="player-avatar-placeholder" title={displayName}>
-        {initials}
-      </div>
+      <Tooltip content={displayName} position="top">
+        <div className="player-avatar-placeholder">{initials}</div>
+      </Tooltip>
     );
   };
 
@@ -156,12 +157,12 @@ export function RoomScreen(): React.JSX.Element | null {
                       {getPlayerDisplayName(player, t)}{' '}
                       {isMe && `(${t('lobby.you')})`}
                       {player.aiType !== AiType.AI_TYPE_NONE && (
-                        <span
-                          className="ai-badge-text"
-                          title={t(`ai.type.${player.aiType}`)}
+                        <Tooltip
+                          content={t(`ai.type.${player.aiType}`)}
+                          position="top"
                         >
-                          AI
-                        </span>
+                          <span className="ai-badge-text">AI</span>
+                        </Tooltip>
                       )}
                     </div>
                     <div className="player-seat">
@@ -184,7 +185,6 @@ export function RoomScreen(): React.JSX.Element | null {
                       className="ui-button mini-button kick-ai-btn"
                       onClick={() => void handleRemovePlayer(player.id)}
                       disabled={isLoading}
-                      title={t('room.kickAi')}
                     >
                       {t('room.kickAi')}
                     </button>

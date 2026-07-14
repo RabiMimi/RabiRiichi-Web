@@ -33,6 +33,7 @@ import {
 import { findActiveDiscardCandidate } from '../domain/inquiry';
 import { GameInfoModal } from './GameInfoModal';
 import { FullscreenButton } from './FullscreenButton';
+import { Tooltip } from './Tooltip';
 
 export function GameInfoPanel(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -450,51 +451,71 @@ function HUDLeftPanel({
       {/* Auto-play Toggles Row */}
       {!isReplay && (
         <div className="auto-play-toggles-row">
-          <button
-            type="button"
-            className={`auto-toggle-btn ${autoAgari ? 'active' : ''}`}
-            onClick={() => rabiriichi.toggleAutoAgari()}
-            title={t(
+          <Tooltip
+            content={t(
               'hud.autoAgariDesc',
               'Automatically declare Win (Ron/Tsumo) when available',
             )}
+            position="top"
+            style={{ flex: 1 }}
           >
-            {t('hud.autoAgari', 'Win')}
-          </button>
-          <button
-            type="button"
-            className={`auto-toggle-btn ${noCalls ? 'active' : ''}`}
-            onClick={() => rabiriichi.toggleNoCalls()}
-            title={t(
+            <button
+              type="button"
+              className={`auto-toggle-btn ${autoAgari ? 'active' : ''}`}
+              onClick={() => rabiriichi.toggleAutoAgari()}
+            >
+              {t('hud.autoAgari', 'Win')}
+            </button>
+          </Tooltip>
+          <Tooltip
+            content={t(
               'hud.noCallsDesc',
               'Never claim discards from other players (Chii/Pon/Kan)',
             )}
+            position="top"
+            style={{ flex: 1 }}
           >
-            {t('hud.noCalls', 'No Calls')}
-          </button>
-          <button
-            type="button"
-            className={`auto-toggle-btn ${autoDiscard ? 'active' : ''}`}
-            onClick={() => rabiriichi.toggleAutoDiscard()}
-            title={t(
+            <button
+              type="button"
+              className={`auto-toggle-btn ${noCalls ? 'active' : ''}`}
+              onClick={() => rabiriichi.toggleNoCalls()}
+            >
+              {t('hud.noCalls', 'No Calls')}
+            </button>
+          </Tooltip>
+          <Tooltip
+            content={t(
               'hud.autoDiscardDesc',
               'Automatically discard drawn tile if no other actions are possible',
             )}
+            position="top"
+            style={{ flex: 1 }}
           >
-            {t('hud.autoDiscard', 'Auto Discard')}
-          </button>
-          {hasNukiDora && (
             <button
               type="button"
-              className={`auto-toggle-btn ${autoNuki ? 'active' : ''}`}
-              onClick={() => rabiriichi.toggleAutoNuki()}
-              title={t(
+              className={`auto-toggle-btn ${autoDiscard ? 'active' : ''}`}
+              onClick={() => rabiriichi.toggleAutoDiscard()}
+            >
+              {t('hud.autoDiscard', 'Auto Discard')}
+            </button>
+          </Tooltip>
+          {hasNukiDora && (
+            <Tooltip
+              content={t(
                 'hud.autoNukiDesc',
                 'Automatically declare Kita (Nukidora) if available',
               )}
+              position="top"
+              style={{ flex: 1 }}
             >
-              {t('hud.autoNuki', 'Auto Nuki')}
-            </button>
+              <button
+                type="button"
+                className={`auto-toggle-btn ${autoNuki ? 'active' : ''}`}
+                onClick={() => rabiriichi.toggleAutoNuki()}
+              >
+                {t('hud.autoNuki', 'Auto Nuki')}
+              </button>
+            </Tooltip>
           )}
         </div>
       )}
@@ -502,13 +523,51 @@ function HUDLeftPanel({
       <div className="hud-buttons-row">
         <FullscreenButton />
 
-        <button
-          type="button"
-          className={`info-icon-btn camera-lock-btn ${isCameraLocked ? 'is-locked' : ''}`}
-          onClick={() => rabiriichi.toggleCameraLock()}
-          title={isCameraLocked ? t('hud.unlockCamera') : t('hud.lockCamera')}
+        <Tooltip
+          content={isCameraLocked ? t('hud.unlockCamera') : t('hud.lockCamera')}
+          position="bottom"
         >
-          {isCameraLocked ? (
+          <button
+            type="button"
+            className={`info-icon-btn camera-lock-btn ${isCameraLocked ? 'is-locked' : ''}`}
+            onClick={() => rabiriichi.toggleCameraLock()}
+          >
+            {isCameraLocked ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+              </svg>
+            )}
+          </button>
+        </Tooltip>
+
+        <Tooltip content={t('hud.gameInfo')} position="bottom">
+          <button type="button" className="info-icon-btn" onClick={onInfoClick}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -520,10 +579,20 @@ function HUDLeftPanel({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
-          ) : (
+          </button>
+        </Tooltip>
+
+        <Tooltip content={t('hud.exitGame')} position="bottom">
+          <button
+            type="button"
+            className="info-icon-btn exit-btn"
+            onClick={onExitClick}
+            disabled={isExiting}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -535,58 +604,12 @@ function HUDLeftPanel({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
-          )}
-        </button>
-
-        <button
-          type="button"
-          className="info-icon-btn"
-          onClick={onInfoClick}
-          title={t('hud.gameInfo')}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-        </button>
-
-        <button
-          type="button"
-          className="info-icon-btn exit-btn"
-          onClick={onExitClick}
-          disabled={isExiting}
-          title={t('hud.exitGame')}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-        </button>
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

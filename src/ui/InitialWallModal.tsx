@@ -6,6 +6,7 @@ import type { RoomModel } from '../domain/model';
 import { deadWallRinshanCount, NUM_DORA } from '../domain/model';
 import { getCurrentRoundEvents } from '../replay/replayDriver';
 import type { IGameTileMsg } from '../proto';
+import { Tooltip } from './Tooltip';
 
 interface InitialWallModalProps {
   isOpen: boolean;
@@ -97,13 +98,15 @@ export function InitialWallModal({
       .join(' | ');
 
     return (
-      <div className={classes} title={titleText}>
-        <img
-          src={getTileTexturePath(tileStr)}
-          alt={tileStr}
-          className="wall-tile-img"
-        />
-      </div>
+      <Tooltip content={titleText} position="top">
+        <div className={classes}>
+          <img
+            src={getTileTexturePath(tileStr)}
+            alt={tileStr}
+            className="wall-tile-img"
+          />
+        </div>
+      </Tooltip>
     );
   };
 

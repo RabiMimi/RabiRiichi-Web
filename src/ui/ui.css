@@ -3817,3 +3817,49 @@
     opacity: 0;
   }
 }
+
+/* Tooltip Styles */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-bubble {
+  position: absolute;
+  z-index: 1000;
+  padding: 6px 10px;
+  background-color: rgba(20, 20, 20, 0.95);
+  color: #fff;
+  font-size: 0.72rem;
+  border-radius: 4px;
+  border: 1px solid #ff7a99;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.tooltip-top {
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, -8px);
+}
+
+.tooltip-bottom {
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, 8px);
+}
+
+.tooltip-left {
+  right: 100%;
+  top: 50%;
+  transform: translate(-8px, -50%);
+}
+
+.tooltip-right {
+  left: 100%;
+  top: 50%;
+  transform: translate(8px, -50%);
+}

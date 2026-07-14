@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Tooltip } from './Tooltip';
 
 interface CopyGameIdButtonProps {
   gameId: string;
@@ -23,33 +24,34 @@ export function CopyGameIdButton({
 
   return (
     <div className="copy-game-id-container">
-      <button
-        type="button"
-        className="copy-game-id-btn"
-        onClick={() => void handleCopy()}
-        title={t('hud.copyGameId')}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: '#ff7a99',
-          cursor: 'pointer',
-          padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="12"
-          height="12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
+      <Tooltip content={t('hud.copyGameId')} position="top">
+        <button
+          type="button"
+          className="copy-game-id-btn"
+          onClick={() => void handleCopy()}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#ff7a99',
+            cursor: 'pointer',
+            padding: 0,
+            display: 'flex',
+            alignItems: 'center',
+          }}
         >
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-        </svg>
-      </button>
+          <svg
+            viewBox="0 0 24 24"
+            width="12"
+            height="12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </Tooltip>
       {copied && <span className="copied-tooltip">{t('hud.copied')}</span>}
     </div>
   );

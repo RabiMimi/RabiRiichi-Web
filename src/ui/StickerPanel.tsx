@@ -3,6 +3,8 @@ import { rabiriichi } from '../net/client';
 import { sendChatMessage } from '../net/messages';
 import { useTranslation } from 'react-i18next';
 
+import { Tooltip } from './Tooltip';
+
 const STICKERS = [
   'angry.png',
   'awawawa.png',
@@ -28,18 +30,22 @@ export function StickerPanel(): React.JSX.Element | null {
 
   return (
     <div className={`sticker-panel-container ${isOpen ? 'open' : 'collapsed'}`}>
-      <button
-        type="button"
-        className="sticker-panel-toggle"
-        onClick={() => setIsOpen(!isOpen)}
-        title={
+      <Tooltip
+        content={
           isOpen
             ? t('sticker.collapse', 'Hide Stickers')
             : t('sticker.expand', 'Show Stickers')
         }
+        position="left"
       >
-        {isOpen ? '▶' : '◀'}
-      </button>
+        <button
+          type="button"
+          className="sticker-panel-toggle"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? '▶' : '◀'}
+        </button>
+      </Tooltip>
       <div className="sticker-panel-content">
         <div className="sticker-panel-header">
           {t('sticker.title', 'Stickers')}

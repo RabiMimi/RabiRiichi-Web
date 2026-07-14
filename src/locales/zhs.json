@@ -148,6 +148,8 @@
     "cancel": "取消",
     "lockCamera": "锁定视角",
     "unlockCamera": "解锁视角",
+    "enterFullscreen": "全屏",
+    "exitFullscreen": "退出全屏",
     "allowedYakus": "启用役种",
     "startingYama": "初始牌山",
     "timerLabel": "出牌倒计时",

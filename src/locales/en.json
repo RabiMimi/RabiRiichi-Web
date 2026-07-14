@@ -147,6 +147,8 @@
     "cancel": "Cancel",
     "lockCamera": "Lock Camera View",
     "unlockCamera": "Unlock Camera View",
+    "enterFullscreen": "Enter Fullscreen",
+    "exitFullscreen": "Exit Fullscreen",
     "allowedYakus": "Allowed Yakus",
     "startingYama": "Starting Yama",
     "timerLabel": "Your Turn",
