@@ -21,9 +21,11 @@ import { startReplay, stopReplay } from './replay/replayDriver';
 import { ResultPanel } from './ui/ResultPanel';
 import { OrientationGuard } from './ui/OrientationGuard';
 import { FullscreenButton } from './ui/FullscreenButton';
+import { StickerPanel } from './ui/StickerPanel';
 import { COMMIT_HASH } from './lib';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import './App.css';
+import './ui/ui.css';
 
 function CameraController({
   controlsRef,
@@ -85,10 +87,14 @@ function App(): React.JSX.Element {
 
     return () => {
       active = false;
+      // Note: intentionally NOT calling rabiriichi.close() here. `rabiriichi`
+      // is a module-level singleton meant to live for the whole app session,
+      // not per-mount. In dev, React.StrictMode mounts this effect, cleans it
+      // up, then re-mounts it once to surface effect bugs - closing the
+      // socket here would abort the in-flight reconnect handshake started by
+      // initRabiRiichi() and this cleanup only race with itself.
       if (stopReplayFn) {
         stopReplayFn();
-      } else {
-        rabiriichi.close();
       }
     };
   }, []);
@@ -204,6 +210,7 @@ function App(): React.JSX.Element {
           </div>
         </>
       )}
+      {room && <StickerPanel />}
     </div>
   );
 }

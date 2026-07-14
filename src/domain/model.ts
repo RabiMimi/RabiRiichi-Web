@@ -113,6 +113,11 @@ export interface RoomModel {
   gameEnded?: boolean;
   endGamePoints?: number[] | null;
   concludedPlayers?: PlayerModel[] | null;
+  // Frozen snapshot of players' result state captured when a round concludes
+  // (agari or ryuukyoku). The round-result panel renders this so the settlement
+  // stays static even if a player leaves the room while it is shown. Cleared
+  // when the next hand deals.
+  roundResultPlayers?: PlayerModel[] | null;
   gameId?: string | null;
 }
 

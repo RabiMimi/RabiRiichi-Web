@@ -92,6 +92,7 @@ describe('RabiRiichi Store', () => {
       noCalls: false,
       autoDiscard: false,
       autoNuki: false,
+      activeStickers: {},
     });
   });
 

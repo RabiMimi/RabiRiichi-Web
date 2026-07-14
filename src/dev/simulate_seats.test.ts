@@ -48,7 +48,7 @@ test('simulate seats positioning output', () => {
   console.log(`Config playerCount: ${playerCount}`);
 
   room.players.forEach((player) => {
-    const hasGameState = !!player.gameState;
+    const hasGameState = Boolean(player.gameState);
     const isLocal = player.id === currentUser.id;
     const screenPos =
       player.seat !== undefined && selfSeat !== undefined

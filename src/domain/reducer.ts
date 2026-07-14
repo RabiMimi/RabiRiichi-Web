@@ -264,6 +264,8 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     gameEnded: false,
     endGamePoints: null,
     concludedPlayers: null,
+    // The previous round's frozen result is no longer relevant.
+    roundResultPlayers: null,
     gameId: eventGameId ?? state.gameId ?? null,
   };
 }
@@ -871,6 +873,9 @@ function handleApplyScore(
   return {
     ...state,
     players: updatedPlayers,
+    // Freeze the settled result so the round-result panel stays static even if
+    // a player leaves the room while it is displayed.
+    roundResultPlayers: updatedPlayers.map((p) => ({ ...p })),
   };
 }
 
@@ -1077,6 +1082,9 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
     ...state,
     players: updatedPlayers,
     ryuukyokuReason: _ev.midGameRyuukyoku?.name ?? 'end_game_ryuukyoku',
+    // Freeze the settled result so the round-result panel stays static even if
+    // a player leaves the room while it is displayed.
+    roundResultPlayers: updatedPlayers.map((p) => ({ ...p })),
   };
 }
 
@@ -1245,6 +1253,9 @@ export function applyRoomState(
     gameEnded: state?.gameEnded ?? false,
     endGamePoints: state?.endGamePoints ?? null,
     concludedPlayers: state?.concludedPlayers ?? null,
+    // Preserve the frozen round result so a player leaving mid-result (which
+    // arrives as a shrunken room-state snapshot) cannot alter the settlement.
+    roundResultPlayers: state?.roundResultPlayers ?? null,
     gameId: state?.gameId ?? null,
   };
 }

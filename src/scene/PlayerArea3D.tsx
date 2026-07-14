@@ -13,19 +13,42 @@ import { Melds3D } from './Melds3D';
 import { NukiDora3D } from './NukiDora3D';
 import { getHandShiftX } from './assets';
 import type { TileRegistry } from '../domain/tileRegistry';
-import { useResultAnimation, useIsReplay } from '../state/store';
+import {
+  useResultAnimation,
+  useIsReplay,
+  useActiveStickers,
+} from '../state/store';
+import { StickerBubble } from '../ui/StickerBubble';
 
 interface PlayerIndicator3DProps {
   player: PlayerModel;
+  isLocal: boolean;
 }
 
 function PlayerIndicator3D({
   player,
-}: PlayerIndicator3DProps): React.JSX.Element {
+  isLocal,
+}: PlayerIndicator3DProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const isAi = player.aiType !== AiType.AI_TYPE_NONE;
   const displayName = getPlayerDisplayName(player, t);
   const initials = isAi ? 'AI' : displayName.slice(0, 2).toUpperCase();
+  const activeStickers = useActiveStickers();
+  const sticker = activeStickers[player.id];
+
+  if (isLocal) {
+    return (
+      <Html
+        position={[0, 0.4, -0.6]}
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
+      >
+        <StickerBubble sticker={sticker} className="sticker-bubble-3d local" />
+      </Html>
+    );
+  }
 
   return (
     <Html
@@ -35,13 +58,14 @@ function PlayerIndicator3D({
         userSelect: 'none',
       }}
     >
-      <div className="player-indicator-3d">
+      <div className="player-indicator-3d animate-pop">
         {isAi ? (
           <div className="ai-rabbit-indicator" />
         ) : (
           <div className="human-avatar-indicator">{initials}</div>
         )}
         <div className="tooltip-name">{displayName}</div>
+        <StickerBubble sticker={sticker} className="sticker-bubble-3d" />
       </div>
     </Html>
   );
@@ -95,8 +119,8 @@ export function PlayerArea3D({
 
   return (
     <group>
-      {/* Player Indicator Overlay (Billboarded near hand) - hide for current player */}
-      {!isLocal && <PlayerIndicator3D player={player} />}
+      {/* Player Indicator Overlay (Billboarded near hand) */}
+      <PlayerIndicator3D player={player} isLocal={isLocal} />
 
       {/* Hand (closed tiles + drawn tile) - pushed towards center */}
       <group position={[0, 0, -0.2]}>

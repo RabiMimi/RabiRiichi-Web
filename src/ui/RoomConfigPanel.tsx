@@ -218,6 +218,8 @@ export function RoomConfigPanel({
       setRyuukyokuTrigger(
         (prev) => prev & ~FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK,
       );
+    } else {
+      setRyuukyokuTrigger((prev) => prev | FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK);
     }
     // Nukidora defaults on only for 3-player games; toggle the default with the
     // player count while leaving other dora options untouched.

@@ -32,6 +32,7 @@ export interface RabiRiichiState {
   noCalls: boolean;
   autoDiscard: boolean;
   autoNuki: boolean;
+  activeStickers: Record<string, string>;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -66,7 +67,8 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.autoAgari !== rabiriichi.autoAgari ||
     lastSnapshot.noCalls !== rabiriichi.noCalls ||
     lastSnapshot.autoDiscard !== rabiriichi.autoDiscard ||
-    lastSnapshot.autoNuki !== rabiriichi.autoNuki
+    lastSnapshot.autoNuki !== rabiriichi.autoNuki ||
+    lastSnapshot.activeStickers !== rabiriichi.activeStickers
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -93,6 +95,7 @@ function getSnapshot(): RabiRiichiState {
       noCalls: rabiriichi.noCalls,
       autoDiscard: rabiriichi.autoDiscard,
       autoNuki: rabiriichi.autoNuki,
+      activeStickers: rabiriichi.activeStickers,
     };
   }
   return lastSnapshot;
@@ -279,6 +282,14 @@ export function useAutoNuki(): boolean {
     subscribe,
     () => rabiriichi.autoNuki,
     () => rabiriichi.autoNuki,
+  );
+}
+
+export function useActiveStickers(): Record<string, string> {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.activeStickers,
+    () => rabiriichi.activeStickers,
   );
 }
 

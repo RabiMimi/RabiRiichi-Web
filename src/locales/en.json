@@ -437,5 +437,10 @@
     "noWallData": "Initial wall data is not available in this replay log.",
     "wallSide": "{{side}} Wall",
     "wanpai": "Dead Wall (Wanpai)"
+  },
+  "sticker": {
+    "title": "Stickers",
+    "expand": "Show Stickers",
+    "collapse": "Hide Stickers"
   }
 }

@@ -16,7 +16,11 @@ import {
   AiType,
 } from '../proto';
 import { TILE_SET_PRESETS } from '../domain/tilesets';
-import { CLIENT_VERSION, MIN_SERVER_VERSION } from '../transport/constants';
+import {
+  CLIENT_VERSION,
+  MIN_SERVER_VERSION,
+  WS_CONNECT_TIMEOUT,
+} from '../transport/constants';
 import {
   STORAGE_KEY_SERVER_SETTINGS,
   type ServerSettings,
@@ -198,6 +202,47 @@ describe('RabiRiichiClient', () => {
       JSON.stringify({ lastUrl: 'ws://localhost:1234' }),
     );
     expect(setItemMock).toHaveBeenCalledWith('rabiriichi_token', 'my-token');
+
+    vi.useRealTimers();
+  });
+
+  it('rejects and resets to disconnected when the socket never opens', async () => {
+    vi.useFakeTimers();
+
+    // Simulate an unreachable server: the socket stays in CONNECTING forever
+    // (no open, error, or close event). This is the case the browser would
+    // otherwise leave pending for minutes, hanging the UI on "connecting".
+    class NeverOpenWebSocket extends MockWebSocket {
+      public constructor(url: string) {
+        super(url);
+        // Cancel the base class's scheduled auto-open so it stays CONNECTING.
+        this.readyState = MockWebSocket.CONNECTING;
+      }
+      public override triggerOpen(): void {
+        // no-op: never opens
+      }
+    }
+    vi.stubGlobal('WebSocket', NeverOpenWebSocket);
+
+    const client = new RabiRiichiClient();
+    const connectPromise = client.connect('ws://unreachable:1234', 'my-token');
+    // Prevent an unhandled rejection while we advance the fake clock.
+    const settled = connectPromise.then(
+      () => 'resolved',
+      () => 'rejected',
+    );
+
+    expect(client.connectionStatus).toBe('connecting');
+
+    // Advance past the connect timeout; the doomed connect must fail fast.
+    // Fake timers make this virtual/instant.
+    await vi.advanceTimersByTimeAsync(WS_CONNECT_TIMEOUT + 10);
+
+    expect(await settled).toBe('rejected');
+    expect(client.connectionStatus).toBe('disconnected');
+    // The timed-out socket should have been closed so it can't resurrect state.
+    const mockWS = MockWebSocket.instances[MockWebSocket.instances.length - 1]!;
+    expect(mockWS.close).toHaveBeenCalled();
 
     vi.useRealTimers();
   });

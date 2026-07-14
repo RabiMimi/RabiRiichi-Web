@@ -1981,10 +1981,6 @@
   opacity: 0.6;
 }
 
-.player-card.empty-seat.has-dropdown {
-  opacity: 1;
-}
-
 .player-avatar-placeholder.empty {
   color: #888;
   border-color: #444;
@@ -2046,6 +2042,16 @@
   flex-direction: column;
   overflow: hidden;
   padding: 4px 0;
+}
+
+/* Portal-rendered variant: anchored to the viewport so the seat grid's
+   overflow scroll box cannot clip it. right + top/bottom are set inline from
+   the anchor button's position (see AddAiDropdown). */
+.dropdown-menu.portal {
+  position: fixed;
+  top: auto;
+  margin-top: 0;
+  max-width: 220px;
 }
 
 .dropdown-item {
@@ -2649,6 +2655,7 @@
 
 /* Tenpai Wait Panel */
 .tenpai-wait-panel {
+  position: relative;
   background-color: rgba(18, 28, 50, 0.94);
   border: 1.5px solid rgba(255, 122, 153, 0.7);
   border-radius: 8px;
@@ -2661,6 +2668,37 @@
   pointer-events: none; /* Mouse hover passes through (except on indicator) */
   width: fit-content;
   box-sizing: border-box;
+}
+
+.tenpai-wait-panel-furiten-overlay {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ff0055, #ff5500);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.8);
+  white-space: nowrap;
+  animation: furiten-glow-pulse 1.5s infinite alternate;
+  z-index: 101;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+@keyframes furiten-glow-pulse {
+  0% {
+    box-shadow: 0 0 4px rgba(255, 0, 85, 0.6);
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    box-shadow: 0 0 12px rgba(255, 85, 0, 1);
+    filter: hue-rotate(360deg);
+  }
 }
 
 /* Position for Hover Discard Waited Panel (Centered above action HUD) */
@@ -3495,4 +3533,265 @@
 
 .auto-toggle-btn:active {
   transform: translateY(1px);
+}
+
+.player-card {
+  position: relative; /* Ensure child absolute positioning works relative to this card */
+}
+
+/* Sticker Panel styling */
+.sticker-panel-container {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 999;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+}
+
+.sticker-panel-container.collapsed {
+  transform: translate(173px, -50%);
+}
+
+.sticker-panel-container.open {
+  transform: translate(0, -50%);
+}
+
+.sticker-panel-toggle {
+  background-color: rgba(18, 28, 50, 0.95);
+  border: 1.5px solid rgba(255, 122, 153, 0.7);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  color: #fff;
+  padding: 12px 6px;
+  cursor: pointer;
+  outline: none;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+  box-shadow: -4px 0 10px rgba(0, 0, 0, 0.4);
+}
+
+.sticker-panel-toggle:hover {
+  background-color: rgba(255, 122, 153, 0.2);
+  color: #ff7a99;
+}
+
+.sticker-panel-content {
+  background-color: rgba(18, 28, 50, 0.95);
+  border: 1.5px solid rgba(255, 122, 153, 0.7);
+  border-radius: 0 0 0 8px;
+  padding: 12px;
+  width: 170px;
+  box-shadow: -4px 4px 15px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.sticker-panel-header {
+  color: #ff7a99;
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 6px;
+}
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.sticker-item-btn {
+  background: none;
+  border: 1px solid transparent;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition:
+    transform 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sticker-item-btn:hover {
+  transform: scale(1.15);
+  border-color: rgba(255, 122, 153, 0.5);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.sticker-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+/* Chat bubble styling for 2D room & 3D scene */
+.sticker-bubble-2d {
+  position: absolute;
+  top: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(18, 28, 50, 0.95);
+  border: 1.5px solid rgba(255, 122, 153, 0.8);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  z-index: 105;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sticker-bubble-2d::before {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 10px 10px 0;
+  border-style: solid;
+  border-color: rgba(255, 122, 153, 0.8) transparent;
+  display: block;
+  width: 0;
+  z-index: -1;
+}
+
+.sticker-bubble-2d::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px 8px 0;
+  border-style: solid;
+  border-color: rgba(18, 28, 50, 0.95) transparent;
+  display: block;
+  width: 0;
+}
+
+.sticker-bubble-3d {
+  position: absolute;
+  top: -85px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(18, 28, 50, 0.95);
+  border: 1.5px solid rgba(255, 122, 153, 0.8);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sticker-bubble-3d::before {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 10px 10px 0;
+  border-style: solid;
+  border-color: rgba(255, 122, 153, 0.8) transparent;
+  display: block;
+  width: 0;
+  z-index: -1;
+}
+
+.sticker-bubble-3d::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px 8px 0;
+  border-style: solid;
+  border-color: rgba(18, 28, 50, 0.95) transparent;
+  display: block;
+  width: 0;
+}
+
+.sticker-bubble-3d.local {
+  position: relative;
+  top: 0;
+  left: 0;
+  transform: none;
+}
+
+.bubble-sticker-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+/* Animations */
+.animate-pop {
+  animation: pop-bounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes pop-bounce {
+  0% {
+    transform: translateX(-50%) scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.sticker-bubble-3d.local.animate-pop {
+  animation: pop-bounce-local 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+    forwards;
+}
+
+@keyframes pop-bounce-local {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-close {
+  animation: pop-close 0.25s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+}
+
+@keyframes pop-close {
+  0% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.sticker-bubble-3d.local.animate-close {
+  animation: pop-close-local 0.25s cubic-bezier(0.6, -0.28, 0.735, 0.045)
+    forwards;
+}
+
+@keyframes pop-close-local {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
 }

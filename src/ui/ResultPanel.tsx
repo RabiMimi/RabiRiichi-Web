@@ -125,27 +125,28 @@ export function ResultPanel(): React.JSX.Element | null {
     [],
   );
 
-  const playersWithResult = React.useMemo(() => {
-    return room
-      ? room.players.filter(
-          (p) =>
-            p.gameState?.agari?.scores != null || p.gameState?.agari?.isTenpai,
-        )
-      : [];
+  // The round result is a static snapshot: prefer the frozen players captured
+  // when the round concluded so the settlement never changes if someone leaves
+  // the room while it is shown. Falls back to live players before the freeze.
+  const resultPlayers = React.useMemo(() => {
+    return room?.roundResultPlayers ?? room?.players ?? [];
   }, [room]);
+
+  const playersWithResult = React.useMemo(() => {
+    return resultPlayers.filter(
+      (p) => p.gameState?.agari?.scores != null || p.gameState?.agari?.isTenpai,
+    );
+  }, [resultPlayers]);
 
   const hasNagashiWinner = React.useMemo(() => {
-    return room?.players.some((p) => p.gameState?.agari?.isNagashi) ?? false;
-  }, [room]);
+    return resultPlayers.some((p) => p.gameState?.agari?.isNagashi);
+  }, [resultPlayers]);
 
   const hasNormalWinner = React.useMemo(() => {
-    return (
-      room?.players.some(
-        (p) =>
-          p.gameState?.agari?.scores != null && !p.gameState.agari.isNagashi,
-      ) ?? false
+    return resultPlayers.some(
+      (p) => p.gameState?.agari?.scores != null && !p.gameState.agari.isNagashi,
     );
-  }, [room]);
+  }, [resultPlayers]);
 
   const isDraw = !hasNormalWinner;
 
@@ -505,7 +506,7 @@ export function ResultPanel(): React.JSX.Element | null {
     return (
       <div className="result-score-changes">
         <div className="score-changes-list">
-          {room.players.map((p) => {
+          {resultPlayers.map((p) => {
             const agari = p.gameState?.agari;
             const delta = (agari?.gainPoints ?? 0) - (agari?.losePoints ?? 0);
             const deltaClass =

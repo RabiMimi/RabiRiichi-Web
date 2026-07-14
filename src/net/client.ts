@@ -1,5 +1,12 @@
-import { Logger, NetworkError, AuthError, RabiEvent } from '../lib';
+import {
+  Logger,
+  NetworkError,
+  AuthError,
+  RabiEvent,
+  waitTimeout,
+} from '../lib';
 import { RabiSocket } from '../transport/rabiSocket';
+import { WS_CONNECT_TIMEOUT } from '../transport/constants';
 import {
   createUser,
   getUserInfo,
@@ -17,6 +24,7 @@ import type {
   ISinglePlayerInquiryMsg,
   IGameConfigMsg,
   IGameLogMsg,
+  IPlayerChatMessage,
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
 import { applyRiichiBonusToWaits } from '../domain/model';
@@ -89,6 +97,12 @@ export class RabiRiichiClient {
   public self: PlayerModel | null = null;
   public room: RoomModel | null = null;
   private _ws: RabiSocket | null = null;
+  // Dedupes concurrent connect() calls for the same target (URL + token) so
+  // that e.g. React StrictMode's dev-only double-invoke of an effect calling
+  // connect() twice back-to-back doesn't spawn two WebSockets that each close
+  // the other's socket via the shared `_ws` field below.
+  private connectPromise: Promise<void> | null = null;
+  private connectingKey: string | null = null;
 
   public connectionStatus: ConnectionStatus = 'disconnected';
   public currentInquiry: ActiveInquiry | null = null;
@@ -97,6 +111,8 @@ export class RabiRiichiClient {
     this.handlePingUpdated(ping);
   public readonly onChange = new RabiEvent<void>();
   public availableYakus: YakuInfo[] = YAKUS;
+  public activeStickers: Record<string, string> = {};
+  private stickerTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
   public isRiichiSelectMode = false;
   public pendingActionOption: ActionOption | null = null;
@@ -210,6 +226,37 @@ export class RabiRiichiClient {
     this.messagePump.subscribeRoomState(this.handleRoomState.bind(this));
     this.messagePump.subscribeGameEvent(this.handleGameEvent.bind(this));
     this.messagePump.subscribeInquiry(this.handleInquiry.bind(this));
+    this.messagePump.subscribeChatMessage(this.handleChatMessage.bind(this));
+  }
+
+  public showStickerLocally(senderId: number, sticker: string): void {
+    const prevTimer = this.stickerTimers.get(senderId);
+    if (prevTimer) {
+      clearTimeout(prevTimer);
+    }
+
+    this.activeStickers = {
+      ...this.activeStickers,
+      [senderId]: sticker,
+    };
+    this.onChange.emit();
+
+    const timer = setTimeout(() => {
+      const next = { ...this.activeStickers };
+      delete next[senderId];
+      this.activeStickers = next;
+      this.stickerTimers.delete(senderId);
+      this.onChange.emit();
+    }, 5000);
+
+    this.stickerTimers.set(senderId, timer);
+  }
+
+  private handleChatMessage(msg: IPlayerChatMessage): void {
+    if (msg.senderId === null || msg.senderId === undefined || !msg.sticker) {
+      return;
+    }
+    this.showStickerLocally(msg.senderId, msg.sticker);
   }
 
   public get ws(): RabiSocket | null {
@@ -223,6 +270,26 @@ export class RabiRiichiClient {
   }
 
   public async connect(url: string, accessToken?: string): Promise<void> {
+    const key = `${url}\u0000${accessToken ?? ''}`;
+    if (this.connectPromise && this.connectingKey === key) {
+      // Same target already connecting - piggyback instead of racing a
+      // second attempt that would close this one out from under it.
+      return this.connectPromise;
+    }
+    this.connectingKey = key;
+    const promise = this.doConnect(url, accessToken);
+    this.connectPromise = promise;
+    try {
+      await promise;
+    } finally {
+      if (this.connectPromise === promise) {
+        this.connectPromise = null;
+        this.connectingKey = null;
+      }
+    }
+  }
+
+  private async doConnect(url: string, accessToken?: string): Promise<void> {
     this.wsurl = url;
     this.accessToken = accessToken ?? null;
     this.self = null;
@@ -274,7 +341,13 @@ export class RabiRiichiClient {
     this._ws = ws;
 
     try {
-      await ws.handShake(this.updateUserInfo.bind(this));
+      // Bound the open+handshake time. Without this, an unreachable server
+      // leaves the browser socket in CONNECTING for minutes and the UI stuck
+      // on "connecting". On timeout we close the doomed socket and reject.
+      await waitTimeout(
+        ws.handShake(this.updateUserInfo.bind(this)),
+        WS_CONNECT_TIMEOUT,
+      );
       if (this._ws !== ws) {
         // This connection was superseded by a newer one while handshaking
         ws.close();
@@ -293,6 +366,9 @@ export class RabiRiichiClient {
         }
       });
     } catch (e) {
+      // Close the (possibly still-opening) socket so a late open/error event
+      // from a timed-out connection can't resurrect stale state.
+      ws.close();
       if (this._ws === ws) {
         this.setConnectionStatus('disconnected');
         this._ws = null;
@@ -902,6 +978,8 @@ export async function initRabiRiichi(): Promise<void> {
     logger.info(`Auto-reconnection succeeded! Connected to ${url}`);
   } catch (err) {
     logger.error(`Auto-reconnection failed for URL ${url}`, err);
-    // Silent fail on auto-connect
+    // Silent fail on auto-connect, but ensure the UI is not left stuck in the
+    // "connecting" state: reset to disconnected so the connect form re-enables.
+    rabiriichi.close();
   }
 }
