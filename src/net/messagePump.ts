@@ -3,6 +3,7 @@ import type {
   IServerRoomStateMsg,
   IEventMsg,
   ISinglePlayerInquiryMsg,
+  IPlayerChatMessage,
 } from '../proto';
 import { type RabiSocket } from '../transport/rabiSocket';
 import { Logger } from '../lib';
@@ -15,6 +16,9 @@ export type InquiryHandler = (
   inquiry: ISinglePlayerInquiryMsg,
   respondTo: number,
 ) => void | Promise<void>;
+export type ChatMessageHandler = (
+  msg: IPlayerChatMessage,
+) => void | Promise<void>;
 
 export class MessagePump {
   private readonly logger = new Logger('MessagePump');
@@ -25,6 +29,7 @@ export class MessagePump {
   private readonly roomStateHandlers = new Set<RoomStateHandler>();
   private readonly gameEventHandlers = new Set<GameEventHandler>();
   private readonly inquiryHandlers = new Set<InquiryHandler>();
+  private readonly chatMessageHandlers = new Set<ChatMessageHandler>();
 
   public attach(socket: RabiSocket): void {
     if (this.socket) {
@@ -55,6 +60,11 @@ export class MessagePump {
   public subscribeInquiry(handler: InquiryHandler): () => void {
     this.inquiryHandlers.add(handler);
     return () => this.inquiryHandlers.delete(handler);
+  }
+
+  public subscribeChatMessage(handler: ChatMessageHandler): () => void {
+    this.chatMessageHandlers.add(handler);
+    return () => this.chatMessageHandlers.delete(handler);
   }
 
   private handleMessage = (msg: IServerMessageDto): void => {
@@ -114,6 +124,17 @@ export class MessagePump {
           await handler(inquiryMsg.inquiry, msg.id);
         } catch (e) {
           this.logger.error('Error in inquiry handler', e);
+        }
+      }
+    }
+
+    // 4. Chat Message
+    if (msg.serverMsg?.chatMsg) {
+      for (const handler of this.chatMessageHandlers) {
+        try {
+          await handler(msg.serverMsg.chatMsg);
+        } catch (e) {
+          this.logger.error('Error in chat message handler', e);
         }
       }
     }

@@ -27,3 +27,19 @@ export function respondInquiry(
     },
   });
 }
+
+export function sendChatMessage(
+  ws: RabiSocket,
+  text: string | null,
+  sticker: string | null,
+): void {
+  ws.send({
+    clientMsg: {
+      chatMsg: {
+        senderId: 0,
+        text: text ?? null,
+        sticker: sticker ?? null,
+      },
+    },
+  });
+}

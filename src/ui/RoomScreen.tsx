@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
-import { useRoom, useSelf } from '../state/store';
+import { useRoom, useSelf, useActiveStickers } from '../state/store';
 import { UserStatus, AiType } from '../proto';
 import { pollUntil } from '../lib';
 import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
 import { AddAiDropdown } from './AddAiDropdown';
+import { StickerBubble } from './StickerBubble';
 import './ui.css';
 
 export function RoomScreen(): React.JSX.Element | null {
   const { t } = useTranslation();
   const room = useRoom();
   const currentUser = useSelf();
+  const activeStickers = useActiveStickers();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -145,6 +147,10 @@ export function RoomScreen(): React.JSX.Element | null {
                   }`}
                 >
                   {renderAvatar(player)}
+                  <StickerBubble
+                    sticker={activeStickers[player.id]}
+                    className="sticker-bubble-2d"
+                  />
                   <div className="player-details">
                     <div className="player-name">
                       {getPlayerDisplayName(player, t)}{' '}

@@ -21,9 +21,11 @@ import { startReplay, stopReplay } from './replay/replayDriver';
 import { ResultPanel } from './ui/ResultPanel';
 import { OrientationGuard } from './ui/OrientationGuard';
 import { FullscreenButton } from './ui/FullscreenButton';
+import { StickerPanel } from './ui/StickerPanel';
 import { COMMIT_HASH } from './lib';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import './App.css';
+import './ui/ui.css';
 
 function CameraController({
   controlsRef,
@@ -204,6 +206,7 @@ function App(): React.JSX.Element {
           </div>
         </>
       )}
+      {room && <StickerPanel />}
     </div>
   );
 }

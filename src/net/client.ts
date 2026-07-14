@@ -24,6 +24,7 @@ import type {
   ISinglePlayerInquiryMsg,
   IGameConfigMsg,
   IGameLogMsg,
+  IPlayerChatMessage,
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
 import { applyRiichiBonusToWaits } from '../domain/model';
@@ -104,6 +105,8 @@ export class RabiRiichiClient {
     this.handlePingUpdated(ping);
   public readonly onChange = new RabiEvent<void>();
   public availableYakus: YakuInfo[] = YAKUS;
+  public activeStickers: Record<string, string> = {};
+  private stickerTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
   public isRiichiSelectMode = false;
   public pendingActionOption: ActionOption | null = null;
@@ -217,6 +220,37 @@ export class RabiRiichiClient {
     this.messagePump.subscribeRoomState(this.handleRoomState.bind(this));
     this.messagePump.subscribeGameEvent(this.handleGameEvent.bind(this));
     this.messagePump.subscribeInquiry(this.handleInquiry.bind(this));
+    this.messagePump.subscribeChatMessage(this.handleChatMessage.bind(this));
+  }
+
+  public showStickerLocally(senderId: number, sticker: string): void {
+    const prevTimer = this.stickerTimers.get(senderId);
+    if (prevTimer) {
+      clearTimeout(prevTimer);
+    }
+
+    this.activeStickers = {
+      ...this.activeStickers,
+      [senderId]: sticker,
+    };
+    this.onChange.emit();
+
+    const timer = setTimeout(() => {
+      const next = { ...this.activeStickers };
+      delete next[senderId];
+      this.activeStickers = next;
+      this.stickerTimers.delete(senderId);
+      this.onChange.emit();
+    }, 5000);
+
+    this.stickerTimers.set(senderId, timer);
+  }
+
+  private handleChatMessage(msg: IPlayerChatMessage): void {
+    if (msg.senderId === null || msg.senderId === undefined || !msg.sticker) {
+      return;
+    }
+    this.showStickerLocally(msg.senderId, msg.sticker);
   }
 
   public get ws(): RabiSocket | null {

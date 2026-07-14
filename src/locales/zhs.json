@@ -438,5 +438,10 @@
     "noWallData": "此对局记录中无初始牌山数据。",
     "wallSide": "{{side}}家牌山",
     "wanpai": "王牌"
+  },
+  "sticker": {
+    "title": "表情包",
+    "expand": "展开表情包",
+    "collapse": "收起表情包"
   }
 }
