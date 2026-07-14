@@ -18,10 +18,11 @@ import {
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { rabiriichi } from '../net/client';
-import { UserStatus } from '../proto';
+import { UserStatus, FuritenType } from '../proto';
 import { pollUntil } from '../lib';
-import { Tile } from '../domain/tile';
+import { Tile, checkDiscardResultsInFuriten } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
+import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
 import {
   getWindKey,
@@ -102,6 +103,7 @@ interface TenpaiWaitPanelProps {
    * guaranteed yaku); 0 for normal discard previews.
    */
   bonusYaku?: number;
+  isFuriten?: boolean;
 }
 
 export function TenpaiWaitPanel({
@@ -109,12 +111,18 @@ export function TenpaiWaitPanel({
   className = '',
   minHan = 1,
   bonusYaku = 0,
+  isFuriten = false,
 }: TenpaiWaitPanelProps): React.JSX.Element | null {
   const { t } = useTranslation();
   if (awaitedTiles.length === 0) return null;
 
   return (
     <div className={`tenpai-wait-panel ${className}`}>
+      {isFuriten && (
+        <div className="tenpai-wait-panel-furiten-overlay">
+          {t('hud.furiten')}
+        </div>
+      )}
       <div className="awaited-tiles-list horizontal">
         {awaitedTiles.map((ti, idx) => {
           const tileStr = Tile.fromByte(ti.winningTile).toString();
@@ -192,12 +200,43 @@ export function GamePlayHUD(): React.JSX.Element | null {
     );
   }, [activeTraceId, currentInquiry, isRiichiSelectMode]);
 
-  const minHan = room?.config?.minHan ?? 1;
-
   const isFuriten = useMemo(() => {
     if (!selfPlayer?.gameState?.furiten) return false;
     return Object.values(selfPlayer.gameState.furiten).some(Boolean);
   }, [selfPlayer]);
+
+  const isFuritenDiscard = useMemo(() => {
+    if (!activeDiscardCandidate || activeTraceId == null || !room || !selfPlayer) {
+      return false;
+    }
+
+    if (selfPlayer.seat === undefined) {
+      return false;
+    }
+    const discards = getPlayerDiscardsFromRegistry(
+      room.tileRegistry,
+      selfPlayer.seat,
+    );
+
+    const tileMsg = room.tileRegistry.get(activeTraceId);
+    if (tileMsg?.tile == null) {
+      return false;
+    }
+
+    const winningWaits = activeDiscardCandidate.candidate.tenpaiInfos.map((w) => w.winningTile);
+    const isAlreadyFuriten =
+      selfPlayer.gameState?.furiten[FuritenType.FURITEN_TYPE_DISCARD] ?? false;
+
+    return checkDiscardResultsInFuriten(
+      tileMsg.tile,
+      winningWaits,
+      discards,
+      isAlreadyFuriten,
+    );
+  }, [activeDiscardCandidate, activeTraceId, room, selfPlayer]);
+
+  const minHan = room?.config?.minHan ?? 1;
+
   const permanentAwaitedTiles = useMemo(() => {
     return selfPlayer?.gameState?.awaitedTiles ?? [];
   }, [selfPlayer]);
@@ -287,6 +326,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
             minHan={minHan}
             bonusYaku={activeDiscardCandidate.isRiichi ? 1 : 0}
             className={`hover-discard ${hasActionButtons ? 'with-buttons' : 'no-buttons'}`}
+            isFuriten={isFuritenDiscard}
           />
         )}
 
@@ -306,6 +346,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
               awaitedTiles={permanentAwaitedTiles}
               minHan={minHan}
               className="badge-hover-panel"
+              isFuriten={isFuriten}
             />
           )}
         </div>

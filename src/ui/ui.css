@@ -2655,6 +2655,7 @@
 
 /* Tenpai Wait Panel */
 .tenpai-wait-panel {
+  position: relative;
   background-color: rgba(18, 28, 50, 0.94);
   border: 1.5px solid rgba(255, 122, 153, 0.7);
   border-radius: 8px;
@@ -2667,6 +2668,37 @@
   pointer-events: none; /* Mouse hover passes through (except on indicator) */
   width: fit-content;
   box-sizing: border-box;
+}
+
+.tenpai-wait-panel-furiten-overlay {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ff0055, #ff5500);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.8);
+  white-space: nowrap;
+  animation: furiten-glow-pulse 1.5s infinite alternate;
+  z-index: 101;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+@keyframes furiten-glow-pulse {
+  0% {
+    box-shadow: 0 0 4px rgba(255, 0, 85, 0.6);
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    box-shadow: 0 0 12px rgba(255, 85, 0, 1);
+    filter: hue-rotate(360deg);
+  }
 }
 
 /* Position for Hover Discard Waited Panel (Centered above action HUD) */
