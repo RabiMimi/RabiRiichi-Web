@@ -23,9 +23,6 @@ export function StickerPanel(): React.JSX.Element | null {
     if (rabiriichi.ws) {
       const stickerPath = `${STICKER_FOLDER}/${stickerName}`;
       sendChatMessage(rabiriichi.ws, null, stickerPath);
-      if (rabiriichi.self) {
-        rabiriichi.showStickerLocally(rabiriichi.self.id, stickerPath);
-      }
     }
   };
 
