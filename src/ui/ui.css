@@ -1025,9 +1025,8 @@
 }
 
 .yaku-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  column-count: 2;
+  column-gap: 16px;
   font-size: 0.95rem;
 }
 
@@ -1036,6 +1035,8 @@
   justify-content: space-between;
   border-bottom: 1px dotted #444;
   padding-bottom: 2px;
+  break-inside: avoid;
+  margin-bottom: 6px;
 }
 
 .yaku-name {

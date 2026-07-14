@@ -3,6 +3,7 @@ import {
   YAKUS,
   buildAllowedYakusPayload,
   filterYakuListForDisplay,
+  sortYakuList,
 } from './yakus';
 import { ScoringType, ScoringOption, type IScoringMsg } from '../proto';
 
@@ -41,7 +42,7 @@ describe('filterYakuListForDisplay', () => {
   const dora = {
     Type: ScoringType.SCORING_TYPE_BONUS_HAN,
     Val: 1,
-    Src: 'dora',
+    Src: 'Dora', // Note: change 'dora' to 'Dora' to match YAKU_ORDER
   } as IScoringMsg;
   const daisangen = {
     Type: ScoringType.SCORING_TYPE_YAKUMAN,
@@ -54,24 +55,27 @@ describe('filterYakuListForDisplay', () => {
     Src: 'Tsuuiisou',
   } as IScoringMsg;
 
-  it('keeps all yaku when there is no yakuman in the hand', () => {
-    const list = [riichi, dora];
+  it('keeps all yaku when there is no yakuman in the hand, and returns them sorted', () => {
+    const list = [dora, riichi]; // Dora first, which is out of order
     const option = ScoringOption.SCORING_OPTION_YAKUMAN;
-    expect(filterYakuListForDisplay(list, option)).toEqual([list[0], list[1]]);
+    // Expected output: riichi first, then dora
+    expect(filterYakuListForDisplay(list, option)).toEqual([riichi, dora]);
   });
 
-  it('filters out non-yakuman yaku when yakuman is enabled and present', () => {
-    const list = [riichi, daisangen, dora, tsuuiisou];
+  it('filters out non-yakuman yaku and returns them sorted when yakuman is enabled and present', () => {
+    const list = [tsuuiisou, riichi, daisangen, dora]; // Tsuuiisou before Daisangen
     const option = ScoringOption.SCORING_OPTION_YAKUMAN;
+    // Expected: Daisangen before Tsuuiisou based on YAKU_ORDER
     expect(filterYakuListForDisplay(list, option)).toEqual([
       daisangen,
       tsuuiisou,
     ]);
   });
 
-  it('keeps all yaku (including yakuman) under Aotenjo rules (yakuman disabled)', () => {
-    const list = [riichi, daisangen, dora];
+  it('keeps all yaku (including yakuman) under Aotenjo rules, and returns them sorted', () => {
+    const list = [dora, daisangen, riichi];
     const option = ScoringOption.SCORING_OPTION_KIRIAGE_MANGAN; // No YAKUMAN flag
+    // Expected: Riichi (1han) -> Daisangen (yakuman) -> Dora
     expect(filterYakuListForDisplay(list, option)).toEqual([
       riichi,
       daisangen,
@@ -79,8 +83,38 @@ describe('filterYakuListForDisplay', () => {
     ]);
   });
 
-  it('defaults to yakuman enabled if scoringOption is null/undefined', () => {
-    const list = [riichi, daisangen, dora];
-    expect(filterYakuListForDisplay(list, null)).toEqual([daisangen]);
+  it('defaults to yakuman enabled if scoringOption is null/undefined, and returns them sorted', () => {
+    const list = [tsuuiisou, riichi, daisangen, dora];
+    expect(filterYakuListForDisplay(list, null)).toEqual([
+      daisangen,
+      tsuuiisou,
+    ]);
+  });
+});
+
+describe('sortYakuList', () => {
+  it('correctly sorts yaku based on predefined traditional order', () => {
+    const riichi = { Src: 'Riichi' } as IScoringMsg;
+    const ippatsu = { Src: 'Ippatsu' } as IScoringMsg;
+    const tsumo = { Src: 'MenzenchinTsumohou' } as IScoringMsg;
+    const tanyao = { Src: 'Tanyao' } as IScoringMsg;
+    const dora = { Src: 'Dora' } as IScoringMsg;
+    const uradora = { Src: 'Uradora' } as IScoringMsg;
+    const unknown = { Src: 'SomeCustomYaku' } as IScoringMsg;
+
+    const list = [uradora, tanyao, unknown, tsumo, ippatsu, dora, riichi];
+    const sorted = sortYakuList(list);
+
+    // Expected order:
+    // Riichi -> Ippatsu -> MenzenchinTsumohou -> Tanyao -> Unknown (999) -> Dora -> Uradora
+    expect(sorted).toEqual([
+      riichi,
+      ippatsu,
+      tsumo,
+      tanyao,
+      unknown,
+      dora,
+      uradora,
+    ]);
   });
 });

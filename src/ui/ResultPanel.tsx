@@ -481,7 +481,6 @@ export function ResultPanel(): React.JSX.Element | null {
         {!isNagashi && !isTenpai && (
           <div className="yaku-list">
             {yakuList.map((yaku, idx) => {
-              if (yaku.Type === ScoringType.SCORING_TYPE_FU) return null; // Skip Fu entries in the list
               const typeLabel =
                 yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
                   ? t('result.yakuman')

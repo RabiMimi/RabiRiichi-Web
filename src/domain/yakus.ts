@@ -90,7 +90,27 @@ export function filterYakuListForDisplay(
   const hasYakuman = rawYakuList.some(
     (y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN,
   );
-  return isYakumanEnabled && hasYakuman
-    ? rawYakuList.filter((y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN)
-    : rawYakuList;
+  const filtered =
+    isYakumanEnabled && hasYakuman
+      ? rawYakuList.filter((y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN)
+      : rawYakuList.filter((y) => y.Type !== ScoringType.SCORING_TYPE_FU);
+  return sortYakuList(filtered);
+}
+
+const YAKU_ORDER_MAP: Record<string, number> = {};
+YAKUS.forEach((yaku, idx) => {
+  YAKU_ORDER_MAP[yaku.name] = idx;
+});
+
+const DORA_ITEMS = ['Dora', 'Akadora', 'Uradora', 'NukiDora'];
+DORA_ITEMS.forEach((doraName, idx) => {
+  YAKU_ORDER_MAP[doraName] = 1000 + idx;
+});
+
+export function sortYakuList(yakuList: IScoringMsg[]): IScoringMsg[] {
+  return [...yakuList].sort((a, b) => {
+    const priorityA = YAKU_ORDER_MAP[a.Src ?? ''] ?? 999;
+    const priorityB = YAKU_ORDER_MAP[b.Src ?? ''] ?? 999;
+    return priorityA - priorityB;
+  });
 }
