@@ -169,26 +169,28 @@ export function RoomScreen(): React.JSX.Element | null {
                       {t('room.seat', { seat: index })}
                     </div>
                   </div>
-                  <div
-                    className={`player-status-badge ${
-                      playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
-                        ? 'ready'
-                        : 'waiting'
-                    }`}
-                  >
-                    {playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
-                      ? t('room.status.ready')
-                      : t('room.status.waiting')}
-                  </div>
-                  {isOwner && player.aiType !== AiType.AI_TYPE_NONE && (
-                    <button
-                      className="ui-button mini-button kick-ai-btn"
-                      onClick={() => void handleRemovePlayer(player.id)}
-                      disabled={isLoading}
+                  <div className="player-actions-col">
+                    <div
+                      className={`player-status-badge ${
+                        playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
+                          ? 'ready'
+                          : 'waiting'
+                      }`}
                     >
-                      {t('room.kickAi')}
-                    </button>
-                  )}
+                      {playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
+                        ? t('room.status.ready')
+                        : t('room.status.waiting')}
+                    </div>
+                    {isOwner && player.aiType !== AiType.AI_TYPE_NONE && (
+                      <button
+                        className="ui-button mini-button kick-ai-btn"
+                        onClick={() => void handleRemovePlayer(player.id)}
+                        disabled={isLoading}
+                      >
+                        {t('room.kickAi')}
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             } else {

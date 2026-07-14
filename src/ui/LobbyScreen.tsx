@@ -114,6 +114,7 @@ export function LobbyScreen(): React.JSX.Element {
             >
               <option value="zhs">简体中文</option>
               <option value="en">English</option>
+              <option value="ja">日本語</option>
             </select>
             {currentUser && (
               <span
