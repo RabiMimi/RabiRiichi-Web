@@ -225,7 +225,8 @@ export class RabiRiichiClient {
       this.room = newRoom;
       this.onChange.emit();
     },
-    handleGameEvent: (eventMsg: IEventMsg) => this.handleGameEvent(eventMsg),
+    handleGameEvent: (eventMsg: IEventMsg, skipDelay = false) =>
+      this.handleGameEvent(eventMsg, skipDelay),
     setWaitingForProceed: (waiting: boolean) => {
       this.isWaitingForProceed = waiting;
       this.onChange.emit();
@@ -486,7 +487,10 @@ export class RabiRiichiClient {
     this.onChange.emit();
   }
 
-  private handleGameEvent(gameEvent: IEventMsg): void {
+  private async handleGameEvent(
+    gameEvent: IEventMsg,
+    skipDelay = false,
+  ): Promise<void> {
     if (!this.room) {
       this.logger.warn('Received game event but not in a room');
       return;
@@ -555,6 +559,38 @@ export class RabiRiichiClient {
     }
 
     this.onChange.emit();
+
+    const delay = this.getEventDelay(gameEvent);
+    if (delay > 0 && !skipDelay) {
+      const isResult =
+        gameEvent.agariEvent ||
+        gameEvent.ryuukyokuEvent ||
+        gameEvent.concludeGameEvent;
+      const speed = isResult ? 1 : this.animationSpeed;
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, delay / speed);
+      });
+    }
+  }
+
+  private getEventDelay(eventMsg: IEventMsg): number {
+    if (eventMsg.drawTileEvent || eventMsg.dealerFirstTurnEvent) {
+      return 600;
+    }
+    if (eventMsg.claimTileEvent || eventMsg.kanEvent) {
+      return 400;
+    }
+    if (
+      eventMsg.agariEvent ||
+      eventMsg.ryuukyokuEvent ||
+      eventMsg.concludeGameEvent
+    ) {
+      return 3000;
+    }
+    if (eventMsg.dealHandEvent) {
+      return 80;
+    }
+    return 0;
   }
 
   /**

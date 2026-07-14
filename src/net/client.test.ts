@@ -949,7 +949,7 @@ describe('RabiRiichiClient', () => {
         },
       },
     });
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(3000);
 
     // Send ConcludeGameEvent
     sendServerMsg(mockWS, {
@@ -960,7 +960,7 @@ describe('RabiRiichiClient', () => {
         },
       },
     });
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(3000);
 
     // Send NextGameEvent
     sendServerMsg(mockWS, {
@@ -974,6 +974,8 @@ describe('RabiRiichiClient', () => {
       },
     });
     await vi.advanceTimersByTimeAsync(0);
+
+    mockWS.send.mockClear();
 
     // Send NextRoundAction inquiry
     sendNextRoundInquiry(mockWS, 11);

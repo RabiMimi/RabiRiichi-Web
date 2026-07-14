@@ -30,7 +30,7 @@ test('simulate seats positioning output', () => {
   console.log(`Loaded ${events.length} events.`);
 
   for (const eventMsg of events) {
-    rabiriichi.replay.handleGameEvent(eventMsg);
+    void rabiriichi.replay.handleGameEvent(eventMsg, true);
   }
 
   const room = rabiriichi.room;

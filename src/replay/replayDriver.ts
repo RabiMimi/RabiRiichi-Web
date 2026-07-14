@@ -29,29 +29,6 @@ const replayState: { running: boolean; paused: boolean; singleStep: boolean } =
   };
 const isRunning = () => replayState.running;
 
-function getEventDelay(eventMsg: IEventMsg): number {
-  if (eventMsg.drawTileEvent || eventMsg.dealerFirstTurnEvent) {
-    return 600;
-  }
-  if (eventMsg.discardTileEvent) {
-    return 1000;
-  }
-  if (eventMsg.claimTileEvent || eventMsg.kanEvent) {
-    return 1200;
-  }
-  if (
-    eventMsg.agariEvent ||
-    eventMsg.ryuukyokuEvent ||
-    eventMsg.concludeGameEvent
-  ) {
-    return 3000;
-  }
-  if (eventMsg.dealHandEvent) {
-    return 80;
-  }
-  return 0;
-}
-
 export function proceedReplay(): void {
   if (resolveProceed) {
     const resolve = resolveProceed;
@@ -125,7 +102,7 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
       rabiriichi.replay.setReplayProgress(eventIdx);
 
       if (eventMsg) {
-        rabiriichi.replay.handleGameEvent(eventMsg);
+        await rabiriichi.replay.handleGameEvent(eventMsg);
 
         if (!isRunning()) break;
 
@@ -146,7 +123,7 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
               const nextEv = currentEvents[eventIdx];
               eventIdx++;
               if (nextEv) {
-                rabiriichi.replay.handleGameEvent(nextEv);
+                await rabiriichi.replay.handleGameEvent(nextEv, true);
               }
             }
             rabiriichi.replay.setReplayProgress(eventIdx);
@@ -169,20 +146,6 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
           if (!isRunning()) break;
           // When auto-proceeding or manual next round, ensure we check paused state again
           continue;
-        }
-
-        if (!replayState.paused) {
-          const delay = getEventDelay(eventMsg);
-          if (delay > 0) {
-            const speed = rabiriichi.animationSpeed;
-            await new Promise<void>((resolve) => {
-              resolveDelay = resolve;
-              replayTimeout = setTimeout(() => {
-                resolveDelay = null;
-                resolve();
-              }, delay / speed);
-            });
-          }
         }
       }
     }
@@ -377,7 +340,7 @@ export function seekToEvent(targetIdx: number): void {
   if (targetIdx > 0) {
     const lastEv = currentEvents[targetIdx - 1];
     if (lastEv) {
-      rabiriichi.replay.handleGameEvent(lastEv);
+      void rabiriichi.replay.handleGameEvent(lastEv, true);
     }
   }
 
