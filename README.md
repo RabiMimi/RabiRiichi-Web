@@ -109,3 +109,12 @@ conflicting stylistic ESLint rules.
 ## Testing
 
 For details on local multiplayer testing and using the offline replay viewer, see [TESTING.md](./TESTING.md).
+
+## License
+
+This repository is licensed under the **GNU General Public License v3** (see [LICENSE](./LICENSE)).
+
+> [!IMPORTANT]
+> The GNU GPLv3 license applies **only to the source code** of this project.
+>
+> All game assets—including but not limited to 3D models (such as tile meshes), textures, images (such as characters, buttons, and graphics), and audio files are **NOT** licensed under the GNU GPLv3, and may not be redistributed or reused for commercial purposes without explicit permission.
