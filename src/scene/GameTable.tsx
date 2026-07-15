@@ -1,4 +1,7 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useRef } from 'react';
+import { useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import { rabiriichi } from '../net/client';
 import { Table } from './Table';
 import { SeatAnchor } from './SeatAnchor';
 import { useRoom, useSelf } from '../state/store';
@@ -6,6 +9,76 @@ import { getScreenPosition } from './seat';
 import { PlayerArea3D } from './PlayerArea3D';
 import { TableCenter } from './TableCenter';
 import { ResultAnimation3D } from './ResultAnimation3D';
+
+function TouchHoverHandler(): null {
+  const { camera, scene } = useThree();
+  const raycasterRef = useRef(new THREE.Raycaster());
+  const mouseRef = useRef(new THREE.Vector2());
+
+  useEffect(() => {
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      // Convert touch coordinates to normalized device coordinates (-1 to +1)
+      mouseRef.current.x = (touch.clientX / window.innerWidth) * 2 - 1;
+      mouseRef.current.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+      // Update the raycaster
+      raycasterRef.current.setFromCamera(mouseRef.current, camera);
+
+      // Perform intersection check
+      const intersects = raycasterRef.current.intersectObjects(scene.children, true);
+      let foundTraceId: number | null = null;
+
+      for (const hit of intersects) {
+        // Walk up to find the group with userData.traceId
+        let curr: THREE.Object3D | null = hit.object;
+        while (curr) {
+          if (curr.userData && curr.userData.traceId !== undefined) {
+            // Note: "Note this doesn't apply to hand tiles."
+            if (curr.userData.area !== 'hand') {
+              foundTraceId = curr.userData.traceId;
+            }
+            break;
+          }
+          curr = curr.parent;
+        }
+        if (foundTraceId !== null) break;
+      }
+
+      // Update hover state
+      if (foundTraceId !== null) {
+        if (rabiriichi.hoveredTileTraceId !== foundTraceId) {
+          rabiriichi.hoverTile(foundTraceId);
+        }
+      } else {
+        if (rabiriichi.hoveredTileTraceId !== null) {
+          rabiriichi.hoverTile(null);
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (rabiriichi.hoveredTileTraceId !== null) {
+        rabiriichi.hoverTile(null);
+      }
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
+
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [camera, scene]);
+
+  return null;
+}
 
 export function GameTable(): React.JSX.Element {
   const room = useRoom();
@@ -56,6 +129,7 @@ export function GameTable(): React.JSX.Element {
 
   return (
     <group>
+      <TouchHoverHandler />
       {/* Lights */}
       <ambientLight intensity={0.5} />
       <directionalLight

@@ -1,8 +1,9 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { useGLTF, useTexture } from '@react-three/drei';
+import { useGLTF, useTexture, Html } from '@react-three/drei';
 import { TileSpotlightParticles } from './TileSpotlightParticles';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
+import { TileTooltip } from '../ui/TileTooltip';
 import {
   TILE_MODEL_PATH,
   getTileTexturePath,
@@ -18,6 +19,7 @@ import {
   useIsRiichiSelectMode,
   useAnimationSpeed,
   useSelectedTileTraceId,
+  useHoveredTileTraceId,
   useActiveComparisonTile,
   useDoraIndicators,
   useRoom,
@@ -218,7 +220,12 @@ export function Tile3D({
   const factorX = (threeViewport.width / size.width) * 0.5;
   const factorY = (threeViewport.height / size.height) * 0.5;
   const selectedTileTraceId = useSelectedTileTraceId();
+  const hoveredTileTraceId = useHoveredTileTraceId();
   const isSelected = selectedTileTraceId === traceId;
+
+  const showTooltip = traceId !== undefined && (
+    hoveredTileTraceId === traceId || (hoveredTileTraceId === null && selectedTileTraceId === traceId)
+  );
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef<number>(0);
   const dragStartY = useRef<number>(0);
@@ -608,6 +615,8 @@ export function Tile3D({
   return (
     <group
       ref={groupRef}
+      name={`tile-${traceId}`}
+      userData={{ traceId, area }}
       onPointerOver={(e: ThreeEvent<PointerEvent>) => {
         if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
@@ -763,6 +772,11 @@ export function Tile3D({
     >
       <primitive ref={tileRef} object={clone} scale={[0.18, 0.24, 0.14]} />
       {isWinningTile && <TileSpotlightParticles />}
+      {showTooltip && (
+        <Html center style={{ pointerEvents: 'none' }}>
+          <TileTooltip />
+        </Html>
+      )}
     </group>
   );
 }

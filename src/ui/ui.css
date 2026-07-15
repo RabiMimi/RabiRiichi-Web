@@ -3897,7 +3897,10 @@
   backdrop-filter: blur(8px);
   height: 24px;
   box-sizing: border-box;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  --tile-tooltip-y-offset: -36px;
+  white-space: nowrap;
+  width: max-content;
 }
 
 .tile-tooltip-badge {
@@ -3939,6 +3942,7 @@
     font-size: 1.05rem;
     border-radius: 8px;
     border-width: 1.5px;
+    --tile-tooltip-y-offset: -60px;
   }
   .tile-tooltip-badge {
     padding: 3px 8px;

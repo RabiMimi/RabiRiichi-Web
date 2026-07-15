@@ -23,7 +23,6 @@ import { OrientationGuard } from './ui/OrientationGuard';
 import { FullscreenButton } from './ui/FullscreenButton';
 import { StickerPanel } from './ui/StickerPanel';
 import { Tooltip } from './ui/Tooltip';
-import { TileTooltip } from './ui/TileTooltip';
 import { COMMIT_HASH } from './lib';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import './App.css';
@@ -215,20 +214,6 @@ function App(): React.JSX.Element {
         </>
       )}
       {room && <StickerPanel />}
-      {room?.info && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '12px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1000,
-            pointerEvents: 'none',
-          }}
-        >
-          <TileTooltip />
-        </div>
-      )}
     </div>
   );
 }

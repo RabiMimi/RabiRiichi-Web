@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useRoom,
@@ -6,7 +6,7 @@ import {
   useSelectedTileTraceId,
 } from '../state/store';
 import type { TFunction } from 'i18next';
-import { Tile } from '../domain/tile';
+import { Tile, TileSuit } from '../domain/tile';
 import { deriveTileInfo, type TileInfoFacts } from '../domain/tileInfo';
 import { getPlayerDisplayName } from '../domain/model';
 
@@ -89,14 +89,67 @@ export function TileTooltip(): React.JSX.Element | null {
     [tileInfo],
   );
 
-  const tileName = useMemo(() => {
+  const tileInstance = useMemo(() => {
     if (tileInfo?.tile == null || tileInfo.tile === 0) return null;
     try {
-      return Tile.fromByte(tileInfo.tile).toString();
+      return Tile.fromByte(tileInfo.tile);
     } catch {
       return null;
     }
   }, [tileInfo]);
+
+  const tileName = useMemo(() => {
+    return tileInstance ? tileInstance.toString() : null;
+  }, [tileInstance]);
+
+  const badgeBackground = useMemo(() => {
+    if (!tileInstance) return '#10b981';
+    switch (tileInstance.suit) {
+      case TileSuit.M:
+        return '#dc2626'; // Red/Orange for Characters
+      case TileSuit.P:
+        return '#2563eb'; // Blue for Circles
+      case TileSuit.S:
+        return '#10b981'; // Green for Bamboos
+      case TileSuit.Z:
+        return '#8b5cf6'; // Purple for Honors
+      default:
+        return '#6b7280';
+    }
+  }, [tileInstance]);
+
+  // Adjust for screen bounds overflow
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    // Check bounds in screen space
+    const rect = el.getBoundingClientRect();
+    const padding = 12;
+    let dx = 0;
+    let dy = 0;
+
+    if (rect.left < padding) {
+      dx = padding - rect.left;
+    } else if (rect.right > window.innerWidth - padding) {
+      dx = window.innerWidth - padding - rect.right;
+    }
+
+    if (rect.top < padding) {
+      // If it overflows the top, shift down below the tile.
+      // - The original offset was negative (shifting it up).
+      // - Shifting it down by the height of tooltip + height of tile + margins.
+      // E.g., if mobile shifted up by -36px, shifting down by +84px flips it.
+      // E.g., if desktop shifted up by -60px, shifting down by +136px flips it.
+      const shiftDown = window.innerWidth >= 1024 ? 136 : 84;
+      dy = shiftDown;
+    }
+
+    setOffset({ x: dx, y: dy });
+  }, [tileInfo, facts, tileName]);
 
   if (!tileInfo || !facts || !tileName) {
     return null;
@@ -113,9 +166,21 @@ export function TileTooltip(): React.JSX.Element | null {
   const junCapsule = buildJunCapsule(facts, t);
 
   return (
-    <div className="tile-tooltip-container">
+    <div
+      ref={containerRef}
+      className="tile-tooltip-container"
+      style={{
+        transform: `translate(calc(-50% + ${offset.x}px), calc(var(--tile-tooltip-y-offset) + ${offset.y}px))`,
+        position: 'absolute',
+      }}
+    >
       {/* Tile Face Badge */}
-      <span className="tile-tooltip-badge">{tileName}</span>
+      <span
+        className="tile-tooltip-badge"
+        style={{ background: badgeBackground }}
+      >
+        {tileName}
+      </span>
 
       {/*
         A single compact "life of the tile" capsule. Discarded tiles read
