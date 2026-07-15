@@ -6,6 +6,7 @@ import { YAKUS } from '../domain/yakus';
 import { getWindKey, type RoomModel } from '../domain/model';
 import { UserStatus } from '../proto';
 import { CopyGameIdButton } from './CopyGameIdButton';
+import { MODAL } from './styles';
 import {
   RENCHAN_POLICIES,
   END_GAME_POLICIES,
@@ -125,14 +126,14 @@ export function GameInfoModal({
     });
 
   return (
-    <div className="game-info-modal-overlay" onClick={onClose}>
+    <div className={MODAL.overlay} onClick={onClose}>
       <div
-        className="game-info-modal-content"
+        className={`${MODAL.card} ${MODAL.cardDefaultLook}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="game-info-modal-header">
-          <h3>{t('hud.gameInfo')}</h3>
-          <button type="button" className="close-btn" onClick={onClose}>
+        <div className={MODAL.header}>
+          <h3 className={MODAL.title}>{t('hud.gameInfo')}</h3>
+          <button type="button" className={MODAL.closeButton} onClick={onClose}>
             &times;
           </button>
         </div>
@@ -162,7 +163,7 @@ export function GameInfoModal({
           </button>
         </div>
 
-        <div className="game-info-modal-body">
+        <div className={MODAL.body}>
           {/* Tab: Live Info */}
           {activeTab === 'info' && (
             <div className="debug-tab-content">
@@ -531,7 +532,7 @@ export function GameInfoModal({
           )}
         </div>
 
-        <div className="game-info-modal-footer">
+        <div className={MODAL.footer}>
           <button
             type="button"
             className="ui-button primary-button"

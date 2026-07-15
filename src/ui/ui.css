@@ -1456,29 +1456,6 @@
 }
 
 /* Connection Status HUD Indicator */
-.connection-status-panel {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: rgba(20, 20, 20, 0.85);
-  border: 1.5px solid #444;
-  border-radius: 8px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #fff;
-  pointer-events: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  z-index: 50;
-}
-
-.ping-text {
-  font-family: monospace;
-  font-size: 0.9rem;
-  font-weight: bold;
-}
-
 /* Yaku Configuration Modal */
 .yaku-modal-overlay {
   position: fixed;
@@ -1625,108 +1602,10 @@
 }
 
 /* Game Info Button & Modal */
-.info-icon-btn {
-  background-color: rgba(20, 20, 20, 0.85);
-  border: 1.5px solid #444;
-  border-radius: 8px;
-  color: #fff;
-  padding: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  transition: all 0.2s;
-  width: fit-content;
-}
-
-.info-icon-btn:hover {
-  border-color: #ff7a99;
-  color: #ff7a99;
-  transform: scale(1.05);
-}
-
 .hud-buttons-row {
   display: flex;
   flex-direction: row;
   gap: 8px;
-}
-
-.exit-btn:hover {
-  border-color: #ff3333;
-  color: #ff3333;
-}
-
-.game-info-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.75);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-  pointer-events: auto;
-}
-
-.game-info-modal-content {
-  background-color: rgba(18, 28, 50, 0.95);
-  border: 2px solid #ff7a99;
-  border-radius: 12px;
-  padding: 24px;
-  width: 90%;
-  max-width: 650px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(255, 122, 153, 0.05);
-  backdrop-filter: blur(16px);
-  box-sizing: border-box;
-  margin: auto;
-}
-
-.game-info-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #444;
-  padding-bottom: 8px;
-  margin-bottom: 16px;
-}
-
-.game-info-modal-header h3 {
-  margin: 0;
-  color: #ff7a99;
-  font-size: 1.2rem;
-}
-
-.game-info-modal-header .close-btn {
-  background: none;
-  border: none;
-  color: #aaa;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-
-.game-info-modal-header .close-btn:hover {
-  color: #fff;
-}
-
-.game-info-modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
 }
 
 .game-info-section {
@@ -1811,12 +1690,6 @@
   color: #80deea;
   font-weight: bold;
   font-family: monospace;
-}
-
-.game-info-modal-footer {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
 }
 
 /* Tabs for GameInfoModal */
@@ -2383,50 +2256,6 @@
 }
 
 /* Orientation Guard Overlay */
-.portrait-orientation-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: #121212;
-  color: #fff;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.rotate-device-icon {
-  font-size: 4rem;
-  margin-bottom: 20px;
-  animation: rotate-anim 2s infinite ease-in-out;
-}
-
-@keyframes rotate-anim {
-  0% {
-    transform: rotate(0deg);
-  }
-  50% {
-    transform: rotate(-90deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-.rotate-prompt-text {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #ff7a99;
-  max-width: 80%;
-  line-height: 1.5;
-}
-
 /* Advanced settings grid */
 .advanced-settings-section {
   max-height: 250px;
@@ -2539,17 +2368,6 @@
   .result-tile-img {
     width: 24px;
     height: 32px;
-  }
-
-  /* Game Info Modal */
-  .game-info-modal-overlay {
-    align-items: flex-start;
-    padding: 10px;
-    overflow-y: auto;
-  }
-  .game-info-modal-content {
-    padding: 16px;
-    max-height: 95vh;
   }
 }
 
@@ -2954,16 +2772,6 @@
   gap: 8px;
 }
 
-.github-btn {
-  position: relative;
-  width: 38px;
-  height: 38px;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-}
-
 .github-badge-tag {
   position: absolute;
   bottom: -4px;
@@ -2986,20 +2794,6 @@
 .github-badge-tag.server-tag {
   background-color: #80deea;
   color: #111;
-}
-
-.github-btn.client-btn:hover {
-  border-color: #ff7a99;
-  color: #ff7a99;
-  box-shadow: 0 4px 12px rgba(255, 122, 153, 0.35);
-  transform: scale(1.05);
-}
-
-.github-btn.server-btn:hover {
-  border-color: #80deea;
-  color: #80deea;
-  box-shadow: 0 4px 12px rgba(128, 222, 234, 0.35);
-  transform: scale(1.05);
 }
 
 @media (max-width: 768px) {
@@ -3351,21 +3145,6 @@
 }
 
 /* Initial Wall Modal Styles */
-.initial-wall-modal-content {
-  max-width: 920px;
-  width: 95%;
-  background-color: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(130, 170, 240, 0.4);
-}
-
-.initial-wall-modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
 .initial-wall-grid-container {
   display: flex;
   flex-direction: column;
@@ -3576,99 +3355,6 @@
 }
 
 /* Sticker Panel styling */
-.sticker-panel-container {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  z-index: 999;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: auto;
-}
-
-.sticker-panel-container.collapsed {
-  transform: translate(173px, -50%);
-}
-
-.sticker-panel-container.open {
-  transform: translate(0, -50%);
-}
-
-.sticker-panel-toggle {
-  background-color: rgba(18, 28, 50, 0.95);
-  border: 1.5px solid rgba(255, 122, 153, 0.7);
-  border-right: none;
-  border-radius: 8px 0 0 8px;
-  color: #fff;
-  padding: 12px 6px;
-  cursor: pointer;
-  outline: none;
-  transition:
-    background-color 0.2s,
-    color 0.2s;
-  box-shadow: -4px 0 10px rgba(0, 0, 0, 0.4);
-}
-
-.sticker-panel-toggle:hover {
-  background-color: rgba(255, 122, 153, 0.2);
-  color: #ff7a99;
-}
-
-.sticker-panel-content {
-  background-color: rgba(18, 28, 50, 0.95);
-  border: 1.5px solid rgba(255, 122, 153, 0.7);
-  border-radius: 0 0 0 8px;
-  padding: 12px;
-  width: 170px;
-  box-shadow: -4px 4px 15px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-}
-
-.sticker-panel-header {
-  color: #ff7a99;
-  font-weight: bold;
-  font-size: 0.9rem;
-  margin-bottom: 10px;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 6px;
-}
-
-.sticker-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.sticker-item-btn {
-  background: none;
-  border: 1px solid transparent;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 6px;
-  transition:
-    transform 0.2s,
-    border-color 0.2s,
-    background-color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sticker-item-btn:hover {
-  transform: scale(1.15);
-  border-color: rgba(255, 122, 153, 0.5);
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.sticker-img {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
-}
-
 /* Chat bubble styling for 2D room & 3D scene */
 .sticker-bubble-2d {
   position: absolute;
@@ -3833,51 +3519,6 @@
 }
 
 /* Tooltip Styles */
-.tooltip-wrapper {
-  position: relative;
-  display: inline-flex;
-}
-
-.tooltip-bubble {
-  position: absolute;
-  z-index: 1000;
-  padding: 6px 10px;
-  background-color: rgba(20, 20, 20, 0.95);
-  color: #fff;
-  font-size: 0.72rem;
-  border-radius: 4px;
-  border: 1px solid #ff7a99;
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  font-family: inherit;
-  line-height: 1.2;
-}
-
-.tooltip-top {
-  bottom: 100%;
-  left: 50%;
-  transform: translate(-50%, -8px);
-}
-
-.tooltip-bottom {
-  top: 100%;
-  left: 50%;
-  transform: translate(-50%, 8px);
-}
-
-.tooltip-left {
-  right: 100%;
-  top: 50%;
-  transform: translate(-8px, -50%);
-}
-
-.tooltip-right {
-  left: 100%;
-  top: 50%;
-  transform: translate(8px, -50%);
-}
-
 /* Tile Tooltip (3D Scene Hover Details) */
 .tile-tooltip-container {
   display: flex;

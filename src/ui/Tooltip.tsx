@@ -10,13 +10,29 @@ interface HTMLPropsWithEvents {
   style?: React.CSSProperties;
 }
 
+type TooltipPosition = 'top' | 'bottom' | 'left' | 'right';
+
 interface TooltipProps {
   content: React.ReactNode;
   children: React.ReactElement<HTMLPropsWithEvents>;
-  position?: 'top' | 'bottom' | 'left' | 'right';
+  position?: TooltipPosition;
   disabled?: boolean;
   style?: React.CSSProperties;
 }
+
+// Placement offsets (8px away from the trigger), keyed by tooltip position.
+const POSITION_CLASSES: Record<TooltipPosition, string> = {
+  top: 'bottom-full left-1/2 -translate-x-1/2 -translate-y-2',
+  bottom: 'top-full left-1/2 -translate-x-1/2 translate-y-2',
+  left: 'right-full top-1/2 -translate-x-2 -translate-y-1/2',
+  right: 'left-full top-1/2 translate-x-2 -translate-y-1/2',
+};
+
+const BUBBLE_CLASSES =
+  'absolute z-[1000] px-2.5 py-1.5 rounded border border-[#ff7a99] ' +
+  'bg-[#141414]/95 text-white text-[0.72rem] leading-[1.2] ' +
+  'font-[inherit] whitespace-nowrap pointer-events-none ' +
+  'shadow-[0_4px_12px_rgba(0,0,0,0.5)]';
 
 export function Tooltip({
   content,
@@ -119,12 +135,12 @@ export function Tooltip({
   });
 
   return (
-    <div className="tooltip-wrapper" style={style}>
+    <div className="relative inline-flex" style={style}>
       {trigger}
       {visible && (
         <div
           ref={bubbleRef}
-          className={`tooltip-bubble tooltip-${position}`}
+          className={`${BUBBLE_CLASSES} ${POSITION_CLASSES[position]}`}
           style={shiftStyle}
         >
           {content}

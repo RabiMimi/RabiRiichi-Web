@@ -26,6 +26,7 @@ import { GameInfoModal } from './GameInfoModal';
 import { InitialWallModal } from './InitialWallModal';
 import { Tooltip } from './Tooltip';
 import { SettingsButton } from './SettingsButton';
+import { IconButton } from './IconButton';
 
 export function ReplayHUD(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -115,9 +116,8 @@ export function ReplayHUD(): React.JSX.Element | null {
             }
             position="bottom"
           >
-            <button
+            <IconButton
               type="button"
-              className={`info-icon-btn camera-lock-btn ${isCameraLocked ? 'is-locked' : ''}`}
               onClick={() => rabiriichi.toggleCameraLock()}
             >
               {isCameraLocked ? (
@@ -165,15 +165,11 @@ export function ReplayHUD(): React.JSX.Element | null {
                   <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
                 </svg>
               )}
-            </button>
+            </IconButton>
           </Tooltip>
 
           <Tooltip content={t('hud.gameInfo')} position="bottom">
-            <button
-              type="button"
-              className="info-icon-btn"
-              onClick={() => setIsInfoOpen(true)}
-            >
+            <IconButton type="button" onClick={() => setIsInfoOpen(true)}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -189,18 +185,14 @@ export function ReplayHUD(): React.JSX.Element | null {
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
               </svg>
-            </button>
+            </IconButton>
           </Tooltip>
 
           <Tooltip
             content={t('replay.initialWallTitle', 'Initial Wall & Doras')}
             position="bottom"
           >
-            <button
-              type="button"
-              className="info-icon-btn"
-              onClick={() => setIsWallOpen(true)}
-            >
+            <IconButton type="button" onClick={() => setIsWallOpen(true)}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -218,13 +210,13 @@ export function ReplayHUD(): React.JSX.Element | null {
                 <line x1="3" y1="9" x2="21" y2="9"></line>
                 <line x1="3" y1="15" x2="21" y2="15"></line>
               </svg>
-            </button>
+            </IconButton>
           </Tooltip>
 
           <Tooltip content={t('hud.exitGame')} position="bottom">
-            <button
+            <IconButton
               type="button"
-              className="info-icon-btn exit-btn"
+              variant="exit"
               onClick={() => stopReplay()}
             >
               <svg
@@ -242,7 +234,7 @@ export function ReplayHUD(): React.JSX.Element | null {
                 <polyline points="16 17 21 12 16 7"></polyline>
                 <line x1="21" y1="12" x2="9" y2="12"></line>
               </svg>
-            </button>
+            </IconButton>
           </Tooltip>
         </div>
       </div>

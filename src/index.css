@@ -1,3 +1,46 @@
+/*
+ * Cascade layer order (earlier = lower priority). The legacy hand-written
+ * stylesheet lives in the `app` layer, which sits BEFORE `utilities` so Tailwind
+ * utility classes can override it as we migrate ui.css piece by piece. Without
+ * an explicit layer, ui.css would be "unlayered" and unconditionally beat every
+ * (layered) Tailwind utility, silently breaking converted components.
+ */
+@layer theme, app, utilities;
+
+/*
+ * Tailwind v4, imported WITHOUT Preflight (the base reset) on purpose: the app
+ * ships a large hand-written stylesheet (ui.css) and we are migrating to
+ * Tailwind incrementally. Enabling Preflight would restyle every existing
+ * element (headings, buttons, lists, ...) and change the current appearance.
+ * We therefore pull in only the theme (design tokens / CSS vars) and utilities.
+ */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* The legacy stylesheets, layered so utilities win on conflicts (see above). */
+@import './App.css' layer(app);
+@import './ui/ui.css' layer(app);
+
+/*
+ * Custom keyframe utilities migrated out of ui.css. Kept here (not as inline
+ * utilities) because custom @keyframes are not expressible as Tailwind classes.
+ */
+@keyframes rotate-device {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@utility animate-rotate-device {
+  animation: rotate-device 2s infinite ease-in-out;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

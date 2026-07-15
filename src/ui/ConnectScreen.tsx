@@ -8,7 +8,6 @@ import {
   STORAGE_KEY_SERVER_SETTINGS,
   type ServerSettings,
 } from '../domain/constants';
-import './ui.css';
 
 export function ConnectScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();

@@ -35,6 +35,7 @@ import { GameInfoModal } from './GameInfoModal';
 import { FullscreenButton } from './FullscreenButton';
 import { Tooltip } from './Tooltip';
 import { SettingsButton } from './SettingsButton';
+import { IconButton } from './IconButton';
 
 export function GameInfoPanel(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -529,9 +530,8 @@ function HUDLeftPanel({
           content={isCameraLocked ? t('hud.unlockCamera') : t('hud.lockCamera')}
           position="bottom"
         >
-          <button
+          <IconButton
             type="button"
-            className={`info-icon-btn camera-lock-btn ${isCameraLocked ? 'is-locked' : ''}`}
             onClick={() => rabiriichi.toggleCameraLock()}
           >
             {isCameraLocked ? (
@@ -565,11 +565,11 @@ function HUDLeftPanel({
                 <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
               </svg>
             )}
-          </button>
+          </IconButton>
         </Tooltip>
 
         <Tooltip content={t('hud.gameInfo')} position="bottom">
-          <button type="button" className="info-icon-btn" onClick={onInfoClick}>
+          <IconButton type="button" onClick={onInfoClick}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -585,13 +585,13 @@ function HUDLeftPanel({
               <line x1="12" y1="16" x2="12" y2="12"></line>
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
-          </button>
+          </IconButton>
         </Tooltip>
 
         <Tooltip content={t('hud.exitGame')} position="bottom">
-          <button
+          <IconButton
             type="button"
-            className="info-icon-btn exit-btn"
+            variant="exit"
             onClick={onExitClick}
             disabled={isExiting}
           >
@@ -610,7 +610,7 @@ function HUDLeftPanel({
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
-          </button>
+          </IconButton>
         </Tooltip>
       </div>
     </div>

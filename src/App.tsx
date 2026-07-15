@@ -25,14 +25,13 @@ import { OrientationGuard } from './ui/OrientationGuard';
 import { FullscreenButton } from './ui/FullscreenButton';
 import { StickerPanel } from './ui/StickerPanel';
 import { Tooltip } from './ui/Tooltip';
+import { IconButton } from './ui/IconButton';
 import { SettingsButton } from './ui/SettingsButton';
 import { SettingsModal } from './ui/SettingsModal';
 import { COMMIT_HASH } from './lib';
 import type { PlayerModel, RoomModel } from './domain/model';
 import type { ActionOption } from './domain/inquiry';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
-import './App.css';
-import './ui/ui.css';
 
 function CameraController({
   controlsRef,
@@ -203,11 +202,12 @@ function App(): React.JSX.Element {
               {t('lobby.build', { commit: COMMIT_HASH })}
             </span>
             <Tooltip content={t('lobby.clientRepo')} position="bottom">
-              <a
+              <IconButton
+                as="a"
+                variant="client"
                 href="https://github.com/RabiMimi/RabiRiichi-Web"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="info-icon-btn github-btn client-btn"
               >
                 <div
                   style={{
@@ -228,14 +228,15 @@ function App(): React.JSX.Element {
                   </svg>
                   <span className="github-badge-tag client-tag">C</span>
                 </div>
-              </a>
+              </IconButton>
             </Tooltip>
             <Tooltip content={t('lobby.serverRepo')} position="bottom">
-              <a
+              <IconButton
+                as="a"
+                variant="server"
                 href="https://github.com/RabiMimi/RabiRiichi"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="info-icon-btn github-btn server-btn"
               >
                 <div
                   style={{
@@ -256,7 +257,7 @@ function App(): React.JSX.Element {
                   </svg>
                   <span className="github-badge-tag server-tag">S</span>
                 </div>
-              </a>
+              </IconButton>
             </Tooltip>
 
             <SettingsButton />

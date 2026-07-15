@@ -6,7 +6,6 @@ import { formatError } from '../lib';
 import type { IGameConfigMsg } from '../proto';
 import { RoomConfigPanel } from './RoomConfigPanel';
 import { ReplayModal } from './ReplayModal';
-import './ui.css';
 
 export function LobbyScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();

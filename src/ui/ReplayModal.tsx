@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { startReplay } from '../replay/replayDriver';
 import { formatError } from '../lib';
-import './ui.css';
 
 interface ReplayModalProps {
   onClose: () => void;

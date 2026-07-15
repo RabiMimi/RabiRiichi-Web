@@ -7,6 +7,7 @@ import { deadWallRinshanCount, NUM_DORA } from '../domain/model';
 import { getCurrentRoundEvents } from '../replay/replayDriver';
 import type { IGameTileMsg } from '../proto';
 import { Tooltip } from './Tooltip';
+import { MODAL } from './styles';
 
 interface InitialWallModalProps {
   isOpen: boolean;
@@ -152,19 +153,21 @@ export function InitialWallModal({
   };
 
   return (
-    <div className="game-info-modal-overlay" onClick={onClose}>
+    <div className={MODAL.overlay} onClick={onClose}>
       <div
-        className="game-info-modal-content initial-wall-modal-content"
+        className={`${MODAL.card} w-[95%] max-w-[920px] border border-[#82aaf0]/40 bg-[#0f172a]/95`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="game-info-modal-header">
-          <h3>{t('replay.initialWallTitle', 'Initial Wall')}</h3>
-          <button type="button" className="close-btn" onClick={onClose}>
+        <div className={MODAL.header}>
+          <h3 className={MODAL.title}>
+            {t('replay.initialWallTitle', 'Initial Wall')}
+          </h3>
+          <button type="button" className={MODAL.closeButton} onClick={onClose}>
             &times;
           </button>
         </div>
 
-        <div className="game-info-modal-body initial-wall-modal-body">
+        <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
           {/* Wall Grid Section */}
           {initialWall && initialWall.length > 0 ? (
             <div className="initial-wall-grid-container">
@@ -199,7 +202,7 @@ export function InitialWallModal({
           )}
         </div>
 
-        <div className="game-info-modal-footer">
+        <div className={MODAL.footer}>
           <button
             type="button"
             className="ui-button primary-button"

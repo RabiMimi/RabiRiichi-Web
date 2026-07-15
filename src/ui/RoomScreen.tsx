@@ -8,7 +8,6 @@ import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
 import { AddAiDropdown } from './AddAiDropdown';
 import { StickerBubble } from './StickerBubble';
 import { Tooltip } from './Tooltip';
-import './ui.css';
 
 export function RoomScreen(): React.JSX.Element | null {
   const { t } = useTranslation();
