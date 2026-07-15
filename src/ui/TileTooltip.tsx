@@ -8,6 +8,7 @@ import {
 import type { TFunction } from 'i18next';
 import { Tile } from '../domain/tile';
 import { deriveTileInfo, type TileInfoFacts } from '../domain/tileInfo';
+import { getPlayerDisplayName } from '../domain/model';
 
 interface JunCapsule {
   /** Optional leading label (e.g. "Drawn"); omitted for the discard arrow form. */
@@ -107,47 +108,14 @@ export function TileTooltip(): React.JSX.Element | null {
     discardedFrom != null
       ? room?.players.find((p) => p.seat === discardedFrom)
       : null;
-  const discarderName = discarder?.nickname;
+  const discarderName = discarder ? getPlayerDisplayName(discarder, t) : null;
 
   const junCapsule = buildJunCapsule(facts, t);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        background: 'rgba(15, 20, 16, 0.96)',
-        border: '1px solid rgba(255, 255, 255, 0.12)',
-        borderRadius: '4px',
-        padding: '3px 8px',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6)',
-        pointerEvents: 'none',
-        userSelect: 'none',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        fontSize: '0.68rem',
-        lineHeight: 1.2,
-        color: '#ffffff',
-        backdropFilter: 'blur(8px)',
-        height: '24px',
-        boxSizing: 'border-box',
-      }}
-    >
+    <div className="tile-tooltip-container">
       {/* Tile Face Badge */}
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          background: '#10b981',
-          color: '#ffffff',
-          borderRadius: '2px',
-          padding: '1px 4px',
-          fontSize: '0.72rem',
-          fontWeight: 800,
-        }}
-      >
-        {tileName}
-      </span>
+      <span className="tile-tooltip-badge">{tileName}</span>
 
       {/*
         A single compact "life of the tile" capsule. Discarded tiles read
@@ -156,15 +124,10 @@ export function TileTooltip(): React.JSX.Element | null {
       */}
       {junCapsule && (
         <div
+          className="tile-tooltip-capsule"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
             background: junCapsule.background,
-            borderRadius: '2px',
-            padding: '1px 5px',
             color: junCapsule.color,
-            fontWeight: 700,
           }}
         >
           {junCapsule.label != null && (
@@ -177,17 +140,7 @@ export function TileTooltip(): React.JSX.Element | null {
       )}
 
       {isClaimed && discarderName && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            background: 'rgba(239, 68, 68, 0.12)',
-            borderRadius: '2px',
-            padding: '1px 4px',
-            color: '#fca5a5',
-            gap: '3px',
-          }}
-        >
+        <div className="tile-tooltip-claimed">
           <span style={{ opacity: 0.85 }}>
             {t('tileTooltip.claimedFrom', 'Claimed')}
           </span>

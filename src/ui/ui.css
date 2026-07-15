@@ -3874,3 +3874,87 @@
   top: 50%;
   transform: translate(8px, -50%);
 }
+
+/* Tile Tooltip (3D Scene Hover Details) */
+.tile-tooltip-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 20, 16, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 3px 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  user-select: none;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  height: 24px;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+}
+
+.tile-tooltip-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #10b981;
+  color: #ffffff;
+  border-radius: 2px;
+  padding: 1px 4px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.tile-tooltip-capsule {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 2px;
+  padding: 1px 5px;
+  font-weight: 700;
+}
+
+.tile-tooltip-claimed {
+  display: flex;
+  align-items: center;
+  background: rgba(239, 68, 68, 0.12);
+  border-radius: 2px;
+  padding: 1px 4px;
+  color: #fca5a5;
+  gap: 3px;
+}
+
+/* Responsive adjustments for Desktop screens */
+@media (min-width: 1024px) {
+  .tile-tooltip-container {
+    height: 42px;
+    padding: 6px 16px;
+    gap: 12px;
+    font-size: 1.05rem;
+    border-radius: 8px;
+    border-width: 1.5px;
+  }
+  .tile-tooltip-badge {
+    padding: 3px 8px;
+    font-size: 1.1rem;
+    border-radius: 4px;
+  }
+  .tile-tooltip-capsule {
+    padding: 3px 10px;
+    gap: 8px;
+    font-size: 1.05rem;
+    border-radius: 4px;
+  }
+  .tile-tooltip-claimed {
+    padding: 3px 8px;
+    gap: 6px;
+    font-size: 1.05rem;
+    border-radius: 4px;
+  }
+}
