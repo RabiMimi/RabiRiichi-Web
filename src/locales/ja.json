@@ -445,5 +445,15 @@
     "title": "スタンプ",
     "expand": "スタンプを表示",
     "collapse": "スタンプを隠す"
+  },
+  "tileTooltip": {
+    "drawnLabel": "ツモ",
+    "initialHand": "配牌",
+    "claimedFrom": "鳴き元",
+    "junNum": "{{jun}} 巡目"
+  },
+  "discardReasons": {
+    "tedashi": "手出し",
+    "tsumogiri": "ツモ切り"
   }
 }

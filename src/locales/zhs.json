@@ -53,7 +53,6 @@
     "configureYakus": "配置役种",
     "allYakus": "全部",
     "yakus": "个役",
-
     "selectAll": "全选",
     "selectNone": "全不选",
     "toggleAll": "全选/全不选",
@@ -446,5 +445,15 @@
     "title": "表情包",
     "expand": "展开表情包",
     "collapse": "收起表情包"
+  },
+  "tileTooltip": {
+    "drawnLabel": "摸牌",
+    "initialHand": "配牌",
+    "claimedFrom": "鸣牌自",
+    "junNum": "第 {{jun}} 巡"
+  },
+  "discardReasons": {
+    "tedashi": "手切",
+    "tsumogiri": "摸切"
   }
 }

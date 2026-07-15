@@ -445,5 +445,15 @@
     "title": "Stickers",
     "expand": "Show Stickers",
     "collapse": "Hide Stickers"
+  },
+  "tileTooltip": {
+    "drawnLabel": "Drawn",
+    "initialHand": "Initial hand",
+    "claimedFrom": "Claimed From",
+    "junNum": "Jun {{jun}}"
+  },
+  "discardReasons": {
+    "tedashi": "Tedashi",
+    "tsumogiri": "Tsumogiri"
   }
 }

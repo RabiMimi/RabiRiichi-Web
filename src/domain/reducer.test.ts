@@ -7,6 +7,7 @@ import {
 } from './reducer';
 import type { RoomModel } from './model';
 import { createEmptyTileRegistry, getRegisteredTile } from './tileRegistry';
+import { deriveTileInfo } from './tileInfo';
 import { getRiichiSidewaysTraceId } from './river';
 import { GameLogMsg, type IServerRoomStateMsg } from '../proto';
 import type { IEventMsg } from '../proto';
@@ -199,6 +200,104 @@ describe('Reducer - Hydration', () => {
     expect(p1?.seat).toBe(1);
     expect(p1?.status).toBe(UserStatus.USER_STATUS_PLAYING);
     expect(p1?.gameState).not.toBeNull();
+  });
+
+  it('should filter out claimed tiles from river discards on hydration', () => {
+    const initialState: RoomModel = {
+      id: 1234,
+      config: null,
+      info: null,
+      players: [],
+      tileRegistry: createEmptyTileRegistry(),
+    };
+
+    const snapshot: IGameStateMsg = {
+      config: {
+        playerCount: 2,
+        pointThreshold: {
+          initialPoints: 25000,
+          riichiPoints: 1000,
+        },
+      },
+      info: {
+        round: 0,
+        dealer: 0,
+        honba: 0,
+        riichiStick: 0,
+        currentPlayer: 0,
+      },
+      wall: {
+        doras: [],
+        remaining: 70,
+        rinshanRemaining: 4,
+      },
+      players: [
+        {
+          id: 0,
+          points: 25000,
+          hand: {
+            freeTiles: [],
+            called: [],
+            // TraceId 103 was discarded, but it was claimed by Player 1 (PON)
+            discarded: [
+              {
+                traceId: 101,
+                tile: 17,
+                source: TileSource.TILE_SOURCE_DISCARD,
+                formTime: -1,
+              },
+              {
+                traceId: 103,
+                tile: 19,
+                source: TileSource.TILE_SOURCE_PON,
+                formTime: 1,
+              },
+            ],
+            jun: 1,
+          },
+        },
+        {
+          id: 1,
+          points: 25000,
+          hand: {
+            freeTiles: [
+              { traceId: 201, tile: 19 },
+              { traceId: 202, tile: 19 },
+            ],
+            called: [
+              {
+                tiles: [
+                  { traceId: 201, tile: 19 },
+                  { traceId: 202, tile: 19 },
+                  { traceId: 103, tile: 19 },
+                ],
+              },
+            ],
+            discarded: [],
+            jun: 1,
+          },
+        },
+      ],
+      currentPlayer: 0,
+    };
+
+    const nextState = hydrateFromGameState(initialState, snapshot);
+
+    expect(nextState.players).toHaveLength(2);
+    const p0 = nextState.players.find((p) => p.id === 0);
+    const p1 = nextState.players.find((p) => p.id === 1);
+
+    // Player 0's river should NOT contain the claimed tile (traceId 103)
+    const p0Discards = p0?.gameState?.hand.discarded ?? [];
+    expect(p0Discards).toHaveLength(1);
+    expect(p0Discards[0]?.traceId).toBe(101);
+
+    // Player 1's open melds should still contain it
+    const p1Called = p1?.gameState?.hand.called ?? [];
+    expect(p1Called).toHaveLength(1);
+    expect(p1Called[0]?.tiles).toBeDefined();
+    const p1CalledTiles = p1Called[0]?.tiles?.map((t) => t.traceId) ?? [];
+    expect(p1CalledTiles).toContain(103);
   });
 });
 
@@ -581,6 +680,120 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.freeTiles).toHaveLength(0);
     expect(p0?.gameState?.hand.called).toHaveLength(1);
     expect(p0?.gameState?.hand.called[0]?.tiles).toHaveLength(4);
+  });
+
+  it('keeps the claimed-from discarder on a daiminkan tile in the registry', () => {
+    // Regression: an open kan (daiminkan) claims another player's discard. Like
+    // a pon, the claimed tile must retain its discardInfo.from so the tooltip
+    // can show who it was claimed from. The server sequence is a claimTileEvent
+    // (group is the Kan) followed by kanEvent then addKanEvent.
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [
+      { traceId: 10, tile: 17 },
+      { traceId: 11, tile: 17 },
+      { traceId: 12, tile: 17 },
+    ]);
+    const discardedTile = {
+      traceId: 99,
+      tile: 17,
+      discardInfo: { from: 1, reason: 1, time: 5, jun: 3 },
+    };
+    setDiscardedTiles(state, 1, [discardedTile]);
+
+    const kanTiles = [
+      { traceId: 10, tile: 17 },
+      { traceId: 11, tile: 17 },
+      { traceId: 12, tile: 17 },
+      discardedTile,
+    ];
+
+    let next = applyEvent(state, {
+      claimTileEvent: {
+        playerId: 0,
+        tile: discardedTile,
+        group: { tiles: kanTiles },
+        reason: 4,
+      },
+    });
+    // The follow-up kanEvent re-mentions the meld; it must not wipe the
+    // claimed-from info off the registry record.
+    next = applyEvent(next, {
+      kanEvent: {
+        playerId: 0,
+        kan: { tiles: kanTiles },
+        incoming: discardedTile,
+        kanSource: TileSource.TILE_SOURCE_DAIMINKAN,
+      },
+    });
+    // AddKanEvent finalises the meld, stamping the DAIMINKAN source onto the
+    // tiles. This is what marks them as claimed.
+    const claimedKanTiles = kanTiles.map((t) => ({
+      ...t,
+      source: TileSource.TILE_SOURCE_DAIMINKAN,
+    }));
+    next = applyEvent(next, {
+      addKanEvent: {
+        playerId: 0,
+        kan: { tiles: claimedKanTiles },
+        incoming: {
+          ...discardedTile,
+          source: TileSource.TILE_SOURCE_DAIMINKAN,
+        },
+        kanSource: TileSource.TILE_SOURCE_DAIMINKAN,
+      },
+    });
+
+    const record = getRegisteredTile(next.tileRegistry, 99);
+    expect(record?.discardInfo?.from).toBe(1);
+    const facts = deriveTileInfo(record ?? {});
+    expect(facts.isClaimed).toBe(true);
+    expect(facts.discardedFrom).toBe(1);
+  });
+
+  it('keeps the claimed-from discarder on pon and chii tiles in the registry', () => {
+    // Pon and chii finalise synchronously, so the claimed tile already carries
+    // its meld source in the claimTileEvent. Confirm the tooltip facts resolve.
+    const cases = [
+      { reason: 4, source: TileSource.TILE_SOURCE_PON, tiles: [17, 17, 17] },
+      { reason: 3, source: TileSource.TILE_SOURCE_CHII, tiles: [17, 18, 19] },
+    ];
+    for (const { reason, source, tiles } of cases) {
+      const state = createInitializedRoom();
+      setFreeTiles(state, 0, [
+        { traceId: 10, tile: tiles[0]! },
+        { traceId: 11, tile: tiles[1]! },
+      ]);
+      const claimed = {
+        traceId: 99,
+        tile: tiles[2]!,
+        source,
+        discardInfo: { from: 1, reason: 1, time: 5, jun: 3 },
+      };
+      setDiscardedTiles(state, 1, [
+        { traceId: 99, tile: tiles[2]!, discardInfo: { from: 1, time: 5 } },
+      ]);
+
+      const next = applyEvent(state, {
+        claimTileEvent: {
+          playerId: 0,
+          tile: claimed,
+          group: {
+            tiles: [
+              { traceId: 10, tile: tiles[0]!, source },
+              { traceId: 11, tile: tiles[1]!, source },
+              claimed,
+            ],
+          },
+          reason,
+        },
+      });
+
+      const facts = deriveTileInfo(
+        getRegisteredTile(next.tileRegistry, 99) ?? {},
+      );
+      expect(facts.isClaimed).toBe(true);
+      expect(facts.discardedFrom).toBe(1);
+    }
   });
 
   it('should fold a surviving pending tile into the hand on the next (rinshan) draw', () => {
