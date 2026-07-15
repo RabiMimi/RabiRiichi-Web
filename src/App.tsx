@@ -24,6 +24,8 @@ import { FullscreenButton } from './ui/FullscreenButton';
 import { StickerPanel } from './ui/StickerPanel';
 import { Tooltip } from './ui/Tooltip';
 import { COMMIT_HASH } from './lib';
+import type { PlayerModel, RoomModel } from './domain/model';
+import type { ActionOption } from './domain/inquiry';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import './App.css';
 import './ui/ui.css';
@@ -58,6 +60,28 @@ function CameraController({
   return null;
 }
 
+function tryDiscardPendingTile(
+  room: RoomModel | null,
+  currentUser: PlayerModel | null,
+) {
+  if (!room || !currentUser) return;
+  const selfPlayer = room.players.find((p) => p.id === currentUser.id);
+  const pendingTile = selfPlayer?.gameState?.hand?.pendingTile;
+  if (!pendingTile) return;
+
+  const playTile = rabiriichi.currentInquiry?.mapped?.playTile;
+  if (playTile && pendingTile.traceId != null && playTile.legalTiles.includes(pendingTile.traceId)) {
+    const activeOpt: ActionOption = {
+      type: 'play-tile' as const,
+      label: '打',
+      actionIndex: playTile.actionIndex,
+      legalTiles: playTile.legalTiles,
+      ...(playTile.candidates ? { candidates: playTile.candidates } : {}),
+    };
+    void rabiriichi.submitInquiryResponse(activeOpt, pendingTile.traceId);
+  }
+}
+
 function App(): React.JSX.Element {
   const { t } = useTranslation();
   const connectionStatus = useConnectionStatus();
@@ -66,6 +90,21 @@ function App(): React.JSX.Element {
   const isCameraLocked = useIsCameraLocked();
   const isReplay = useIsReplay();
   const controlsRef = useRef<OrbitControlsImpl>(null);
+  const lastMissedRef = useRef<number>(0);
+
+  const handlePointerMissed = () => {
+    // Clear selection
+    rabiriichi.selectTile(null);
+
+    // Double click/tap check
+    const now = Date.now();
+    const diff = now - lastMissedRef.current;
+    lastMissedRef.current = now;
+
+    if (diff < 300) {
+      tryDiscardPendingTile(room, currentUser);
+    }
+  };
 
   useEffect(() => {
     void preloadAllTileImages();
@@ -132,7 +171,7 @@ function App(): React.JSX.Element {
       <Canvas
         camera={{ position: [0, 3.0, 3.4], fov: 50 }}
         style={{ zIndex: 1 }}
-        onPointerMissed={() => rabiriichi.selectTile(null)}
+        onPointerMissed={handlePointerMissed}
       >
         <CameraController controlsRef={controlsRef} />
         <GameTable />
