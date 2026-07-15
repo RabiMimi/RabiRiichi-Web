@@ -3897,7 +3897,9 @@
   backdrop-filter: blur(8px);
   height: 24px;
   box-sizing: border-box;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
   --tile-tooltip-y-offset: -36px;
   white-space: nowrap;
   width: max-content;

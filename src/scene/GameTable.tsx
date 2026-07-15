@@ -29,7 +29,10 @@ function TouchHoverHandler(): null {
       raycasterRef.current.setFromCamera(mouseRef.current, camera);
 
       // Perform intersection check
-      const intersects = raycasterRef.current.intersectObjects(scene.children, true);
+      const intersects = raycasterRef.current.intersectObjects(
+        scene.children,
+        true,
+      );
       let foundTraceId: number | null = null;
 
       for (const hit of intersects) {

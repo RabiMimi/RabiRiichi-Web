@@ -70,7 +70,11 @@ function tryDiscardPendingTile(
   if (!pendingTile) return;
 
   const playTile = rabiriichi.currentInquiry?.mapped?.playTile;
-  if (playTile && pendingTile.traceId != null && playTile.legalTiles.includes(pendingTile.traceId)) {
+  if (
+    playTile &&
+    pendingTile.traceId != null &&
+    playTile.legalTiles.includes(pendingTile.traceId)
+  ) {
     const activeOpt: ActionOption = {
       type: 'play-tile' as const,
       label: '打',

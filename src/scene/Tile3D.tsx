@@ -223,9 +223,10 @@ export function Tile3D({
   const hoveredTileTraceId = useHoveredTileTraceId();
   const isSelected = selectedTileTraceId === traceId;
 
-  const showTooltip = traceId !== undefined && (
-    hoveredTileTraceId === traceId || (hoveredTileTraceId === null && selectedTileTraceId === traceId)
-  );
+  const showTooltip =
+    traceId !== undefined &&
+    (hoveredTileTraceId === traceId ||
+      (hoveredTileTraceId === null && selectedTileTraceId === traceId));
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef<number>(0);
   const dragStartY = useRef<number>(0);
