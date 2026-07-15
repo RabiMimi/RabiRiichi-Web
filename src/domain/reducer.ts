@@ -166,7 +166,12 @@ export function hydrateFromGameState(
           resolveTileFace(tileRegistry, t),
         ),
         called: handState?.called ?? [],
-        discarded: handState?.discarded ?? [],
+        discarded: (handState?.discarded ?? [])
+          .filter(
+            (t) =>
+              t.formTime === undefined || t.formTime === null || t.formTime < 0,
+          )
+          .map((t) => resolveTileFace(tileRegistry, t)),
         pendingTile: handState?.pendingTile ?? null,
         nukiDora: handState?.nukiDora ?? [],
       },
