@@ -66,10 +66,10 @@ function tryDiscardPendingTile(
 ) {
   if (!room || !currentUser) return;
   const selfPlayer = room.players.find((p) => p.id === currentUser.id);
-  const pendingTile = selfPlayer?.gameState?.hand?.pendingTile;
+  const pendingTile = selfPlayer?.gameState?.hand.pendingTile;
   if (!pendingTile) return;
 
-  const playTile = rabiriichi.currentInquiry?.mapped?.playTile;
+  const playTile = rabiriichi.currentInquiry?.mapped.playTile;
   if (
     playTile &&
     pendingTile.traceId != null &&

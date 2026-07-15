@@ -113,6 +113,7 @@ export function TileTooltip(): React.JSX.Element | null {
         return '#10b981'; // Green for Bamboos
       case TileSuit.Z:
         return '#8b5cf6'; // Purple for Honors
+      case TileSuit.Invalid:
       default:
         return '#6b7280';
     }

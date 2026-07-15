@@ -39,10 +39,11 @@ function TouchHoverHandler(): null {
         // Walk up to find the group with userData.traceId
         let curr: THREE.Object3D | null = hit.object;
         while (curr) {
-          if (curr.userData && curr.userData.traceId !== undefined) {
+          const traceId = curr.userData.traceId as unknown;
+          if (typeof traceId === 'number') {
             // Note: "Note this doesn't apply to hand tiles."
             if (curr.userData.area !== 'hand') {
-              foundTraceId = curr.userData.traceId;
+              foundTraceId = traceId;
             }
             break;
           }
