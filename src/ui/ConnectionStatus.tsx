@@ -75,7 +75,7 @@ export function ConnectionStatusIndicator(): React.JSX.Element {
   const ping = usePing();
 
   return (
-    <div className="pointer-events-auto absolute top-5 right-5 z-[50] flex items-center gap-2 rounded-lg border-[1.5px] border-[#444] bg-[#141414]/85 px-3 py-2 text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+    <div className="flex items-center gap-2 rounded-lg border-[1.5px] border-[#444] bg-[#141414]/85 px-3 py-2 text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
       <span className="font-mono text-[0.9rem] font-bold">
         {connStatus === 'connecting'
           ? 'Connecting...'

@@ -6,6 +6,7 @@ import { YAKUS } from '../domain/yakus';
 import { getWindKey, type RoomModel } from '../domain/model';
 import { UserStatus } from '../proto';
 import { CopyGameIdButton } from './CopyGameIdButton';
+import { Button } from './Button';
 import { MODAL } from './styles';
 import {
   RENCHAN_POLICIES,
@@ -131,35 +132,50 @@ export function GameInfoModal({
         className={`${MODAL.card} ${MODAL.cardDefaultLook}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={MODAL.header}>
-          <h3 className={MODAL.title}>{t('hud.gameInfo')}</h3>
+        {/* Header */}
+        <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-1">
+          <div className="flex items-center gap-5">
+            <h3 className="m-0 text-[1.1rem] font-bold text-[#ff7a99] whitespace-nowrap">
+              {t('hud.gameInfo')}
+            </h3>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                className={`bg-transparent border-none text-[0.85rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                  activeTab === 'info'
+                    ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                    : 'text-[#888] hover:text-white hover:bg-[#333]'
+                }`}
+                onClick={() => setActiveTab('info')}
+              >
+                {t('hud.tabLiveInfo')}
+              </button>
+              <button
+                type="button"
+                className={`bg-transparent border-none text-[0.85rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                  activeTab === 'config'
+                    ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                    : 'text-[#888] hover:text-white hover:bg-[#333]'
+                }`}
+                onClick={() => setActiveTab('config')}
+              >
+                {t('hud.tabConfig')}
+              </button>
+              <button
+                type="button"
+                className={`bg-transparent border-none text-[0.85rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                  activeTab === 'yaku'
+                    ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                    : 'text-[#888] hover:text-white hover:bg-[#333]'
+                }`}
+                onClick={() => setActiveTab('yaku')}
+              >
+                {t('hud.tabYakuYama')}
+              </button>
+            </div>
+          </div>
           <button type="button" className={MODAL.closeButton} onClick={onClose}>
             &times;
-          </button>
-        </div>
-
-        {/* Tab Buttons */}
-        <div className="game-info-tabs">
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'info' ? 'active' : ''}`}
-            onClick={() => setActiveTab('info')}
-          >
-            {t('hud.tabLiveInfo')}
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'config' ? 'active' : ''}`}
-            onClick={() => setActiveTab('config')}
-          >
-            {t('hud.tabConfig')}
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'yaku' ? 'active' : ''}`}
-            onClick={() => setActiveTab('yaku')}
-          >
-            {t('hud.tabYakuYama')}
           </button>
         </div>
 
@@ -533,13 +549,9 @@ export function GameInfoModal({
         </div>
 
         <div className={MODAL.footer}>
-          <button
-            type="button"
-            className="ui-button primary-button"
-            onClick={onClose}
-          >
+          <Button type="button" onClick={onClose}>
             {t('result.confirm')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

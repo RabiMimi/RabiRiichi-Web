@@ -8,6 +8,8 @@ import {
   STORAGE_KEY_SERVER_SETTINGS,
   type ServerSettings,
 } from '../domain/constants';
+import { Button } from './Button';
+import { SCREEN, FORM } from './styles';
 
 export function ConnectScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
@@ -71,66 +73,47 @@ export function ConnectScreen(): React.JSX.Element {
   const isConnecting = connectionStatus === 'connecting';
 
   return (
-    <div className="ui-screen connect-screen">
-      <div className="ui-card connect-card" style={{ position: 'relative' }}>
-        <div
-          style={{
-            position: 'absolute',
-            top: '8px',
-            left: '12px',
-            fontSize: '0.8rem',
-            color: '#666',
-          }}
-        >
+    <div className={SCREEN.base}>
+      <div className={`${SCREEN.card} relative`}>
+        <div className="absolute top-2 left-3 text-[0.8rem] text-[#666]">
           v{CLIENT_VERSION}
         </div>
         {/* Title row with language switcher */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '8px',
-          }}
-        >
-          <h1 className="ui-title" style={{ margin: 0 }}>
+        <div className="flex justify-between items-center mb-2">
+          <h1 className={SCREEN.title} style={{ margin: 0 }}>
             RabiRiichi
           </h1>
           <select
             value={i18n.language}
             onChange={(e) => void i18n.changeLanguage(e.target.value)}
-            className="language-selector"
-            style={{
-              padding: '4px 8px',
-              borderRadius: '4px',
-              backgroundColor: '#1a1a1a',
-              color: '#fff',
-              border: '1px solid #555',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-            }}
+            className="px-2 py-1 rounded bg-[#1a1a1a] text-white border border-[#555] cursor-pointer text-[0.85rem] outline-none focus:border-[#ff7a99]"
           >
             <option value="zhs">简体中文</option>
             <option value="en">English</option>
             <option value="ja">日本語</option>
           </select>
         </div>
-        <p className="ui-subtitle">{t('connect.subtitle')}</p>
+        <p className={SCREEN.subtitle}>{t('connect.subtitle')}</p>
 
-        <form onSubmit={onSubmit} className="ui-form">
-          <div className="form-group">
-            <label htmlFor="server-select">{t('connect.serverAddress')}</label>
+        <form onSubmit={onSubmit} className={FORM.form}>
+          <div className={FORM.group}>
+            <label htmlFor="server-select" className={FORM.label}>
+              {t('connect.serverAddress')}
+            </label>
             <ServerSelector
               onTargetUrlChange={setTargetUrl}
               isConnecting={isConnecting}
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="nickname">{t('connect.nickname')}</label>
+          <div className={FORM.group}>
+            <label htmlFor="nickname" className={FORM.label}>
+              {t('connect.nickname')}
+            </label>
             <input
               id="nickname"
               type="text"
+              className={FORM.input}
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               disabled={isConnecting}
@@ -139,15 +122,11 @@ export function ConnectScreen(): React.JSX.Element {
             />
           </div>
 
-          {error && <div className="ui-error">{error}</div>}
+          {error && <div className={FORM.error}>{error}</div>}
 
-          <button
-            type="submit"
-            className="ui-button primary-button"
-            disabled={isConnecting}
-          >
+          <Button type="submit" disabled={isConnecting}>
             {isConnecting ? t('connect.connecting') : t('connect.connect')}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

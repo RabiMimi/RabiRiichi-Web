@@ -7,6 +7,7 @@ import { deadWallRinshanCount, NUM_DORA } from '../domain/model';
 import { getCurrentRoundEvents } from '../replay/replayDriver';
 import type { IGameTileMsg } from '../proto';
 import { Tooltip } from './Tooltip';
+import { Button } from './Button';
 import { MODAL } from './styles';
 
 interface InitialWallModalProps {
@@ -203,13 +204,9 @@ export function InitialWallModal({
         </div>
 
         <div className={MODAL.footer}>
-          <button
-            type="button"
-            className="ui-button primary-button"
-            onClick={onClose}
-          >
+          <Button type="button" onClick={onClose}>
             {t('result.confirm')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

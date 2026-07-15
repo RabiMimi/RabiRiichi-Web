@@ -45,59 +45,25 @@ function ScoringOptionGroup({
 }: ScoringOptionGroupProps) {
   const { t } = useTranslation();
   return (
-    <div className="policy-group" style={{ fontSize: '0.75rem' }}>
-      <h4
-        style={{
-          margin: '0 0 4px 0',
-          fontSize: '0.8rem',
-          color: '#ff7a99',
-        }}
-      >
+    <div className="flex flex-col gap-1 text-[0.75rem]">
+      <h4 className="m-0 mb-1 text-[0.8rem] text-[#ff7a99] font-bold">
         {t('advanced.scoringOption')}
       </h4>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '3px',
-        }}
-      >
+      <div className="flex flex-col gap-1">
         {/* 切上满贯 */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
+        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
           <input
             type="checkbox"
             checked={(scoringOption & 1) !== 0}
             onChange={() => setScoringOption(scoringOption ^ 1)}
             disabled={isLoading}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
+            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
           />
           {t('advanced.scoring.kiriageMangan')}
         </label>
 
         {/* 青天井 (Virtual checkbox, checked when Yakuman bit 2 is 0) */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
+        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
           <input
             type="checkbox"
             checked={(scoringOption & 2) === 0}
@@ -111,26 +77,13 @@ function ScoringOptionGroup({
               }
             }}
             disabled={isLoading}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
+            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
           />
           {t('advanced.scoring.aotenjou')}
         </label>
 
         {/* 役满 (Bit 2) */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
+        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
           <input
             type="checkbox"
             checked={(scoringOption & 2) !== 0}
@@ -143,26 +96,13 @@ function ScoringOptionGroup({
               }
             }}
             disabled={isLoading}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
+            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
           />
           {t('advanced.scoring.yakuman')}
         </label>
 
         {/* 多倍役满 (Bit 4) */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
+        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
           <input
             type="checkbox"
             checked={(scoringOption & 4) !== 0}
@@ -175,26 +115,13 @@ function ScoringOptionGroup({
               }
             }}
             disabled={isLoading || (scoringOption & 2) === 0}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
+            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
           />
           {t('advanced.scoring.multipleYakuman')}
         </label>
 
         {/* 累计役满 (Bit 8) */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
+        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
           <input
             type="checkbox"
             checked={(scoringOption & 8) !== 0}
@@ -207,11 +134,7 @@ function ScoringOptionGroup({
               }
             }}
             disabled={isLoading || (scoringOption & 2) === 0}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
+            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
           />
           {t('advanced.scoring.kazoeYakuman')}
         </label>
@@ -243,7 +166,7 @@ export function AdvancedSettingsTab({
 }: AdvancedSettingsTabProps) {
   const { t } = useTranslation();
   return (
-    <div className="advanced-settings-section">
+    <div className="max-h-[250px] overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 text-left pr-1">
       <PolicyCheckboxGroup
         title={t('advanced.renchanPolicy')}
         options={RENCHAN_POLICIES}
@@ -314,37 +237,15 @@ export function AdvancedSettingsTab({
       />
 
       {/* Points Deduction Policy */}
-      <div
-        className="policy-group"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-        }}
-      >
-        <h4
-          style={{
-            margin: '0 0 4px 0',
-            fontSize: '0.8rem',
-            color: '#ff7a99',
-          }}
-        >
+      <div className="flex flex-col gap-1 text-[0.75rem]">
+        <h4 className="m-0 mb-1 text-[0.8rem] text-[#ff7a99] font-bold">
           {t('advanced.pointsDeductionPolicy')}
         </h4>
         <select
           value={pointsDeductionPolicy}
           onChange={(e) => setPointsDeductionPolicy(Number(e.target.value))}
           disabled={isLoading}
-          style={{
-            padding: '6px 8px',
-            backgroundColor: '#111',
-            color: '#ccc',
-            border: '1px solid #333',
-            borderRadius: '4px',
-            fontSize: '0.75rem',
-            width: '100%',
-            boxSizing: 'border-box',
-          }}
+          className="w-full rounded border border-[#333] bg-[#111] px-2 py-1.5 text-[0.75rem] text-[#ccc] focus:outline-none focus:border-[#ff7a99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer h-7"
         >
           <option value={0}>{t('advanced.deduction.alwaysAllow')}</option>
           <option value={1}>{t('advanced.deduction.sufficientPoints')}</option>

@@ -19,6 +19,7 @@ import {
   type VoiceLineConfig,
 } from '../domain/character';
 import { soundManager } from '../lib/sound';
+import { FORM, MODAL } from './styles';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -106,53 +107,58 @@ export function SettingsModal({
   };
 
   return (
-    <div className="settings-modal-backdrop" onClick={onClose}>
+    <div className={MODAL.overlay} onClick={onClose}>
       <div
-        className="settings-modal-container"
+        className={`${MODAL.card} w-[95%] max-w-[900px] border border-[#ff7a99]/30 bg-[#121c32]/95 p-3.5 sm:p-5`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="settings-header">
-          <div className="settings-header-left">
-            <h2>{t('settings.title', 'System Settings')}</h2>
-            <div className="settings-tab-bar-inline">
+        <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-1">
+          <div className="flex items-center gap-5">
+            <h2 className="m-0 text-[1.1rem] font-bold text-[#ff7a99] whitespace-nowrap">
+              {t('settings.title', 'System Settings')}
+            </h2>
+            <div className="flex gap-1">
               <button
                 type="button"
-                className={`settings-tab-btn ${activeTab === 'visuals' ? 'active' : ''}`}
+                className={`bg-transparent border-none text-[0.85rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                  activeTab === 'visuals'
+                    ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                    : 'text-[#888] hover:text-white hover:bg-[#333]'
+                }`}
                 onClick={() => setActiveTab('visuals')}
               >
                 {t('settings.visualsTab', 'Visuals')}
               </button>
               <button
                 type="button"
-                className={`settings-tab-btn ${activeTab === 'sounds' ? 'active' : ''}`}
+                className={`bg-transparent border-none text-[0.85rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                  activeTab === 'sounds'
+                    ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                    : 'text-[#888] hover:text-white hover:bg-[#333]'
+                }`}
                 onClick={() => setActiveTab('sounds')}
               >
                 {t('settings.soundsTab', 'Sounds')}
               </button>
             </div>
           </div>
-          <button
-            type="button"
-            className="settings-close-btn"
-            onClick={onClose}
-          >
+          <button type="button" className={MODAL.closeButton} onClick={onClose}>
             ✕
           </button>
         </div>
 
         {/* Content */}
-        <div className="settings-content-wrapper">
+        <div className="flex-grow flex flex-col overflow-hidden min-h-0">
           {activeTab === 'visuals' && (
-            <div className="settings-visuals-tab">
-              {/* Left Column - Portrait & Character Switcher */}
-              <div className="settings-char-column">
-                <div className="settings-section-title">
+            <div className="flex flex-1 gap-4 overflow-hidden min-h-0 sm:flex-row flex-col">
+              {/* Column 1: Selector & Portrait */}
+              <div className="w-full sm:w-[28%] lg:w-[32%] flex flex-col gap-2 shrink-0">
+                <div className="text-[0.75rem] font-extrabold uppercase tracking-wider text-white/50 text-left">
                   {t('settings.characterSelector', 'Active Character')}
                 </div>
-
                 <select
-                  className="settings-char-select"
+                  className={`${FORM.input} w-full text-[0.88rem] py-1 px-2 h-8`}
                   value={activeCharacterId}
                   disabled={inGame}
                   onChange={(e) =>
@@ -167,7 +173,7 @@ export function SettingsModal({
                 </select>
 
                 {inGame && (
-                  <div className="settings-warning-text">
+                  <div className="text-[0.7rem] text-[#ff6666] italic text-left -mt-1">
                     {t(
                       'settings.inGameWarning',
                       'Active character cannot be changed in-game.',
@@ -175,30 +181,30 @@ export function SettingsModal({
                   </div>
                 )}
 
-                <div className="settings-char-portrait-container">
+                <div className="flex-grow bg-[#141414]/50 border border-white/5 rounded-lg overflow-hidden flex justify-center items-center relative aspect-[3/4]">
                   <img
                     src={activeCharacter.visualUrl}
                     alt={t(`character.${activeCharacter.id}.name`)}
-                    className="settings-char-portrait"
+                    className="max-w-full max-h-full object-contain"
                   />
                   {(activeCharacter.illustration ?? activeCharacter.cv) && (
-                    <div className="settings-char-credits-container">
+                    <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col gap-1">
                       {activeCharacter.illustration && (
-                        <div className="settings-credit-capsule">
-                          <span className="credit-label">
+                        <div className="flex items-center bg-[#0a0c12]/85 border border-white/10 rounded-full px-2 py-0.5 text-[0.62rem] w-fit">
+                          <span className="text-[#fbbf24] font-bold mr-1 border-r border-white/20 pr-1 uppercase">
                             {t('character.credits.illustration', 'Artist')}
                           </span>
-                          <span className="credit-value">
+                          <span className="text-[#f3f4f6] font-medium">
                             {activeCharacter.illustration}
                           </span>
                         </div>
                       )}
                       {activeCharacter.cv && (
-                        <div className="settings-credit-capsule">
-                          <span className="credit-label">
+                        <div className="flex items-center bg-[#0a0c12]/85 border border-white/10 rounded-full px-2 py-0.5 text-[0.62rem] w-fit">
+                          <span className="text-[#fbbf24] font-bold mr-1 border-r border-white/20 pr-1 uppercase">
                             {t('character.credits.cv', 'CV')}
                           </span>
-                          <span className="credit-value">
+                          <span className="text-[#f3f4f6] font-medium">
                             {activeCharacter.cv}
                           </span>
                         </div>
@@ -208,35 +214,39 @@ export function SettingsModal({
                 </div>
               </div>
 
-              {/* Right Column - Stickers and Voice lines */}
-              <div className="settings-assets-column">
+              {/* Stacked columns wrapper (sm: side-by-side, lg: stacked vertically) */}
+              <div className="flex-grow flex flex-col sm:flex-row lg:flex-col gap-4 min-h-0 overflow-hidden">
                 {/* Voice Lines */}
-                <div className="settings-voice-section">
-                  <div className="settings-section-title">
+                <div className="flex-grow flex flex-col gap-2 min-h-0 lg:h-[220px]">
+                  <div className="text-[0.75rem] font-extrabold uppercase tracking-wider text-white/50 text-left">
                     {t('settings.voicelines', 'Voice Lines')}
                   </div>
-                  <div className="settings-scroll-box voice-list">
+                  <div className="flex-grow flex flex-col gap-2.5 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg">
                     {voiceGroups.map((group) => (
-                      <div key={group.category} className="voice-group">
-                        <div className="voice-group-header">
+                      <div key={group.category} className="flex flex-col gap-1">
+                        <div className="text-[0.72rem] font-bold text-white/40 border-b border-white/5 pb-0.5 text-left">
                           {t(`settings.voiceCategories.${group.category}`)}
                         </div>
-                        <div className="voice-group-grid">
+                        <div className="grid grid-cols-2 gap-1">
                           {group.lines.map((v) => {
                             const isPlaying = playingVoiceId === v.id;
                             return (
                               <button
                                 key={v.id}
                                 type="button"
-                                className={`settings-voice-item-btn ${isPlaying ? 'playing' : ''}`}
+                                className={`flex items-center justify-start gap-1 border border-none rounded px-1.5 py-0.5 text-[0.7rem] font-medium text-left cursor-pointer transition-all duration-150 outline-none truncate h-6 ${
+                                  isPlaying
+                                    ? 'bg-[#fbbf24]/[0.12] border-[#fbbf24] text-[#fbbf24]'
+                                    : 'bg-white/[0.03] border-white/[0.05] text-[#d1d5db] hover:bg-[#fbbf24]/[0.08] hover:text-[#fbbf24]'
+                                }`}
                                 onClick={() =>
                                   handlePlayVoice(v.id, v.audioUrl)
                                 }
                               >
-                                <span className="voice-play-icon">
+                                <span className="voice-play-icon shrink-0">
                                   {isPlaying ? <StopIcon /> : <PlayIcon />}
                                 </span>
-                                <span>
+                                <span className="truncate">
                                   {t(
                                     `character.${activeCharacter.id}.voices.${v.id}`,
                                   )}
@@ -251,19 +261,20 @@ export function SettingsModal({
                 </div>
 
                 {/* Stickers */}
-                <div className="settings-stickers-section">
-                  <div className="settings-section-title">
-                    {t('settings.stickers', 'Stickers Preview')}
+                <div className="w-full sm:w-[32%] lg:w-full flex flex-col gap-2 min-h-0 lg:flex-grow">
+                  <div className="text-[0.75rem] font-extrabold uppercase tracking-wider text-white/50 text-left">
+                    {t('settings.stickers', 'Stickers')}
                   </div>
-                  <div className="settings-scroll-box stickers-grid">
+                  <div className="flex-grow grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-8 gap-1 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg content-start">
                     {activeCharacter.stickers.map((sName) => (
                       <div
                         key={sName}
-                        className="settings-sticker-preview-item"
+                        className="aspect-square bg-white/[0.02] border border-white/[0.04] rounded flex items-center justify-center p-0.5 hover:border-[#ff7a99]/40 hover:bg-white/[0.05] transition-all"
                       >
                         <img
                           src={`${activeCharacter.stickersDir}/${sName}`}
                           alt={sName}
+                          className="max-w-full max-h-full object-contain"
                         />
                       </div>
                     ))}
@@ -274,16 +285,20 @@ export function SettingsModal({
           )}
 
           {activeTab === 'sounds' && (
-            <div className="settings-sounds-tab">
+            <div className="flex flex-col gap-2.5 p-3 sm:p-4 max-w-[480px] w-full mx-auto min-h-0 overflow-y-auto">
               {/* Global Mute Toggle */}
-              <div className="settings-sound-row global-mute-row">
-                <span className="sound-row-label font-bold text-amber">
+              <div className="flex justify-start items-center gap-3 py-1.5 px-3 rounded-lg border border-white/[0.04] bg-white/[0.02]">
+                <span className="text-[0.85rem] font-bold text-[#fbbf24] w-[140px] shrink-0 text-left">
                   {t('settings.globalMute', 'Mute All')}
                 </span>
                 <div className="sound-row-controls">
                   <button
                     type="button"
-                    className={`sound-mute-btn ${muteAll ? 'muted' : ''}`}
+                    className={`inline-flex items-center justify-center w-7 h-7 border text-white cursor-pointer text-[0.95rem] rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
+                      muteAll
+                        ? 'bg-red-500/[0.06] border-red-500/20'
+                        : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
+                    }`}
                     onClick={() => updateClientSettings({ muteAll: !muteAll })}
                   >
                     {muteAll ? '🔇' : '🔊'}
@@ -291,19 +306,23 @@ export function SettingsModal({
                 </div>
               </div>
 
-              <hr className="settings-divider" />
-
               {/* BGM Vol */}
               <div
-                className={`settings-sound-row ${muteAll ? 'disabled' : ''}`}
+                className={`flex justify-start items-center gap-3 py-1 px-1 transition-opacity duration-200 ${
+                  muteAll ? 'opacity-40 pointer-events-none' : ''
+                }`}
               >
-                <div className="sound-row-label">
+                <div className="text-[0.85rem] font-semibold text-[#e5e7eb] w-[140px] shrink-0 text-left">
                   {t('settings.volumeBGM', 'BGM Volume')}
                 </div>
-                <div className="sound-row-controls">
+                <div className="flex items-center gap-2.5 flex-grow justify-start">
                   <button
                     type="button"
-                    className={`sound-mute-btn ${muteBGM || muteAll ? 'muted' : ''}`}
+                    className={`inline-flex items-center justify-center w-6.5 h-6.5 border text-white cursor-pointer text-[0.85rem] rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
+                      muteBGM || muteAll
+                        ? 'bg-red-500/[0.06] border-red-500/20'
+                        : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
+                    }`}
                     disabled={muteAll}
                     onClick={() => updateClientSettings({ muteBGM: !muteBGM })}
                   >
@@ -321,9 +340,9 @@ export function SettingsModal({
                         volumeBGM: parseFloat(e.target.value),
                       })
                     }
-                    className="settings-volume-slider"
+                    className="settings-volume-slider flex-1 h-1 bg-white/15 rounded-lg outline-none appearance-none cursor-pointer"
                   />
-                  <span className="volume-percent-text">
+                  <span className="text-[0.8rem] font-bold w-10 text-[#888] shrink-0 text-right">
                     {muteBGM || muteAll
                       ? '0%'
                       : `${Math.round(volumeBGM * 100)}%`}
@@ -333,15 +352,21 @@ export function SettingsModal({
 
               {/* SE Vol */}
               <div
-                className={`settings-sound-row ${muteAll ? 'disabled' : ''}`}
+                className={`flex justify-start items-center gap-3 py-1 px-1 transition-opacity duration-200 ${
+                  muteAll ? 'opacity-40 pointer-events-none' : ''
+                }`}
               >
-                <div className="sound-row-label">
-                  {t('settings.volumeSE', 'Sound Effects Volume')}
+                <div className="text-[0.85rem] font-semibold text-[#e5e7eb] w-[140px] shrink-0 text-left">
+                  {t('settings.volumeSE', 'Sound Effects')}
                 </div>
-                <div className="sound-row-controls">
+                <div className="flex items-center gap-2.5 flex-grow justify-start">
                   <button
                     type="button"
-                    className={`sound-mute-btn ${muteSE || muteAll ? 'muted' : ''}`}
+                    className={`inline-flex items-center justify-center w-6.5 h-6.5 border text-white cursor-pointer text-[0.85rem] rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
+                      muteSE || muteAll
+                        ? 'bg-red-500/[0.06] border-red-500/20'
+                        : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
+                    }`}
                     disabled={muteAll}
                     onClick={() => updateClientSettings({ muteSE: !muteSE })}
                   >
@@ -359,9 +384,9 @@ export function SettingsModal({
                         volumeSE: parseFloat(e.target.value),
                       })
                     }
-                    className="settings-volume-slider"
+                    className="settings-volume-slider flex-1 h-1 bg-white/15 rounded-lg outline-none appearance-none cursor-pointer"
                   />
-                  <span className="volume-percent-text">
+                  <span className="text-[0.8rem] font-bold w-10 text-[#888] shrink-0 text-right">
                     {muteSE || muteAll
                       ? '0%'
                       : `${Math.round(volumeSE * 100)}%`}
@@ -371,15 +396,21 @@ export function SettingsModal({
 
               {/* Voice Vol */}
               <div
-                className={`settings-sound-row ${muteAll ? 'disabled' : ''}`}
+                className={`flex justify-start items-center gap-3 py-1 px-1 transition-opacity duration-200 ${
+                  muteAll ? 'opacity-40 pointer-events-none' : ''
+                }`}
               >
-                <div className="sound-row-label">
+                <div className="text-[0.85rem] font-semibold text-[#e5e7eb] w-[140px] shrink-0 text-left">
                   {t('settings.volumeVoice', 'Voice Volume')}
                 </div>
-                <div className="sound-row-controls">
+                <div className="flex items-center gap-2.5 flex-grow justify-start">
                   <button
                     type="button"
-                    className={`sound-mute-btn ${muteVoice || muteAll ? 'muted' : ''}`}
+                    className={`inline-flex items-center justify-center w-6.5 h-6.5 border text-[#e5e7eb] cursor-pointer text-[0.85rem] rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
+                      muteVoice || muteAll
+                        ? 'bg-red-500/[0.06] border-red-500/20'
+                        : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
+                    }`}
                     disabled={muteAll}
                     onClick={() =>
                       updateClientSettings({ muteVoice: !muteVoice })
@@ -399,9 +430,9 @@ export function SettingsModal({
                         volumeVoice: parseFloat(e.target.value),
                       })
                     }
-                    className="settings-volume-slider"
+                    className="settings-volume-slider flex-1 h-1 bg-white/15 rounded-lg outline-none appearance-none cursor-pointer"
                   />
-                  <span className="volume-percent-text">
+                  <span className="text-[0.8rem] font-bold w-10 text-[#888] shrink-0 text-right">
                     {muteVoice || muteAll
                       ? '0%'
                       : `${Math.round(volumeVoice * 100)}%`}

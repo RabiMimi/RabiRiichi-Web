@@ -2,6 +2,7 @@ import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { AiType } from '../proto';
+import { Button } from './Button';
 
 interface AddAiDropdownProps {
   disabled: boolean;
@@ -82,14 +83,15 @@ export function AddAiDropdown({
 
   return (
     <div className="add-ai-container">
-      <button
+      <Button
         ref={buttonRef}
-        className="ui-button mini-button add-ai-btn"
+        size="compact"
+        className="add-ai-btn"
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={disabled}
       >
         {t('room.addAi')} <span className="arrow">▼</span>
-      </button>
+      </Button>
       {isOpen &&
         position &&
         createPortal(

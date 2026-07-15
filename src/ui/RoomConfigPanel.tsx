@@ -43,6 +43,7 @@ import { GameSettingsTab } from './GameSettingsTab';
 import { PointsSettingsTab } from './PointsSettingsTab';
 import { YakuSettingsTab } from './YakuSettingsTab';
 import { AdvancedSettingsTab } from './AdvancedSettingsTab';
+import { Button } from './Button';
 
 interface SavedRoomConfig {
   playerCount?: number;
@@ -531,34 +532,52 @@ export function RoomConfigPanel({
     ryuukyokuPoints1Error !== null;
 
   return (
-    <div className="room-config-panel">
-      <div className="room-config-header">
-        <h3>{t('lobby.roomSettings')}</h3>
-        <div className="room-config-tabs">
+    <div className="bg-[#202020] border border-[#444] rounded-lg p-4 mb-3 flex flex-col gap-3 box-border">
+      <div className="flex justify-between items-center border-b border-[#333] pb-1 mb-3">
+        <h3 className="m-0 text-[1.1rem] text-[#ff7a99] font-bold text-left">
+          {t('lobby.roomSettings')}
+        </h3>
+        <div className="flex gap-1">
           <button
             type="button"
-            className={`tab-btn ${activeTab === 'game' ? 'active' : ''}`}
+            className={`bg-transparent border-none text-[0.9rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
+              activeTab === 'game'
+                ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                : 'text-[#888] hover:text-white hover:bg-[#333]'
+            }`}
             onClick={() => setActiveTab('game')}
           >
             {t('lobby.gameSettings')}
           </button>
           <button
             type="button"
-            className={`tab-btn ${activeTab === 'points' ? 'active' : ''}`}
+            className={`bg-transparent border-none text-[0.9rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
+              activeTab === 'points'
+                ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                : 'text-[#888] hover:text-white hover:bg-[#333]'
+            }`}
             onClick={() => setActiveTab('points')}
           >
             {t('lobby.pointsSettings')}
           </button>
           <button
             type="button"
-            className={`tab-btn ${activeTab === 'yaku' ? 'active' : ''}`}
+            className={`bg-transparent border-none text-[0.9rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
+              activeTab === 'yaku'
+                ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                : 'text-[#888] hover:text-white hover:bg-[#333]'
+            }`}
             onClick={() => setActiveTab('yaku')}
           >
             {t('lobby.configureYakus')}
           </button>
           <button
             type="button"
-            className={`tab-btn ${activeTab === 'advanced' ? 'active' : ''}`}
+            className={`bg-transparent border-none text-[0.9rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
+              activeTab === 'advanced'
+                ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                : 'text-[#888] hover:text-white hover:bg-[#333]'
+            }`}
             onClick={() => setActiveTab('advanced')}
           >
             {t('lobby.advancedSettings')}
@@ -566,7 +585,7 @@ export function RoomConfigPanel({
         </div>
       </div>
 
-      <div className="room-config-tab-content">
+      <div className="flex-grow">
         {activeTab === 'game' && (
           <GameSettingsTab
             isLoading={isLoading}
@@ -658,18 +677,14 @@ export function RoomConfigPanel({
         )}
       </div>
 
-      <div
-        className="room-config-actions"
-        style={{ display: 'flex', gap: '12px', marginTop: '16px' }}
-      >
-        <button
+      <div className="flex gap-3 mt-4">
+        <Button
           onClick={handleCreateClick}
-          className="ui-button primary-button"
           disabled={isLoading || isFormInvalid}
-          style={{ flex: 1 }}
+          className="flex-grow"
         >
           {t('lobby.createRoom')}
-        </button>
+        </Button>
       </div>
     </div>
   );

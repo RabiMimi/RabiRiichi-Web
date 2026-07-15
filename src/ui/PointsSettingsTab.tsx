@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { FORM } from './styles';
 
 interface PointsSettingsTabProps {
   isLoading: boolean;
@@ -65,10 +66,12 @@ export function PointsSettingsTab({
 }: PointsSettingsTabProps) {
   const { t } = useTranslation();
   return (
-    <div className="basic-settings-grid">
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="initial-points">{t('lobby.initialPoints')}</label>
+    <div className="grid grid-cols-1 min-[480px]:grid-cols-2 min-[768px]:grid-cols-3 gap-x-4 gap-y-2.5 w-full box-border">
+      <div className={FORM.groupInlineWrapper}>
+        <div className={FORM.groupInline}>
+          <label htmlFor="initial-points" className={FORM.labelInline}>
+            {t('lobby.initialPoints')}
+          </label>
           <input
             id="initial-points"
             type="text"
@@ -80,16 +83,19 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="25000"
+            className={FORM.inputInline}
           />
         </div>
         {initialPointsError && (
-          <span className="field-error">{initialPointsError}</span>
+          <span className={FORM.fieldError}>{initialPointsError}</span>
         )}
       </div>
 
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="finish-points">{t('lobby.finishPoints')}</label>
+      <div className={FORM.groupInlineWrapper}>
+        <div className={FORM.groupInline}>
+          <label htmlFor="finish-points" className={FORM.labelInline}>
+            {t('lobby.finishPoints')}
+          </label>
           <input
             id="finish-points"
             type="text"
@@ -101,16 +107,19 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="30000"
+            className={FORM.inputInline}
           />
         </div>
         {finishPointsError && (
-          <span className="field-error">{finishPointsError}</span>
+          <span className={FORM.fieldError}>{finishPointsError}</span>
         )}
       </div>
 
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="upper-points">{t('lobby.upperPoints')}</label>
+      <div className={FORM.groupInlineWrapper}>
+        <div className={FORM.groupInline}>
+          <label htmlFor="upper-points" className={FORM.labelInline}>
+            {t('lobby.upperPoints')}
+          </label>
           <input
             id="upper-points"
             type="text"
@@ -122,16 +131,19 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="1000000"
+            className={FORM.inputInline}
           />
         </div>
         {upperPointsError && (
-          <span className="field-error">{upperPointsError}</span>
+          <span className={FORM.fieldError}>{upperPointsError}</span>
         )}
       </div>
 
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="riichi-points">{t('lobby.riichiPoints')}</label>
+      <div className={FORM.groupInlineWrapper}>
+        <div className={FORM.groupInline}>
+          <label htmlFor="riichi-points" className={FORM.labelInline}>
+            {t('lobby.riichiPoints')}
+          </label>
           <input
             id="riichi-points"
             type="text"
@@ -143,16 +155,19 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="1000"
+            className={FORM.inputInline}
           />
         </div>
         {riichiPointsError && (
-          <span className="field-error">{riichiPointsError}</span>
+          <span className={FORM.fieldError}>{riichiPointsError}</span>
         )}
       </div>
 
-      <div className="form-group-inline-wrapper">
-        <div className="form-group-inline">
-          <label htmlFor="honba-points">{t('lobby.honbaPoints')}</label>
+      <div className={FORM.groupInlineWrapper}>
+        <div className={FORM.groupInline}>
+          <label htmlFor="honba-points" className={FORM.labelInline}>
+            {t('lobby.honbaPoints')}
+          </label>
           <input
             id="honba-points"
             type="text"
@@ -164,17 +179,20 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="300"
+            className={FORM.inputInline}
           />
         </div>
         {honbaPointsError && (
-          <span className="field-error">{honbaPointsError}</span>
+          <span className={FORM.fieldError}>{honbaPointsError}</span>
         )}
       </div>
 
-      <div className="form-group-inline-wrapper double-input-wrapper">
-        <div className="form-group-inline">
-          <label>{t('lobby.ryuukyokuPoints')}</label>
-          <div className="double-input-container">
+      <div className={FORM.groupInlineWrapper}>
+        <div className={FORM.groupInline}>
+          <label className={FORM.labelInline}>
+            {t('lobby.ryuukyokuPoints')}
+          </label>
+          <div className="flex items-center gap-1.5 flex-grow min-w-0">
             <input
               id="ryuukyoku-points-0"
               type="text"
@@ -186,8 +204,9 @@ export function PointsSettingsTab({
               }}
               disabled={isLoading}
               placeholder="1000"
+              className={FORM.inputInline}
             />
-            <span className="input-separator">/</span>
+            <span className="text-[#666] font-bold">/</span>
             <input
               id="ryuukyoku-points-1"
               type="text"
@@ -199,11 +218,12 @@ export function PointsSettingsTab({
               }}
               disabled={isLoading}
               placeholder="1500"
+              className={FORM.inputInline}
             />
           </div>
         </div>
         {(ryuukyokuPoints0Error ?? ryuukyokuPoints1Error) && (
-          <span className="field-error">
+          <span className={FORM.fieldError}>
             {ryuukyokuPoints0Error ?? ryuukyokuPoints1Error}
           </span>
         )}

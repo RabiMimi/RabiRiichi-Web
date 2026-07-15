@@ -1,9 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRoom } from '../state/store';
+import { useRoom, useCharacterId } from '../state/store';
 import { getPlayerDisplayName } from '../domain/model';
 import { AiType } from '../proto';
-import { MIMI_PATH } from '../scene/assets';
+import { CHARACTERS } from '../domain/character';
+import { Button } from './Button';
 import { CopyGameIdButton } from './CopyGameIdButton';
 
 interface FinalResultPanelProps {
@@ -15,6 +16,16 @@ export function FinalResultPanel({
 }: FinalResultPanelProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const room = useRoom();
+  const characterId = useCharacterId();
+  const activeCharacter = React.useMemo(() => {
+    const found = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
+    if (!found) {
+      throw new Error(
+        `Character ${characterId} not found and no fallback available`,
+      );
+    }
+    return found;
+  }, [characterId]);
 
   const rankedPlayers = React.useMemo(() => {
     if (!room) return [];
@@ -34,8 +45,8 @@ export function FinalResultPanel({
       <div className="result-layout-container">
         <div className="result-character-side">
           <img
-            src={MIMI_PATH}
-            alt="mimi-avatar"
+            src={activeCharacter.visualUrl}
+            alt={`${activeCharacter.id}-avatar`}
             className="result-mimi-side-art"
           />
         </div>
@@ -103,13 +114,9 @@ export function FinalResultPanel({
             className="result-actions"
             style={{ flexDirection: 'row', gap: '12px' }}
           >
-            <button
-              className="ui-button primary-button"
-              onClick={onReturnToRoom}
-              style={{ width: '100%' }}
-            >
+            <Button onClick={onReturnToRoom} className="w-full">
               {t('result.returnToRoom', 'Return to Room')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -54,7 +54,7 @@ export function StickerPanel(): React.JSX.Element | null {
           {isOpen ? '▶' : '◀'}
         </button>
       </Tooltip>
-      <div className="w-[170px] rounded-bl-lg border-[1.5px] border-[#ff7a99]/70 bg-[#121c32]/95 p-3 shadow-[-4px_4px_15px_rgba(0,0,0,0.5)] backdrop-blur-lg">
+      <div className="w-[170px] rounded-l-lg border-[1.5px] border-[#ff7a99]/70 bg-[#121c32]/95 p-3 shadow-[-4px_4px_15px_rgba(0,0,0,0.5)] backdrop-blur-lg">
         <div className="mb-2.5 border-b border-white/10 pb-1.5 text-center text-[0.9rem] font-bold text-[#ff7a99]">
           {t('sticker.title', 'Stickers')}
         </div>

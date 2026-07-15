@@ -458,9 +458,9 @@
   },
   "settings": {
     "title": "システム設定",
-    "visualsTab": "キャラクター设定",
-    "soundsTab": "音量設定",
-    "characterSelector": "使用キャラクター",
+    "visualsTab": "ビジュアル",
+    "soundsTab": "サウンド",
+    "characterSelector": "キャラクター",
     "voicelines": "ボイス試聴",
     "stickers": "スタンププレビュー",
     "globalMute": "全ミュート",

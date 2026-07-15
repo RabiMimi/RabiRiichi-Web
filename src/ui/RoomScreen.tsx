@@ -8,6 +8,8 @@ import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
 import { AddAiDropdown } from './AddAiDropdown';
 import { StickerBubble } from './StickerBubble';
 import { Tooltip } from './Tooltip';
+import { Button } from './Button';
+import { SCREEN, FORM } from './styles';
 
 export function RoomScreen(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -121,19 +123,21 @@ export function RoomScreen(): React.JSX.Element | null {
     const initials = isAi ? 'AI' : displayName.slice(0, 2).toUpperCase();
     return (
       <Tooltip content={displayName} position="top">
-        <div className="player-avatar-placeholder">{initials}</div>
+        <div className="w-12 h-12 rounded-full bg-white/[0.05] border-2 border-[#ff7a99]/40 flex justify-center items-center font-bold text-[#ff7a99] text-[1.1rem] shrink-0">
+          {initials}
+        </div>
       </Tooltip>
     );
   };
 
   return (
-    <div className="ui-screen room-screen">
-      <div className="ui-card room-card">
-        <h2 className="ui-title">{t('room.title', { id: room.id })}</h2>
+    <div className={SCREEN.base}>
+      <div className={`${SCREEN.card} max-w-[800px]`}>
+        <h2 className={SCREEN.title}>{t('room.title', { id: room.id })}</h2>
 
-        {error && <div className="ui-error">{error}</div>}
+        {error && <div className={FORM.error}>{error}</div>}
 
-        <div className="player-list">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 mb-6 max-h-[600px]:max-h-[180px] max-h-[600px]:overflow-y-auto max-h-[600px]:mb-3 max-h-[600px]:pr-1">
           {seats.map((player, index) => {
             if (player) {
               const playerIsReady =
@@ -142,17 +146,19 @@ export function RoomScreen(): React.JSX.Element | null {
               return (
                 <div
                   key={player.id}
-                  className={`player-card ${isMe ? 'is-me' : ''} ${
-                    player.aiType !== AiType.AI_TYPE_NONE ? 'is-ai' : ''
-                  }`}
+                  className={`flex items-center bg-[#1a1a1a] border ${
+                    isMe
+                      ? 'border-[#ff7a99] bg-[#ff7a99]/[0.08]'
+                      : 'border-[#444]'
+                  } rounded-lg p-3 gap-3 transition-colors duration-200`}
                 >
                   {renderAvatar(player)}
                   <StickerBubble
                     sticker={activeStickers[player.id]}
                     className="sticker-bubble-2d"
                   />
-                  <div className="player-details">
-                    <div className="player-name">
+                  <div className="flex-grow">
+                    <div className="font-bold text-[1.05rem]">
                       {getPlayerDisplayName(player, t)}{' '}
                       {isMe && `(${t('lobby.you')})`}
                       {player.aiType !== AiType.AI_TYPE_NONE && (
@@ -160,20 +166,22 @@ export function RoomScreen(): React.JSX.Element | null {
                           content={t(`ai.type.${player.aiType}`)}
                           position="top"
                         >
-                          <span className="ai-badge-text">AI</span>
+                          <span className="bg-[#3f51b5] text-white text-[0.75rem] px-1.5 py-0.5 rounded ml-2 align-middle font-normal">
+                            AI
+                          </span>
                         </Tooltip>
                       )}
                     </div>
-                    <div className="player-seat">
+                    <div className="text-[0.8rem] text-[#888] mt-0.5">
                       {t('room.seat', { seat: index })}
                     </div>
                   </div>
-                  <div className="player-actions-col">
+                  <div className="flex flex-col items-end gap-1 shrink-0">
                     <div
-                      className={`player-status-badge ${
+                      className={`text-[0.8rem] font-bold px-2.5 py-1.5 rounded border whitespace-nowrap shrink-0 ${
                         playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
-                          ? 'ready'
-                          : 'waiting'
+                          ? 'bg-green-500/15 text-green-500 border-green-500/30'
+                          : 'bg-yellow-500/5 text-yellow-500 border-yellow-500/20'
                       }`}
                     >
                       {playerIsReady || player.aiType !== AiType.AI_TYPE_NONE
@@ -182,7 +190,7 @@ export function RoomScreen(): React.JSX.Element | null {
                     </div>
                     {isOwner && player.aiType !== AiType.AI_TYPE_NONE && (
                       <button
-                        className="ui-button mini-button kick-ai-btn"
+                        className="px-2 py-1 text-[0.8rem] bg-[#a33] text-white border-none rounded cursor-pointer whitespace-nowrap shrink-0 hover:not-disabled:bg-[#c44] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed outline-none"
                         onClick={() => void handleRemovePlayer(player.id)}
                         disabled={isLoading}
                       >
@@ -194,13 +202,18 @@ export function RoomScreen(): React.JSX.Element | null {
               );
             } else {
               return (
-                <div key={`empty-${index}`} className="player-card empty-seat">
-                  <div className="player-avatar-placeholder empty">?</div>
-                  <div className="player-details">
-                    <div className="player-name empty-text">
+                <div
+                  key={`empty-${index}`}
+                  className="flex items-center border border-[#444] border-dashed bg-[#111] opacity-60 rounded-lg p-3 gap-3"
+                >
+                  <div className="w-12 h-12 rounded-full bg-white/[0.05] border-2 border-[#444] flex justify-center items-center font-bold text-[#888] text-[1.1rem] shrink-0">
+                    ?
+                  </div>
+                  <div className="flex-grow">
+                    <div className="font-bold text-[1.05rem] text-[#888] italic">
                       {t('room.emptySeat')}
                     </div>
-                    <div className="player-seat">
+                    <div className="text-[0.8rem] text-[#888] mt-0.5">
                       {t('room.seat', { seat: index })}
                     </div>
                   </div>
@@ -216,10 +229,11 @@ export function RoomScreen(): React.JSX.Element | null {
           })}
         </div>
 
-        <div className="room-actions">
-          <button
+        <div className="flex gap-3">
+          <Button
             onClick={onToggleReady}
-            className={`ui-button ${isReady ? 'secondary-button' : 'primary-button'}`}
+            variant={isReady ? 'secondary' : 'primary'}
+            className="flex-1"
             disabled={isLoading}
           >
             {isLoading
@@ -227,15 +241,16 @@ export function RoomScreen(): React.JSX.Element | null {
               : isReady
                 ? t('room.unready')
                 : t('room.ready')}
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={onLeaveRoom}
-            className="ui-button secondary-button"
+            variant="secondary"
+            className="flex-1"
             disabled={isLoading}
           >
             {t('room.leave')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

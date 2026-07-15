@@ -17,6 +17,7 @@ import {
   useAutoNuki,
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
+import { Button } from './Button';
 import { rabiriichi } from '../net/client';
 import { UserStatus, FuritenType } from '../proto';
 import { pollUntil } from '../lib';
@@ -306,8 +307,11 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
   return (
     <div className="game-play-hud">
-      {/* Connection Status */}
-      <ConnectionStatusIndicator />
+      {/* Top Right HUD (Settings + Connection Status) */}
+      <div className="pointer-events-auto absolute top-5 right-5 z-[50] flex items-center gap-2">
+        <ConnectionStatusIndicator />
+        <SettingsButton />
+      </div>
 
       {/* Left HUD Panel */}
       <HUDLeftPanel
@@ -524,7 +528,6 @@ function HUDLeftPanel({
 
       <div className="hud-buttons-row">
         <FullscreenButton />
-        <SettingsButton />
 
         <Tooltip
           content={isCameraLocked ? t('hud.unlockCamera') : t('hud.lockCamera')}
@@ -657,22 +660,22 @@ function HUDExitConfirmModal({
       <div className="exit-confirm-modal-content">
         <p className="exit-confirm-message">{t('hud.confirmExit')}</p>
         <div className="exit-confirm-buttons">
-          <button
+          <Button
             type="button"
-            className="ui-button danger-button"
+            variant="danger"
             onClick={onConfirm}
             disabled={isExiting}
           >
             {t('hud.confirm')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="ui-button secondary-button"
+            variant="secondary"
             onClick={onCancel}
             disabled={isExiting}
           >
             {t('hud.cancel')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

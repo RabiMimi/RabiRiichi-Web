@@ -9,10 +9,13 @@ import {
   useHasInMemoryResult,
   useIsReplay,
   useReplayProgress,
+  useCharacterId,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
-import { getTileTexturePath, MIMI_PATH } from '../scene/assets';
+import { getTileTexturePath } from '../scene/assets';
+import { CHARACTERS } from '../domain/character';
+import { Button } from './Button';
 import { type ActionOption } from '../domain/inquiry';
 import { ScoringType } from '../proto';
 import type { IGameTileMsg } from '../proto';
@@ -96,6 +99,16 @@ export function ResultPanel(): React.JSX.Element | null {
   const hasInMemoryResult = useHasInMemoryResult();
   const isReplay = useIsReplay();
   const progress = useReplayProgress();
+  const characterId = useCharacterId();
+  const activeCharacter = React.useMemo(() => {
+    const found = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
+    if (!found) {
+      throw new Error(
+        `Character ${characterId} not found and no fallback available`,
+      );
+    }
+    return found;
+  }, [characterId]);
 
   const currentRoundIdx = React.useMemo(() => {
     void progress; // Reference to satisfy react-hooks/exhaustive-deps
@@ -542,8 +555,8 @@ export function ResultPanel(): React.JSX.Element | null {
       <div className="result-layout-container">
         <div className="result-character-side">
           <img
-            src={MIMI_PATH}
-            alt="mimi-avatar"
+            src={activeCharacter.visualUrl}
+            alt={`${activeCharacter.id}-avatar`}
             className="result-mimi-side-art"
           />
         </div>
@@ -573,10 +586,10 @@ export function ResultPanel(): React.JSX.Element | null {
 
           {/* Proceed button */}
           <div className="result-actions">
-            <button
-              className="ui-button primary-button"
+            <Button
               onClick={handleProceed}
               disabled={!canProceed && !room.gameEnded}
+              className="w-full"
             >
               {room.gameEnded
                 ? t('result.showFinalResults', 'Show Game Results')
@@ -587,7 +600,7 @@ export function ResultPanel(): React.JSX.Element | null {
                   : canProceed
                     ? t('result.confirmWithTime', { seconds: secondsLeft })
                     : t('result.waitingForNext')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
