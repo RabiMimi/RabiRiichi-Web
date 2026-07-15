@@ -67,13 +67,12 @@ export function StickerBubble({
         ? 'animate-close'
         : '';
 
+  const [charId, filename] = displaySticker.split('/');
+  const srcPath = `/assets/${charId}/stickers/${filename}`;
+
   return (
     <div className={`${className} ${animClass}`}>
-      <img
-        src={`/assets/stickers/${displaySticker}`}
-        alt="sticker"
-        className="bubble-sticker-img"
-      />
+      <img src={srcPath} alt="sticker" className="bubble-sticker-img" />
     </div>
   );
 }

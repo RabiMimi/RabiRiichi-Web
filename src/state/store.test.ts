@@ -93,6 +93,15 @@ describe('RabiRiichi Store', () => {
       autoDiscard: false,
       autoNuki: false,
       activeStickers: {},
+      characterId: 'mimi',
+      volumeSE: 1.0,
+      volumeBGM: 1.0,
+      volumeVoice: 1.0,
+      muteSE: false,
+      muteBGM: false,
+      muteVoice: false,
+      muteAll: false,
+      isSettingsOpen: false,
     });
   });
 

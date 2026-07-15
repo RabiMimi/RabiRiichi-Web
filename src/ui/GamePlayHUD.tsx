@@ -34,6 +34,7 @@ import { findActiveDiscardCandidate } from '../domain/inquiry';
 import { GameInfoModal } from './GameInfoModal';
 import { FullscreenButton } from './FullscreenButton';
 import { Tooltip } from './Tooltip';
+import { SettingsButton } from './SettingsButton';
 
 export function GameInfoPanel(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -522,6 +523,7 @@ function HUDLeftPanel({
 
       <div className="hud-buttons-row">
         <FullscreenButton />
+        <SettingsButton />
 
         <Tooltip
           content={isCameraLocked ? t('hud.unlockCamera') : t('hud.lockCamera')}

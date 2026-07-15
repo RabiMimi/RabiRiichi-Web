@@ -33,6 +33,15 @@ export interface RabiRiichiState {
   autoDiscard: boolean;
   autoNuki: boolean;
   activeStickers: Record<string, string>;
+  characterId: string;
+  volumeSE: number;
+  volumeBGM: number;
+  volumeVoice: number;
+  muteSE: boolean;
+  muteBGM: boolean;
+  muteVoice: boolean;
+  muteAll: boolean;
+  isSettingsOpen: boolean;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -68,7 +77,16 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.noCalls !== rabiriichi.noCalls ||
     lastSnapshot.autoDiscard !== rabiriichi.autoDiscard ||
     lastSnapshot.autoNuki !== rabiriichi.autoNuki ||
-    lastSnapshot.activeStickers !== rabiriichi.activeStickers
+    lastSnapshot.activeStickers !== rabiriichi.activeStickers ||
+    lastSnapshot.characterId !== rabiriichi.visuals.characterId ||
+    lastSnapshot.volumeSE !== rabiriichi.sounds.volumeSE ||
+    lastSnapshot.volumeBGM !== rabiriichi.sounds.volumeBGM ||
+    lastSnapshot.volumeVoice !== rabiriichi.sounds.volumeVoice ||
+    lastSnapshot.muteSE !== rabiriichi.sounds.muteSE ||
+    lastSnapshot.muteBGM !== rabiriichi.sounds.muteBGM ||
+    lastSnapshot.muteVoice !== rabiriichi.sounds.muteVoice ||
+    lastSnapshot.muteAll !== rabiriichi.sounds.muteAll ||
+    lastSnapshot.isSettingsOpen !== rabiriichi.isSettingsOpen
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -96,6 +114,15 @@ function getSnapshot(): RabiRiichiState {
       autoDiscard: rabiriichi.autoDiscard,
       autoNuki: rabiriichi.autoNuki,
       activeStickers: rabiriichi.activeStickers,
+      characterId: rabiriichi.visuals.characterId,
+      volumeSE: rabiriichi.sounds.volumeSE,
+      volumeBGM: rabiriichi.sounds.volumeBGM,
+      volumeVoice: rabiriichi.sounds.volumeVoice,
+      muteSE: rabiriichi.sounds.muteSE,
+      muteBGM: rabiriichi.sounds.muteBGM,
+      muteVoice: rabiriichi.sounds.muteVoice,
+      muteAll: rabiriichi.sounds.muteAll,
+      isSettingsOpen: rabiriichi.isSettingsOpen,
     };
   }
   return lastSnapshot;
@@ -345,6 +372,88 @@ export function useClaimTargetTileId(): number | null {
     subscribe,
     getClaimTargetTileIdSelector,
     getClaimTargetTileIdSelector,
+  );
+}
+
+import type { ClientSettings } from '../domain/constants';
+
+export function updateClientSettings(patch: Partial<ClientSettings>): void {
+  rabiriichi.updateClientSettings(patch);
+}
+
+export function useCharacterId(): string {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.visuals.characterId,
+    () => rabiriichi.visuals.characterId,
+  );
+}
+
+export function useVolumeSE(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.volumeSE,
+    () => rabiriichi.sounds.volumeSE,
+  );
+}
+
+export function useVolumeBGM(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.volumeBGM,
+    () => rabiriichi.sounds.volumeBGM,
+  );
+}
+
+export function useVolumeVoice(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.volumeVoice,
+    () => rabiriichi.sounds.volumeVoice,
+  );
+}
+
+export function useMuteSE(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.muteSE,
+    () => rabiriichi.sounds.muteSE,
+  );
+}
+
+export function useMuteBGM(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.muteBGM,
+    () => rabiriichi.sounds.muteBGM,
+  );
+}
+
+export function useMuteVoice(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.muteVoice,
+    () => rabiriichi.sounds.muteVoice,
+  );
+}
+
+export function useMuteAll(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.muteAll,
+    () => rabiriichi.sounds.muteAll,
+  );
+}
+
+export function setSettingsOpen(isOpen: boolean): void {
+  rabiriichi.setSettingsOpen(isOpen);
+}
+
+export function useIsSettingsOpen(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.isSettingsOpen,
+    () => rabiriichi.isSettingsOpen,
   );
 }
 

@@ -38,6 +38,7 @@ import {
   type ServerSettings,
   type ClientSettings,
 } from '../domain/constants';
+import { VisualsSettings, SoundsSettings } from '../domain/settings';
 import { applyEvent, applyRoomState } from '../domain/reducer';
 import {
   type MappedInquiry,
@@ -130,12 +131,20 @@ export class RabiRiichiClient {
   public isRiichiSelectMode = false;
   public pendingActionOption: ActionOption | null = null;
   public animationSpeed = 1.0;
+  public visuals = new VisualsSettings();
+  public sounds = new SoundsSettings();
   public isWaitingForProceed = false;
 
   public autoAgari = false;
   public noCalls = false;
   public autoDiscard = false;
   public autoNuki = false;
+  public isSettingsOpen = false;
+
+  public setSettingsOpen(isOpen: boolean): void {
+    this.isSettingsOpen = isOpen;
+    this.onChange.emit();
+  }
 
   public toggleAutoAgari(): void {
     this.autoAgari = !this.autoAgari;
@@ -191,15 +200,20 @@ export class RabiRiichiClient {
   public resultAnimation: 'agari' | 'ryuukyoku' | null = null;
   private resultAnimationTimerId: ReturnType<typeof setTimeout> | null = null;
 
-  public setAnimationSpeed(speed: number): void {
-    this.animationSpeed = speed;
+  public updateClientSettings(patch: Partial<ClientSettings>): void {
+    if (patch.animationSpeed !== undefined) {
+      this.animationSpeed = patch.animationSpeed;
+    }
+    this.visuals.update(patch);
+    this.sounds.update(patch);
+
     this.onChange.emit();
 
     if (typeof localStorage !== 'undefined') {
       try {
         const stored = localStorage.getItem(STORAGE_KEY_CLIENT_SETTINGS);
         const settings = parseClientSettings(stored);
-        settings.animationSpeed = speed;
+        Object.assign(settings, patch);
         localStorage.setItem(
           STORAGE_KEY_CLIENT_SETTINGS,
           JSON.stringify(settings),
@@ -211,6 +225,10 @@ export class RabiRiichiClient {
         );
       }
     }
+  }
+
+  public setAnimationSpeed(speed: number): void {
+    this.updateClientSettings({ animationSpeed: speed });
   }
 
   // Backdoor for replay and testing helpers (e.g. replay driver, test mocks)
@@ -263,6 +281,8 @@ export class RabiRiichiClient {
       try {
         const stored = localStorage.getItem(STORAGE_KEY_CLIENT_SETTINGS);
         const settings = parseClientSettings(stored);
+        this.visuals = new VisualsSettings(settings);
+        this.sounds = new SoundsSettings(settings);
         if (typeof settings.animationSpeed === 'number') {
           this.animationSpeed = settings.animationSpeed;
         }

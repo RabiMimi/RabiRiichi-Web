@@ -25,6 +25,7 @@ import { FullscreenButton } from './FullscreenButton';
 import { GameInfoModal } from './GameInfoModal';
 import { InitialWallModal } from './InitialWallModal';
 import { Tooltip } from './Tooltip';
+import { SettingsButton } from './SettingsButton';
 
 export function ReplayHUD(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -106,6 +107,7 @@ export function ReplayHUD(): React.JSX.Element | null {
 
         <div className="hud-buttons-row">
           <FullscreenButton />
+          <SettingsButton />
 
           <Tooltip
             content={

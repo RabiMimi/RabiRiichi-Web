@@ -11,6 +11,8 @@ import {
   useRoom,
   useIsCameraLocked,
   useIsReplay,
+  useIsSettingsOpen,
+  setSettingsOpen,
 } from './state/store';
 import { ConnectScreen } from './ui/ConnectScreen';
 import { LobbyScreen } from './ui/LobbyScreen';
@@ -23,6 +25,8 @@ import { OrientationGuard } from './ui/OrientationGuard';
 import { FullscreenButton } from './ui/FullscreenButton';
 import { StickerPanel } from './ui/StickerPanel';
 import { Tooltip } from './ui/Tooltip';
+import { SettingsButton } from './ui/SettingsButton';
+import { SettingsModal } from './ui/SettingsModal';
 import { COMMIT_HASH } from './lib';
 import type { PlayerModel, RoomModel } from './domain/model';
 import type { ActionOption } from './domain/inquiry';
@@ -93,6 +97,7 @@ function App(): React.JSX.Element {
   const room = useRoom();
   const isCameraLocked = useIsCameraLocked();
   const isReplay = useIsReplay();
+  const isSettingsOpen = useIsSettingsOpen();
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const lastMissedRef = useRef<number>(0);
 
@@ -253,10 +258,15 @@ function App(): React.JSX.Element {
                 </div>
               </a>
             </Tooltip>
+
+            <SettingsButton />
           </div>
         </>
       )}
       {room && <StickerPanel />}
+      {isSettingsOpen && (
+        <SettingsModal onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
   );
 }

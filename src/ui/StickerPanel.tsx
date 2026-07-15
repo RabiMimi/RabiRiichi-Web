@@ -1,29 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { rabiriichi } from '../net/client';
 import { sendChatMessage } from '../net/messages';
 import { useTranslation } from 'react-i18next';
+import { CHARACTERS } from '../domain/character';
+import { useCharacterId } from '../state/store';
 
 import { Tooltip } from './Tooltip';
-
-const STICKERS = [
-  'angry.png',
-  'awawawa.png',
-  'happy.png',
-  'smile.png',
-  'speechless.png',
-  'surprised.png',
-];
-
-const STICKER_FOLDER = 'mimi';
-const STICKER_BASE_PATH = '/assets/stickers';
 
 export function StickerPanel(): React.JSX.Element | null {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
+  const characterId = useCharacterId();
+
+  const character = useMemo(() => {
+    const found = CHARACTERS.find((c) => c.id === characterId);
+    if (found) return found;
+    const fallback = CHARACTERS[0];
+    if (!fallback) {
+      throw new Error('No characters configured');
+    }
+    return fallback;
+  }, [characterId]);
 
   const handleSelectSticker = (stickerName: string) => {
     if (rabiriichi.ws) {
-      const stickerPath = `${STICKER_FOLDER}/${stickerName}`;
+      // The server expects characterId/stickerName (e.g. "mimi/angry.png")
+      const stickerPath = `${character.id}/${stickerName}`;
       sendChatMessage(rabiriichi.ws, null, stickerPath);
     }
   };
@@ -51,8 +53,8 @@ export function StickerPanel(): React.JSX.Element | null {
           {t('sticker.title', 'Stickers')}
         </div>
         <div className="sticker-grid">
-          {STICKERS.map((stickerName) => {
-            const path = `${STICKER_BASE_PATH}/${STICKER_FOLDER}/${stickerName}`;
+          {character.stickers.map((stickerName) => {
+            const path = `${character.stickersDir}/${stickerName}`;
             return (
               <button
                 key={stickerName}

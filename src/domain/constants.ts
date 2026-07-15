@@ -136,4 +136,12 @@ export interface ServerSettings {
 
 export interface ClientSettings {
   animationSpeed?: number;
+  characterId?: string;
+  volumeSE?: number; // 0 to 1
+  volumeBGM?: number; // 0 to 1
+  volumeVoice?: number; // 0 to 1
+  muteSE?: boolean;
+  muteBGM?: boolean;
+  muteVoice?: boolean;
+  muteAll?: boolean;
 }
