@@ -5,16 +5,13 @@
  * an explicit layer, ui.css would be "unlayered" and unconditionally beat every
  * (layered) Tailwind utility, silently breaking converted components.
  */
-@layer theme, app, utilities;
+@layer theme, base, app, utilities;
 
 /*
- * Tailwind v4, imported WITHOUT Preflight (the base reset) on purpose: the app
- * ships a large hand-written stylesheet (ui.css) and we are migrating to
- * Tailwind incrementally. Enabling Preflight would restyle every existing
- * element (headings, buttons, lists, ...) and change the current appearance.
- * We therefore pull in only the theme (design tokens / CSS vars) and utilities.
+ * Tailwind v4, imported WITH Preflight (the base reset) to normalize cross-browser styles.
  */
 @import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 /* The legacy stylesheets, layered so utilities win on conflicts (see above). */

@@ -1393,6 +1393,47 @@ describe('Reducer - Events', () => {
     expect(afterLeave?.roundResultPlayers?.map((p) => p.id)).toEqual([
       101, 102,
     ]);
+
+    // The array reference must be preserved, not just its contents: the reveal
+    // animation keys off it, so a new array would restart it.
+    expect(afterLeave?.roundResultPlayers).toBe(settled.roundResultPlayers);
+  });
+
+  it('preserves the frozen result reference across repeated room-state pushes', () => {
+    // The reveal animation depends on these references, so every incidental
+    // room-state push must return the exact same arrays.
+    const state = createInitializedRoom();
+    const p0Raw = state.players[0];
+    if (p0Raw?.gameState) {
+      p0Raw.gameState.agari = { gainPoints: 0, losePoints: 0, scores: {} };
+    }
+
+    const settled = applyEvent(state, {
+      applyScoreEvent: {
+        scoreChange: [{ from: 102, to: 101, points: 3900, reason: 1 }],
+      },
+    });
+    settled.concludedPlayers = settled.players.map((p) => ({ ...p }));
+
+    const frozenResult = settled.roundResultPlayers;
+    const frozenConcluded = settled.concludedPlayers;
+
+    let current = settled;
+    for (const players of [
+      [{ id: 101, status: UserStatus.USER_STATUS_READY }],
+      [
+        { id: 101, status: UserStatus.USER_STATUS_READY },
+        { id: 102, status: UserStatus.USER_STATUS_PLAYING },
+      ],
+      [{ id: 101, status: UserStatus.USER_STATUS_PLAYING }],
+    ]) {
+      const next = applyRoomState(current, { id: 1234, players });
+      expect(next).not.toBeNull();
+      if (!next) return;
+      expect(next.roundResultPlayers).toBe(frozenResult);
+      expect(next.concludedPlayers).toBe(frozenConcluded);
+      current = next;
+    }
   });
 
   it('freezes a round-result snapshot on ryuukyoku', () => {

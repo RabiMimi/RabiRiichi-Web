@@ -93,7 +93,7 @@ export function StickerBubble({
     <div
       className={`${positionClass} ${baseBubbleClass} ${tailClass} ${animClass}`}
     >
-      <img src={srcPath} alt="sticker" className="w-16 h-16 object-contain" />
+      <img src={srcPath} alt="sticker" className="w-16 h-16 object-contain max-w-none" />
     </div>
   );
 }

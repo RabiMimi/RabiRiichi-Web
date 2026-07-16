@@ -126,12 +126,14 @@ export function ResultPanel(): React.JSX.Element | null {
     [],
   );
 
-  // The round result is a static snapshot: prefer the frozen players captured
-  // when the round concluded so the settlement never changes if someone leaves
-  // the room while it is shown. Falls back to live players before the freeze.
+  // Prefer the frozen snapshot captured at round conclusion, depending on the
+  // array refs (not the whole `room`) so room-state churn can't restart the
+  // reveal. The reducer preserves `roundResultPlayers` across room updates.
+  const frozenResultPlayers = room?.roundResultPlayers ?? null;
+  const livePlayers = room?.players ?? null;
   const resultPlayers = React.useMemo(() => {
-    return room?.roundResultPlayers ?? room?.players ?? [];
-  }, [room]);
+    return frozenResultPlayers ?? livePlayers ?? [];
+  }, [frozenResultPlayers, livePlayers]);
 
   const hasNagashiWinner = React.useMemo(() => {
     return resultPlayers.some((p) => p.gameState?.agari?.isNagashi);
@@ -153,6 +155,10 @@ export function ResultPanel(): React.JSX.Element | null {
   }, [resultPlayers]);
 
   const isDraw = !hasNormalWinner && !hasNagashiWinner;
+
+  // The only `room` field the reveal reads; kept as a primitive so the effect
+  // need not depend on the churning `room` object.
+  const scoringOption = room?.config?.scoringOption;
 
   // Voice & Animation states
   const [animatingPlayerIndex, setAnimatingPlayerIndex] =
@@ -177,7 +183,8 @@ export function ResultPanel(): React.JSX.Element | null {
     );
   }, [playersWithResult, hasNextRound, isWaitingForProceed, resultAnimation]);
 
-  const currentUser = useSelf();
+  // Primitive id (not the `self` object) so a self refresh can't restart it.
+  const currentUserId = useSelf()?.id ?? null;
 
   React.useEffect(() => {
     if (!showPanel) return;
@@ -221,10 +228,7 @@ export function ResultPanel(): React.JSX.Element | null {
         if (!agari) continue;
 
         const rawYakuList = agari.scores?.items ?? [];
-        const yakuList = filterYakuListForDisplay(
-          rawYakuList,
-          room?.config?.scoringOption,
-        );
+        const yakuList = filterYakuListForDisplay(rawYakuList, scoringOption);
 
         // 1a. Show yaku one by one (Reveal yaku first, then play voice)
         for (let yIdx = 0; yIdx < yakuList.length; yIdx++) {
@@ -255,8 +259,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
           if (result.finalYakuman && result.finalYakuman > 0) {
             const isAotenjou =
-              room?.config?.scoringOption != null &&
-              (room.config.scoringOption & 2) === 0;
+              scoringOption != null && (scoringOption & 2) === 0;
             if (result.kazoeYakuman && result.kazoeYakuman > 0 && !isAotenjou) {
               limitVoiceId = 'kazoeYakuman';
             } else {
@@ -272,7 +275,7 @@ export function ResultPanel(): React.JSX.Element | null {
             const limit = getLimitName(
               result.han ?? 0,
               result.fu ?? 0,
-              room?.config?.scoringOption ?? 0,
+              scoringOption ?? 0,
             );
             if (limit) {
               limitVoiceId = limit;
@@ -310,8 +313,8 @@ export function ResultPanel(): React.JSX.Element | null {
       }
 
       // Play final reaction voice
-      if (currentUser) {
-        const isWinner = playersWithResult.some((p) => p.id === currentUser.id);
+      if (currentUserId != null) {
+        const isWinner = playersWithResult.some((p) => p.id === currentUserId);
         const finalVoiceId = isWinner ? 'win' : 'lose';
         const voiceLine = activeCharacter.voiceLines.find(
           (v) => v.id === finalVoiceId,
@@ -331,13 +334,16 @@ export function ResultPanel(): React.JSX.Element | null {
       stateRef.active = false;
       soundManager.stopAllVoices();
     };
+    // `room` is deliberately excluded: it changes on every room-state push and
+    // re-including it would restart the reveal. Everything the reveal needs is
+    // captured as stable values above.
   }, [
     showPanel,
     isDraw,
     playersWithResult,
     activeCharacter,
-    room,
-    currentUser,
+    scoringOption,
+    currentUserId,
   ]);
 
   React.useEffect(() => {
