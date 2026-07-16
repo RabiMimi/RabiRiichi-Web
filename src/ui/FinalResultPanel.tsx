@@ -95,7 +95,7 @@ export function FinalResultPanel({
           </div>
 
           <div
-            className="flex-1 overflow-y-auto flex flex-col gap-1.5 lg:gap-2.5 pr-1"
+            className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col gap-1.5 lg:gap-2.5 pr-1"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}

@@ -7,6 +7,7 @@ import { getWindKey, type RoomModel } from '../domain/model';
 import { UserStatus } from '../proto';
 import { CopyGameIdButton } from './CopyGameIdButton';
 import { Button } from './Button';
+import { UiTile } from './UiTile';
 import { MODAL } from './styles';
 import {
   RENCHAN_POLICIES,
@@ -581,10 +582,9 @@ export function GameInfoModal({
                           key={byte}
                           className="flex flex-col items-center gap-1 w-9 shrink-0"
                         >
-                          <img
-                            src={getTileTexturePath(tileStr)}
-                            alt={tileStr}
-                            className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.4)]"
+                          <UiTile
+                            tile={tileStr}
+                            size="info"
                           />
                           <span className="text-xs text-[#80deea] font-bold font-mono">
                             x{count}

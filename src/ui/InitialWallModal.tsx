@@ -8,6 +8,7 @@ import { getCurrentRoundEvents } from '../replay/replayDriver';
 import type { IGameTileMsg } from '../proto';
 import { Tooltip } from './Tooltip';
 import { Button } from './Button';
+import { UiTile } from './UiTile';
 import { MODAL } from './styles';
 
 const SEAT_LEGEND_STYLES = [
@@ -122,9 +123,9 @@ export function InitialWallModal({
     return (
       <Tooltip content={titleText} position="top">
         <div className={classes}>
-          <img
-            src={getTileTexturePath(tileStr)}
-            alt={tileStr}
+          <UiTile
+            tile={tileStr}
+            size="custom"
             className="w-full h-full object-cover block"
           />
         </div>

@@ -6,6 +6,7 @@ import { Logger } from '../lib/logger';
 import { type ActionOption, type InquiryOptionType } from '../domain/inquiry';
 import { Tile } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
+import { UiTile } from './UiTile';
 
 const logger = new Logger('ActionHUD');
 
@@ -161,13 +162,11 @@ export function ActionHUD(): React.JSX.Element | null {
                 <div className="flex gap-[1px] bg-[#141414]/60 px-0.5 py-[1px] rounded border border-[#444]">
                   {opt.tiles.map((tileMsg, idx) => {
                     const tileStr = Tile.fromByte(tileMsg.tile).toString();
-                    const imgSrc = getTileTexturePath(tileStr);
                     return (
-                      <img
+                      <UiTile
                         key={idx}
-                        src={imgSrc}
-                        alt={tileStr}
-                        className="w-3.5 h-[19px] sm:w-5 sm:h-[27px] lg:w-6 lg:h-[32px] rounded-[1px] border border-[#333] shadow-[0_2px_4px_rgba(0,0,0,0.3)] object-cover bg-[#f7f4eb]"
+                        tile={tileStr}
+                        size="action"
                       />
                     );
                   })}

@@ -26,6 +26,7 @@ import { Tile, checkDiscardResultsInFuriten } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
 import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
+import { UiTile } from './UiTile';
 import {
   getWindKey,
   waitMeetsMinHan,
@@ -86,19 +87,15 @@ export function GameInfoPanel(): React.JSX.Element | null {
         <div className="flex gap-1">
           {Array.from({ length: 5 }).map((_, idx) => {
             const doraTileMsg = idx < doras.length ? doras[idx] : null;
-            let imgSrc = '/assets/hand_tiles/back.jpg';
-
-            if (doraTileMsg?.tile) {
-              const tileStr = Tile.fromByte(doraTileMsg.tile).toString();
-              imgSrc = getTileTexturePath(tileStr);
-            }
+            const tileStr = doraTileMsg?.tile
+              ? Tile.fromByte(doraTileMsg.tile).toString()
+              : 'back';
 
             return (
-              <img
+              <UiTile
                 key={idx}
-                src={imgSrc}
-                alt={doraTileMsg ? 'Dora' : 'Locked'}
-                className="w-[28px] h-[38px] rounded border border-[#333] shadow-[0_2px_4px_rgba(0,0,0,0.3)] object-cover bg-[#f7f4eb]"
+                tile={tileStr}
+                size="dora"
               />
             );
           })}
@@ -154,12 +151,10 @@ export function TenpaiWaitPanel({
                 meetsMinHan ? '' : 'opacity-45'
               }`}
             >
-              <img
-                src={imgSrc}
-                alt={tileStr}
-                className={`w-5.5 sm:w-7 sm:w-9 h-auto rounded-[2px] shadow-[0_1px_3px_rgba(0,0,0,0.5)] ${
-                  meetsMinHan ? '' : 'grayscale'
-                }`}
+              <UiTile
+                tile={tileStr}
+                size="tenpai"
+                className={meetsMinHan ? '' : 'grayscale'}
               />
               <div className="flex flex-col items-center text-[9px] sm:text-[0.68rem] sm:text-xs leading-[1.1] sm:leading-[1.2]">
                 <span className="text-[#ddd]">

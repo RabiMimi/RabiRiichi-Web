@@ -22,6 +22,7 @@ import { type ActionOption } from '../domain/inquiry';
 import type { IGameTileMsg } from '../proto';
 import { FinalResultPanel } from './FinalResultPanel';
 import { soundManager } from '../lib/sound';
+import { UiTile } from './UiTile';
 
 import { Logger } from '../lib/logger';
 import {
@@ -48,23 +49,12 @@ function renderIndicatorTiles(
 ): React.JSX.Element[] {
   return Array.from({ length: 5 }).map((_, idx) => {
     const tileMsg = tiles[idx];
-    if (tileMsg) {
-      const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-      return (
-        <img
-          key={tileMsg.traceId ?? `${keyPrefix}-${idx}`}
-          src={getTileTexturePath(tileStr)}
-          alt={tileStr}
-          className="w-[22px] h-[29px] sm:w-8 sm:h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-        />
-      );
-    }
+    const tileStr = tileMsg ? Tile.fromByte(tileMsg.tile ?? 0).toString() : "back";
     return (
-      <img
-        key={`${keyPrefix}-back-${idx}`}
-        src="/assets/hand_tiles/back.jpg"
-        alt="Locked"
-        className="w-[22px] h-[29px] sm:w-8 sm:h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)] border border-[#333] object-cover bg-[#f7f4eb]"
+      <UiTile
+        key={tileMsg?.traceId ? `${keyPrefix}-${idx}` : `locked-${idx}`}
+        tile={tileStr}
+        size="result"
       />
     );
   });
@@ -443,7 +433,7 @@ export function ResultPanel(): React.JSX.Element | null {
     return (
       <div className="relative z-[1] flex flex-col gap-1 lg:gap-2 bg-[#1e1e1e]/70 border border-[#333] rounded-xl p-2 lg:p-3 box-border">
         <div className="flex flex-row items-center gap-1 lg:gap-2 flex-wrap">
-          <span className="text-[10px] lg:text-xs text-[#80deea] font-bold uppercase tracking-wider whitespace-nowrap min-w-0">
+          <span className="text-sm text-[#80deea] font-bold uppercase tracking-wider whitespace-nowrap min-w-0">
             {t('result.dora')}
           </span>
           <div className="flex flex-row items-center gap-1 lg:gap-2 flex-wrap">
@@ -455,7 +445,7 @@ export function ResultPanel(): React.JSX.Element | null {
             {/* Uradora Indicators */}
             {showUradoras && uradoras.length > 0 && (
               <>
-                <span className="text-[#666] text-[10px] lg:text-sm font-bold select-none mx-0.5 lg:mx-1">
+                <span className="text-[#666] text-sm font-bold select-none mx-0.5 lg:mx-1">
                   /
                 </span>
                 <div className="flex gap-0.5 lg:gap-1">
@@ -490,9 +480,9 @@ export function ResultPanel(): React.JSX.Element | null {
   if (!room || !showPanel) return null;
 
   return (
-    <div className="absolute inset-0 bg-[#0a0a0a]/85 flex justify-center items-center z-[120] text-white font-sans backdrop-blur-md">
+    <div className="absolute inset-0 bg-[#0a0a0a]/85 flex justify-center items-center z-[120] text-white font-sans backdrop-blur-md overflow-x-hidden">
       <div className="flex flex-row items-stretch gap-0 w-[95%] max-w-5xl max-h-[85vh] m-auto box-border z-[121] relative">
-        <div className="hidden lg:block flex-none w-80 relative z-[2] -mr-20 pointer-events-none">
+        <div className="flex-none w-24 sm:w-48 lg:w-80 relative z-[2] -mr-6 sm:-mr-12 lg:-mr-20 pointer-events-none">
           <img
             src={activeCharacter.visualUrl}
             alt={`${activeCharacter.id}-avatar`}
@@ -500,20 +490,20 @@ export function ResultPanel(): React.JSX.Element | null {
           />
         </div>
         <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 lg:p-4 lg:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 lg:gap-2.5 relative overflow-hidden box-border">
-          <h2 className="relative z-[1] text-lg lg:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider lg:tracking-widest">
+          <h2 className="relative z-[1] text-2xl lg:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider lg:tracking-widest">
             {hasNagashiWinner
               ? t('yaku.NagashiMangan')
               : isDraw
                 ? room.ryuukyokuReason
                   ? t(`result.ryuukyoku.${room.ryuukyokuReason}`, {
-                      defaultValue: t('result.draw'),
-                    })
+                    defaultValue: t('result.draw'),
+                  })
                   : t('result.draw')
                 : t('result.agari')}
           </h2>
 
           <div
-            className="flex-1 overflow-y-auto flex flex-col gap-1.5 lg:gap-2.5 pr-1"
+            className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col gap-1.5 lg:gap-2.5 pr-1"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
@@ -535,11 +525,10 @@ export function ResultPanel(): React.JSX.Element | null {
 
             {/* Score changes panel */}
             <div
-              className={`transition-all duration-1000 ease-out transform ${
-                showScoreChanges
-                  ? 'opacity-100 translate-y-0 max-h-[300px]'
-                  : 'opacity-0 translate-y-6 pointer-events-none max-h-0 overflow-hidden'
-              }`}
+              className={`transition-all duration-1000 ease-out transform ${showScoreChanges
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-6 pointer-events-none'
+                }`}
             >
               <ScoreTransferPanel resultPlayers={resultPlayers} room={room} />
             </div>
@@ -547,16 +536,15 @@ export function ResultPanel(): React.JSX.Element | null {
 
           {/* Proceed button */}
           <div
-            className={`relative z-[1] flex justify-center transition-all duration-500 ease-out transform ${
-              animationFinished
-                ? 'opacity-100 scale-100'
-                : 'opacity-0 scale-95 pointer-events-none'
-            }`}
+            className={`relative z-[1] flex justify-center transition-all duration-500 ease-out transform ${animationFinished
+              ? 'opacity-100 scale-100'
+              : 'opacity-0 scale-95 pointer-events-none'
+              }`}
           >
             <Button
               onClick={handleProceed}
               disabled={!canProceed && !room.gameEnded}
-              className="w-full min-w-[180px] md:w-auto"
+              className="w-full min-w-[180px] lg:w-auto"
             >
               {room.gameEnded
                 ? t('result.showFinalResults', 'Show Game Results')

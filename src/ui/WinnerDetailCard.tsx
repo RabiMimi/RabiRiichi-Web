@@ -7,6 +7,7 @@ import type { PlayerModel, RoomModel } from '../domain/model';
 import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
 import { getLimitName } from '../domain/resultHelpers';
+import { UiTile } from './UiTile';
 
 const LIMIT_BADGE_STYLES: Record<string, string> = {
   'limit-mangan': 'bg-[#ff7a99]',
@@ -82,10 +83,10 @@ export function WinnerDetailCard({
       const limit = isAotenjou
         ? null
         : getLimitName(
-            result.han ?? 0,
-            result.fu ?? 0,
-            room.config?.scoringOption ?? 0,
-          );
+          result.han ?? 0,
+          result.fu ?? 0,
+          room.config?.scoringOption ?? 0,
+        );
 
       if (limit) {
         limitLabel = t(`result.${limit}`);
@@ -127,37 +128,35 @@ export function WinnerDetailCard({
   return (
     <div
       key={player.id}
-      className={`rounded-xl flex flex-col border transition-all duration-700 ease-out transform ${cardStyles} ${
-        isCardStarted
-        ? 'opacity-100 translate-y-0 scale-100 p-2 lg:p-3 gap-1.5 lg:gap-2 max-h-screen'
-          : 'opacity-0 -translate-y-4 scale-95 p-0 border-none gap-0 overflow-hidden max-h-0 pointer-events-none'
-      }`}
+      className={`rounded-xl flex flex-col border p-2 lg:p-3 gap-1.5 lg:gap-2 transition-all duration-700 ease-out transform ${cardStyles} ${isCardStarted
+          ? 'opacity-100 translate-y-0 scale-100'
+          : 'opacity-0 -translate-y-2 scale-98 pointer-events-none'
+        }`}
     >
       <div className="flex items-center gap-1.5 lg:gap-3">
         <span
-          className={`text-[10px] lg:text-xs font-bold px-1.5 py-0.5 lg:px-2.5 lg:py-1 rounded-full text-white ${badgeColor}`}
+          className={`text-sm font-bold px-1.5 py-0.5 lg:px-3 lg:py-1 rounded-full text-white ${badgeColor}`}
         >
           {badgeText}
         </span>
-        <span className="text-xs lg:text-lg font-bold">
+        <span className="text-lg font-bold">
           {getPlayerDisplayName(player, t)}
         </span>
         {isTenpai ? (
           player.gameState?.awaitedTiles &&
           player.gameState.awaitedTiles.length > 0 && (
             <div className="ml-auto flex items-center gap-1 lg:gap-2">
-              <span className="text-xs lg:text-sm text-[#aaa] font-bold">
+              <span className="text-sm text-[#aaa] font-bold">
                 {t('result.tenpaiWaits', 'Waits')}:
               </span>
               <div className="flex gap-1.5">
                 {player.gameState.awaitedTiles.map((ti, idx) => {
                   const tileStr = Tile.fromByte(ti.winningTile).toString();
                   return (
-                    <img
+                    <UiTile
                       key={idx}
-                      src={getTileTexturePath(tileStr)}
-                      alt={tileStr}
-                      className="w-6 h-8 rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+                      tile={tileStr}
+                      size="result"
                     />
                   );
                 })}
@@ -166,21 +165,20 @@ export function WinnerDetailCard({
           )
         ) : (
           <div
-            className={`ml-auto flex items-center gap-2 transition-all duration-700 ease-out transform ${
-              showTotal
+            className={`ml-auto flex items-center gap-2 transition-all duration-700 ease-out transform ${showTotal
                 ? 'opacity-100 translate-x-0'
                 : 'opacity-0 translate-x-4 pointer-events-none'
-            }`}
+              }`}
           >
             {limitLabel && (
               <span
-                  className={`text-xs lg:text-sm font-bold px-1.5 py-0.5 lg:px-3 lg:py-1 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${finalLimitClass}`}
+                  className={`text-sm font-bold px-1.5 py-0.5 lg:px-3 lg:py-1 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${finalLimitClass}`}
               >
                 {limitLabel}
               </span>
             )}
             {hanFuLabel && (
-                <span className={`font-bold text-sm lg:text-lg ${finalHanFuColor}`}>
+                <span className={`font-bold text-lg ${finalHanFuColor}`}>
                 {hanFuLabel}
               </span>
             )}
@@ -190,53 +188,49 @@ export function WinnerDetailCard({
 
       {isNagashi ? (
         <div className="flex flex-col gap-2 bg-[#141414]/40 p-3 rounded-md">
-          <span className="text-[10px] lg:text-xs text-[#88a8cc] uppercase font-bold">
+          <span className="text-xs text-[#88a8cc] uppercase font-bold">
             {t('result.river')}
           </span>
           <div className="flex flex-wrap gap-0.5 lg:gap-1">
             {(player.gameState?.hand.discarded ?? []).map((tileMsg, idx) => {
               const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
               return (
-                <img
+                <UiTile
                   key={tileMsg.traceId ?? idx}
-                  src={getTileTexturePath(tileStr)}
-                  alt={tileStr}
-                  className="w-[22px] h-[29px] lg:w-8 lg:h-[42px] rounded-sm shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                  tile={tileStr}
+                  size="result"
                 />
               );
             })}
           </div>
         </div>
       ) : (
-          <div className="flex flex-wrap gap-0.5 lg:gap-1 bg-[#1a1a1a] p-1 lg:p-1.5 rounded-md items-center">
-            <div className="flex gap-0.5 lg:gap-1">
+        <div className="flex flex-wrap gap-0.5 lg:gap-1 bg-[#1a1a1a] p-1 lg:p-1.5 rounded-md items-center">
+          <div className="flex gap-0.5 lg:gap-1">
             {handTiles.map((tileMsg, idx) => {
               const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
               return (
-                <img
+                <UiTile
                   key={tileMsg.traceId ?? idx}
-                  src={getTileTexturePath(tileStr)}
-                  alt={tileStr}
-                  className="w-[22px] h-[29px] lg:w-8 lg:h-[42px] rounded-sm shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                  tile={tileStr}
+                  size="result"
                 />
               );
             })}
           </div>
           {/* Winning tile */}
           {agari.incoming && (
-              <div className="ml-2 lg:ml-3 border-l-2 border-zinc-700 pl-2 lg:pl-3 flex items-center">
-                <div className="relative flex">
-                  <span className="absolute -top-2.5 lg:-top-3.5 left-1/2 -translate-x-1/2 bg-[#ff7a99] text-[#fff] text-[9px] lg:text-[11px] font-black px-1.5 py-0.5 rounded-sm leading-none z-[2] select-none border border-[#ffccd5] whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-                    {t('result.winTile')}
-                  </span>
-                  <img
-                    src={getTileTexturePath(
-                      Tile.fromByte(agari.incoming.tile ?? 0).toString(),
-                    )}
-                    alt="winning-tile"
-                    className="w-[22px] h-[29px] lg:w-8 lg:h-[42px] rounded-sm shadow-[0_2px_4px_rgba(0,0,0,0.5)] border-2 border-[#ff7a99]"
-                  />
-                </div>
+            <div className="ml-2 lg:ml-3 border-l-2 border-zinc-700 pl-2 lg:pl-3 flex items-center">
+              <div className="relative flex">
+                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#ff7a99] text-[#fff] text-xs font-black px-1.5 py-0.5 rounded-sm leading-none z-[2] select-none border border-[#ffccd5] whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
+                  {t('result.winTile')}
+                </span>
+                <UiTile
+                  tile={Tile.fromByte(agari.incoming.tile ?? 0).toString()}
+                  isWinningTile
+                  size="result"
+                />
+              </div>
             </div>
           )}
           {/* Called melds */}
@@ -250,11 +244,10 @@ export function WinnerDetailCard({
                 {tiles.map((tile, tileIdx) => {
                   const tileStr = Tile.fromByte(tile.tile ?? 0).toString();
                   return (
-                    <img
+                    <UiTile
                       key={tile.traceId ?? tileIdx}
-                      src={getTileTexturePath(tileStr)}
-                      alt={tileStr}
-                      className="w-[22px] h-[29px] lg:w-8 lg:h-[42px] rounded-sm shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                      tile={tileStr}
+                      size="result"
                     />
                   );
                 })}
@@ -266,9 +259,9 @@ export function WinnerDetailCard({
 
       {/* List of Yaku */}
       {!isTenpai && (
-        <div className="grid grid-cols-2 gap-x-1.5 lg:gap-x-4 gap-y-0.5 lg:gap-y-2 text-[10px] lg:text-sm">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
           {/* Column 1 */}
-          <div className="flex flex-col gap-0.5 lg:gap-2">
+          <div className="flex flex-col gap-1.5">
             {yakuList
               .slice(0, Math.ceil(yakuList.length / 2))
               .map((yaku, idx) => {
@@ -283,11 +276,10 @@ export function WinnerDetailCard({
                 return (
                   <div
                     key={idx}
-                    className={`bg-white/[0.08] border border-white/15 rounded-[6px] px-2 py-0.75 lg:px-2.5 lg:py-1 flex items-center justify-between gap-1 lg:gap-1.5 transition-all duration-500 ease-out transform ${
-                      isRevealed
+                    className={`bg-white/[0.08] border border-white/15 rounded-[6px] px-2 py-0.75 flex items-center justify-between gap-1 transition-all duration-500 ease-out transform ${isRevealed
                         ? 'opacity-100 scale-100'
                         : 'opacity-0 scale-95 pointer-events-none'
-                    }`}
+                      }`}
                   >
                     <span className="text-[#ddd] truncate flex-1 text-left">
                       {t(`yaku.${yaku.Src ?? ''}`, {
@@ -303,7 +295,7 @@ export function WinnerDetailCard({
           </div>
 
           {/* Column 2 */}
-          <div className="flex flex-col gap-0.5 lg:gap-2">
+          <div className="flex flex-col gap-1.5">
             {yakuList.slice(Math.ceil(yakuList.length / 2)).map((yaku, idx) => {
               const half = Math.ceil(yakuList.length / 2);
               const globalIdx = half + idx;
@@ -317,11 +309,10 @@ export function WinnerDetailCard({
               return (
                 <div
                   key={idx}
-                  className={`bg-white/[0.08] border border-white/15 rounded-[6px] px-2 py-0.75 lg:px-2.5 lg:py-1 flex items-center justify-between gap-1 lg:gap-1.5 transition-all duration-500 ease-out transform ${
-                    isRevealed
+                  className={`bg-white/[0.08] border border-white/15 rounded-[6px] px-2 py-0.75 flex items-center justify-between gap-1 transition-all duration-500 ease-out transform ${isRevealed
                       ? 'opacity-100 scale-100'
                       : 'opacity-0 scale-95 pointer-events-none'
-                  }`}
+                    }`}
                 >
                   <span className="text-[#ddd] truncate flex-1 text-left">
                     {t(`yaku.${yaku.Src ?? ''}`, {
