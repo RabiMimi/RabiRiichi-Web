@@ -139,26 +139,26 @@ export function ActionHUD(): React.JSX.Element | null {
   });
 
   return (
-    <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[50] pointer-events-auto">
-      <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2.5 max-w-[90vw] bg-[#121c32]/88 px-2.5 py-1 sm:px-5 sm:py-2 rounded-[16px] sm:rounded-[20px] border border-[#ff7a99]/35 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-md items-center">
+    <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-[50] pointer-events-auto">
+      <div className="flex flex-wrap justify-center gap-1 sm:gap-1.5 max-w-[95vw] bg-[#121c32]/88 px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-[12px] sm:rounded-[16px] border border-[#ff7a99]/35 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-md items-center">
         {flatOptions.map((opt) => (
           <button
             key={opt.key}
-            className={`bg-transparent border-none text-base sm:text-xl lg:text-2xl font-bold px-2 py-1 sm:px-4 sm:py-1.5 lg:px-5 lg:py-2 cursor-pointer rounded-xl transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 outline-none ${
+            className={`bg-transparent border-none text-base sm:text-lg lg:text-xl font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 lg:px-3.5 lg:py-1.5 cursor-pointer rounded-lg transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 outline-none ${
               HUD_BTN_COLORS[opt.type] ?? 'text-white'
             }`}
             onClick={opt.onClick}
             style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)' }}
           >
             {opt.tiles ? (
-              <div className="flex flex-col items-center gap-[2px]">
+              <div className="flex flex-col items-center gap-[1px]">
                 <span
-                  className="text-[10px] sm:text-xs lg:text-sm"
+                  className="text-[9px] sm:text-[11px] lg:text-xs"
                   style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}
                 >
                   {opt.label}
                 </span>
-                <div className="flex gap-[2px] bg-[#141414]/60 px-1 py-0.5 rounded border border-[#444]">
+                <div className="flex gap-[1px] bg-[#141414]/60 px-0.5 py-[1px] rounded border border-[#444]">
                   {opt.tiles.map((tileMsg, idx) => {
                     const tileStr = Tile.fromByte(tileMsg.tile).toString();
                     const imgSrc = getTileTexturePath(tileStr);
@@ -167,7 +167,7 @@ export function ActionHUD(): React.JSX.Element | null {
                         key={idx}
                         src={imgSrc}
                         alt={tileStr}
-                        className="w-4.5 h-[24px] sm:w-6 sm:h-[32px] lg:w-7 lg:h-[37px] rounded-[2px] border border-[#333] shadow-[0_2px_4px_rgba(0,0,0,0.3)] object-cover bg-[#f7f4eb]"
+                        className="w-3.5 h-[19px] sm:w-5 sm:h-[27px] lg:w-6 lg:h-[32px] rounded-[1px] border border-[#333] shadow-[0_2px_4px_rgba(0,0,0,0.3)] object-cover bg-[#f7f4eb]"
                       />
                     );
                   })}

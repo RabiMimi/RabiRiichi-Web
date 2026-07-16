@@ -41,9 +41,7 @@ export function WinnerDetailCard({
   const isTenpai = agari.isTenpai ?? false;
 
   let badgeText = t('result.winnerBadge');
-  if (isNagashi) {
-    badgeText = t('yaku.NagashiMangan');
-  } else if (isTenpai) {
+  if (isTenpai) {
     badgeText = t('result.tenpai');
   }
 
@@ -264,7 +262,7 @@ export function WinnerDetailCard({
       )}
 
       {/* List of Yaku */}
-      {!isNagashi && !isTenpai && (
+      {!isTenpai && (
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           {/* Column 1 */}
           <div className="flex flex-col gap-2">
@@ -273,9 +271,11 @@ export function WinnerDetailCard({
               .map((yaku, idx) => {
                 const globalIdx = idx;
                 const typeLabel =
-                  yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
-                    ? t('result.yakuman')
-                    : t('result.han', { count: yaku.Val });
+                  yaku.Src === 'NagashiMangan'
+                    ? ''
+                    : yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
+                      ? t('result.yakuman')
+                      : t('result.han', { count: yaku.Val });
                 const isRevealed = globalIdx < visibleYakuCount;
                 return (
                   <div
@@ -305,9 +305,11 @@ export function WinnerDetailCard({
               const half = Math.ceil(yakuList.length / 2);
               const globalIdx = half + idx;
               const typeLabel =
-                yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
-                  ? t('result.yakuman')
-                  : t('result.han', { count: yaku.Val });
+                yaku.Src === 'NagashiMangan'
+                  ? ''
+                  : yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
+                    ? t('result.yakuman')
+                    : t('result.han', { count: yaku.Val });
               const isRevealed = globalIdx < visibleYakuCount;
               return (
                 <div

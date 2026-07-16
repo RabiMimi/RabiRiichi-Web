@@ -94,7 +94,12 @@ export function FinalResultPanel({
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1">
+          <div
+            className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
             <div className="flex flex-col gap-3 mt-4">
               {rankedPlayers.map((item, index) => {
                 const rank = index + 1;

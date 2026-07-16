@@ -93,17 +93,17 @@ export function ScoreTransferPanel({
                   className={`font-mono text-[1.35rem] font-black drop-shadow-lg ${textColor}`}
                 >
                   {deltaSign}
-                  {delta.toLocaleString()}
+                  {delta.toString()}
                 </span>
               </div>
 
               {/* Score Transition */}
               <div className="flex items-center gap-2 z-10 bg-black/50 px-2 py-1 rounded-md w-full justify-center border border-white/10 shadow-inner">
                 <span className="font-mono text-[0.75rem] text-[#888] line-through decoration-[#ff7a99]/60 decoration-2">
-                  {prevPoints.toLocaleString()}
+                  {prevPoints.toString()}
                 </span>
                 <span className="font-mono text-[0.85rem] font-bold text-[#e2e8f0]">
-                  {currentPoints.toLocaleString()}
+                  {currentPoints.toString()}
                 </span>
               </div>
             </div>

@@ -179,7 +179,12 @@ export function GameInfoModal({
           </button>
         </div>
 
-        <div className={MODAL.body}>
+        <div
+          className={MODAL.body}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+        >
           {/* Tab: Live Info */}
           {activeTab === 'info' && (
             <div className="flex flex-col gap-4 text-left">

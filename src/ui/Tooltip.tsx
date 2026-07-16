@@ -1,13 +1,17 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useRef, useState, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useHoverOrTouchHold } from './useHoverOrTouchHold';
 
 interface HTMLPropsWithEvents {
   onMouseEnter?: (e: React.MouseEvent) => void;
   onMouseLeave?: (e: React.MouseEvent) => void;
   onFocus?: (e: React.FocusEvent) => void;
   onBlur?: (e: React.FocusEvent) => void;
-  onTouchStart?: (e: React.TouchEvent) => void;
-  onTouchEnd?: (e: React.TouchEvent) => void;
+  onPointerEnter?: (e: React.PointerEvent) => void;
+  onPointerLeave?: (e: React.PointerEvent) => void;
+  onPointerDown?: (e: React.PointerEvent) => void;
+  onPointerUp?: (e: React.PointerEvent) => void;
+  onPointerCancel?: (e: React.PointerEvent) => void;
   style?: React.CSSProperties;
 }
 
@@ -19,6 +23,7 @@ interface TooltipProps {
   position?: TooltipPosition;
   disabled?: boolean;
   style?: React.CSSProperties;
+  forceVisible?: boolean | undefined;
 }
 
 // Transforms template generators for setting transform style on bubble.
@@ -48,9 +53,10 @@ export function Tooltip({
   position = 'top',
   disabled = false,
   style,
+  forceVisible,
 }: TooltipProps): React.JSX.Element {
-  const [visible, setVisible] = useState(false);
-  const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [active, bind] = useHoverOrTouchHold(300);
+  const visible = forceVisible ?? active;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
 
@@ -58,14 +64,6 @@ export function Tooltip({
     null,
   );
   const [shiftStyle, setShiftStyle] = useState<React.CSSProperties>({});
-
-  useEffect(() => {
-    return () => {
-      if (touchTimerRef.current) {
-        clearTimeout(touchTimerRef.current);
-      }
-    };
-  }, []);
 
   // 1. Calculate anchor screen coordinates of the wrapper div
   useLayoutEffect(() => {
@@ -135,43 +133,34 @@ export function Tooltip({
     return children;
   }
 
-  const handleTouchStart = () => {
-    if (touchTimerRef.current) {
-      clearTimeout(touchTimerRef.current);
-    }
-    setVisible(true);
-  };
-
-  const handleTouchEnd = () => {
-    touchTimerRef.current = setTimeout(() => {
-      setVisible(false);
-    }, 1500);
-  };
-
   const trigger = React.cloneElement(children, {
-    onMouseEnter: (e: React.MouseEvent) => {
-      children.props.onMouseEnter?.(e);
-      setVisible(true);
-    },
-    onMouseLeave: (e: React.MouseEvent) => {
-      children.props.onMouseLeave?.(e);
-      setVisible(false);
-    },
     onFocus: (e: React.FocusEvent) => {
       children.props.onFocus?.(e);
-      setVisible(true);
+      bind.onFocus(e);
     },
     onBlur: (e: React.FocusEvent) => {
       children.props.onBlur?.(e);
-      setVisible(false);
+      bind.onBlur(e);
     },
-    onTouchStart: (e: React.TouchEvent) => {
-      children.props.onTouchStart?.(e);
-      handleTouchStart();
+    onPointerEnter: (e: React.PointerEvent) => {
+      children.props.onPointerEnter?.(e);
+      bind.onPointerEnter(e);
     },
-    onTouchEnd: (e: React.TouchEvent) => {
-      children.props.onTouchEnd?.(e);
-      handleTouchEnd();
+    onPointerLeave: (e: React.PointerEvent) => {
+      children.props.onPointerLeave?.(e);
+      bind.onPointerLeave(e);
+    },
+    onPointerDown: (e: React.PointerEvent) => {
+      children.props.onPointerDown?.(e);
+      bind.onPointerDown(e);
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      children.props.onPointerUp?.(e);
+      bind.onPointerUp(e);
+    },
+    onPointerCancel: (e: React.PointerEvent) => {
+      children.props.onPointerCancel?.(e);
+      bind.onPointerCancel(e);
     },
     style: {
       ...children.props.style,

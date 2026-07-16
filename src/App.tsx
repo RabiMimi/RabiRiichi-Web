@@ -28,6 +28,7 @@ import { Tooltip } from './ui/Tooltip';
 import { IconButton } from './ui/IconButton';
 import { SettingsButton } from './ui/SettingsButton';
 import { SettingsModal } from './ui/SettingsModal';
+import { tooltipPortalTarget, stickerPortalTarget } from './ui/portal';
 import { COMMIT_HASH } from './lib';
 import type { PlayerModel, RoomModel } from './domain/model';
 import type { ActionOption } from './domain/inquiry';
@@ -285,6 +286,9 @@ function App(): React.JSX.Element {
       {isSettingsOpen && (
         <SettingsModal onClose={() => setSettingsOpen(false)} />
       )}
+      {/* Portal targets for 3D projections */}
+      <div ref={tooltipPortalTarget as React.RefObject<HTMLDivElement>} className="absolute inset-0 pointer-events-none z-[120]" />
+      <div ref={stickerPortalTarget as React.RefObject<HTMLDivElement>} className="absolute inset-0 pointer-events-none z-[80]" />
     </div>
   );
 }

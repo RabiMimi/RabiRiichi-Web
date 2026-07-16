@@ -27,6 +27,7 @@ export function CopyGameIdButton({
       <Tooltip
         content={copied ? t('hud.copied') : t('hud.copyGameId')}
         position="top"
+        forceVisible={copied ? true : undefined}
       >
         <button
           type="button"

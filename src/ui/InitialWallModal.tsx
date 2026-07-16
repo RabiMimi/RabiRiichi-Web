@@ -195,7 +195,12 @@ export function InitialWallModal({
           </button>
         </div>
 
-        <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
+        <div
+          className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto"
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+        >
           {/* Wall Grid Section */}
           {initialWall && initialWall.length > 0 ? (
             <div className="flex flex-col gap-4">

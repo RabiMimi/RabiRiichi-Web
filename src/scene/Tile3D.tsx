@@ -4,6 +4,7 @@ import { TileSpotlightParticles } from './TileSpotlightParticles';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TileTooltip } from '../ui/TileTooltip';
+import { tooltipPortalTarget } from '../ui/portal';
 import {
   TILE_MODEL_PATH,
   getTileTexturePath,
@@ -774,7 +775,7 @@ export function Tile3D({
       <primitive ref={tileRef} object={clone} scale={[0.18, 0.24, 0.14]} />
       {isWinningTile && <TileSpotlightParticles />}
       {showTooltip && (
-        <Html center style={{ pointerEvents: 'none' }}>
+        <Html center style={{ pointerEvents: 'none' }} portal={tooltipPortalTarget as React.RefObject<HTMLElement>}>
           <TileTooltip />
         </Html>
       )}

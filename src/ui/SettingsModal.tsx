@@ -239,7 +239,12 @@ export function SettingsModal({
                   <div className="text-xs lg:text-sm font-extrabold uppercase tracking-wider text-white/50 text-left">
                     {t('settings.voicelines', 'Voice Lines')}
                   </div>
-                  <div className="flex-grow flex flex-col gap-2.5 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg">
+                  <div
+                    className="flex-grow flex flex-col gap-2.5 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                  >
                     {voiceGroups.map((group) => (
                       <div key={group.category} className="flex flex-col gap-1">
                         <div className="text-xs lg:text-sm font-bold text-white/40 border-b border-white/5 pb-0.5 text-left">
@@ -283,7 +288,12 @@ export function SettingsModal({
                   <div className="text-xs lg:text-sm font-extrabold uppercase tracking-wider text-white/50 text-left">
                     {t('settings.stickers', 'Stickers')}
                   </div>
-                  <div className="flex-grow grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-8 gap-1 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg content-start">
+                  <div
+                    className="flex-grow grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-8 gap-1 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg content-start"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                  >
                     {activeCharacter.stickers.map((sName) => (
                       <div
                         key={sName}
@@ -303,7 +313,12 @@ export function SettingsModal({
           )}
 
           {activeTab === 'sounds' && (
-            <div className="flex flex-col gap-2.5 sm:gap-4 p-3 sm:p-4 lg:p-6 max-w-[480px] lg:max-w-[600px] w-full mx-auto min-h-0 overflow-y-auto">
+            <div
+              className="flex flex-col gap-2.5 sm:gap-4 p-3 sm:p-4 lg:p-6 max-w-[480px] lg:max-w-[600px] w-full mx-auto min-h-0 overflow-y-auto"
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+            >
               {/* Global Mute Toggle */}
               <div className="flex justify-start items-center gap-3 py-1.5 px-3 rounded-lg border border-white/[0.04] bg-white/[0.02]">
                 <span className="text-sm lg:text-base font-bold text-[#fbbf24] w-[140px] lg:w-[180px] shrink-0 text-left">

@@ -18,6 +18,7 @@ import {
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { Button } from './Button';
+import { useHoverOrTouchHold } from './useHoverOrTouchHold';
 import { rabiriichi } from '../net/client';
 import { UserStatus, FuritenType } from '../proto';
 import { pollUntil } from '../lib';
@@ -50,7 +51,10 @@ export function GameInfoPanel(): React.JSX.Element | null {
   const roundNumber = dealer + 1;
 
   return (
-    <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-2 px-3 flex flex-col gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)] min-w-[180px]">
+    <div
+      tabIndex={0}
+      className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-2 px-3 flex flex-col gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)] min-w-[180px] opacity-65 hover:opacity-100 focus-within:opacity-100 focus:outline-none transition-opacity duration-300"
+    >
       <div className="flex justify-center items-center gap-4 border-b border-[#333] pb-[6px] text-sm font-bold">
         <span className="text-[#ccc] flex items-center">
           {windTranslated}
@@ -206,7 +210,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [showPermanentWaits, setShowPermanentWaits] = useState(false);
+  const [showPermanentWaits, showPermanentWaitsBind] = useHoverOrTouchHold(300);
 
   const selfPlayer = useMemo(() => {
     if (!room || !currentUser) return null;
@@ -387,9 +391,11 @@ export function GamePlayHUD(): React.JSX.Element | null {
                 ? 'border-[#cc3333] text-[#cc3333] hover:scale-110 hover:bg-[#cc3333] hover:text-white hover:shadow-[0_4px_15px_rgba(204,51,51,0.4)]'
                 : 'border-[#ff7a99] text-[#ff7a99] hover:scale-110 hover:bg-[#ff7a99] hover:text-white hover:shadow-[0_4px_15px_rgba(255,122,153,0.4)]'
             }`}
-            onMouseEnter={() => setShowPermanentWaits(true)}
-            onMouseLeave={() => setShowPermanentWaits(false)}
-            onClick={() => setShowPermanentWaits((prev) => !prev)}
+            onPointerEnter={showPermanentWaitsBind.onPointerEnter}
+            onPointerLeave={showPermanentWaitsBind.onPointerLeave}
+            onPointerDown={showPermanentWaitsBind.onPointerDown}
+            onPointerUp={showPermanentWaitsBind.onPointerUp}
+            onPointerCancel={showPermanentWaitsBind.onPointerCancel}
           >
             {isFuriten ? t('hud.furiten') : t('hud.tenpai')}
           </div>

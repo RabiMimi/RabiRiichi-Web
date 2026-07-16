@@ -27,6 +27,7 @@ import { InitialWallModal } from './InitialWallModal';
 import { Tooltip } from './Tooltip';
 import { SettingsButton } from './SettingsButton';
 import { IconButton } from './IconButton';
+import { useHoverOrTouchHold } from './useHoverOrTouchHold';
 
 export function ReplayHUD(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -41,7 +42,7 @@ export function ReplayHUD(): React.JSX.Element | null {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isWallOpen, setIsWallOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [showPermanentWaits, setShowPermanentWaits] = useState(false);
+  const [showPermanentWaits, showPermanentWaitsBind] = useHoverOrTouchHold(300);
 
   const selfPlayer = useMemo(() => {
     if (!room || !currentUser) return null;
@@ -481,9 +482,11 @@ export function ReplayHUD(): React.JSX.Element | null {
                 ? 'border-[#cc3333] text-[#cc3333] hover:scale-110 hover:bg-[#cc3333] hover:text-white hover:shadow-[0_4px_15px_rgba(204,51,51,0.4)]'
                 : 'border-[#ff7a99] text-[#ff7a99] hover:scale-110 hover:bg-[#ff7a99] hover:text-white hover:shadow-[0_4px_15px_rgba(255,122,153,0.4)]'
             }`}
-            onMouseEnter={() => setShowPermanentWaits(true)}
-            onMouseLeave={() => setShowPermanentWaits(false)}
-            onClick={() => setShowPermanentWaits((prev) => !prev)}
+            onPointerEnter={showPermanentWaitsBind.onPointerEnter}
+            onPointerLeave={showPermanentWaitsBind.onPointerLeave}
+            onPointerDown={showPermanentWaitsBind.onPointerDown}
+            onPointerUp={showPermanentWaitsBind.onPointerUp}
+            onPointerCancel={showPermanentWaitsBind.onPointerCancel}
           >
             {isFuriten ? t('hud.furiten') : t('hud.tenpai')}
           </div>

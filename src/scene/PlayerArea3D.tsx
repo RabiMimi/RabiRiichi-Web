@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useHoverOrTouchHold } from '../ui/useHoverOrTouchHold';
 import { Html } from '@react-three/drei';
 import { useTranslation } from 'react-i18next';
 import { AiType } from '../proto';
@@ -36,6 +37,8 @@ function PlayerIndicator3D({
   const activeStickers = useActiveStickers();
   const sticker = activeStickers[player.id];
 
+  const [showName, showNameBind] = useHoverOrTouchHold(300);
+
   if (isLocal) {
     return (
       <Html
@@ -58,7 +61,14 @@ function PlayerIndicator3D({
         userSelect: 'none',
       }}
     >
-      <div className="group relative cursor-pointer flex items-center justify-center animate-pop">
+      <div
+        className="relative cursor-pointer flex items-center justify-center animate-pop"
+        onPointerEnter={showNameBind.onPointerEnter}
+        onPointerLeave={showNameBind.onPointerLeave}
+        onPointerDown={showNameBind.onPointerDown}
+        onPointerUp={showNameBind.onPointerUp}
+        onPointerCancel={showNameBind.onPointerCancel}
+      >
         {isAi ? (
           <div className="w-6 h-6 rounded-full relative border-[1.5px] border-white shadow-[0_0_8px_rgba(155,81,224,0.7)] bg-[linear-gradient(135deg,#4285f4,#9b51e0,#e91e63,#f2994a)] bg-[length:200%_200%] animate-[gemini-gradient_3s_ease_infinite] before:content-[''] before:absolute before:-top-2 before:w-1.5 before:h-3 before:[background:inherit] before:rounded-t-full before:border-t-[1.5px] before:border-x-[1.5px] before:border-white before:left-[3px] before:rotate-[-15deg] after:content-[''] after:absolute after:-top-2 after:w-1.5 after:h-3 after:[background:inherit] after:rounded-t-full after:border-t-[1.5px] after:border-x-[1.5px] after:border-white after:right-[3px] after:rotate-[15deg]" />
         ) : (
@@ -66,7 +76,11 @@ function PlayerIndicator3D({
             {initials}
           </div>
         )}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 -translate-y-1 bg-black/85 text-white py-1 px-2 rounded text-[11px] whitespace-nowrap opacity-0 pointer-events-none transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.5)] border border-[#444] z-[1000] group-hover:opacity-100 group-hover:-translate-y-2">
+        <div
+          className={`absolute bottom-full left-1/2 -translate-x-1/2 bg-black/85 text-white py-1 px-2 rounded text-[11px] whitespace-nowrap pointer-events-none transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.5)] border border-[#444] z-[1000] ${
+            showName ? 'opacity-100 -translate-y-2' : 'opacity-0 -translate-y-1'
+          }`}
+        >
           {displayName}
         </div>
         <StickerBubble sticker={sticker} className="sticker-bubble-3d" />

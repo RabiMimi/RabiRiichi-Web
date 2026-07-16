@@ -133,15 +133,18 @@ export function ResultPanel(): React.JSX.Element | null {
     return room?.roundResultPlayers ?? room?.players ?? [];
   }, [room]);
 
-  const playersWithResult = React.useMemo(() => {
-    return resultPlayers.filter(
-      (p) => p.gameState?.agari?.scores != null || p.gameState?.agari?.isTenpai,
-    );
-  }, [resultPlayers]);
-
   const hasNagashiWinner = React.useMemo(() => {
     return resultPlayers.some((p) => p.gameState?.agari?.isNagashi);
   }, [resultPlayers]);
+
+  const playersWithResult = React.useMemo(() => {
+    if (hasNagashiWinner) {
+      return resultPlayers.filter((p) => p.gameState?.agari?.isNagashi);
+    }
+    return resultPlayers.filter(
+      (p) => p.gameState?.agari?.scores != null || p.gameState?.agari?.isTenpai,
+    );
+  }, [resultPlayers, hasNagashiWinner]);
 
   const hasNormalWinner = React.useMemo(() => {
     return resultPlayers.some(
@@ -246,7 +249,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
         // 1b. Play limit voice & show total
         if (!isActive()) return;
-        if (agari.scores?.result) {
+        if (agari.scores?.result && !agari.isNagashi) {
           const result = agari.scores.result;
           let limitVoiceId: string | null = null;
 
@@ -284,11 +287,6 @@ export function ResultPanel(): React.JSX.Element | null {
           } else {
             await new Promise((r) => setTimeout(r, 800));
           }
-        } else if (agari.isNagashi) {
-          const voiceLine = activeCharacter.voiceLines.find(
-            (v) => v.id === 'nagashiMangan',
-          );
-          await soundManager.playVoicePromise(voiceLine?.audioUrl);
         } else {
           await new Promise((r) => setTimeout(r, 800));
         }
@@ -508,7 +506,12 @@ export function ResultPanel(): React.JSX.Element | null {
                 : t('result.agari')}
           </h2>
 
-          <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1">
+          <div
+            className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
             <div className="relative z-[1] flex flex-col gap-4">
               {playersWithResult.map((w, pIdx) => (
                 <WinnerDetailCard
