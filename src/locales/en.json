@@ -424,6 +424,8 @@
     "pause": "Pause",
     "stepBackward": "Step Backward",
     "stepForward": "Step Forward",
+    "prevRound": "Previous Round",
+    "nextRound": "Next Round",
     "perspective": "Perspective",
     "modalTitle": "View Replay",
     "gameIdLabel": "Game ID",

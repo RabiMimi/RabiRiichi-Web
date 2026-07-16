@@ -8,6 +8,7 @@ import {
   useResultAnimation,
   useHasInMemoryResult,
   useIsReplay,
+  useIsReplayPaused,
   useReplayProgress,
   useCharacterId,
   useSelf,
@@ -30,13 +31,10 @@ import {
   jumpToRound,
   stopReplay,
 } from '../replay/replayDriver';
-import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
-import {
-  getYakuVoiceLineId,
-  getLimitName,
-} from '../domain/resultHelpers';
+import { getYakuVoiceLineId, getLimitName } from '../domain/resultHelpers';
 import { WinnerDetailCard } from './WinnerDetailCard';
+import { ScoreTransferPanel } from './ScoreTransferPanel';
 
 /**
  * Renders a fixed 5-wide indicator row for the settlement screen: each tile the
@@ -83,6 +81,7 @@ export function ResultPanel(): React.JSX.Element | null {
   const resultAnimation = useResultAnimation();
   const hasInMemoryResult = useHasInMemoryResult();
   const isReplay = useIsReplay();
+  const isPaused = useIsReplayPaused();
   const progress = useReplayProgress();
   const characterId = useCharacterId();
   const activeCharacter = React.useMemo(() => {
@@ -369,7 +368,11 @@ export function ResultPanel(): React.JSX.Element | null {
   const handleProceed = React.useCallback(() => {
     if (isReplay) {
       if (currentRoundIdx < roundStartIndices.length - 1) {
-        jumpToRound(currentRoundIdx + 1);
+        if (!isPaused) {
+          proceedReplay();
+        } else {
+          jumpToRound(currentRoundIdx + 1);
+        }
       } else {
         setShowFinalResults(true);
       }
@@ -384,6 +387,7 @@ export function ResultPanel(): React.JSX.Element | null {
     }
   }, [
     isReplay,
+    isPaused,
     currentRoundIdx,
     roundStartIndices,
     proceedAction,
@@ -393,7 +397,7 @@ export function ResultPanel(): React.JSX.Element | null {
   ]);
 
   React.useEffect(() => {
-    if (!isWaitingForProceed) return;
+    if (!isWaitingForProceed || isPaused) return;
 
     const intervalId = setInterval(() => {
       setLocalSecondsLeft((prev) => {
@@ -410,7 +414,7 @@ export function ResultPanel(): React.JSX.Element | null {
       clearInterval(intervalId);
       setLocalSecondsLeft(8);
     };
-  }, [isWaitingForProceed, handleProceed]);
+  }, [isWaitingForProceed, isPaused, handleProceed]);
 
   const secondsLeft = currentInquiry
     ? Math.ceil(actionTimeout)
@@ -481,50 +485,6 @@ export function ResultPanel(): React.JSX.Element | null {
 
   if (!room || !showPanel) return null;
 
-  const renderScoreChanges = () => {
-    return (
-      <div className="relative z-[1] bg-[#252525]/75 border border-[#333] rounded-[10px] p-4">
-        <div className="flex flex-row gap-2.5 justify-between">
-          {resultPlayers.map((p) => {
-            const agari = p.gameState?.agari;
-            const delta = (agari?.gainPoints ?? 0) - (agari?.losePoints ?? 0);
-            const deltaColor =
-              delta > 0
-                ? 'text-[#00ff00]'
-                : delta < 0
-                  ? 'text-[#ff3333]'
-                  : 'text-[#888]';
-            const deltaText = delta > 0 ? `+${delta}` : `${delta}`;
-            const currentPoints =
-              p.gameState?.points ??
-              room.config?.pointThreshold?.initialPoints ??
-              25000;
-            const prevPoints = currentPoints - delta;
-
-            return (
-              <div
-                key={p.id}
-                className="flex-1 flex flex-col items-center bg-black/20 border border-white/5 rounded-lg py-2 px-1.5 gap-1 box-border min-w-[90px]"
-              >
-                <span className="font-bold text-sm truncate max-w-full text-center">
-                  {getPlayerDisplayName(p, t)}
-                </span>
-                <span className="text-[#888] text-sm font-mono">
-                  {prevPoints} → {currentPoints}
-                </span>
-                <span
-                  className={`font-bold font-mono text-lg min-w-0 text-center ${deltaColor}`}
-                >
-                  {deltaText}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="absolute inset-0 bg-[#0a0a0a]/85 flex justify-center items-center z-[120] text-white font-sans backdrop-blur-md">
       <div className="flex flex-row items-stretch gap-0 w-[95%] max-w-[1000px] max-h-[85vh] m-auto box-border z-[121] relative">
@@ -572,7 +532,7 @@ export function ResultPanel(): React.JSX.Element | null {
                   : 'opacity-0 translate-y-6 pointer-events-none max-h-0 overflow-hidden'
               }`}
             >
-              {renderScoreChanges()}
+              <ScoreTransferPanel resultPlayers={resultPlayers} room={room} />
             </div>
           </div>
 

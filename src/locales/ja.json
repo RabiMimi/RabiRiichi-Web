@@ -424,6 +424,8 @@
     "pause": "一時停止",
     "stepBackward": "1手戻る",
     "stepForward": "1手進む",
+    "prevRound": "前の局",
+    "nextRound": "次の局",
     "perspective": "視点",
     "modalTitle": "牌譜再生",
     "gameIdLabel": "ゲームID",

@@ -424,6 +424,8 @@
     "pause": "暂停",
     "stepBackward": "单步后退",
     "stepForward": "单步前进",
+    "prevRound": "上一局",
+    "nextRound": "下一局",
     "perspective": "视角",
     "modalTitle": "观看回放",
     "gameIdLabel": "游戏 ID",

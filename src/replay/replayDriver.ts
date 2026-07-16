@@ -56,6 +56,12 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
 
   rabiriichi.replay.setIsReplay(true);
   rabiriichi.replay.setReplayPaused(false);
+  // A previous replay session may have been stopped while its round-result
+  // screen was showing (isWaitingForProceed left true). Without resetting it
+  // here, the fresh room (no agari data yet) would immediately satisfy
+  // ResultPanel's showPanel condition and render a zeroed score-transfer
+  // panel before any events have replayed.
+  rabiriichi.replay.setWaitingForProceed(false);
   replayState.paused = false;
   replayState.singleStep = false;
   rabiriichi.replay.setConnectionStatus('connected');
@@ -267,6 +273,7 @@ export function stopReplay(): void {
   }
   rabiriichi.replay.setIsReplay(false);
   rabiriichi.replay.setReplayPaused(false);
+  rabiriichi.replay.setWaitingForProceed(false);
   replayState.paused = false;
   replayState.singleStep = false;
   if (resolvePause) {

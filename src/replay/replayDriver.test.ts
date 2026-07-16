@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   startReplay,
   pauseReplay,
@@ -6,6 +6,7 @@ import {
   getRoundStartIndices,
   stopReplay,
   jumpToRound,
+  togglePause,
 } from './replayDriver';
 import { rabiriichi } from '../net/client';
 import { getEventsFromReplay } from './replay';
@@ -88,4 +89,28 @@ describe('ReplayDriver - Seek & Result State Integration', () => {
     // We can check our updated currentPlayer logic: it should be the dealer (e.g. 0 or 1, not -1)
     expect(room.info?.currentPlayer).not.toBe(-1);
   });
+
+  it('should not leak isWaitingForProceed from a stopped session into a fresh replay', async () => {
+    // Play forward live so the loop naturally pauses at a round's concludeGameEvent
+    // (isWaitingForProceed becomes true), mirroring watching a result screen.
+    rabiriichi.setAnimationSpeed(200);
+    togglePause();
+    await vi.waitFor(
+      () => {
+        expect(rabiriichi.isWaitingForProceed).toBe(true);
+      },
+      { timeout: 15000, interval: 20 },
+    );
+
+    // Stop the session while the result screen is still showing (a very common
+    // user action: watch a result, then rewind/reload the replay).
+    stopReplay();
+    expect(rabiriichi.isWaitingForProceed).toBe(false);
+
+    // Restarting the same (or another) replay must not inherit the stale flag,
+    // otherwise ResultPanel would render immediately against the fresh room
+    // (no agari data yet) and show a zeroed score-transfer panel.
+    startReplay(replayData, 1);
+    expect(rabiriichi.isWaitingForProceed).toBe(false);
+  }, 20000);
 });
