@@ -534,13 +534,13 @@ export function RoomConfigPanel({
   return (
     <div className="bg-[#202020] border border-[#444] rounded-lg p-4 mb-3 flex flex-col gap-3 box-border">
       <div className="flex justify-between items-center border-b border-[#333] pb-1 mb-3">
-        <h3 className="m-0 text-[1.1rem] text-[#ff7a99] font-bold text-left">
+        <h3 className="m-0 text-lg text-[#ff7a99] font-bold text-left">
           {t('lobby.roomSettings')}
         </h3>
         <div className="flex gap-1">
           <button
             type="button"
-            className={`bg-transparent border-none text-[0.9rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
+            className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
               activeTab === 'game'
                 ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                 : 'text-[#888] hover:text-white hover:bg-[#333]'
@@ -551,7 +551,7 @@ export function RoomConfigPanel({
           </button>
           <button
             type="button"
-            className={`bg-transparent border-none text-[0.9rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
+            className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
               activeTab === 'points'
                 ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                 : 'text-[#888] hover:text-white hover:bg-[#333]'
@@ -562,7 +562,7 @@ export function RoomConfigPanel({
           </button>
           <button
             type="button"
-            className={`bg-transparent border-none text-[0.9rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
+            className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
               activeTab === 'yaku'
                 ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                 : 'text-[#888] hover:text-white hover:bg-[#333]'
@@ -573,7 +573,7 @@ export function RoomConfigPanel({
           </button>
           <button
             type="button"
-            className={`bg-transparent border-none text-[0.9rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
+            className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
               activeTab === 'advanced'
                 ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                 : 'text-[#888] hover:text-white hover:bg-[#333]'

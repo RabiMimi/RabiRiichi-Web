@@ -263,7 +263,7 @@ export function ResultPanel(): React.JSX.Element | null {
     return (
       <div className="relative z-[1] flex flex-col gap-3 bg-[#1e1e1e]/70 border border-[#333] rounded-[10px] p-4 box-border">
         <div className="flex flex-row items-center gap-3 flex-wrap">
-          <span className="text-[0.8rem] text-[#80deea] font-bold uppercase tracking-[1px] whitespace-nowrap min-w-[135px]">
+          <span className="text-sm text-[#80deea] font-bold uppercase tracking-[1px] whitespace-nowrap min-w-[135px]">
             {t('result.dora')}
           </span>
           <div className="flex flex-row items-center gap-3 flex-wrap">
@@ -425,7 +425,7 @@ export function ResultPanel(): React.JSX.Element | null {
             player.gameState?.awaitedTiles &&
             player.gameState.awaitedTiles.length > 0 && (
               <div className="ml-auto flex items-center gap-2">
-                <span className="text-[0.9rem] text-[#aaa] font-bold">
+                <span className="text-sm text-[#aaa] font-bold">
                   {t('result.tenpaiWaits', 'Waits')}:
                 </span>
                 <div className="flex gap-1.5">
@@ -447,13 +447,13 @@ export function ResultPanel(): React.JSX.Element | null {
             <div className="ml-auto flex items-center gap-2">
               {limitLabel && (
                 <span
-                  className={`text-[0.8rem] font-bold px-3 py-1 rounded-[50px] shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${finalLimitClass}`}
+                  className={`text-sm font-bold px-3 py-1 rounded-[50px] shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${finalLimitClass}`}
                 >
                   {limitLabel}
                 </span>
               )}
               {hanFuLabel && (
-                <span className={`font-bold text-[1.1rem] ${finalHanFuColor}`}>
+                <span className={`font-bold text-lg ${finalHanFuColor}`}>
                   {hanFuLabel}
                 </span>
               )}
@@ -463,7 +463,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
         {isNagashi ? (
           <div className="flex flex-col gap-2 bg-[#141414]/40 p-3 rounded-md">
-            <span className="text-[0.8rem] text-[#88a8cc] uppercase font-bold">
+            <span className="text-sm text-[#88a8cc] uppercase font-bold">
               {t('result.river')}
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -538,7 +538,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
         {/* List of Yaku */}
         {!isNagashi && !isTenpai && (
-          <div className="grid grid-cols-2 gap-2 text-[0.85rem]">
+          <div className="grid grid-cols-2 gap-2 text-sm">
             {yakuList.map((yaku, idx) => {
               const typeLabel =
                 yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
@@ -589,14 +589,14 @@ export function ResultPanel(): React.JSX.Element | null {
                 key={p.id}
                 className="flex-1 flex flex-col items-center bg-black/20 border border-white/5 rounded-lg py-2 px-1.5 gap-1 box-border min-w-[90px]"
               >
-                <span className="font-bold text-[0.9rem] truncate max-w-full text-center">
+                <span className="font-bold text-sm truncate max-w-full text-center">
                   {getPlayerDisplayName(p, t)}
                 </span>
-                <span className="text-[#888] text-[0.85rem] font-mono">
+                <span className="text-[#888] text-sm font-mono">
                   {prevPoints} → {currentPoints}
                 </span>
                 <span
-                  className={`font-bold font-mono text-[1.1rem] min-w-0 text-center ${deltaColor}`}
+                  className={`font-bold font-mono text-lg min-w-0 text-center ${deltaColor}`}
                 >
                   {deltaText}
                 </span>
@@ -619,7 +619,7 @@ export function ResultPanel(): React.JSX.Element | null {
           />
         </div>
         <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-[20px] p-6 pl-4 md:pl-20 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-4 relative overflow-hidden box-border">
-          <h2 className="relative z-[1] text-[2.2rem] font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-1 tracking-[4px]">
+          <h2 className="relative z-[1] text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-1 tracking-[4px]">
             {isDraw
               ? hasNagashiWinner
                 ? t('yaku.NagashiMangan')

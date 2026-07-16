@@ -67,7 +67,7 @@ export function LobbyScreen(): React.JSX.Element {
               {t('lobby.title')}
             </h2>
             {rabiriichi.wsurl && (
-              <span className="text-[0.85rem] text-[#888] font-normal">
+              <span className="text-sm text-[#888] font-normal">
                 (
                 {t('lobby.connectedServer', {
                   url: rabiriichi.wsurl.replace(/^wss?:\/\//, ''),

@@ -198,7 +198,7 @@ function App(): React.JSX.Element {
         <>
           <FullscreenButton className="absolute top-5 left-5 z-[150] pointer-events-auto" />
           <div className="absolute top-5 right-5 z-[150] pointer-events-auto flex items-center gap-2">
-            <span className="self-center text-[0.75rem] text-[#888] font-mono whitespace-nowrap select-text">
+            <span className="self-center text-xs text-[#888] font-mono whitespace-nowrap select-text">
               {t('lobby.build', { commit: COMMIT_HASH })}
             </span>
             <Tooltip content={t('lobby.clientRepo')} position="bottom">

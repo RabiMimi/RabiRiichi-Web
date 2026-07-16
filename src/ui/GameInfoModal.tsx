@@ -135,13 +135,13 @@ export function GameInfoModal({
         {/* Header */}
         <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-1">
           <div className="flex items-center gap-5">
-            <h3 className="m-0 text-[1.1rem] font-bold text-[#ff7a99] whitespace-nowrap">
+            <h3 className="m-0 text-lg font-bold text-[#ff7a99] whitespace-nowrap">
               {t('hud.gameInfo')}
             </h3>
             <div className="flex gap-1">
               <button
                 type="button"
-                className={`bg-transparent border-none text-[0.85rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
                   activeTab === 'info'
                     ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                     : 'text-[#888] hover:text-white hover:bg-[#333]'
@@ -152,7 +152,7 @@ export function GameInfoModal({
               </button>
               <button
                 type="button"
-                className={`bg-transparent border-none text-[0.85rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
                   activeTab === 'config'
                     ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                     : 'text-[#888] hover:text-white hover:bg-[#333]'
@@ -163,7 +163,7 @@ export function GameInfoModal({
               </button>
               <button
                 type="button"
-                className={`bg-transparent border-none text-[0.85rem] font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
                   activeTab === 'yaku'
                     ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                     : 'text-[#888] hover:text-white hover:bg-[#333]'
@@ -184,14 +184,14 @@ export function GameInfoModal({
           {activeTab === 'info' && (
             <div className="flex flex-col gap-4 text-left">
               <div className="grid grid-cols-1 min-[481px]:grid-cols-2 gap-x-4 gap-y-2 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
-                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                <div className="flex justify-between items-center text-sm py-0.5">
                   <span className="text-[#aaa]">{t('hud.roomId')}:</span>
                   <span className="text-white font-bold font-mono">
                     {room.id}
                   </span>
                 </div>
                 {room.gameId && (
-                  <div className="flex justify-between items-center text-[0.85rem] py-0.5 game-id-row">
+                  <div className="flex justify-between items-center text-sm py-0.5 game-id-row">
                     <span className="text-[#aaa]">{t('hud.gameId')}:</span>
                     <span className="text-white font-bold font-mono game-id-val flex items-center gap-2">
                       {room.gameId}
@@ -201,7 +201,7 @@ export function GameInfoModal({
                 )}
                 {info && (
                   <>
-                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                    <div className="flex justify-between items-center text-sm py-0.5">
                       <span className="text-[#aaa]">
                         {t('hud.roundLabel')}:
                       </span>
@@ -212,13 +212,13 @@ export function GameInfoModal({
                         {t('hud.roundSuffix')}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                    <div className="flex justify-between items-center text-sm py-0.5">
                       <span className="text-[#aaa]">{t('hud.dealer')}:</span>
                       <span className="text-white font-bold font-mono">
                         Seat {info.dealer}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                    <div className="flex justify-between items-center text-sm py-0.5">
                       <span className="text-[#aaa]">
                         {t('hud.activePlayer')}:
                       </span>
@@ -226,13 +226,13 @@ export function GameInfoModal({
                         {t('room.seat', { seat: info.currentPlayer })}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                    <div className="flex justify-between items-center text-sm py-0.5">
                       <span className="text-[#aaa]">{t('hud.turnJun')}:</span>
                       <span className="text-white font-bold font-mono">
                         {activePlayerJun}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                    <div className="flex justify-between items-center text-sm py-0.5">
                       <span className="text-[#aaa]">{t('hud.wallLabel')}:</span>
                       <span className="text-white font-bold font-mono">
                         {t('hud.remainingTiles', {
@@ -240,7 +240,7 @@ export function GameInfoModal({
                         })}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                    <div className="flex justify-between items-center text-sm py-0.5">
                       <span className="text-[#aaa]">
                         {t('hud.honbaLabel')}:
                       </span>
@@ -249,7 +249,7 @@ export function GameInfoModal({
                         {t('hud.honbaSuffix')}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                    <div className="flex justify-between items-center text-sm py-0.5">
                       <span className="text-[#aaa]">
                         {t('hud.riichiLabel')}:
                       </span>
@@ -272,18 +272,18 @@ export function GameInfoModal({
                       key={p.id}
                       className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2.5 flex flex-col gap-1.5"
                     >
-                      <div className="flex items-center gap-2 text-[0.9rem]">
+                      <div className="flex items-center gap-2 text-sm">
                         <span className="text-[#ff7a99] font-bold">
                           {t('room.seat', { seat: p.seat ?? '?' })}:
                         </span>
                         <span className="text-white font-bold">
                           {p.nickname}
                         </span>
-                        <span className="text-[#666] text-[0.75rem]">
+                        <span className="text-xs text-[#666]">
                           (ID: {p.id})
                         </span>
                       </div>
-                      <div className="flex justify-between text-[0.8rem] text-[#aaa]">
+                      <div className="flex justify-between text-sm text-[#aaa]">
                         <span className="p-points">
                           {t('hud.pointsLabel')}:{' '}
                           {p.gameState?.points !== undefined
@@ -306,31 +306,31 @@ export function GameInfoModal({
           {activeTab === 'config' && config && (
             <div className="flex flex-col gap-4 text-left">
               <div className="grid grid-cols-1 min-[481px]:grid-cols-2 gap-x-4 gap-y-2 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
-                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                <div className="flex justify-between items-center text-sm py-0.5">
                   <span className="text-[#aaa]">{t('lobby.players')}:</span>
                   <span className="text-white font-bold font-mono">
                     {config.playerCount}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                <div className="flex justify-between items-center text-sm py-0.5">
                   <span className="text-[#aaa]">{t('lobby.rounds')}:</span>
                   <span className="text-white font-bold font-mono">
                     {config.totalRound}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                <div className="flex justify-between items-center text-sm py-0.5">
                   <span className="text-[#aaa]">{t('lobby.minHan')}:</span>
                   <span className="text-white font-bold font-mono">
                     {config.minHan}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                <div className="flex justify-between items-center text-sm py-0.5">
                   <span className="text-[#aaa]">{t('lobby.seed')}:</span>
                   <span className="text-white font-bold font-mono">
                     {seedStr === '0' ? t('lobby.auto') : seedStr}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                <div className="flex justify-between items-center text-sm py-0.5">
                   <span className="text-[#aaa]">
                     {t('lobby.nextRoundAckTimeout')}:
                   </span>
@@ -338,7 +338,7 @@ export function GameInfoModal({
                     {config.nextRoundAckTimeout}s
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                <div className="flex justify-between items-center text-sm py-0.5">
                   <span className="text-[#aaa]">
                     {t('lobby.actionTimeout')}:
                   </span>
@@ -353,7 +353,7 @@ export function GameInfoModal({
                   {t('hud.rulesAndPolicies')}
                 </h4>
                 <div className="flex flex-col gap-2.5 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
-                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                  <div className="flex items-start justify-between gap-3 text-sm py-1">
                     <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.renchanPolicy')}:
                     </span>
@@ -365,14 +365,14 @@ export function GameInfoModal({
                       ).map((f) => (
                         <span
                           key={f}
-                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-xs font-mono"
                         >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                  <div className="flex items-start justify-between gap-3 text-sm py-1">
                     <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.endGamePolicy')}:
                     </span>
@@ -384,14 +384,14 @@ export function GameInfoModal({
                       ).map((f) => (
                         <span
                           key={f}
-                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-xs font-mono"
                         >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                  <div className="flex items-start justify-between gap-3 text-sm py-1">
                     <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.kuikaePolicy')}:
                     </span>
@@ -403,14 +403,14 @@ export function GameInfoModal({
                       ).map((f) => (
                         <span
                           key={f}
-                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-xs font-mono"
                         >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                  <div className="flex items-start justify-between gap-3 text-sm py-1">
                     <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.riichiPolicy')}:
                     </span>
@@ -422,14 +422,14 @@ export function GameInfoModal({
                       ).map((f) => (
                         <span
                           key={f}
-                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-xs font-mono"
                         >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                  <div className="flex items-start justify-between gap-3 text-sm py-1">
                     <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.doraOption')}:
                     </span>
@@ -441,14 +441,14 @@ export function GameInfoModal({
                       ).map((f) => (
                         <span
                           key={f}
-                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-xs font-mono"
                         >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                  <div className="flex items-start justify-between gap-3 text-sm py-1">
                     <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.agariOption')}:
                     </span>
@@ -460,14 +460,14 @@ export function GameInfoModal({
                       ).map((f) => (
                         <span
                           key={f}
-                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-xs font-mono"
                         >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                  <div className="flex items-start justify-between gap-3 text-sm py-1">
                     <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.scoringOption')}:
                     </span>
@@ -479,14 +479,14 @@ export function GameInfoModal({
                       ).map((f) => (
                         <span
                           key={f}
-                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-xs font-mono"
                         >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                  <div className="flex items-start justify-between gap-3 text-sm py-1">
                     <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.ryuukyokuTrigger')}:
                     </span>
@@ -498,14 +498,14 @@ export function GameInfoModal({
                       ).map((f) => (
                         <span
                           key={f}
-                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-xs font-mono"
                         >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                  <div className="flex items-start justify-between gap-3 text-sm py-1">
                     <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.pointsDeductionPolicy')}:
                     </span>
@@ -539,7 +539,7 @@ export function GameInfoModal({
                       return (
                         <div
                           key={group}
-                          className="flex flex-wrap items-baseline gap-1.5 text-[0.85rem]"
+                          className="flex flex-wrap items-baseline gap-1.5 text-sm"
                         >
                           <span className="text-[#888] font-bold min-w-[70px] shrink-0">
                             {t(`yakuGroup.${group}`)}:
@@ -548,7 +548,7 @@ export function GameInfoModal({
                             {groupYakus.map((yaku) => (
                               <span
                                 key={yaku.name}
-                                className="bg-[#1a1a1a] border border-[#333] rounded px-2 py-0.5 text-[#ccc] text-[0.8rem]"
+                                className="bg-[#1a1a1a] border border-[#333] rounded px-2 py-0.5 text-[#ccc] text-sm"
                               >
                                 {t(`yaku.${yaku.name}`)}
                               </span>
@@ -581,7 +581,7 @@ export function GameInfoModal({
                             alt={tileStr}
                             className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.4)]"
                           />
-                          <span className="text-[0.75rem] text-[#80deea] font-bold font-mono">
+                          <span className="text-xs text-[#80deea] font-bold font-mono">
                             x{count}
                           </span>
                         </div>

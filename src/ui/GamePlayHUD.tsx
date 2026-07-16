@@ -51,7 +51,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
 
   return (
     <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-2 px-3 flex flex-col gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)] min-w-[180px]">
-      <div className="flex justify-center items-center gap-4 border-b border-[#333] pb-[6px] text-[0.85rem] font-bold">
+      <div className="flex justify-center items-center gap-4 border-b border-[#333] pb-[6px] text-sm font-bold">
         <span className="text-[#ccc] flex items-center">
           {windTranslated}
           {t('hud.windSpace')}
@@ -68,7 +68,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
         </span>
         {riichiStick > 0 && (
           <span className="text-[#ff3333] bg-white/95 py-[1px] px-[6px] rounded text-[0.7rem] border-[1.5px] border-[#ff3333] font-extrabold shadow-[0_1px_3px_rgba(0,0,0,0.3)] flex items-center">
-            <span className="text-[#ff3333] text-[0.85rem] font-extrabold m-0">
+            <span className="text-[#ff3333] text-sm font-extrabold m-0">
               {riichiStick}
             </span>
             {t('hud.riichiSuffix')}
@@ -76,7 +76,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
         )}
       </div>
       <div className="flex flex-col gap-1">
-        <div className="text-[0.75rem] font-bold text-[#80deea] tracking-[2px]">
+        <div className="text-xs font-bold text-[#80deea] tracking-[2px]">
           {t('hud.dora')}
         </div>
         <div className="flex gap-1">
@@ -447,7 +447,7 @@ function HUDLeftPanel({
     (room.config.doraOption & 128) !== 0;
 
   const getToggleBtnClass = (isActive: boolean) =>
-    `flex-1 bg-[#141414]/85 border-[1.5px] rounded-[6px] py-1.5 text-[0.85rem] font-bold cursor-pointer pointer-events-auto transition-all duration-200 text-center select-none hover:-translate-y-[1px] active:translate-y-[1px] ${
+    `flex-1 bg-[#141414]/85 border-[1.5px] rounded-[6px] py-1.5 text-sm font-bold cursor-pointer pointer-events-auto transition-all duration-200 text-center select-none hover:-translate-y-[1px] active:translate-y-[1px] ${
       isActive
         ? 'bg-[#ff7a99]/15 border-[#ff7a99] text-[#ff7a99] shadow-[0_0_10px_rgba(255,122,153,0.3),inset_0_0_4px_rgba(255,122,153,0.2)] [text-shadow:0_0_4px_rgba(255,122,153,0.4)]'
         : 'border-[#444] text-[#888] shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:border-[#ff7a99] hover:text-[#ccc]'
@@ -462,7 +462,7 @@ function HUDLeftPanel({
       <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-1.5 px-3 flex flex-row items-center gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
         <label
           htmlFor="speed-select"
-          className="text-[0.8rem] font-bold text-[#aaa]"
+          className="text-sm font-bold text-[#aaa]"
         >
           {t('hud.speed')}
         </label>
@@ -470,7 +470,7 @@ function HUDLeftPanel({
           id="speed-select"
           value={animationSpeed}
           onChange={(e) => rabiriichi.setAnimationSpeed(Number(e.target.value))}
-          className="bg-[#222] text-white border border-[#555] rounded py-0.5 px-1.5 text-[0.9rem] cursor-pointer outline-none"
+          className="bg-[#222] text-white border border-[#555] rounded py-0.5 px-1.5 text-sm cursor-pointer outline-none"
         >
           <option value="0.25">x0.25</option>
           <option value="0.5">x0.5</option>
@@ -689,7 +689,7 @@ function HUDExitConfirmModal({
   return (
     <div className="fixed inset-0 w-screen h-screen bg-black/70 flex justify-center items-center z-[1100] backdrop-blur-[3px] pointer-events-auto">
       <div className="bg-[#2a2a2a] border-2 border-[#ff3333] rounded-xl p-6 w-[90%] max-w-[400px] shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-center box-border">
-        <p className="text-[1.05rem] text-white mb-5 font-medium leading-[1.4]">
+        <p className="text-base text-white mb-5 font-medium leading-[1.4]">
           {t('hud.confirmExit')}
         </p>
         <div className="flex gap-4 justify-center">

@@ -22,7 +22,7 @@ export const MODAL = {
   cardDefaultLook:
     'w-[90%] max-w-[650px] border-2 border-[#ff7a99] bg-[#121c32]/95',
   header: 'mb-4 flex items-center justify-between border-b border-[#444] pb-2',
-  title: 'm-0 text-[1.2rem] text-[#ff7a99]',
+  title: 'm-0 text-xl text-[#ff7a99]',
   closeButton:
     'cursor-pointer border-none bg-transparent p-0 text-[1.5rem] ' +
     'leading-none text-[#aaa] hover:text-white',
@@ -51,7 +51,7 @@ export const SCREEN = {
     'bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent',
   // Screen subtitle (replaces `.ui-subtitle`)
   subtitle:
-    'm-0 mb-6 text-center text-[0.95rem] uppercase tracking-[3px] text-white/60',
+    'm-0 mb-6 text-center text-sm sm:text-base uppercase tracking-[3px] text-white/60',
 } as const;
 
 /**
@@ -67,21 +67,21 @@ export const FORM = {
   // Vertically stacked inline group wrapper (handles inline field errors)
   groupInlineWrapper: 'flex flex-col gap-0.5 w-full min-w-0',
   // Field label
-  label: 'text-[0.9rem] font-semibold text-[#ccc]',
+  label: 'text-sm font-semibold text-[#ccc]',
   // Inline label (aligned on left, fixed minimum width to align inputs)
   labelInline:
-    'text-[0.82rem] font-semibold text-[#ccc] shrink-0 w-[75px] text-right whitespace-nowrap',
+    'text-sm font-semibold text-[#ccc] shrink-0 w-[75px] text-right whitespace-nowrap',
   // Input fields
   input:
     'h-10 rounded-lg border border-[#555] bg-[#1a1a1a] px-3 py-2 text-base text-white ' +
     'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50',
   // Inline inputs/selects (slightly smaller padding)
   inputInline:
-    'h-8 flex-1 min-w-0 rounded-lg border border-[#555] bg-[#1a1a1a] px-2.5 py-1.5 text-[0.88rem] text-white ' +
+    'h-8 flex-1 min-w-0 rounded-lg border border-[#555] bg-[#1a1a1a] px-2.5 py-1.5 text-sm text-white ' +
     'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50',
   // Inline wrapper error text
-  fieldError: 'text-[0.72rem] text-[#ff6666] pl-[83px] text-left mt-0.5',
+  fieldError: 'text-xs text-[#ff6666] pl-[83px] text-left mt-0.5',
   // Standard full-width error container
   error:
-    'rounded-lg border border-[#ff0000]/30 bg-[#ff0000]/15 p-2.5 text-center text-[0.9rem] text-[#ff6666]',
+    'rounded-lg border border-[#ff0000]/30 bg-[#ff0000]/15 p-2.5 text-center text-sm text-[#ff6666]',
 } as const;
