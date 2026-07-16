@@ -106,10 +106,10 @@ export function LobbyScreen(): React.JSX.Element {
             isLoading={isLoading}
           />
 
-          <div className="flex flex-col gap-4 border-t border-[#444] pt-4 mt-2 min-[480px]:flex-row min-[480px]:justify-between min-[480px]:items-end">
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-4 border-t border-[#444] pt-4 mt-2">
             <form
               onSubmit={onJoinRoom}
-              className="flex flex-col gap-1.5 flex-1"
+              className="flex flex-col gap-1.5"
             >
               <label htmlFor="room-id" className={FORM.label}>
                 {t('lobby.joinRoomLabel')}
@@ -139,20 +139,24 @@ export function LobbyScreen(): React.JSX.Element {
               </div>
             </form>
 
-            <Button
-              variant="secondary"
-              onClick={() => setIsReplayModalOpen(true)}
-              disabled={isLoading}
-            >
-              {t('lobby.viewReplay')}
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleLogout}
-              disabled={isLoading}
-            >
-              {t('lobby.logout')}
-            </Button>
+            <div className="flex gap-3 flex-wrap ml-auto max-[540px]:ml-0">
+              <Button
+                variant="secondary"
+                onClick={() => setIsReplayModalOpen(true)}
+                disabled={isLoading}
+                className="whitespace-nowrap"
+              >
+                {t('lobby.viewReplay')}
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleLogout}
+                disabled={isLoading}
+                className="whitespace-nowrap"
+              >
+                {t('lobby.logout')}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -70,7 +70,7 @@ export const FORM = {
   label: 'text-sm font-semibold text-[#ccc]',
   // Inline label (aligned on left, fixed minimum width to align inputs)
   labelInline:
-    'text-sm font-semibold text-[#ccc] shrink-0 w-[75px] text-right whitespace-nowrap',
+    'text-sm font-semibold text-[#ccc] shrink-0 w-[110px] text-right whitespace-nowrap',
   // Input fields
   input:
     'h-10 rounded-lg border border-[#555] bg-[#1a1a1a] px-3 py-2 text-base text-white ' +
@@ -80,7 +80,7 @@ export const FORM = {
     'h-8 flex-1 min-w-0 rounded-lg border border-[#555] bg-[#1a1a1a] px-2.5 py-1.5 text-sm text-white ' +
     'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50',
   // Inline wrapper error text
-  fieldError: 'text-xs text-[#ff6666] pl-[83px] text-left mt-0.5',
+  fieldError: 'text-xs text-[#ff6666] pl-[118px] text-left mt-0.5',
   // Standard full-width error container
   error:
     'rounded-lg border border-[#ff0000]/30 bg-[#ff0000]/15 p-2.5 text-center text-sm text-[#ff6666]',
