@@ -441,24 +441,24 @@ export function ResultPanel(): React.JSX.Element | null {
     if (doras.length === 0) return null;
 
     return (
-      <div className="relative z-[1] flex flex-col gap-1 sm:gap-2 bg-[#1e1e1e]/70 border border-[#333] rounded-xl p-2 sm:p-3 box-border">
-        <div className="flex flex-row items-center gap-1 sm:gap-2 flex-wrap">
-          <span className="text-[10px] sm:text-xs text-[#80deea] font-bold uppercase tracking-wider whitespace-nowrap min-w-0">
+      <div className="relative z-[1] flex flex-col gap-1 lg:gap-2 bg-[#1e1e1e]/70 border border-[#333] rounded-xl p-2 lg:p-3 box-border">
+        <div className="flex flex-row items-center gap-1 lg:gap-2 flex-wrap">
+          <span className="text-[10px] lg:text-xs text-[#80deea] font-bold uppercase tracking-wider whitespace-nowrap min-w-0">
             {t('result.dora')}
           </span>
-          <div className="flex flex-row items-center gap-1 sm:gap-2 flex-wrap">
+          <div className="flex flex-row items-center gap-1 lg:gap-2 flex-wrap">
             {/* Dora Indicators */}
-            <div className="flex gap-0.5 md:gap-1">
+            <div className="flex gap-0.5 lg:gap-1">
               {renderIndicatorTiles(doras, 'dora')}
             </div>
 
             {/* Uradora Indicators */}
             {showUradoras && uradoras.length > 0 && (
               <>
-                <span className="text-[#666] text-[10px] sm:text-sm font-bold select-none mx-0.5 sm:mx-1">
+                <span className="text-[#666] text-[10px] lg:text-sm font-bold select-none mx-0.5 lg:mx-1">
                   /
                 </span>
-                <div className="flex gap-0.5 md:gap-1">
+                <div className="flex gap-0.5 lg:gap-1">
                   {renderIndicatorTiles(uradoras, 'uradora')}
                 </div>
               </>
@@ -492,15 +492,15 @@ export function ResultPanel(): React.JSX.Element | null {
   return (
     <div className="absolute inset-0 bg-[#0a0a0a]/85 flex justify-center items-center z-[120] text-white font-sans backdrop-blur-md">
       <div className="flex flex-row items-stretch gap-0 w-[95%] max-w-5xl max-h-[85vh] m-auto box-border z-[121] relative">
-        <div className="hidden md:block flex-none w-80 relative z-[2] -mr-20 pointer-events-none">
+        <div className="hidden lg:block flex-none w-80 relative z-[2] -mr-20 pointer-events-none">
           <img
             src={activeCharacter.visualUrl}
             alt={`${activeCharacter.id}-avatar`}
             className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none opacity-95"
           />
         </div>
-        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 md:p-4 md:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 sm:gap-2.5 relative overflow-hidden box-border">
-          <h2 className="relative z-[1] text-lg sm:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider sm:tracking-widest">
+        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 lg:p-4 lg:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 lg:gap-2.5 relative overflow-hidden box-border">
+          <h2 className="relative z-[1] text-lg lg:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider lg:tracking-widest">
             {hasNagashiWinner
               ? t('yaku.NagashiMangan')
               : isDraw
@@ -513,12 +513,12 @@ export function ResultPanel(): React.JSX.Element | null {
           </h2>
 
           <div
-            className="flex-1 overflow-y-auto flex flex-col gap-1.5 sm:gap-2.5 pr-1"
+            className="flex-1 overflow-y-auto flex flex-col gap-1.5 lg:gap-2.5 pr-1"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
           >
-            <div className="relative z-[1] flex flex-col gap-1.5 sm:gap-2.5">
+            <div className="relative z-[1] flex flex-col gap-1.5 lg:gap-2.5">
               {playersWithResult.map((w, pIdx) => (
                 <WinnerDetailCard
                   key={w.id}

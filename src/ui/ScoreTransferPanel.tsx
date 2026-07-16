@@ -99,9 +99,11 @@ export function ScoreTransferPanel({
 
               {/* Score Transition */}
               <div className="flex items-center gap-2 z-10 bg-black/50 px-2 py-1 rounded-md w-full justify-center border border-white/10 shadow-inner">
-                <span className="font-mono text-xs text-[#888] line-through decoration-[#ff7a99]/60 decoration-2">
-                  {prevPoints.toString()}
-                </span>
+                {delta !== 0 && (
+                  <span className="font-mono text-xs text-[#888] line-through decoration-[#ff7a99]/60 decoration-2">
+                    {prevPoints.toString()}
+                  </span>
+                )}
                 <span className="font-mono text-sm font-bold text-[#e2e8f0]">
                   {currentPoints.toString()}
                 </span>
