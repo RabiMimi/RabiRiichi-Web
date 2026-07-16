@@ -71,26 +71,32 @@ body {
 }
 
 /* Explicitly restore text selection for form inputs so typing and copy/pasting still works */
-input, textarea, select, [contenteditable="true"] {
+input,
+textarea,
+select,
+[contenteditable='true'] {
   user-select: text;
   -webkit-user-select: text;
 }
 
 /* Restore touch swipe/scroll gestures inside scrollable containers (like modals and settings lists) */
-.overflow-y-auto, [class*="overflow-y-scroll"] {
+.overflow-y-auto,
+[class*='overflow-y-scroll'] {
   user-select: text;
   -webkit-user-select: text;
   touch-action: pan-y !important;
   overscroll-behavior: contain;
 }
 
-.overflow-x-auto, [class*="overflow-x-scroll"] {
+.overflow-x-auto,
+[class*='overflow-x-scroll'] {
   user-select: text;
   -webkit-user-select: text;
   touch-action: pan-x !important;
 }
 
-.overflow-auto, [class*="overflow-scroll"] {
+.overflow-auto,
+[class*='overflow-scroll'] {
   user-select: text;
   -webkit-user-select: text;
   touch-action: auto !important;

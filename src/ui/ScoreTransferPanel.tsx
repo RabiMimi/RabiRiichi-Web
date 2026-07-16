@@ -37,7 +37,7 @@ export function ScoreTransferPanel({
         {resultPlayers.map((p) => {
           const agari = p.gameState?.agari;
           const delta = (agari?.gainPoints ?? 0) - (agari?.losePoints ?? 0);
-          const isDealer = p.seat === room?.info?.dealer;
+          const isDealer = p.seat === room.info?.dealer;
           const currentPoints =
             p.gameState?.points ??
             room.config?.pointThreshold?.initialPoints ??

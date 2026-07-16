@@ -1703,6 +1703,41 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.remainingTiles).toBe(70);
   });
 
+  it('preserves the initial wall across a mid-round syncGameStateEvent', () => {
+    let state = createInitializedRoom();
+    state = applyEvent(state, {
+      beginGameEvent: {
+        round: 0,
+        dealer: 0,
+        honba: 0,
+        remainingTiles: 70,
+        initialWall: [
+          { traceId: 1, tile: 11 },
+          { traceId: 2, tile: 12 },
+        ],
+      },
+    });
+    expect(state.info?.initialWall).toHaveLength(2);
+
+    const synced = applyEvent(state, {
+      syncGameStateEvent: {
+        playerId: 0,
+        gameState: {
+          config: { playerCount: 2 },
+          info: { round: 0, dealer: 0 },
+          wall: { remaining: 65 },
+          players: [
+            { id: 0, points: 25000 },
+            { id: 1, points: 25000 },
+          ],
+        },
+      },
+    });
+
+    expect(synced.info?.initialWall).toHaveLength(2);
+    expect(synced.info?.initialWall?.map((t) => t.traceId)).toEqual([1, 2]);
+  });
+
   it('should handle syncGameStateEvent by hydrating tenpaiWaits', () => {
     const state = createInitializedRoom();
     const eventMsg = {

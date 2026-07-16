@@ -17,7 +17,9 @@ export interface HoverOrTouchHoldBind {
  *   clears immediately on pointerup/pointercancel. Quick taps are ignored.
  * - Keyboard focus: triggers on focus, clears on blur.
  */
-export function useHoverOrTouchHold(delayMs = 300): [boolean, HoverOrTouchHoldBind] {
+export function useHoverOrTouchHold(
+  delayMs = 300,
+): [boolean, HoverOrTouchHoldBind] {
   const [active, setActive] = useState(false);
   const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTouchTimeRef = useRef(0);
@@ -68,29 +70,35 @@ export function useHoverOrTouchHold(delayMs = 300): [boolean, HoverOrTouchHoldBi
     [delayMs, recordTouch],
   );
 
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') {
-      recordTouch();
-      if (touchTimerRef.current) {
-        clearTimeout(touchTimerRef.current);
-        touchTimerRef.current = null;
-      } else {
-        setActive(false);
+  const onPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType === 'touch') {
+        recordTouch();
+        if (touchTimerRef.current) {
+          clearTimeout(touchTimerRef.current);
+          touchTimerRef.current = null;
+        } else {
+          setActive(false);
+        }
       }
-    }
-  }, [recordTouch]);
+    },
+    [recordTouch],
+  );
 
-  const onPointerCancel = useCallback((e: React.PointerEvent) => {
-    if (e.pointerType === 'touch') {
-      recordTouch();
-      if (touchTimerRef.current) {
-        clearTimeout(touchTimerRef.current);
-        touchTimerRef.current = null;
-      } else {
-        setActive(false);
+  const onPointerCancel = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType === 'touch') {
+        recordTouch();
+        if (touchTimerRef.current) {
+          clearTimeout(touchTimerRef.current);
+          touchTimerRef.current = null;
+        } else {
+          setActive(false);
+        }
       }
-    }
-  }, [recordTouch]);
+    },
+    [recordTouch],
+  );
 
   const onFocus = useCallback(() => {
     if (Date.now() - lastTouchTimeRef.current < 800) {

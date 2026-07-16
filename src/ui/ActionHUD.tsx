@@ -5,7 +5,6 @@ import { rabiriichi } from '../net/client';
 import { Logger } from '../lib/logger';
 import { type ActionOption, type InquiryOptionType } from '../domain/inquiry';
 import { Tile } from '../domain/tile';
-import { getTileTexturePath } from '../scene/assets';
 import { UiTile } from './UiTile';
 
 const logger = new Logger('ActionHUD');
@@ -162,13 +161,7 @@ export function ActionHUD(): React.JSX.Element | null {
                 <div className="flex gap-[1px] bg-[#141414]/60 px-0.5 py-[1px] rounded border border-[#444]">
                   {opt.tiles.map((tileMsg, idx) => {
                     const tileStr = Tile.fromByte(tileMsg.tile).toString();
-                    return (
-                      <UiTile
-                        key={idx}
-                        tile={tileStr}
-                        size="action"
-                      />
-                    );
+                    return <UiTile key={idx} tile={tileStr} size="action" />;
                   })}
                 </div>
               </div>

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
-import { getTileTexturePath } from '../scene/assets';
 import { YAKUS } from '../domain/yakus';
 import { getWindKey, type RoomModel } from '../domain/model';
 import { UserStatus } from '../proto';
@@ -582,10 +581,7 @@ export function GameInfoModal({
                           key={byte}
                           className="flex flex-col items-center gap-1 w-9 shrink-0"
                         >
-                          <UiTile
-                            tile={tileStr}
-                            size="info"
-                          />
+                          <UiTile tile={tileStr} size="info" />
                           <span className="text-xs text-[#80deea] font-bold font-mono">
                             x{count}
                           </span>

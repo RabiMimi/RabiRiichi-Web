@@ -93,6 +93,9 @@ export function hydrateFromGameState(
         currentPlayer: snapshot.info.currentPlayer ?? 0,
         doras: snapshot.wall?.doras ?? [],
         uradoras: [],
+        ...(state.info?.initialWall
+          ? { initialWall: state.info.initialWall }
+          : {}),
       }
     : null;
 

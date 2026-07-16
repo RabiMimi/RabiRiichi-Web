@@ -1,7 +1,13 @@
 import React from 'react';
 import { getTileTexturePath } from '../scene/assets';
 
-export type UiTileSize = 'result' | 'dora' | 'action' | 'info' | 'tenpai' | 'custom';
+export type UiTileSize =
+  | 'result'
+  | 'dora'
+  | 'action'
+  | 'info'
+  | 'tenpai'
+  | 'custom';
 
 interface UiTileProps {
   tile: string;
@@ -26,7 +32,9 @@ export function UiTile({
   className = '',
 }: UiTileProps): React.JSX.Element {
   const isBack = tile === 'back';
-  const imgSrc = isBack ? '/assets/hand_tiles/back.jpg' : getTileTexturePath(tile);
+  const imgSrc = isBack
+    ? '/assets/hand_tiles/back.jpg'
+    : getTileTexturePath(tile);
 
   const isCustom = size === 'custom';
   const defaultStyles = isCustom

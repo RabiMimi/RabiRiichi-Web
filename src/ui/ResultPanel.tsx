@@ -15,7 +15,6 @@ import {
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
-import { getTileTexturePath } from '../scene/assets';
 import { CHARACTERS } from '../domain/character';
 import { Button } from './Button';
 import { type ActionOption } from '../domain/inquiry';
@@ -49,7 +48,9 @@ function renderIndicatorTiles(
 ): React.JSX.Element[] {
   return Array.from({ length: 5 }).map((_, idx) => {
     const tileMsg = tiles[idx];
-    const tileStr = tileMsg ? Tile.fromByte(tileMsg.tile ?? 0).toString() : "back";
+    const tileStr = tileMsg
+      ? Tile.fromByte(tileMsg.tile ?? 0).toString()
+      : 'back';
     return (
       <UiTile
         key={tileMsg?.traceId ? `${keyPrefix}-${idx}` : `locked-${idx}`}
@@ -496,8 +497,8 @@ export function ResultPanel(): React.JSX.Element | null {
               : isDraw
                 ? room.ryuukyokuReason
                   ? t(`result.ryuukyoku.${room.ryuukyokuReason}`, {
-                    defaultValue: t('result.draw'),
-                  })
+                      defaultValue: t('result.draw'),
+                    })
                   : t('result.draw')
                 : t('result.agari')}
           </h2>
@@ -525,10 +526,11 @@ export function ResultPanel(): React.JSX.Element | null {
 
             {/* Score changes panel */}
             <div
-              className={`transition-all duration-1000 ease-out transform ${showScoreChanges
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-6 pointer-events-none'
-                }`}
+              className={`transition-all duration-1000 ease-out transform ${
+                showScoreChanges
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-6 pointer-events-none'
+              }`}
             >
               <ScoreTransferPanel resultPlayers={resultPlayers} room={room} />
             </div>
@@ -536,10 +538,11 @@ export function ResultPanel(): React.JSX.Element | null {
 
           {/* Proceed button */}
           <div
-            className={`relative z-[1] flex justify-center transition-all duration-500 ease-out transform ${animationFinished
-              ? 'opacity-100 scale-100'
-              : 'opacity-0 scale-95 pointer-events-none'
-              }`}
+            className={`relative z-[1] flex justify-center transition-all duration-500 ease-out transform ${
+              animationFinished
+                ? 'opacity-100 scale-100'
+                : 'opacity-0 scale-95 pointer-events-none'
+            }`}
           >
             <Button
               onClick={handleProceed}

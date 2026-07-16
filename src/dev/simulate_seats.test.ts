@@ -1,4 +1,4 @@
-import { test } from 'vitest';
+import { test, expect } from 'vitest';
 import { rabiriichi } from '../net/client';
 import {
   getEventsFromReplay,
@@ -6,6 +6,7 @@ import {
 } from '../replay/replay';
 import { createEmptyTileRegistry } from '../domain/tileRegistry';
 import { getScreenPosition, getSeatRotation } from '../scene/seat';
+import type { RoomModel } from '../domain/model';
 import { UserStatus, AiType } from '../proto';
 import type { IGameLogMsg } from '../proto';
 import replayDataRaw from './fixtures/full_game.json';
@@ -14,20 +15,23 @@ const replayData = replayDataRaw as unknown as IGameLogMsg;
 
 test('simulate seats positioning output', () => {
   const seat = 1;
+  const initialRoom = createInitialRoomFromReplay(replayData);
+  const targetPlayer = initialRoom.players.find((p) => p.seat === seat);
+  if (!targetPlayer) throw new Error('Player not found at seat 1');
+
   rabiriichi.replay.setConnectionStatus('connected');
   rabiriichi.replay.setSelf({
-    id: seat,
-    nickname: `Player ${seat}`,
+    id: targetPlayer.id,
+    nickname: targetPlayer.nickname,
     status: UserStatus.USER_STATUS_PLAYING,
     gameState: null,
-    aiType: AiType.AI_TYPE_NONE,
+    aiType: targetPlayer.aiType,
   });
 
-  const initialRoom = createInitialRoomFromReplay(replayData);
   rabiriichi.replay.setRoom(initialRoom);
 
   const events = getEventsFromReplay(replayData, seat);
-  console.log(`Loaded ${events.length} events.`);
+  expect(events.length).toBeGreaterThan(0);
 
   for (const eventMsg of events) {
     void rabiriichi.replay.handleGameEvent(eventMsg, true);
@@ -42,10 +46,10 @@ test('simulate seats positioning output', () => {
 
   const selfPlayer = room.players.find((p) => p.id === currentUser.id);
   const selfSeat = selfPlayer?.seat;
-  console.log(`Self player: id=${currentUser.id}, seat=${selfSeat}`);
+  expect(selfSeat).toBeDefined();
 
   const playerCount = room.config?.playerCount ?? 2;
-  console.log(`Config playerCount: ${playerCount}`);
+  expect(playerCount).toBe(4);
 
   room.players.forEach((player) => {
     const hasGameState = Boolean(player.gameState);
@@ -60,14 +64,12 @@ test('simulate seats positioning output', () => {
     const x = rotation !== undefined ? Math.sin(rotation) * radius : undefined;
     const z = rotation !== undefined ? Math.cos(rotation) * radius : undefined;
 
-    console.log(
-      `Player ID=${player.id} (seat=${player.seat}, Me=${isLocal}, hasGameState=${hasGameState}):`,
-    );
-    console.log(`  => screenPos=${screenPos}`);
-    console.log(
-      `  => rotation=${rotation} rad (${rotation !== undefined ? ((rotation * 180) / Math.PI).toFixed(0) : 'N/A'} deg)`,
-    );
-    console.log(`  => position=[${x?.toFixed(2)}, 0, ${z?.toFixed(2)}]`);
+    expect(hasGameState).toBeTypeOf('boolean');
+    expect(isLocal).toBeTypeOf('boolean');
+    expect(screenPos).toBeDefined();
+    expect(rotation).toBeDefined();
+    expect(x).toBeTypeOf('number');
+    expect(z).toBeTypeOf('number');
   });
 });
 
@@ -81,7 +83,7 @@ test('simulate 2-player positioning', () => {
     aiType: AiType.AI_TYPE_NONE,
   });
 
-  const room = {
+  const room: RoomModel = {
     id: 114514,
     config: {
       playerCount: 2,
@@ -150,10 +152,10 @@ test('simulate 2-player positioning', () => {
 
   const selfPlayer = room.players.find((p) => p.id === currentUser.id);
   const selfSeat = selfPlayer?.seat;
-  console.log(`[2P] Self player: id=${currentUser.id}, seat=${selfSeat}`);
+  expect(selfSeat).toBeDefined();
 
   const playerCount = room.config?.playerCount ?? 2;
-  console.log(`[2P] Config playerCount: ${playerCount}`);
+  expect(playerCount).toBe(2);
 
   room.players.forEach((player) => {
     const isLocal = player.id === currentUser.id;
@@ -167,13 +169,10 @@ test('simulate 2-player positioning', () => {
     const x = rotation !== undefined ? Math.sin(rotation) * radius : undefined;
     const z = rotation !== undefined ? Math.cos(rotation) * radius : undefined;
 
-    console.log(
-      `[2P] Player ID=${player.id} (seat=${player.seat}, Me=${isLocal}):`,
-    );
-    console.log(`  => screenPos=${screenPos}`);
-    console.log(
-      `  => rotation=${rotation} rad (${rotation !== undefined ? ((rotation * 180) / Math.PI).toFixed(0) : 'N/A'} deg)`,
-    );
-    console.log(`  => position=[${x?.toFixed(2)}, 0, ${z?.toFixed(2)}]`);
+    expect(isLocal).toBeTypeOf('boolean');
+    expect(screenPos).toBeDefined();
+    expect(rotation).toBeDefined();
+    expect(x).toBeTypeOf('number');
+    expect(z).toBeTypeOf('number');
   });
 });

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
-import { getTileTexturePath } from '../scene/assets';
 import type { RoomModel } from '../domain/model';
 import { deadWallRinshanCount, NUM_DORA } from '../domain/model';
 import { getCurrentRoundEvents } from '../replay/replayDriver';

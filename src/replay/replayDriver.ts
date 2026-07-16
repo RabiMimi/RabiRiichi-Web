@@ -193,10 +193,10 @@ export function togglePause(): void {
 const isStepPoint = (ev: IEventMsg): boolean => {
   return Boolean(
     ev.discardTileEvent ??
-      ev.drawTileEvent ??
-      ev.claimTileEvent ??
-      ev.dealerFirstTurnEvent ??
-      ev.concludeGameEvent,
+    ev.drawTileEvent ??
+    ev.claimTileEvent ??
+    ev.dealerFirstTurnEvent ??
+    ev.concludeGameEvent,
   );
 };
 

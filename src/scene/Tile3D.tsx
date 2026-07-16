@@ -775,7 +775,11 @@ export function Tile3D({
       <primitive ref={tileRef} object={clone} scale={[0.18, 0.24, 0.14]} />
       {isWinningTile && <TileSpotlightParticles />}
       {showTooltip && (
-        <Html center style={{ pointerEvents: 'none' }} portal={tooltipPortalTarget as React.RefObject<HTMLElement>}>
+        <Html
+          center
+          style={{ pointerEvents: 'none' }}
+          portal={tooltipPortalTarget as React.RefObject<HTMLElement>}
+        >
           <TileTooltip />
         </Html>
       )}

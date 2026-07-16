@@ -23,7 +23,6 @@ import { rabiriichi } from '../net/client';
 import { UserStatus, FuritenType } from '../proto';
 import { pollUntil } from '../lib';
 import { Tile, checkDiscardResultsInFuriten } from '../domain/tile';
-import { getTileTexturePath } from '../scene/assets';
 import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
 import { UiTile } from './UiTile';
@@ -91,13 +90,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
               ? Tile.fromByte(doraTileMsg.tile).toString()
               : 'back';
 
-            return (
-              <UiTile
-                key={idx}
-                tile={tileStr}
-                size="dora"
-              />
-            );
+            return <UiTile key={idx} tile={tileStr} size="dora" />;
           })}
         </div>
       </div>
@@ -141,7 +134,6 @@ export function TenpaiWaitPanel({
       <div className="flex flex-row gap-1.5 sm:gap-3 max-w-[90vw] overflow-x-auto mt-0.5 sm:mt-1">
         {awaitedTiles.map((ti, idx) => {
           const tileStr = Tile.fromByte(ti.winningTile).toString();
-          const imgSrc = getTileTexturePath(tileStr);
           const yakuBound = ti.yakuman > 0;
           const meetsMinHan = waitMeetsMinHan(ti, minHan, bonusYaku);
           return (

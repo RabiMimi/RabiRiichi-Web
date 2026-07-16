@@ -287,8 +287,14 @@ function App(): React.JSX.Element {
         <SettingsModal onClose={() => setSettingsOpen(false)} />
       )}
       {/* Portal targets for 3D projections */}
-      <div ref={tooltipPortalTarget as React.RefObject<HTMLDivElement>} className="absolute inset-0 pointer-events-none z-[120]" />
-      <div ref={stickerPortalTarget as React.RefObject<HTMLDivElement>} className="absolute inset-0 pointer-events-none z-[80]" />
+      <div
+        ref={tooltipPortalTarget as React.RefObject<HTMLDivElement>}
+        className="absolute inset-0 pointer-events-none z-[120]"
+      />
+      <div
+        ref={stickerPortalTarget as React.RefObject<HTMLDivElement>}
+        className="absolute inset-0 pointer-events-none z-[80]"
+      />
     </div>
   );
 }
