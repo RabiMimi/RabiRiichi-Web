@@ -8,6 +8,7 @@ export interface YakuInfo {
 export const YAKUS: YakuInfo[] = [
   // 1 Han
   { name: 'Riichi', group: '1han' },
+  { name: 'DoubleRiichi', group: '2han' },
   { name: 'Ippatsu', group: '1han' },
   { name: 'MenzenchinTsumohou', group: '1han' },
   { name: 'Tanyao', group: '1han' },
@@ -24,7 +25,6 @@ export const YAKUS: YakuInfo[] = [
   { name: 'HouteiRaoyui', group: '1han' },
 
   // 2 Han
-  { name: 'DoubleRiichi', group: '2han' },
   { name: 'SanshokuDoujun', group: '2han' },
   { name: 'Ittsu', group: '2han' },
   { name: 'Chantaiyao', group: '2han' },
