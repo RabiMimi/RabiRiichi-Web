@@ -55,17 +55,17 @@ function renderIndicatorTiles(
           key={tileMsg.traceId ?? `${keyPrefix}-${idx}`}
           src={getTileTexturePath(tileStr)}
           alt={tileStr}
-          className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+          className="w-[22px] h-[29px] sm:w-8 sm:h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
         />
       );
     }
     return (
-      <div
+      <img
         key={`${keyPrefix}-back-${idx}`}
-        className="w-8 h-[42px] bg-[#252525] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)] border border-[#444] relative overflow-hidden"
-      >
-        <div className="absolute inset-0.5 bg-gradient-to-br from-[#2e2e2e] to-[#1c1c1c] rounded-[1.5px] border border-[#ff7a99]/15" />
-      </div>
+        src="/assets/hand_tiles/back.jpg"
+        alt="Locked"
+        className="w-[22px] h-[29px] sm:w-8 sm:h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)] border border-[#333] object-cover bg-[#f7f4eb]"
+      />
     );
   });
 }
@@ -441,24 +441,24 @@ export function ResultPanel(): React.JSX.Element | null {
     if (doras.length === 0) return null;
 
     return (
-      <div className="relative z-[1] flex flex-col gap-3 bg-[#1e1e1e]/70 border border-[#333] rounded-[10px] p-4 box-border">
-        <div className="flex flex-row items-center gap-3 flex-wrap">
-          <span className="text-sm text-[#80deea] font-bold uppercase tracking-[1px] whitespace-nowrap min-w-[135px]">
+      <div className="relative z-[1] flex flex-col gap-1 sm:gap-2 bg-[#1e1e1e]/70 border border-[#333] rounded-xl p-2 sm:p-3 box-border">
+        <div className="flex flex-row items-center gap-1 sm:gap-2 flex-wrap">
+          <span className="text-[10px] sm:text-xs text-[#80deea] font-bold uppercase tracking-wider whitespace-nowrap min-w-0">
             {t('result.dora')}
           </span>
-          <div className="flex flex-row items-center gap-3 flex-wrap">
+          <div className="flex flex-row items-center gap-1 sm:gap-2 flex-wrap">
             {/* Dora Indicators */}
-            <div className="flex gap-1.5">
+            <div className="flex gap-0.5 md:gap-1">
               {renderIndicatorTiles(doras, 'dora')}
             </div>
 
             {/* Uradora Indicators */}
             {showUradoras && uradoras.length > 0 && (
               <>
-                <span className="text-[#666] text-[1.4rem] font-bold select-none mx-1">
+                <span className="text-[#666] text-[10px] sm:text-sm font-bold select-none mx-0.5 sm:mx-1">
                   /
                 </span>
-                <div className="flex gap-1.5">
+                <div className="flex gap-0.5 md:gap-1">
                   {renderIndicatorTiles(uradoras, 'uradora')}
                 </div>
               </>
@@ -491,16 +491,16 @@ export function ResultPanel(): React.JSX.Element | null {
 
   return (
     <div className="absolute inset-0 bg-[#0a0a0a]/85 flex justify-center items-center z-[120] text-white font-sans backdrop-blur-md">
-      <div className="flex flex-row items-stretch gap-0 w-[95%] max-w-[1000px] max-h-[85vh] m-auto box-border z-[121] relative">
-        <div className="hidden md:block flex-[0_0_320px] relative z-[2] -mr-20 pointer-events-none">
+      <div className="flex flex-row items-stretch gap-0 w-[95%] max-w-5xl max-h-[85vh] m-auto box-border z-[121] relative">
+        <div className="hidden md:block flex-none w-80 relative z-[2] -mr-20 pointer-events-none">
           <img
             src={activeCharacter.visualUrl}
             alt={`${activeCharacter.id}-avatar`}
             className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none opacity-95"
           />
         </div>
-        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-[20px] p-6 pl-4 md:pl-20 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-4 relative overflow-hidden box-border">
-          <h2 className="relative z-[1] text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-1 tracking-[4px]">
+        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 md:p-4 md:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 sm:gap-2.5 relative overflow-hidden box-border">
+          <h2 className="relative z-[1] text-lg sm:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider sm:tracking-widest">
             {hasNagashiWinner
               ? t('yaku.NagashiMangan')
               : isDraw
@@ -513,12 +513,12 @@ export function ResultPanel(): React.JSX.Element | null {
           </h2>
 
           <div
-            className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1"
+            className="flex-1 overflow-y-auto flex flex-col gap-1.5 sm:gap-2.5 pr-1"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
           >
-            <div className="relative z-[1] flex flex-col gap-4">
+            <div className="relative z-[1] flex flex-col gap-1.5 sm:gap-2.5">
               {playersWithResult.map((w, pIdx) => (
                 <WinnerDetailCard
                   key={w.id}

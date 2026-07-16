@@ -67,10 +67,10 @@ export function ScoreTransferPanel({
             >
               {/* Decorative inner glow */}
               {isPositive && (
-                <div className="absolute top-0 left-0 right-0 h-[60%] bg-gradient-to-b from-[#00ff66]/10 to-transparent pointer-events-none rounded-t-xl" />
+                <div className="absolute top-0 left-0 right-0 h-3/5 bg-gradient-to-b from-[#00ff66]/10 to-transparent pointer-events-none rounded-t-xl" />
               )}
               {isNegative && (
-                <div className="absolute top-0 left-0 right-0 h-[60%] bg-gradient-to-b from-[#ff3366]/10 to-transparent pointer-events-none rounded-t-xl" />
+                <div className="absolute top-0 left-0 right-0 h-3/5 bg-gradient-to-b from-[#ff3366]/10 to-transparent pointer-events-none rounded-t-xl" />
               )}
 
               {/* Floating Dealer Badge */}
@@ -82,7 +82,7 @@ export function ScoreTransferPanel({
 
               {/* Header: Name */}
               <div className="flex flex-col items-center z-10 w-full mb-1">
-                <span className="font-bold text-[0.95rem] truncate w-full text-center text-[#f8f9fa] drop-shadow-md">
+                <span className="font-bold text-sm truncate w-full text-center text-[#f8f9fa] drop-shadow-md">
                   {getPlayerDisplayName(p, t)}
                 </span>
               </div>
@@ -90,7 +90,7 @@ export function ScoreTransferPanel({
               {/* Score Delta */}
               <div className="flex flex-col items-center z-10 mb-2">
                 <span
-                  className={`font-mono text-[1.35rem] font-black drop-shadow-lg ${textColor}`}
+                  className={`font-mono text-xl font-black drop-shadow-lg ${textColor}`}
                 >
                   {deltaSign}
                   {delta.toString()}
@@ -99,10 +99,10 @@ export function ScoreTransferPanel({
 
               {/* Score Transition */}
               <div className="flex items-center gap-2 z-10 bg-black/50 px-2 py-1 rounded-md w-full justify-center border border-white/10 shadow-inner">
-                <span className="font-mono text-[0.75rem] text-[#888] line-through decoration-[#ff7a99]/60 decoration-2">
+                <span className="font-mono text-xs text-[#888] line-through decoration-[#ff7a99]/60 decoration-2">
                   {prevPoints.toString()}
                 </span>
-                <span className="font-mono text-[0.85rem] font-bold text-[#e2e8f0]">
+                <span className="font-mono text-sm font-bold text-[#e2e8f0]">
                   {currentPoints.toString()}
                 </span>
               </div>

@@ -79,13 +79,13 @@ export function FinalResultPanel({
             className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none opacity-95"
           />
         </div>
-        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-[20px] p-6 pl-4 md:pl-20 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-4 relative overflow-hidden box-border">
+        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 md:p-4 md:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 sm:gap-2.5 relative overflow-hidden box-border">
           <div className="flex flex-col gap-1 items-center">
-            <h2 className="relative z-[1] text-[2.2rem] font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-1 tracking-[4px]">
+            <h2 className="relative z-[1] text-lg sm:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider sm:tracking-widest">
               {t('result.finalTitle', 'Game Concluded')}
             </h2>
             {room.gameId && (
-              <div className="text-[#aaa] text-[0.85rem] flex items-center justify-center gap-2">
+              <div className="text-[#aaa] text-xs flex items-center justify-center gap-2">
                 <span>
                   {t('hud.gameId')}: {room.gameId}
                 </span>
@@ -95,12 +95,12 @@ export function FinalResultPanel({
           </div>
 
           <div
-            className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1"
+            className="flex-1 overflow-y-auto flex flex-col gap-1.5 sm:gap-2.5 pr-1"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col gap-3 mt-4">
+            <div className="flex flex-col gap-1 sm:gap-2 mt-1 sm:mt-2">
               {rankedPlayers.map((item, index) => {
                 const rank = index + 1;
                 const displayName = getPlayerDisplayName(item.player, t);
@@ -114,23 +114,23 @@ export function FinalResultPanel({
                 return (
                   <div
                     key={item.player.id}
-                    className={`flex items-center gap-4 rounded-lg px-4 py-3 border transition-all duration-200 ${styles.card}`}
+                    className={`flex items-center gap-1.5 sm:gap-4 rounded-lg px-2 py-1.5 sm:px-4 sm:py-3 border transition-all duration-200 ${styles.card}`}
                   >
                     <div
-                      className={`text-[1.8rem] font-bold w-8 text-center ${styles.number}`}
+                      className={`text-base sm:text-3xl font-bold w-5 sm:w-8 text-center ${styles.number}`}
                     >
                       #{rank}
                     </div>
                     <div
-                      className={`w-12 h-12 bg-[#444] rounded-full flex justify-center items-center text-[1.2rem] font-bold border-2 ${styles.avatar}`}
+                      className={`w-7 h-7 sm:w-12 sm:h-12 bg-[#444] rounded-full flex justify-center items-center text-xs sm:text-xl font-bold border-2 ${styles.avatar}`}
                     >
                       {initials}
                     </div>
                     <div className="flex-1 flex justify-between items-center">
-                      <span className="text-[1.2rem] font-medium">
+                      <span className="text-xs sm:text-xl font-medium">
                         {displayName}
                       </span>
-                      <span className="text-[1.4rem] font-semibold text-[#ff7a99]">
+                      <span className="text-sm sm:text-2xl font-semibold text-[#ff7a99]">
                         {item.points}
                       </span>
                     </div>
