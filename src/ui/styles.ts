@@ -21,7 +21,8 @@ export const MODAL = {
     'backdrop-blur-[16px] max-md:max-h-[95vh] max-md:px-4 max-md:py-3',
   cardDefaultLook:
     'w-[90%] max-w-[650px] border-2 border-[#ff7a99] bg-[#121c32]/95',
-  header: 'mb-2.5 flex items-center justify-between border-b border-[#444] pb-1.5',
+  header:
+    'mb-2.5 flex items-center justify-between border-b border-[#444] pb-1.5',
   title: 'm-0 text-xl text-[#ff7a99]',
   closeButton:
     'cursor-pointer border-none bg-transparent p-0 text-[1.5rem] ' +

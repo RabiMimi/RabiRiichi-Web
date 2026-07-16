@@ -127,6 +127,30 @@ class SoundManager {
     }
   }
 
+  /** Plays a character voice line sequentially, returning a promise that resolves when it ends, pauses, errors, or after a fallback timeout. */
+  public playVoicePromise(url: string | undefined): Promise<void> {
+    return new Promise<void>((resolve) => {
+      // Base64 silent WAV url or undefined
+      if (!url || url.startsWith('data:audio/wav;base64')) {
+        setTimeout(resolve, 1000);
+        return;
+      }
+
+      let resolved = false;
+      const handleEnd = () => {
+        if (!resolved) {
+          resolved = true;
+          resolve();
+        }
+      };
+
+      const audio = this.playVoice(url, handleEnd, handleEnd);
+      if (!audio) {
+        setTimeout(resolve, 1000);
+      }
+    });
+  }
+
   public stopAllVoices(): void {
     for (const voice of this.activeVoices) {
       voice.pause();

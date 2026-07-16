@@ -10,6 +10,7 @@ import {
   useIsReplay,
   useReplayProgress,
   useCharacterId,
+  useSelf,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
@@ -17,9 +18,9 @@ import { getTileTexturePath } from '../scene/assets';
 import { CHARACTERS } from '../domain/character';
 import { Button } from './Button';
 import { type ActionOption } from '../domain/inquiry';
-import { ScoringType } from '../proto';
 import type { IGameTileMsg } from '../proto';
 import { FinalResultPanel } from './FinalResultPanel';
+import { soundManager } from '../lib/sound';
 
 import { Logger } from '../lib/logger';
 import {
@@ -31,14 +32,11 @@ import {
 } from '../replay/replayDriver';
 import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
-
-const LIMIT_BADGE_STYLES: Record<string, string> = {
-  'limit-mangan': 'bg-[#ff7a99]',
-  'limit-haneman': 'bg-[#8c7aff]',
-  'limit-baiman': 'bg-[#ffb830]',
-  'limit-sanbaiman': 'bg-[#ff6e30]',
-  'limit-yakuman': 'bg-[#ff3333]',
-};
+import {
+  getYakuVoiceLineId,
+  getLimitName,
+} from '../domain/resultHelpers';
+import { WinnerDetailCard } from './WinnerDetailCard';
 
 /**
  * Renders a fixed 5-wide indicator row for the settlement screen: each tile the
@@ -56,7 +54,7 @@ function renderIndicatorTiles(
       const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
       return (
         <img
-          key={`${keyPrefix}-${idx}`}
+          key={tileMsg.traceId ?? `${keyPrefix}-${idx}`}
           src={getTileTexturePath(tileStr)}
           alt={tileStr}
           className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
@@ -64,36 +62,14 @@ function renderIndicatorTiles(
       );
     }
     return (
-      <img
-        key={`${keyPrefix}-${idx}`}
-        src={getTileTexturePath('back')}
-        alt="back"
-        className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-      />
+      <div
+        key={`${keyPrefix}-back-${idx}`}
+        className="w-8 h-[42px] bg-[#252525] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)] border border-[#444] relative overflow-hidden"
+      >
+        <div className="absolute inset-0.5 bg-gradient-to-br from-[#2e2e2e] to-[#1c1c1c] rounded-[1.5px] border border-[#ff7a99]/15" />
+      </div>
     );
   });
-}
-
-function getLimitName(
-  han: number,
-  fu: number,
-  scoringOption: number,
-): string | null {
-  if (han >= 11) return 'sanbaiman';
-  if (han >= 8) return 'baiman';
-  if (han >= 6) return 'haneman';
-  if (han >= 5) return 'mangan';
-
-  const hasKiriage = (scoringOption & 1) !== 0;
-  let score = fu * (1 << (han + 2));
-  if (hasKiriage && score > 1900 && score < 2000) {
-    score = 2000;
-  }
-  if (score >= 2000) {
-    return 'mangan';
-  }
-
-  return null;
 }
 
 const logger = new Logger('ResultPanel');
@@ -174,7 +150,210 @@ export function ResultPanel(): React.JSX.Element | null {
     );
   }, [resultPlayers]);
 
-  const isDraw = !hasNormalWinner;
+  const isDraw = !hasNormalWinner && !hasNagashiWinner;
+
+  // Voice & Animation states
+  const [animatingPlayerIndex, setAnimatingPlayerIndex] =
+    React.useState<number>(0);
+  const [visibleYakuCounts, setVisibleYakuCounts] = React.useState<
+    Record<number, number>
+  >({});
+  const [showTotals, setShowTotals] = React.useState<Record<number, boolean>>(
+    {},
+  );
+  const [showScoreChanges, setShowScoreChanges] = React.useState(false);
+  const [animationFinished, setAnimationFinished] = React.useState(false);
+
+  const hasNextRound =
+    currentInquiry?.mapped.buttons.some((b) => b.type === 'next-round') ??
+    false;
+
+  const showPanel = React.useMemo(() => {
+    return (
+      (playersWithResult.length > 0 || hasNextRound || isWaitingForProceed) &&
+      !resultAnimation
+    );
+  }, [playersWithResult, hasNextRound, isWaitingForProceed, resultAnimation]);
+
+  const currentUser = useSelf();
+
+  React.useEffect(() => {
+    if (!showPanel) return;
+
+    const stateRef = { active: true };
+    const isActive = () => stateRef.active;
+
+    const runAnimation = async () => {
+      await Promise.resolve(); // Defer to avoid synchronous setState warnings
+
+      if (isDraw) {
+        if (isActive()) {
+          setShowScoreChanges(true);
+          setAnimationFinished(true);
+        }
+        return;
+      }
+
+      // 1. Reset states
+      if (isActive()) {
+        setAnimatingPlayerIndex(0);
+        setVisibleYakuCounts({});
+        setShowTotals({});
+        setShowScoreChanges(false);
+        setAnimationFinished(false);
+      }
+
+      // Wait a brief moment before starting player animations
+      await new Promise((r) => setTimeout(r, 500));
+
+      for (let pIdx = 0; pIdx < playersWithResult.length; pIdx++) {
+        if (!isActive()) return;
+        setAnimatingPlayerIndex(pIdx);
+
+        // Pause slightly on card start
+        await new Promise((r) => setTimeout(r, 300));
+
+        const player = playersWithResult[pIdx];
+        if (!player) continue;
+        const agari = player.gameState?.agari;
+        if (!agari) continue;
+
+        const rawYakuList = agari.scores?.items ?? [];
+        const yakuList = filterYakuListForDisplay(
+          rawYakuList,
+          room?.config?.scoringOption,
+        );
+
+        // 1a. Show yaku one by one (Reveal yaku first, then play voice)
+        for (let yIdx = 0; yIdx < yakuList.length; yIdx++) {
+          if (!isActive()) return;
+
+          if (isActive()) {
+            setVisibleYakuCounts((prev) => ({
+              ...prev,
+              [pIdx]: yIdx + 1,
+            }));
+          }
+
+          const yaku = yakuList[yIdx];
+          if (!yaku) continue;
+          const voiceId = getYakuVoiceLineId(yaku.Src ?? '', yaku.Val ?? 0);
+          const voiceLine = activeCharacter.voiceLines.find(
+            (v) => v.id === voiceId,
+          );
+
+          await soundManager.playVoicePromise(voiceLine?.audioUrl);
+        }
+
+        // 1b. Play limit voice & show total
+        if (!isActive()) return;
+        if (agari.scores?.result) {
+          const result = agari.scores.result;
+          let limitVoiceId: string | null = null;
+
+          if (result.finalYakuman && result.finalYakuman > 0) {
+            const isAotenjou =
+              room?.config?.scoringOption != null &&
+              (room.config.scoringOption & 2) === 0;
+            if (result.kazoeYakuman && result.kazoeYakuman > 0 && !isAotenjou) {
+              limitVoiceId = 'kazoeYakuman';
+            } else {
+              const count = result.finalYakuman;
+              if (count === 1) limitVoiceId = 'yakuman';
+              else if (count === 2) limitVoiceId = 'doubleYakuman';
+              else if (count === 3) limitVoiceId = 'tripleYakuman';
+              else if (count === 4) limitVoiceId = 'quadrupleYakuman';
+              else if (count === 5) limitVoiceId = 'quintupleYakuman';
+              else if (count >= 6) limitVoiceId = 'miracleYakuman';
+            }
+          } else {
+            const limit = getLimitName(
+              result.han ?? 0,
+              result.fu ?? 0,
+              room?.config?.scoringOption ?? 0,
+            );
+            if (limit) {
+              limitVoiceId = limit;
+            }
+          }
+
+          if (limitVoiceId) {
+            const voiceLine = activeCharacter.voiceLines.find(
+              (v) => v.id === limitVoiceId,
+            );
+            await soundManager.playVoicePromise(voiceLine?.audioUrl);
+          } else {
+            await new Promise((r) => setTimeout(r, 800));
+          }
+        } else if (agari.isNagashi) {
+          const voiceLine = activeCharacter.voiceLines.find(
+            (v) => v.id === 'nagashiMangan',
+          );
+          await soundManager.playVoicePromise(voiceLine?.audioUrl);
+        } else {
+          await new Promise((r) => setTimeout(r, 800));
+        }
+
+        if (!isActive()) return;
+        if (isActive()) {
+          setShowTotals((prev) => ({
+            ...prev,
+            [pIdx]: true,
+          }));
+        }
+
+        // Pause slightly before moving to the next winner
+        await new Promise((r) => setTimeout(r, 600));
+      }
+
+      // 2. Show score changes
+      if (!isActive()) return;
+      if (isActive()) {
+        setShowScoreChanges(true);
+      }
+
+      // Play final reaction voice
+      if (currentUser) {
+        const isWinner = playersWithResult.some((p) => p.id === currentUser.id);
+        const finalVoiceId = isWinner ? 'win' : 'lose';
+        const voiceLine = activeCharacter.voiceLines.find(
+          (v) => v.id === finalVoiceId,
+        );
+        await soundManager.playVoicePromise(voiceLine?.audioUrl);
+      }
+
+      if (!isActive()) return;
+      if (isActive()) {
+        setAnimationFinished(true);
+      }
+    };
+
+    void runAnimation();
+
+    return () => {
+      stateRef.active = false;
+      soundManager.stopAllVoices();
+    };
+  }, [
+    showPanel,
+    isDraw,
+    playersWithResult,
+    activeCharacter,
+    room,
+    currentUser,
+  ]);
+
+  React.useEffect(() => {
+    if (!showPanel) {
+      void Promise.resolve().then(() => {
+        setAnimatingPlayerIndex(0);
+        setVisibleYakuCounts({});
+        setShowTotals({});
+        setShowScoreChanges(false);
+        setAnimationFinished(false);
+      });
+    }
+  }, [showPanel]);
 
   const proceedAction = React.useMemo(() => {
     return currentInquiry?.mapped.buttons.find(
@@ -237,16 +416,9 @@ export function ResultPanel(): React.JSX.Element | null {
     ? Math.ceil(actionTimeout)
     : localSecondsLeft;
 
-  const hasNextRound =
-    currentInquiry?.mapped.buttons.some((b) => b.type === 'next-round') ??
-    false;
-
   const showUradoras = React.useMemo(() => {
-    return (
-      resultPlayers.some(
-        (p) =>
-          p.gameState?.agari?.scores != null && p.gameState.riichiTileId > 0,
-      ) ?? false
+    return resultPlayers.some(
+      (p) => p.gameState?.agari?.scores != null && p.gameState.riichiTileId > 0,
     );
   }, [resultPlayers]);
 
@@ -307,262 +479,7 @@ export function ResultPanel(): React.JSX.Element | null {
     return <FinalResultPanel onReturnToRoom={handleReturnToRoom} />;
   }
 
-  const showPanel =
-    (playersWithResult.length > 0 || hasNextRound || isWaitingForProceed) &&
-    !resultAnimation;
-
   if (!room || !showPanel) return null;
-
-  const renderWinnerDetails = (player: (typeof room.players)[0]) => {
-    const agari = player.gameState?.agari;
-    if (!agari) return null;
-    if (!agari.scores && !agari.isTenpai) return null;
-
-    const isNagashi = agari.isNagashi ?? false;
-    const isTenpai = agari.isTenpai ?? false;
-
-    let badgeText = t('result.winnerBadge');
-    if (isNagashi) {
-      badgeText = t('yaku.NagashiMangan');
-    } else if (isTenpai) {
-      badgeText = t('result.tenpai');
-    }
-
-    let limitLabel: string | null = null;
-    let hanFuLabel = '';
-    let limitClass = '';
-
-    if (isNagashi) {
-      limitLabel = t('result.mangan');
-      limitClass = 'limit-mangan';
-    } else if (isTenpai) {
-      // nothing
-    } else if (agari.scores?.result) {
-      const result = agari.scores.result;
-      const isAotenjou =
-        room.config?.scoringOption != null &&
-        (room.config.scoringOption & 2) === 0;
-
-      if (result.finalYakuman && result.finalYakuman > 0) {
-        limitClass = 'limit-yakuman';
-        if (result.kazoeYakuman && result.kazoeYakuman > 0 && !isAotenjou) {
-          limitLabel = t('result.yakuman');
-          hanFuLabel = t('result.han', { count: result.han });
-        } else {
-          const yakumanCount = result.finalYakuman;
-          if (yakumanCount > 1) {
-            const key = `result.multipleYakuman_${yakumanCount}`;
-            limitLabel = t(key, {
-              defaultValue: t('result.multipleYakuman', {
-                count: yakumanCount,
-              }),
-            });
-          } else {
-            limitLabel = t('result.yakuman');
-          }
-        }
-      } else {
-        const limit = isAotenjou
-          ? null
-          : getLimitName(
-              result.han ?? 0,
-              result.fu ?? 0,
-              room.config?.scoringOption ?? 0,
-            );
-
-        if (limit) {
-          limitLabel = t(`result.${limit}`);
-          limitClass = `limit-${limit}`;
-          hanFuLabel = t('result.fuAndHan', {
-            fu: result.fu,
-            han: result.han,
-          });
-        } else {
-          hanFuLabel = t('result.fuAndHan', {
-            fu: result.fu,
-            han: result.han,
-          });
-        }
-      }
-    }
-
-    const rawYakuList = agari.scores?.items ?? [];
-    const yakuList = filterYakuListForDisplay(
-      rawYakuList,
-      room.config?.scoringOption,
-    );
-
-    const handTiles = player.gameState?.hand.freeTiles ?? [];
-    const calledMelds = player.gameState?.hand.called ?? [];
-
-    const cardStyles = isNagashi
-      ? 'bg-[#1c304d]/85 border-[#00bcff]'
-      : 'bg-[#2b2b2b]/75 border-[#444]';
-
-    const badgeColor = isNagashi ? 'bg-[#00bcff]' : 'bg-[#ff3333]';
-
-    const finalLimitClass = isNagashi
-      ? 'bg-[#00bcff] text-[#1a1a1a]'
-      : `${LIMIT_BADGE_STYLES[limitClass] ?? 'bg-gray-500'} text-white`;
-
-    const finalHanFuColor = isNagashi ? 'text-[#00e5ff]' : 'text-[#ff7a99]';
-
-    return (
-      <div
-        key={player.id}
-        className={`rounded-[10px] p-4 flex flex-col gap-3 border ${cardStyles}`}
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className={`text-[0.75rem] font-bold px-2.5 py-0.75 rounded-[50px] text-white ${badgeColor}`}
-          >
-            {badgeText}
-          </span>
-          <span className="text-[1.15rem] font-bold">
-            {getPlayerDisplayName(player, t)}
-          </span>
-          {isTenpai ? (
-            player.gameState?.awaitedTiles &&
-            player.gameState.awaitedTiles.length > 0 && (
-              <div className="ml-auto flex items-center gap-2">
-                <span className="text-sm text-[#aaa] font-bold">
-                  {t('result.tenpaiWaits', 'Waits')}:
-                </span>
-                <div className="flex gap-1.5">
-                  {player.gameState.awaitedTiles.map((ti, idx) => {
-                    const tileStr = Tile.fromByte(ti.winningTile).toString();
-                    return (
-                      <img
-                        key={idx}
-                        src={getTileTexturePath(tileStr)}
-                        alt={tileStr}
-                        className="w-6 h-8 rounded-[2px] shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )
-          ) : (
-            <div className="ml-auto flex items-center gap-2">
-              {limitLabel && (
-                <span
-                  className={`text-sm font-bold px-3 py-1 rounded-[50px] shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${finalLimitClass}`}
-                >
-                  {limitLabel}
-                </span>
-              )}
-              {hanFuLabel && (
-                <span className={`font-bold text-lg ${finalHanFuColor}`}>
-                  {hanFuLabel}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {isNagashi ? (
-          <div className="flex flex-col gap-2 bg-[#141414]/40 p-3 rounded-md">
-            <span className="text-sm text-[#88a8cc] uppercase font-bold">
-              {t('result.river')}
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {(player.gameState?.hand.discarded ?? []).map((tileMsg, idx) => {
-                const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-                return (
-                  <img
-                    key={tileMsg.traceId ?? idx}
-                    src={getTileTexturePath(tileStr)}
-                    alt={tileStr}
-                    className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          /* Display final sorted hand tiles */
-          <div className="flex flex-wrap gap-[3px] bg-[#1a1a1a] p-2 rounded-md items-center">
-            <div className="flex gap-[3px]">
-              {handTiles.map((tileMsg, idx) => {
-                const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-                return (
-                  <img
-                    key={tileMsg.traceId ?? idx}
-                    src={getTileTexturePath(tileStr)}
-                    alt={tileStr}
-                    className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-                  />
-                );
-              })}
-            </div>
-            {/* Winning tile */}
-            {agari.incoming && (
-              <div className="flex items-center gap-1.5 ml-3 border-l-[1.5px] border-[#444] pl-3">
-                <span className="winning-tile-label">
-                  {t('result.winTile')}:
-                </span>
-                <img
-                  src={getTileTexturePath(
-                    Tile.fromByte(agari.incoming.tile ?? 0).toString(),
-                  )}
-                  alt="winning-tile"
-                  className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)] border-[1.5px] border-[#ff7a99]"
-                />
-              </div>
-            )}
-            {/* Called melds */}
-            {calledMelds.map((meld, meldIdx) => {
-              const tiles = meld.tiles ?? [];
-              return (
-                <div
-                  key={meldIdx}
-                  className="flex gap-[3px] ml-3 border-l-[1.5px] border-[#444] pl-3"
-                >
-                  {tiles.map((tile, tileIdx) => {
-                    const tileStr = Tile.fromByte(tile.tile ?? 0).toString();
-                    return (
-                      <img
-                        key={tile.traceId ?? tileIdx}
-                        src={getTileTexturePath(tileStr)}
-                        alt={tileStr}
-                        className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-                      />
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* List of Yaku */}
-        {!isNagashi && !isTenpai && (
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            {yakuList.map((yaku, idx) => {
-              const typeLabel =
-                yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
-                  ? t('result.yakuman')
-                  : t('result.han', { count: yaku.Val });
-              return (
-                <div
-                  key={idx}
-                  className="bg-white/[0.08] border border-white/15 rounded-[6px] px-2.5 py-1 flex items-center justify-between gap-1.5"
-                >
-                  <span className="text-[#ddd]">
-                    {t(`yaku.${yaku.Src ?? ''}`, {
-                      defaultValue: yaku.Src ?? '',
-                    })}
-                  </span>
-                  <span className="text-[#ffaa44] font-bold">{typeLabel}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
 
   const renderScoreChanges = () => {
     return (
@@ -620,30 +537,53 @@ export function ResultPanel(): React.JSX.Element | null {
         </div>
         <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-[20px] p-6 pl-4 md:pl-20 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-4 relative overflow-hidden box-border">
           <h2 className="relative z-[1] text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-1 tracking-[4px]">
-            {isDraw
-              ? hasNagashiWinner
-                ? t('yaku.NagashiMangan')
-                : room.ryuukyokuReason
+            {hasNagashiWinner
+              ? t('yaku.NagashiMangan')
+              : isDraw
+                ? room.ryuukyokuReason
                   ? t(`result.ryuukyoku.${room.ryuukyokuReason}`, {
                       defaultValue: t('result.draw'),
                     })
                   : t('result.draw')
-              : t('result.agari')}
+                : t('result.agari')}
           </h2>
 
           <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1">
             <div className="relative z-[1] flex flex-col gap-4">
-              {playersWithResult.map((w) => renderWinnerDetails(w))}
+              {playersWithResult.map((w, pIdx) => (
+                <WinnerDetailCard
+                  key={w.id}
+                  player={w}
+                  visibleYakuCount={visibleYakuCounts[pIdx] ?? 0}
+                  showTotal={showTotals[pIdx] ?? false}
+                  isCardStarted={pIdx <= animatingPlayerIndex}
+                  room={room}
+                />
+              ))}
             </div>
 
             {renderDoraIndicators()}
 
             {/* Score changes panel */}
-            {renderScoreChanges()}
+            <div
+              className={`transition-all duration-1000 ease-out transform ${
+                showScoreChanges
+                  ? 'opacity-100 translate-y-0 max-h-[300px]'
+                  : 'opacity-0 translate-y-6 pointer-events-none max-h-0 overflow-hidden'
+              }`}
+            >
+              {renderScoreChanges()}
+            </div>
           </div>
 
           {/* Proceed button */}
-          <div className="relative z-[1] flex justify-center">
+          <div
+            className={`relative z-[1] flex justify-center transition-all duration-500 ease-out transform ${
+              animationFinished
+                ? 'opacity-100 scale-100'
+                : 'opacity-0 scale-95 pointer-events-none'
+            }`}
+          >
             <Button
               onClick={handleProceed}
               disabled={!canProceed && !room.gameEnded}

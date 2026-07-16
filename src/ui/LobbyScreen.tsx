@@ -107,10 +107,7 @@ export function LobbyScreen(): React.JSX.Element {
           />
 
           <div className="flex flex-wrap items-end gap-x-6 gap-y-4 border-t border-[#444] pt-4 mt-2">
-            <form
-              onSubmit={onJoinRoom}
-              className="flex flex-col gap-1.5"
-            >
+            <form onSubmit={onJoinRoom} className="flex flex-col gap-1.5">
               <label htmlFor="room-id" className={FORM.label}>
                 {t('lobby.joinRoomLabel')}
               </label>

@@ -381,7 +381,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
       {/* 2D Permanent Tenpai/Furiten Badge Overlay (positioned near the hand) */}
       {(hasPermanentTenpai || isFuriten) && (
         <div className="absolute bottom-[13vh] left-[calc(50%-24vw)] z-[90] flex flex-col items-center pointer-events-auto">
-        <div
+          <div
             className={`min-w-[36px] h-[36px] sm:min-w-[44px] sm:h-[44px] rounded-[18px] sm:rounded-[22px] px-2 sm:px-3 box-border bg-[#121c32]/85 border-2 flex items-center justify-center text-base sm:text-lg font-bold cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.5)] transition-all duration-200 select-none ${
               isFuriten
                 ? 'border-[#cc3333] text-[#cc3333] hover:scale-110 hover:bg-[#cc3333] hover:text-white hover:shadow-[0_4px_15px_rgba(204,51,51,0.4)]'
@@ -461,10 +461,7 @@ function HUDLeftPanel({
 
       {/* Settings Panel */}
       <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-1.5 px-3 flex flex-row items-center gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-        <label
-          htmlFor="speed-select"
-          className="text-sm font-bold text-[#aaa]"
-        >
+        <label htmlFor="speed-select" className="text-sm font-bold text-[#aaa]">
           {t('hud.speed')}
         </label>
         <select

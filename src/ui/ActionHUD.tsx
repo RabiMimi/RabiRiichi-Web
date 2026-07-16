@@ -14,7 +14,8 @@ const HUD_BTN_COLORS: Record<string, string> = {
   pon: 'text-[#ffaa44]',
   kan: 'text-[#ff66cc]',
   riichi: 'text-[#ff7a99]',
-  agari: 'text-[#ff3333] text-2xl sm:text-3xl animate-[hud-agari-pulse_1.5s_infinite]',
+  agari:
+    'text-[#ff3333] text-2xl sm:text-3xl animate-[hud-agari-pulse_1.5s_infinite]',
   skip: 'text-[#cccccc]',
   ryuukyoku: 'text-[#aaaaaa]',
 };
