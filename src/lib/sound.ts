@@ -1,9 +1,16 @@
+import { Howl } from 'howler';
 import { rabiriichi } from '../net/client';
 
+export interface AudioPlayback {
+  stop(): void;
+  onEnded(cb: () => void): void;
+  setVolume(vol: number): void;
+}
+
 class SoundManager {
-  private bgmAudio: HTMLAudioElement | null = null;
-  private activeVoices = new Set<HTMLAudioElement>();
-  private activeSEs = new Set<HTMLAudioElement>();
+  private bgmAudio: Howl | null = null;
+  private activeVoices = new Set<AudioPlayback>();
+  private activeSEs = new Set<AudioPlayback>();
 
   constructor() {
     // Subscribe to store updates to dynamically adjust volumes
@@ -26,15 +33,15 @@ class SoundManager {
 
   public updateAllVolumes(): void {
     if (this.bgmAudio) {
-      this.bgmAudio.volume = this.getEffectiveVolume('bgm');
+      this.bgmAudio.volume(this.getEffectiveVolume('bgm'));
     }
     const voiceVol = this.getEffectiveVolume('voice');
-    for (const voice of this.activeVoices) {
-      voice.volume = voiceVol;
+    for (const playback of this.activeVoices) {
+      playback.setVolume(voiceVol);
     }
     const seVol = this.getEffectiveVolume('se');
-    for (const se of this.activeSEs) {
-      se.volume = seVol;
+    for (const playback of this.activeSEs) {
+      playback.setVolume(seVol);
     }
   }
 
@@ -42,39 +49,74 @@ class SoundManager {
   public playBGM(url: string): void {
     this.stopBGM();
     try {
-      const audio = new Audio(url);
-      audio.loop = true;
-      audio.volume = this.getEffectiveVolume('bgm');
-      this.bgmAudio = audio;
-      audio.play().catch((err) => {
-        console.warn(
-          'Failed to autoplay BGM (requires user interaction first):',
-          err,
-        );
+      const sound = new Howl({
+        src: [url],
+        loop: true,
+        volume: this.getEffectiveVolume('bgm'),
+        html5: true, // Stream larger files like BGMs
       });
+      this.bgmAudio = sound;
+      sound.play();
     } catch (e) {
-      console.error('Failed to create Audio for BGM:', e);
+      console.error('Failed to create Howl for BGM:', e);
     }
   }
 
   public stopBGM(): void {
     if (this.bgmAudio) {
-      this.bgmAudio.pause();
+      this.bgmAudio.stop();
+      this.bgmAudio.unload();
       this.bgmAudio = null;
     }
   }
 
   /** Plays a one-shot sound effect. */
-  public playSE(url: string): HTMLAudioElement | null {
+  public playSE(url: string): AudioPlayback | null {
     try {
-      const audio = new Audio(url);
-      audio.volume = this.getEffectiveVolume('se');
-      this.activeSEs.add(audio);
-      audio.addEventListener('ended', () => {
-        this.activeSEs.delete(audio);
+      const sound = new Howl({
+        src: [url],
+        volume: this.getEffectiveVolume('se'),
       });
-      audio.play().catch(() => undefined);
-      return audio;
+
+      const endedCallbacks = new Set<() => void>();
+      const triggerEnd = () => {
+        for (const cb of endedCallbacks) {
+          cb();
+        }
+      };
+
+      const playback: AudioPlayback = {
+        stop: () => {
+          sound.stop();
+          this.activeSEs.delete(playback);
+          triggerEnd();
+        },
+        onEnded: (cb) => {
+          endedCallbacks.add(cb);
+        },
+        setVolume: (vol) => {
+          sound.volume(vol);
+        },
+      };
+
+      sound.on('end', () => {
+        this.activeSEs.delete(playback);
+        triggerEnd();
+      });
+
+      sound.on('stop', () => {
+        this.activeSEs.delete(playback);
+        triggerEnd();
+      });
+
+      sound.on('playerror', () => {
+        this.activeSEs.delete(playback);
+        triggerEnd();
+      });
+
+      sound.play();
+      this.activeSEs.add(playback);
+      return playback;
     } catch {
       return null;
     }
@@ -85,43 +127,99 @@ class SoundManager {
     url: string,
     onEnded?: () => void,
     onError?: () => void,
-  ): HTMLAudioElement | null {
+  ): AudioPlayback | null {
     // Stop all active voice lines before playing a new one
     this.stopAllVoices();
 
-    try {
-      const audio = new Audio(url);
-      audio.volume = this.getEffectiveVolume('voice');
-      this.activeVoices.add(audio);
+    if (url.startsWith('data:audio/wav;base64')) {
+      let timerId: ReturnType<typeof setTimeout> | null = null;
+      const endedCallbacks = new Set<() => void>();
 
-      const cleanUp = () => {
-        this.activeVoices.delete(audio);
+      const triggerEnd = () => {
+        onEnded?.();
+        for (const cb of endedCallbacks) {
+          cb();
+        }
       };
 
-      audio.addEventListener('ended', () => {
-        cleanUp();
+      const mockPlayback: AudioPlayback = {
+        stop: () => {
+          if (timerId) {
+            clearTimeout(timerId);
+            timerId = null;
+          }
+          triggerEnd();
+        },
+        onEnded: (cb) => {
+          endedCallbacks.add(cb);
+        },
+        setVolume: (_vol) => undefined,
+      };
+
+      timerId = setTimeout(() => {
+        this.activeVoices.delete(mockPlayback);
+        mockPlayback.stop();
+      }, 1000);
+
+      this.activeVoices.add(mockPlayback);
+      return mockPlayback;
+    }
+
+    try {
+      const sound = new Howl({
+        src: [url],
+        volume: this.getEffectiveVolume('voice'),
+      });
+
+      const endedCallbacks = new Set<() => void>();
+      const triggerEnd = () => {
         onEnded?.();
+        for (const cb of endedCallbacks) {
+          cb();
+        }
+      };
+
+      const playback: AudioPlayback = {
+        stop: () => {
+          sound.stop();
+          this.activeVoices.delete(playback);
+          triggerEnd();
+        },
+        onEnded: (cb) => {
+          endedCallbacks.add(cb);
+        },
+        setVolume: (vol) => {
+          sound.volume(vol);
+        },
+      };
+
+      sound.on('end', () => {
+        this.activeVoices.delete(playback);
+        triggerEnd();
       });
 
-      audio.addEventListener('pause', () => {
-        cleanUp();
-        onEnded?.();
+      sound.on('stop', () => {
+        this.activeVoices.delete(playback);
+        triggerEnd();
       });
 
-      audio.addEventListener('error', () => {
-        cleanUp();
+      sound.on('loaderror', () => {
+        this.activeVoices.delete(playback);
         onError?.();
+        triggerEnd();
       });
 
-      audio.play().catch((err) => {
-        console.warn('Failed to play voice line:', err);
-        cleanUp();
+      sound.on('playerror', () => {
+        this.activeVoices.delete(playback);
         onError?.();
+        triggerEnd();
       });
 
-      return audio;
+      sound.play();
+      this.activeVoices.add(playback);
+      return playback;
     } catch (e) {
-      console.error('Failed to create Audio for voice line:', e);
+      console.error('Failed to create Howl for voice line:', e);
       onError?.();
       return null;
     }
@@ -144,16 +242,16 @@ class SoundManager {
         }
       };
 
-      const audio = this.playVoice(url, handleEnd, handleEnd);
-      if (!audio) {
+      const playback = this.playVoice(url, handleEnd, handleEnd);
+      if (!playback) {
         setTimeout(resolve, 1000);
       }
     });
   }
 
   public stopAllVoices(): void {
-    for (const voice of this.activeVoices) {
-      voice.pause();
+    for (const playback of this.activeVoices) {
+      playback.stop();
     }
     this.activeVoices.clear();
   }

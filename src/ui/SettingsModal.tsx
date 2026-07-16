@@ -42,7 +42,7 @@ const StopIcon = (): React.JSX.Element => (
     fill="currentColor"
     className="w-[18px] h-[18px] block"
   >
-    <path d="M6 19h12V5H6v14z" />
+    <path d="M6 6h12v12H6z" />
   </svg>
 );
 
@@ -111,14 +111,12 @@ export function SettingsModal({
       return;
     }
 
-    const audio = soundManager.playVoice(url);
-    if (audio) {
+    const playback = soundManager.playVoice(url);
+    if (playback) {
       setPlayingVoiceId(id);
-      const onStop = () => {
+      playback.onEnded(() => {
         setPlayingVoiceId((prev) => (prev === id ? null : prev));
-      };
-      audio.addEventListener('ended', onStop);
-      audio.addEventListener('pause', onStop);
+      });
     } else {
       setPlayingVoiceId(null);
     }
