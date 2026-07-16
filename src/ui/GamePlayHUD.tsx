@@ -130,14 +130,14 @@ export function TenpaiWaitPanel({
 
   return (
     <div
-      className={`absolute bg-[#121c32]/94 border-[1.5px] border-[#ff7a99]/70 rounded-lg py-2 px-3 shadow-[0_4px_15px_rgba(0,0,0,0.6)] backdrop-blur-md text-white font-sans z-[100] pointer-events-none w-fit box-border ${className}`}
+      className={`absolute bg-[#121c32]/94 border-[1.5px] border-[#ff7a99]/70 rounded-lg py-1.5 px-2 sm:py-3 sm:px-4 shadow-[0_4px_15px_rgba(0,0,0,0.6)] backdrop-blur-md text-white font-sans z-[100] pointer-events-none w-fit box-border ${className}`}
     >
       {isFuriten && (
-        <div className="absolute -top-[11px] left-1/2 -translate-x-1/2 bg-gradient-to-br from-[#ff0055] to-[#ff5500] text-white text-[0.65rem] font-bold tracking-[1px] px-2 py-[2px] rounded-full shadow-[0_0_8px_rgba(255,0,85,0.8)] whitespace-nowrap animate-[furiten-glow-pulse_1.5s_infinite_alternate] z-[101] uppercase border border-white/40">
+        <div className="absolute -top-[9px] md:-top-[11px] left-1/2 -translate-x-1/2 bg-gradient-to-br from-[#ff0055] to-[#ff5500] text-white text-[0.6rem] md:text-xs font-bold tracking-[1px] px-1.5 py-[1px] md:px-2 md:py-[2px] rounded-full shadow-[0_0_8px_rgba(255,0,85,0.8)] whitespace-nowrap animate-[furiten-glow-pulse_1.5s_infinite_alternate] z-[101] uppercase border border-white/40">
           {t('hud.furiten')}
         </div>
       )}
-      <div className="flex flex-row gap-2.5 max-w-[90vw] overflow-x-auto mt-1">
+      <div className="flex flex-row gap-1.5 sm:gap-3 max-w-[90vw] overflow-x-auto mt-0.5 sm:mt-1">
         {awaitedTiles.map((ti, idx) => {
           const tileStr = Tile.fromByte(ti.winningTile).toString();
           const imgSrc = getTileTexturePath(tileStr);
@@ -146,18 +146,18 @@ export function TenpaiWaitPanel({
           return (
             <div
               key={idx}
-              className={`flex flex-col items-center gap-1 bg-white/5 py-1.5 px-2 rounded min-w-[48px] ${
+              className={`flex flex-col items-center gap-0.5 sm:gap-1 bg-white/5 py-1 px-1.5 sm:py-2 sm:px-3 rounded min-w-[36px] sm:min-w-[48px] sm:min-w-[58px] ${
                 meetsMinHan ? '' : 'opacity-45'
               }`}
             >
               <img
                 src={imgSrc}
                 alt={tileStr}
-                className={`w-7 h-auto rounded-[2px] shadow-[0_1px_3px_rgba(0,0,0,0.5)] ${
+                className={`w-5.5 sm:w-7 sm:w-9 h-auto rounded-[2px] shadow-[0_1px_3px_rgba(0,0,0,0.5)] ${
                   meetsMinHan ? '' : 'grayscale'
                 }`}
               />
-              <div className="flex flex-col items-center text-[0.68rem] leading-[1.2]">
+              <div className="flex flex-col items-center text-[9px] sm:text-[0.68rem] sm:text-xs leading-[1.1] sm:leading-[1.2]">
                 <span className="text-[#ddd]">
                   {ti.remainingCount}
                   {t('hud.tilesRemaining')}
@@ -381,14 +381,15 @@ export function GamePlayHUD(): React.JSX.Element | null {
       {/* 2D Permanent Tenpai/Furiten Badge Overlay (positioned near the hand) */}
       {(hasPermanentTenpai || isFuriten) && (
         <div className="absolute bottom-[13vh] left-[calc(50%-24vw)] z-[90] flex flex-col items-center pointer-events-auto">
-          <div
-            className={`min-w-[36px] h-[36px] rounded-[18px] px-2 box-border bg-[#121c32]/85 border-2 flex items-center justify-center text-[1.05rem] font-bold cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.5)] transition-all duration-200 select-none ${
+        <div
+            className={`min-w-[36px] h-[36px] sm:min-w-[44px] sm:h-[44px] rounded-[18px] sm:rounded-[22px] px-2 sm:px-3 box-border bg-[#121c32]/85 border-2 flex items-center justify-center text-base sm:text-lg font-bold cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.5)] transition-all duration-200 select-none ${
               isFuriten
                 ? 'border-[#cc3333] text-[#cc3333] hover:scale-110 hover:bg-[#cc3333] hover:text-white hover:shadow-[0_4px_15px_rgba(204,51,51,0.4)]'
                 : 'border-[#ff7a99] text-[#ff7a99] hover:scale-110 hover:bg-[#ff7a99] hover:text-white hover:shadow-[0_4px_15px_rgba(255,122,153,0.4)]'
             }`}
             onMouseEnter={() => setShowPermanentWaits(true)}
             onMouseLeave={() => setShowPermanentWaits(false)}
+            onClick={() => setShowPermanentWaits((prev) => !prev)}
           >
             {isFuriten ? t('hud.furiten') : t('hud.tenpai')}
           </div>

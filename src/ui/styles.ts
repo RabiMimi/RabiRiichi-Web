@@ -16,18 +16,18 @@ export const MODAL = {
     // Small screens: pin to top and allow scrolling so tall modals fit.
     'max-md:items-start max-md:overflow-y-auto max-md:p-2.5',
   card:
-    'mx-auto box-border flex max-h-[85vh] flex-col rounded-xl p-6 ' +
+    'mx-auto box-border flex max-h-[85vh] flex-col rounded-xl px-6 py-4 ' +
     'shadow-[0_10px_30px_rgba(0,0,0,0.5),0_0_20px_rgba(255,122,153,0.05)] ' +
-    'backdrop-blur-[16px] max-md:max-h-[95vh] max-md:p-4',
+    'backdrop-blur-[16px] max-md:max-h-[95vh] max-md:px-4 max-md:py-3',
   cardDefaultLook:
     'w-[90%] max-w-[650px] border-2 border-[#ff7a99] bg-[#121c32]/95',
-  header: 'mb-4 flex items-center justify-between border-b border-[#444] pb-2',
+  header: 'mb-2.5 flex items-center justify-between border-b border-[#444] pb-1.5',
   title: 'm-0 text-xl text-[#ff7a99]',
   closeButton:
     'cursor-pointer border-none bg-transparent p-0 text-[1.5rem] ' +
     'leading-none text-[#aaa] hover:text-white',
-  body: 'flex flex-1 flex-col gap-5 overflow-y-auto pr-2',
-  footer: 'mt-4 flex justify-end',
+  body: 'flex flex-1 flex-col gap-3.5 overflow-y-auto pr-2',
+  footer: 'mt-2.5 flex justify-end',
 } as const;
 
 /**
@@ -36,7 +36,7 @@ export const MODAL = {
 export const SCREEN = {
   // Base overlay screen that covers the viewport (replaces `.ui-screen`)
   base:
-    'absolute inset-0 z-[100] flex h-full w-full box-border items-center justify-center ' +
+    'fixed inset-0 z-[100] flex h-full w-full box-border items-center justify-center ' +
     'bg-[#141414]/85 p-5 text-[#f0f0f0] backdrop-blur-[4px] overflow-y-auto ' +
     // Responsive: align items to start on short screens to support scrolling
     'max-h-[550px]:items-start',

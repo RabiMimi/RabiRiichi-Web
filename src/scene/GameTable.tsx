@@ -34,6 +34,7 @@ function TouchHoverHandler(): null {
         true,
       );
       let foundTraceId: number | null = null;
+      let hitAnyTile = false;
 
       for (const hit of intersects) {
         // Walk up to find the group with userData.traceId
@@ -41,6 +42,7 @@ function TouchHoverHandler(): null {
         while (curr) {
           const traceId = curr.userData.traceId as unknown;
           if (typeof traceId === 'number') {
+            hitAnyTile = true;
             // Note: "Note this doesn't apply to hand tiles."
             if (curr.userData.area !== 'hand') {
               foundTraceId = traceId;
@@ -49,7 +51,7 @@ function TouchHoverHandler(): null {
           }
           curr = curr.parent;
         }
-        if (foundTraceId !== null) break;
+        if (hitAnyTile) break;
       }
 
       // Update hover state

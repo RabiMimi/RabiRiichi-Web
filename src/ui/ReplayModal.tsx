@@ -6,6 +6,8 @@ import { formatError } from '../lib';
 import { Button } from './Button';
 import { FORM, MODAL } from './styles';
 
+import { createPortal } from 'react-dom';
+
 interface ReplayModalProps {
   onClose: () => void;
 }
@@ -33,7 +35,7 @@ export function ReplayModal({ onClose }: ReplayModalProps): React.JSX.Element {
     }
   };
 
-  return (
+  return createPortal(
     <div className={MODAL.overlay} onClick={onClose}>
       <div
         className={`${MODAL.card} !p-4 w-[90%] max-w-[360px] border border-[#ff7a99]/30 bg-[#121c32]/95`}
@@ -103,6 +105,7 @@ export function ReplayModal({ onClose }: ReplayModalProps): React.JSX.Element {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
   useRoom,
@@ -123,22 +124,22 @@ export function SettingsModal({
     }
   };
 
-  return (
+  return createPortal(
     <div className={MODAL.overlay} onClick={onClose}>
       <div
-        className={`${MODAL.card} w-[95%] max-w-[900px] border border-[#ff7a99]/30 bg-[#121c32]/95 p-3.5 sm:p-5`}
+        className={`${MODAL.card} w-[95%] max-w-[900px] md:max-w-[1000px] lg:max-w-[1100px] xl:max-w-[1250px] max-h-[85vh] lg:max-h-[90vh] border border-[#ff7a99]/30 bg-[#121c32]/95`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-1">
           <div className="flex items-center gap-5">
-            <h2 className="m-0 text-lg font-bold text-[#ff7a99] whitespace-nowrap">
+            <h2 className="m-0 text-lg lg:text-2xl font-bold text-[#ff7a99] whitespace-nowrap">
               {t('settings.title', 'System Settings')}
             </h2>
             <div className="flex gap-1">
               <button
                 type="button"
-                className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                className={`bg-transparent border-none text-sm lg:text-base font-bold px-3 py-1.5 lg:px-4 lg:py-2 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
                   activeTab === 'visuals'
                     ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                     : 'text-[#888] hover:text-white hover:bg-[#333]'
@@ -149,7 +150,7 @@ export function SettingsModal({
               </button>
               <button
                 type="button"
-                className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                className={`bg-transparent border-none text-sm lg:text-base font-bold px-3 py-1.5 lg:px-4 lg:py-2 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
                   activeTab === 'sounds'
                     ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                     : 'text-[#888] hover:text-white hover:bg-[#333]'
@@ -171,11 +172,11 @@ export function SettingsModal({
             <div className="flex flex-1 gap-4 overflow-hidden min-h-0 sm:flex-row flex-col">
               {/* Column 1: Selector & Portrait */}
               <div className="w-full sm:w-[28%] lg:w-[32%] flex flex-col gap-2 shrink-0">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-white/50 text-left">
+                <div className="text-xs lg:text-sm font-extrabold uppercase tracking-wider text-white/50 text-left">
                   {t('settings.characterSelector', 'Active Character')}
                 </div>
                 <select
-                  className={`${FORM.input} w-full text-sm py-1 px-2 h-8`}
+                  className={`${FORM.input} w-full text-sm lg:text-base py-1 px-2 h-8 lg:h-10`}
                   value={activeCharacterId}
                   disabled={inGame}
                   onChange={(e) =>
@@ -207,7 +208,7 @@ export function SettingsModal({
                   {(activeCharacter.illustration ?? activeCharacter.cv) && (
                     <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col gap-1">
                       {activeCharacter.illustration && (
-                        <div className="flex items-center bg-[#0a0c12]/85 border border-white/10 rounded-full px-2 py-0.5 text-[0.62rem] w-fit">
+                        <div className="flex items-center bg-[#0a0c12]/85 border border-white/10 rounded-full px-2 py-0.5 lg:px-3 lg:py-1 text-[0.62rem] sm:text-xs lg:text-sm w-fit">
                           <span className="text-[#fbbf24] font-bold mr-1 border-r border-white/20 pr-1 uppercase">
                             {t('character.credits.illustration', 'Art')}
                           </span>
@@ -217,7 +218,7 @@ export function SettingsModal({
                         </div>
                       )}
                       {activeCharacter.cv && (
-                        <div className="flex items-center bg-[#0a0c12]/85 border border-white/10 rounded-full px-2 py-0.5 text-[0.62rem] w-fit">
+                        <div className="flex items-center bg-[#0a0c12]/85 border border-white/10 rounded-full px-2 py-0.5 lg:px-3 lg:py-1 text-[0.62rem] sm:text-xs lg:text-sm w-fit">
                           <span className="text-[#fbbf24] font-bold mr-1 border-r border-white/20 pr-1 uppercase">
                             {t('character.credits.cv', 'CV')}
                           </span>
@@ -235,13 +236,13 @@ export function SettingsModal({
               <div className="flex-grow flex flex-col sm:flex-row lg:flex-col gap-4 min-h-0 overflow-hidden">
                 {/* Voice Lines */}
                 <div className="flex-grow flex flex-col gap-2 min-h-0 lg:h-[220px]">
-                  <div className="text-xs font-extrabold uppercase tracking-wider text-white/50 text-left">
+                  <div className="text-xs lg:text-sm font-extrabold uppercase tracking-wider text-white/50 text-left">
                     {t('settings.voicelines', 'Voice Lines')}
                   </div>
                   <div className="flex-grow flex flex-col gap-2.5 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg">
                     {voiceGroups.map((group) => (
                       <div key={group.category} className="flex flex-col gap-1">
-                        <div className="text-xs font-bold text-white/40 border-b border-white/5 pb-0.5 text-left">
+                        <div className="text-xs lg:text-sm font-bold text-white/40 border-b border-white/5 pb-0.5 text-left">
                           {t(`settings.voiceCategories.${group.category}`)}
                         </div>
                         <div className="grid grid-cols-2 gap-1">
@@ -251,7 +252,7 @@ export function SettingsModal({
                               <button
                                 key={v.id}
                                 type="button"
-                                className={`flex items-center justify-start gap-1 border border-none rounded px-1.5 py-0.5 text-[0.7rem] font-medium text-left cursor-pointer transition-all duration-150 outline-none truncate h-6 ${
+                                className={`flex items-center justify-start gap-1 border border-none rounded px-1.5 py-0.5 text-[0.7rem] lg:text-xs font-medium text-left cursor-pointer transition-all duration-150 outline-none truncate h-6 lg:h-7 ${
                                   isPlaying
                                     ? 'bg-[#fbbf24]/[0.12] border-[#fbbf24] text-[#fbbf24]'
                                     : 'bg-white/[0.03] border-white/[0.05] text-[#d1d5db] hover:bg-[#fbbf24]/[0.08] hover:text-[#fbbf24]'
@@ -279,7 +280,7 @@ export function SettingsModal({
 
                 {/* Stickers */}
                 <div className="w-full sm:w-[32%] lg:w-full flex flex-col gap-2 min-h-0 lg:flex-grow">
-                  <div className="text-xs font-extrabold uppercase tracking-wider text-white/50 text-left">
+                  <div className="text-xs lg:text-sm font-extrabold uppercase tracking-wider text-white/50 text-left">
                     {t('settings.stickers', 'Stickers')}
                   </div>
                   <div className="flex-grow grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-8 gap-1 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg content-start">
@@ -302,16 +303,16 @@ export function SettingsModal({
           )}
 
           {activeTab === 'sounds' && (
-            <div className="flex flex-col gap-2.5 p-3 sm:p-4 max-w-[480px] w-full mx-auto min-h-0 overflow-y-auto">
+            <div className="flex flex-col gap-2.5 sm:gap-4 p-3 sm:p-4 lg:p-6 max-w-[480px] lg:max-w-[600px] w-full mx-auto min-h-0 overflow-y-auto">
               {/* Global Mute Toggle */}
               <div className="flex justify-start items-center gap-3 py-1.5 px-3 rounded-lg border border-white/[0.04] bg-white/[0.02]">
-                <span className="text-sm font-bold text-[#fbbf24] w-[140px] shrink-0 text-left">
+                <span className="text-sm lg:text-base font-bold text-[#fbbf24] w-[140px] lg:w-[180px] shrink-0 text-left">
                   {t('settings.globalMute', 'Mute All')}
                 </span>
                 <div className="sound-row-controls">
                   <button
                     type="button"
-                    className={`inline-flex items-center justify-center w-7 h-7 border text-white cursor-pointer text-base rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
+                    className={`inline-flex items-center justify-center w-7 h-7 lg:w-9 lg:h-9 border text-white cursor-pointer text-base lg:text-lg rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
                       muteAll
                         ? 'bg-red-500/[0.06] border-red-500/20'
                         : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
@@ -329,13 +330,13 @@ export function SettingsModal({
                   muteAll ? 'opacity-40 pointer-events-none' : ''
                 }`}
               >
-                <div className="text-sm font-semibold text-[#e5e7eb] w-[140px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-xs">
+                <div className="text-sm lg:text-base font-semibold text-[#e5e7eb] w-[140px] lg:w-[180px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-xs">
                   {t('settings.volumeBGM', 'BGM Volume')}
                 </div>
                 <div className="flex items-center gap-2.5 flex-grow justify-start">
                   <button
                     type="button"
-                    className={`inline-flex items-center justify-center w-6.5 h-6.5 border text-white cursor-pointer text-sm rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
+                    className={`inline-flex items-center justify-center w-6.5 h-6.5 lg:w-8 lg:h-8 border text-white cursor-pointer text-sm lg:text-base rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
                       muteBGM || muteAll
                         ? 'bg-red-500/[0.06] border-red-500/20'
                         : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
@@ -359,7 +360,7 @@ export function SettingsModal({
                     }
                     className={VOLUME_SLIDER_CLASS}
                   />
-                  <span className="text-sm font-bold w-10 text-[#888] shrink-0 text-right">
+                  <span className="text-sm lg:text-base font-bold w-10 lg:w-14 text-[#888] shrink-0 text-right">
                     {muteBGM || muteAll
                       ? '0%'
                       : `${Math.round(volumeBGM * 100)}%`}
@@ -373,13 +374,13 @@ export function SettingsModal({
                   muteAll ? 'opacity-40 pointer-events-none' : ''
                 }`}
               >
-                <div className="text-sm font-semibold text-[#e5e7eb] w-[140px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-xs">
+                <div className="text-sm lg:text-base font-semibold text-[#e5e7eb] w-[140px] lg:w-[180px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-xs">
                   {t('settings.volumeSE', 'Sound Effects')}
                 </div>
                 <div className="flex items-center gap-2.5 flex-grow justify-start">
                   <button
                     type="button"
-                    className={`inline-flex items-center justify-center w-6.5 h-6.5 border text-white cursor-pointer text-sm rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
+                    className={`inline-flex items-center justify-center w-6.5 h-6.5 lg:w-8 lg:h-8 border text-white cursor-pointer text-sm lg:text-base rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
                       muteSE || muteAll
                         ? 'bg-red-500/[0.06] border-red-500/20'
                         : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
@@ -403,7 +404,7 @@ export function SettingsModal({
                     }
                     className={VOLUME_SLIDER_CLASS}
                   />
-                  <span className="text-sm font-bold w-10 text-[#888] shrink-0 text-right">
+                  <span className="text-sm lg:text-base font-bold w-10 lg:w-14 text-[#888] shrink-0 text-right">
                     {muteSE || muteAll
                       ? '0%'
                       : `${Math.round(volumeSE * 100)}%`}
@@ -417,7 +418,7 @@ export function SettingsModal({
                   muteAll ? 'opacity-40 pointer-events-none' : ''
                 }`}
               >
-                <div className="text-sm font-semibold text-[#e5e7eb] w-[140px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-xs">
+                <div className="text-sm lg:text-base font-semibold text-[#e5e7eb] w-[140px] lg:w-[180px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-xs">
                   {t('settings.volumeVoice', 'Voice Volume')}
                 </div>
                 <div className="flex items-center gap-2.5 flex-grow justify-start">
@@ -449,7 +450,7 @@ export function SettingsModal({
                     }
                     className={VOLUME_SLIDER_CLASS}
                   />
-                  <span className="text-sm font-bold w-10 text-[#888] shrink-0 text-right">
+                  <span className="text-sm lg:text-base font-bold w-10 lg:w-14 text-[#888] shrink-0 text-right">
                     {muteVoice || muteAll
                       ? '0%'
                       : `${Math.round(volumeVoice * 100)}%`}
@@ -460,6 +461,7 @@ export function SettingsModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

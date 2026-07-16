@@ -14,7 +14,7 @@ const HUD_BTN_COLORS: Record<string, string> = {
   pon: 'text-[#ffaa44]',
   kan: 'text-[#ff66cc]',
   riichi: 'text-[#ff7a99]',
-  agari: 'text-[#ff3333] text-[1.5rem] animate-[hud-agari-pulse_1.5s_infinite]',
+  agari: 'text-[#ff3333] text-2xl sm:text-3xl animate-[hud-agari-pulse_1.5s_infinite]',
   skip: 'text-[#cccccc]',
   ryuukyoku: 'text-[#aaaaaa]',
 };
@@ -55,13 +55,13 @@ export function ActionHUD(): React.JSX.Element | null {
     return (
       <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-[50] pointer-events-auto">
         <div
-          className="text-[#80deea] text-[1.15rem] font-bold mb-2 text-center bg-black/65 px-4 py-1.5 rounded-[15px]"
+          className="text-[#80deea] text-lg sm:text-xl font-bold mb-2 text-center bg-black/65 px-4 py-1.5 rounded-[15px]"
           style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.9)' }}
         >
           {t('hud.declareRiichi')}
         </div>
         <button
-          className="bg-[#441111] border-[1.5px] border-[#772222] rounded-md text-[#ff9999] px-4 py-2 text-base font-bold cursor-pointer transition-all duration-150 hover:bg-[#662222] hover:text-white outline-none"
+          className="bg-[#441111] border-[1.5px] border-[#772222] rounded-md text-[#ff9999] px-4 py-2 sm:px-6 sm:py-2.5 text-base sm:text-lg font-bold cursor-pointer transition-all duration-150 hover:bg-[#662222] hover:text-white outline-none"
           onClick={() => setIsRiichiSelectMode(false)}
         >
           {t('hud.cancelRiichi')}
@@ -138,26 +138,26 @@ export function ActionHUD(): React.JSX.Element | null {
   });
 
   return (
-    <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-[50] pointer-events-auto">
-      <div className="flex flex-wrap justify-center gap-2.5 max-w-[90vw] bg-[#121c32]/88 px-4 py-1.5 rounded-[20px] border border-[#ff7a99]/35 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-md items-center">
+    <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-[50] pointer-events-auto">
+      <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2.5 max-w-[90vw] bg-[#121c32]/88 px-2.5 py-1 sm:px-5 sm:py-2 rounded-[16px] sm:rounded-[20px] border border-[#ff7a99]/35 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-md items-center">
         {flatOptions.map((opt) => (
           <button
             key={opt.key}
-            className={`bg-transparent border-none text-[1.1rem] font-bold px-3.5 py-1.5 cursor-pointer rounded-xl transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 outline-none ${
+            className={`bg-transparent border-none text-base sm:text-xl lg:text-2xl font-bold px-2 py-1 sm:px-4 sm:py-1.5 lg:px-5 lg:py-2 cursor-pointer rounded-xl transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 outline-none ${
               HUD_BTN_COLORS[opt.type] ?? 'text-white'
             }`}
             onClick={opt.onClick}
             style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)' }}
           >
             {opt.tiles ? (
-              <div className="flex flex-col items-center gap-[3px]">
+              <div className="flex flex-col items-center gap-[2px]">
                 <span
-                  className="text-[0.72rem]"
+                  className="text-[10px] sm:text-xs lg:text-sm"
                   style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}
                 >
                   {opt.label}
                 </span>
-                <div className="flex gap-[2px] bg-[#141414]/60 px-1.25 py-0.75 rounded border border-[#444]">
+                <div className="flex gap-[2px] bg-[#141414]/60 px-1 py-0.5 rounded border border-[#444]">
                   {opt.tiles.map((tileMsg, idx) => {
                     const tileStr = Tile.fromByte(tileMsg.tile).toString();
                     const imgSrc = getTileTexturePath(tileStr);
@@ -166,7 +166,7 @@ export function ActionHUD(): React.JSX.Element | null {
                         key={idx}
                         src={imgSrc}
                         alt={tileStr}
-                        className="w-5 h-[27px] rounded-[2px] border border-[#333] shadow-[0_2px_4px_rgba(0,0,0,0.3)] object-cover bg-[#f7f4eb]"
+                        className="w-4.5 h-[24px] sm:w-6 sm:h-[32px] lg:w-7 lg:h-[37px] rounded-[2px] border border-[#333] shadow-[0_2px_4px_rgba(0,0,0,0.3)] object-cover bg-[#f7f4eb]"
                       />
                     );
                   })}

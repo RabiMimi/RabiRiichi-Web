@@ -152,11 +152,13 @@ export function RoomScreen(): React.JSX.Element | null {
                       : 'border-[#444]'
                   } rounded-lg p-3 gap-3 transition-colors duration-200`}
                 >
-                  {renderAvatar(player)}
-                  <StickerBubble
-                    sticker={activeStickers[player.id]}
-                    className="sticker-bubble-2d"
-                  />
+                  <div className="relative shrink-0">
+                    {renderAvatar(player)}
+                    <StickerBubble
+                      sticker={activeStickers[player.id]}
+                      className="sticker-bubble-2d"
+                    />
+                  </div>
                   <div className="flex-grow">
                     <div className="font-bold text-[1.05rem]">
                       {getPlayerDisplayName(player, t)}{' '}

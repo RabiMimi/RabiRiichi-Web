@@ -40,7 +40,7 @@ export function ReplayHUD(): React.JSX.Element | null {
 
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isWallOpen, setIsWallOpen] = useState(false);
-  const [isForceCollapsed, setIsForceCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [showPermanentWaits, setShowPermanentWaits] = useState(false);
 
   const selfPlayer = useMemo(() => {
@@ -259,23 +259,16 @@ export function ReplayHUD(): React.JSX.Element | null {
       {/* Replay Controls Toolbar (Bottom Center) */}
       <div
         className={`absolute bottom-0 left-1/2 -translate-x-1/2 bg-[#141414]/90 border-2 border-[#ff7a99] border-b-0 rounded-t-xl pt-4 px-6 pb-3 flex flex-col items-center gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.6)] z-[95] min-w-[450px] box-border transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-auto group ${
-          isForceCollapsed
-            ? 'translate-y-full'
-            : 'translate-y-full hover:translate-y-0'
+          isCollapsed ? 'translate-y-full' : 'translate-y-0'
         }`}
-        onMouseLeave={() => setIsForceCollapsed(false)}
       >
         <div
-          className={`absolute top-[-26px] left-1/2 -translate-x-1/2 bg-[#141414]/90 border-2 border-b-0 rounded-t-lg py-[2px] px-5 text-[0.8rem] cursor-pointer z-[96] transition-all duration-200 select-none ${
-            isForceCollapsed
-              ? 'text-[#ff7a99] border-[#ff7a99]'
-              : 'text-[#ff7a99] border-[#ff7a99] group-hover:text-white group-hover:border-white'
-          }`}
-          onClick={() => setIsForceCollapsed((prev) => !prev)}
+          className="absolute top-[-26px] left-1/2 -translate-x-1/2 bg-[#141414]/90 border-2 border-[#ff7a99] border-b-0 rounded-t-lg py-[2px] px-5 text-[0.8rem] cursor-pointer z-[96] transition-all duration-200 select-none text-[#ff7a99]"
+          onClick={() => setIsCollapsed((prev) => !prev)}
         >
           <span
             className={`inline-block transition-transform duration-300 ${
-              isForceCollapsed ? 'rotate-0' : 'group-hover:rotate-180'
+              isCollapsed ? 'rotate-0' : 'rotate-180'
             }`}
           >
             ▲
@@ -490,6 +483,7 @@ export function ReplayHUD(): React.JSX.Element | null {
             }`}
             onMouseEnter={() => setShowPermanentWaits(true)}
             onMouseLeave={() => setShowPermanentWaits(false)}
+            onClick={() => setShowPermanentWaits((prev) => !prev)}
           >
             {isFuriten ? t('hud.furiten') : t('hud.tenpai')}
           </div>

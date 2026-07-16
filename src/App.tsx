@@ -89,6 +89,16 @@ function tryDiscardPendingTile(
   }
 }
 
+/** Double-tap skip: find the skip button in the current inquiry and submit it. */
+function trySkipAction() {
+  const mapped = rabiriichi.currentInquiry?.mapped;
+  if (!mapped) return;
+  const skipBtn = mapped.buttons.find((b) => b.type === 'skip');
+  if (skipBtn) {
+    void rabiriichi.submitInquiryResponse(skipBtn);
+  }
+}
+
 function App(): React.JSX.Element {
   const { t } = useTranslation();
   const connectionStatus = useConnectionStatus();
@@ -110,7 +120,10 @@ function App(): React.JSX.Element {
     lastMissedRef.current = now;
 
     if (diff < 300) {
+      // Auto-discard drawn tile when it's our turn to play
       tryDiscardPendingTile(room, currentUser);
+      // Skip when pon/chi/kan action buttons are shown (issue #90)
+      trySkipAction();
     }
   };
 
