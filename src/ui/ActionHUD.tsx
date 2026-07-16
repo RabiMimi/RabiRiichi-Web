@@ -9,6 +9,16 @@ import { getTileTexturePath } from '../scene/assets';
 
 const logger = new Logger('ActionHUD');
 
+const HUD_BTN_COLORS: Record<string, string> = {
+  chii: 'text-[#66ccff]',
+  pon: 'text-[#ffaa44]',
+  kan: 'text-[#ff66cc]',
+  riichi: 'text-[#ff7a99]',
+  agari: 'text-[#ff3333] text-[1.5rem] animate-[hud-agari-pulse_1.5s_infinite]',
+  skip: 'text-[#cccccc]',
+  ryuukyoku: 'text-[#aaaaaa]',
+};
+
 interface FlattenedOption {
   key: string;
   label: string;
@@ -43,10 +53,15 @@ export function ActionHUD(): React.JSX.Element | null {
   // If selecting a tile to discard for Riichi
   if (isRiichiSelectMode) {
     return (
-      <div className="action-hud-container">
-        <div className="action-hud-message">{t('hud.declareRiichi')}</div>
+      <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-[50] pointer-events-auto">
+        <div
+          className="text-[#80deea] text-[1.15rem] font-bold mb-2 text-center bg-black/65 px-4 py-1.5 rounded-[15px]"
+          style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.9)' }}
+        >
+          {t('hud.declareRiichi')}
+        </div>
         <button
-          className="hud-cancel-btn"
+          className="bg-[#441111] border-[1.5px] border-[#772222] rounded-md text-[#ff9999] px-4 py-2 text-base font-bold cursor-pointer transition-all duration-150 hover:bg-[#662222] hover:text-white outline-none"
           onClick={() => setIsRiichiSelectMode(false)}
         >
           {t('hud.cancelRiichi')}
@@ -123,18 +138,26 @@ export function ActionHUD(): React.JSX.Element | null {
   });
 
   return (
-    <div className="action-hud-container">
-      <div className="action-hud-buttons">
+    <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-[50] pointer-events-auto">
+      <div className="flex flex-wrap justify-center gap-2.5 max-w-[90vw] bg-[#121c32]/88 px-4 py-1.5 rounded-[20px] border border-[#ff7a99]/35 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-md items-center">
         {flatOptions.map((opt) => (
           <button
             key={opt.key}
-            className={`hud-btn hud-btn-${opt.type}`}
+            className={`bg-transparent border-none text-[1.1rem] font-bold px-3.5 py-1.5 cursor-pointer rounded-xl transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 outline-none ${
+              HUD_BTN_COLORS[opt.type] ?? 'text-white'
+            }`}
             onClick={opt.onClick}
+            style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)' }}
           >
             {opt.tiles ? (
-              <div className="hud-tile-group">
-                <span className="hud-group-type-label">{opt.label}</span>
-                <div className="hud-group-tiles">
+              <div className="flex flex-col items-center gap-[3px]">
+                <span
+                  className="text-[0.72rem]"
+                  style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}
+                >
+                  {opt.label}
+                </span>
+                <div className="flex gap-[2px] bg-[#141414]/60 px-1.25 py-0.75 rounded border border-[#444]">
                   {opt.tiles.map((tileMsg, idx) => {
                     const tileStr = Tile.fromByte(tileMsg.tile).toString();
                     const imgSrc = getTileTexturePath(tileStr);
@@ -143,7 +166,7 @@ export function ActionHUD(): React.JSX.Element | null {
                         key={idx}
                         src={imgSrc}
                         alt={tileStr}
-                        className="hud-tile-img"
+                        className="w-5 h-[27px] rounded-[2px] border border-[#333] shadow-[0_2px_4px_rgba(0,0,0,0.3)] object-cover bg-[#f7f4eb]"
                       />
                     );
                   })}

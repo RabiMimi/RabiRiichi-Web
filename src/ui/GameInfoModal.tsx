@@ -182,23 +182,18 @@ export function GameInfoModal({
         <div className={MODAL.body}>
           {/* Tab: Live Info */}
           {activeTab === 'info' && (
-            <div className="debug-tab-content">
-              <div className="debug-grid">
-                <div className="debug-row">
-                  <span className="debug-label">{t('hud.roomId')}:</span>
-                  <span className="debug-val">{room.id}</span>
+            <div className="flex flex-col gap-4 text-left">
+              <div className="grid grid-cols-1 min-[481px]:grid-cols-2 gap-x-4 gap-y-2 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                  <span className="text-[#aaa]">{t('hud.roomId')}:</span>
+                  <span className="text-white font-bold font-mono">
+                    {room.id}
+                  </span>
                 </div>
                 {room.gameId && (
-                  <div className="debug-row game-id-row">
-                    <span className="debug-label">{t('hud.gameId')}:</span>
-                    <span
-                      className="debug-val game-id-val"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                      }}
-                    >
+                  <div className="flex justify-between items-center text-[0.85rem] py-0.5 game-id-row">
+                    <span className="text-[#aaa]">{t('hud.gameId')}:</span>
+                    <span className="text-white font-bold font-mono game-id-val flex items-center gap-2">
                       {room.gameId}
                       <CopyGameIdButton gameId={room.gameId} />
                     </span>
@@ -206,55 +201,59 @@ export function GameInfoModal({
                 )}
                 {info && (
                   <>
-                    <div className="debug-row">
-                      <span className="debug-label">
+                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                      <span className="text-[#aaa]">
                         {t('hud.roundLabel')}:
                       </span>
-                      <span className="debug-val">
+                      <span className="text-white font-bold font-mono">
                         {t(`hud.${getWindKey(info.round)}`)}
                         {t('hud.windSpace')}
                         {info.dealer + 1}
                         {t('hud.roundSuffix')}
                       </span>
                     </div>
-                    <div className="debug-row">
-                      <span className="debug-label">{t('hud.dealer')}:</span>
-                      <span className="debug-val">Seat {info.dealer}</span>
+                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                      <span className="text-[#aaa]">{t('hud.dealer')}:</span>
+                      <span className="text-white font-bold font-mono">
+                        Seat {info.dealer}
+                      </span>
                     </div>
-                    <div className="debug-row">
-                      <span className="debug-label">
+                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                      <span className="text-[#aaa]">
                         {t('hud.activePlayer')}:
                       </span>
-                      <span className="debug-val">
+                      <span className="text-white font-bold font-mono">
                         {t('room.seat', { seat: info.currentPlayer })}
                       </span>
                     </div>
-                    <div className="debug-row">
-                      <span className="debug-label">{t('hud.turnJun')}:</span>
-                      <span className="debug-val">{activePlayerJun}</span>
+                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                      <span className="text-[#aaa]">{t('hud.turnJun')}:</span>
+                      <span className="text-white font-bold font-mono">
+                        {activePlayerJun}
+                      </span>
                     </div>
-                    <div className="debug-row">
-                      <span className="debug-label">{t('hud.wallLabel')}:</span>
-                      <span className="debug-val">
+                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                      <span className="text-[#aaa]">{t('hud.wallLabel')}:</span>
+                      <span className="text-white font-bold font-mono">
                         {t('hud.remainingTiles', {
                           count: info.remainingTiles,
                         })}
                       </span>
                     </div>
-                    <div className="debug-row">
-                      <span className="debug-label">
+                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                      <span className="text-[#aaa]">
                         {t('hud.honbaLabel')}:
                       </span>
-                      <span className="debug-val">
+                      <span className="text-white font-bold font-mono">
                         {info.honba}
                         {t('hud.honbaSuffix')}
                       </span>
                     </div>
-                    <div className="debug-row">
-                      <span className="debug-label">
+                    <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                      <span className="text-[#aaa]">
                         {t('hud.riichiLabel')}:
                       </span>
-                      <span className="debug-val">
+                      <span className="text-white font-bold font-mono">
                         {info.riichiStick}
                         {t('hud.riichiSuffix')}
                       </span>
@@ -263,21 +262,28 @@ export function GameInfoModal({
                 )}
               </div>
 
-              <div className="debug-section">
-                <h4 className="game-info-subtitle">
+              <div className="flex flex-col gap-2.5">
+                <h4 className="m-0 text-base text-[#ff7a99] border-b border-[#333] pb-1.5">
                   {t('hud.playersCount', { count: players.length })}
                 </h4>
-                <div className="debug-players-list">
+                <div className="flex flex-col gap-2">
                   {players.map((p) => (
-                    <div key={p.id} className="debug-player-card">
-                      <div className="player-meta">
-                        <span className="p-seat">
+                    <div
+                      key={p.id}
+                      className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2.5 flex flex-col gap-1.5"
+                    >
+                      <div className="flex items-center gap-2 text-[0.9rem]">
+                        <span className="text-[#ff7a99] font-bold">
                           {t('room.seat', { seat: p.seat ?? '?' })}:
                         </span>
-                        <span className="p-name">{p.nickname}</span>
-                        <span className="p-id">(ID: {p.id})</span>
+                        <span className="text-white font-bold">
+                          {p.nickname}
+                        </span>
+                        <span className="text-[#666] text-[0.75rem]">
+                          (ID: {p.id})
+                        </span>
                       </div>
-                      <div className="player-state">
+                      <div className="flex justify-between text-[0.8rem] text-[#aaa]">
                         <span className="p-points">
                           {t('hud.pointsLabel')}:{' '}
                           {p.gameState?.points !== undefined
@@ -298,180 +304,212 @@ export function GameInfoModal({
 
           {/* Tab: Config */}
           {activeTab === 'config' && config && (
-            <div className="debug-tab-content">
-              <div className="debug-grid">
-                <div className="debug-row">
-                  <span className="debug-label">{t('lobby.players')}:</span>
-                  <span className="debug-val">{config.playerCount}</span>
+            <div className="flex flex-col gap-4 text-left">
+              <div className="grid grid-cols-1 min-[481px]:grid-cols-2 gap-x-4 gap-y-2 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                  <span className="text-[#aaa]">{t('lobby.players')}:</span>
+                  <span className="text-white font-bold font-mono">
+                    {config.playerCount}
+                  </span>
                 </div>
-                <div className="debug-row">
-                  <span className="debug-label">{t('lobby.rounds')}:</span>
-                  <span className="debug-val">{config.totalRound}</span>
+                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                  <span className="text-[#aaa]">{t('lobby.rounds')}:</span>
+                  <span className="text-white font-bold font-mono">
+                    {config.totalRound}
+                  </span>
                 </div>
-                <div className="debug-row">
-                  <span className="debug-label">{t('lobby.minHan')}:</span>
-                  <span className="debug-val">{config.minHan}</span>
+                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                  <span className="text-[#aaa]">{t('lobby.minHan')}:</span>
+                  <span className="text-white font-bold font-mono">
+                    {config.minHan}
+                  </span>
                 </div>
-                <div className="debug-row">
-                  <span className="debug-label">{t('lobby.seed')}:</span>
-                  <span className="debug-val">
+                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                  <span className="text-[#aaa]">{t('lobby.seed')}:</span>
+                  <span className="text-white font-bold font-mono">
                     {seedStr === '0' ? t('lobby.auto') : seedStr}
                   </span>
                 </div>
-                <div className="debug-row">
-                  <span className="debug-label">
+                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                  <span className="text-[#aaa]">
                     {t('lobby.nextRoundAckTimeout')}:
                   </span>
-                  <span className="debug-val">
+                  <span className="text-white font-bold font-mono">
                     {config.nextRoundAckTimeout}s
                   </span>
                 </div>
-                <div className="debug-row">
-                  <span className="debug-label">
+                <div className="flex justify-between items-center text-[0.85rem] py-0.5">
+                  <span className="text-[#aaa]">
                     {t('lobby.actionTimeout')}:
                   </span>
-                  <span className="debug-val">
+                  <span className="text-white font-bold font-mono">
                     {config.gameplayActionTimeout}s
                   </span>
                 </div>
               </div>
 
-              <div className="debug-section">
-                <h4 className="game-info-subtitle">
+              <div className="flex flex-col gap-2.5">
+                <h4 className="m-0 text-base text-[#ff7a99] border-b border-[#333] pb-1.5">
                   {t('hud.rulesAndPolicies')}
                 </h4>
-                <div className="debug-policies-grid">
-                  <div className="policy-row">
-                    <span className="p-label">
+                <div className="flex flex-col gap-2.5 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                    <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.renchanPolicy')}:
                     </span>
-                    <div className="p-badges">
+                    <div className="flex flex-wrap gap-1 justify-end">
                       {getActivePolicyLabels(
                         config.renchanPolicy,
                         RENCHAN_POLICIES,
                         t,
                       ).map((f) => (
-                        <span key={f} className="debug-badge">
+                        <span
+                          key={f}
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                        >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="policy-row">
-                    <span className="p-label">
+                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                    <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.endGamePolicy')}:
                     </span>
-                    <div className="p-badges">
+                    <div className="flex flex-wrap gap-1 justify-end">
                       {getActivePolicyLabels(
                         config.endGamePolicy,
                         END_GAME_POLICIES,
                         t,
                       ).map((f) => (
-                        <span key={f} className="debug-badge">
+                        <span
+                          key={f}
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                        >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="policy-row">
-                    <span className="p-label">
+                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                    <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.kuikaePolicy')}:
                     </span>
-                    <div className="p-badges">
+                    <div className="flex flex-wrap gap-1 justify-end">
                       {getActivePolicyLabels(
                         config.kuikaePolicy,
                         KUIKAE_POLICIES,
                         t,
                       ).map((f) => (
-                        <span key={f} className="debug-badge">
+                        <span
+                          key={f}
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                        >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="policy-row">
-                    <span className="p-label">
+                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                    <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.riichiPolicy')}:
                     </span>
-                    <div className="p-badges">
+                    <div className="flex flex-wrap gap-1 justify-end">
                       {getActivePolicyLabels(
                         config.riichiPolicy,
                         RIICHI_POLICIES,
                         t,
                       ).map((f) => (
-                        <span key={f} className="debug-badge">
+                        <span
+                          key={f}
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                        >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="policy-row">
-                    <span className="p-label">{t('advanced.doraOption')}:</span>
-                    <div className="p-badges">
+                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                    <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
+                      {t('advanced.doraOption')}:
+                    </span>
+                    <div className="flex flex-wrap gap-1 justify-end">
                       {getActivePolicyLabels(
                         config.doraOption,
                         DORA_OPTIONS,
                         t,
                       ).map((f) => (
-                        <span key={f} className="debug-badge">
+                        <span
+                          key={f}
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                        >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="policy-row">
-                    <span className="p-label">
+                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                    <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.agariOption')}:
                     </span>
-                    <div className="p-badges">
+                    <div className="flex flex-wrap gap-1 justify-end">
                       {getActivePolicyLabels(
                         config.agariOption,
                         AGARI_OPTIONS,
                         t,
                       ).map((f) => (
-                        <span key={f} className="debug-badge">
+                        <span
+                          key={f}
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                        >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="policy-row">
-                    <span className="p-label">
+                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                    <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.scoringOption')}:
                     </span>
-                    <div className="p-badges">
+                    <div className="flex flex-wrap gap-1 justify-end">
                       {getActivePolicyLabels(
                         config.scoringOption,
                         SCORING_OPTIONS,
                         t,
                       ).map((f) => (
-                        <span key={f} className="debug-badge">
+                        <span
+                          key={f}
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                        >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="policy-row">
-                    <span className="p-label">
+                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                    <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.ryuukyokuTrigger')}:
                     </span>
-                    <div className="p-badges">
+                    <div className="flex flex-wrap gap-1 justify-end">
                       {getActivePolicyLabels(
                         config.ryuukyokuTrigger,
                         RYUUKYOKU_TRIGGERS,
                         t,
                       ).map((f) => (
-                        <span key={f} className="debug-badge">
+                        <span
+                          key={f}
+                          className="bg-[#2a2a2a] border border-[#444] rounded px-1.5 py-0.5 text-[#ddd] text-[0.75rem] font-mono"
+                        >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="policy-row">
-                    <span className="p-label">
+                  <div className="flex items-start justify-between gap-3 text-[0.85rem] py-1">
+                    <span className="text-[#aaa] font-bold shrink-0 mt-0.5">
                       {t('advanced.pointsDeductionPolicy')}:
                     </span>
-                    <span className="debug-val text-badge">
+                    <span className="text-[#ff7a99] font-bold font-mono">
                       {t(
                         getDeductionPolicyTranslationKey(
                           config.pointsDeductionPolicy,
@@ -486,12 +524,12 @@ export function GameInfoModal({
 
           {/* Tab: Yaku & Yama */}
           {activeTab === 'yaku' && (
-            <div className="debug-tab-content">
-              <div className="game-info-section">
-                <h4 className="game-info-subtitle">
+            <div className="flex flex-col gap-4 text-left">
+              <div className="flex flex-col gap-2.5 text-left">
+                <h4 className="m-0 text-base text-[#ff7a99] border-b border-[#333] pb-1.5">
                   {t('hud.allowedYakus')} ({activeYakus.length})
                 </h4>
-                <div className="game-info-yakus-container">
+                <div className="flex flex-col gap-2">
                   {['1han', '2han', '3han', '6han', 'yakuman', 'other'].map(
                     (group) => {
                       const groupYakus = activeYakus.filter(
@@ -499,13 +537,19 @@ export function GameInfoModal({
                       );
                       if (groupYakus.length === 0) return null;
                       return (
-                        <div key={group} className="game-info-yaku-group">
-                          <span className="yaku-group-title">
+                        <div
+                          key={group}
+                          className="flex flex-wrap items-baseline gap-1.5 text-[0.85rem]"
+                        >
+                          <span className="text-[#888] font-bold min-w-[70px] shrink-0">
                             {t(`yakuGroup.${group}`)}:
                           </span>
-                          <div className="yaku-badge-list">
+                          <div className="flex flex-wrap gap-1.5">
                             {groupYakus.map((yaku) => (
-                              <span key={yaku.name} className="yaku-badge">
+                              <span
+                                key={yaku.name}
+                                className="bg-[#1a1a1a] border border-[#333] rounded px-2 py-0.5 text-[#ccc] text-[0.8rem]"
+                              >
                                 {t(`yaku.${yaku.name}`)}
                               </span>
                             ))}
@@ -518,26 +562,28 @@ export function GameInfoModal({
               </div>
 
               {tileBytes.length > 0 && (
-                <div
-                  className="game-info-section"
-                  style={{ marginTop: '16px' }}
-                >
-                  <h4 className="game-info-subtitle">
+                <div className="flex flex-col gap-2.5 text-left mt-4">
+                  <h4 className="m-0 text-base text-[#ff7a99] border-b border-[#333] pb-1.5">
                     {t('hud.startingYama')} ({tileBytes.length})
                   </h4>
-                  <div className="yama-tiles-grid">
+                  <div className="flex flex-wrap gap-2 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
                     {sortedUniqueBytes.map((byte) => {
                       const tile = Tile.fromByte(byte);
                       const tileStr = tile.toString();
                       const count = counts[byte] ?? 0;
                       return (
-                        <div key={byte} className="yama-tile-item">
+                        <div
+                          key={byte}
+                          className="flex flex-col items-center gap-1 w-9 shrink-0"
+                        >
                           <img
                             src={getTileTexturePath(tileStr)}
                             alt={tileStr}
-                            className="yama-tile-img"
+                            className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.4)]"
                           />
-                          <span className="yama-tile-count">x{count}</span>
+                          <span className="text-[0.75rem] text-[#80deea] font-bold font-mono">
+                            x{count}
+                          </span>
                         </div>
                       );
                     })}

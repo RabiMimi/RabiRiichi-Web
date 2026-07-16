@@ -146,7 +146,7 @@ export function RoomScreen(): React.JSX.Element | null {
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center bg-[#1a1a1a] border ${
+                  className={`relative flex items-center bg-[#1a1a1a] border ${
                     isMe
                       ? 'border-[#ff7a99] bg-[#ff7a99]/[0.08]'
                       : 'border-[#444]'

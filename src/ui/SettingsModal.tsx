@@ -26,16 +26,33 @@ interface SettingsModalProps {
 }
 
 const PlayIcon = (): React.JSX.Element => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="voice-play-icon-svg">
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="w-[18px] h-[18px] block"
+  >
     <path d="M8 5v14l11-7z" />
   </svg>
 );
 
 const StopIcon = (): React.JSX.Element => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="voice-play-icon-svg">
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="w-[18px] h-[18px] block"
+  >
     <path d="M6 19h12V5H6v14z" />
   </svg>
 );
+
+const VOLUME_SLIDER_CLASS =
+  'flex-1 h-1 bg-white/15 rounded-lg outline-none appearance-none cursor-pointer ' +
+  '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 ' +
+  '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#fbbf24] [&::-webkit-slider-thumb]:cursor-pointer ' +
+  '[&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(0,0,0,0.5)] [&::-webkit-slider-thumb]:transition-transform ' +
+  '[&::-webkit-slider-thumb]:duration-100 hover:[&::-webkit-slider-thumb]:scale-[1.2] ' +
+  'disabled:bg-white/5 disabled:cursor-not-allowed disabled:[&::-webkit-slider-thumb]:bg-[#4b5563] ' +
+  'disabled:[&::-webkit-slider-thumb]:cursor-not-allowed';
 
 export function SettingsModal({
   onClose,
@@ -192,7 +209,7 @@ export function SettingsModal({
                       {activeCharacter.illustration && (
                         <div className="flex items-center bg-[#0a0c12]/85 border border-white/10 rounded-full px-2 py-0.5 text-[0.62rem] w-fit">
                           <span className="text-[#fbbf24] font-bold mr-1 border-r border-white/20 pr-1 uppercase">
-                            {t('character.credits.illustration', 'Artist')}
+                            {t('character.credits.illustration', 'Art')}
                           </span>
                           <span className="text-[#f3f4f6] font-medium">
                             {activeCharacter.illustration}
@@ -243,7 +260,7 @@ export function SettingsModal({
                                   handlePlayVoice(v.id, v.audioUrl)
                                 }
                               >
-                                <span className="voice-play-icon shrink-0">
+                                <span className="opacity-75 inline-flex items-center justify-center w-[18px] h-[18px] shrink-0">
                                   {isPlaying ? <StopIcon /> : <PlayIcon />}
                                 </span>
                                 <span className="truncate">
@@ -312,7 +329,7 @@ export function SettingsModal({
                   muteAll ? 'opacity-40 pointer-events-none' : ''
                 }`}
               >
-                <div className="text-[0.85rem] font-semibold text-[#e5e7eb] w-[140px] shrink-0 text-left">
+                <div className="text-[0.85rem] font-semibold text-[#e5e7eb] w-[140px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-[0.8rem]">
                   {t('settings.volumeBGM', 'BGM Volume')}
                 </div>
                 <div className="flex items-center gap-2.5 flex-grow justify-start">
@@ -340,7 +357,7 @@ export function SettingsModal({
                         volumeBGM: parseFloat(e.target.value),
                       })
                     }
-                    className="settings-volume-slider flex-1 h-1 bg-white/15 rounded-lg outline-none appearance-none cursor-pointer"
+                    className={VOLUME_SLIDER_CLASS}
                   />
                   <span className="text-[0.8rem] font-bold w-10 text-[#888] shrink-0 text-right">
                     {muteBGM || muteAll
@@ -356,7 +373,7 @@ export function SettingsModal({
                   muteAll ? 'opacity-40 pointer-events-none' : ''
                 }`}
               >
-                <div className="text-[0.85rem] font-semibold text-[#e5e7eb] w-[140px] shrink-0 text-left">
+                <div className="text-[0.85rem] font-semibold text-[#e5e7eb] w-[140px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-[0.8rem]">
                   {t('settings.volumeSE', 'Sound Effects')}
                 </div>
                 <div className="flex items-center gap-2.5 flex-grow justify-start">
@@ -384,7 +401,7 @@ export function SettingsModal({
                         volumeSE: parseFloat(e.target.value),
                       })
                     }
-                    className="settings-volume-slider flex-1 h-1 bg-white/15 rounded-lg outline-none appearance-none cursor-pointer"
+                    className={VOLUME_SLIDER_CLASS}
                   />
                   <span className="text-[0.8rem] font-bold w-10 text-[#888] shrink-0 text-right">
                     {muteSE || muteAll
@@ -400,7 +417,7 @@ export function SettingsModal({
                   muteAll ? 'opacity-40 pointer-events-none' : ''
                 }`}
               >
-                <div className="text-[0.85rem] font-semibold text-[#e5e7eb] w-[140px] shrink-0 text-left">
+                <div className="text-[0.85rem] font-semibold text-[#e5e7eb] w-[140px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-[0.8rem]">
                   {t('settings.volumeVoice', 'Voice Volume')}
                 </div>
                 <div className="flex items-center gap-2.5 flex-grow justify-start">
@@ -430,7 +447,7 @@ export function SettingsModal({
                         volumeVoice: parseFloat(e.target.value),
                       })
                     }
-                    className="settings-volume-slider flex-1 h-1 bg-white/15 rounded-lg outline-none appearance-none cursor-pointer"
+                    className={VOLUME_SLIDER_CLASS}
                   />
                   <span className="text-[0.8rem] font-bold w-10 text-[#888] shrink-0 text-right">
                     {muteVoice || muteAll

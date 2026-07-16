@@ -27,9 +27,18 @@ import {
   getCurrentRoundIndex,
   getRoundStartIndices,
   jumpToRound,
+  stopReplay,
 } from '../replay/replayDriver';
 import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
+
+const LIMIT_BADGE_STYLES: Record<string, string> = {
+  'limit-mangan': 'bg-[#ff7a99]',
+  'limit-haneman': 'bg-[#8c7aff]',
+  'limit-baiman': 'bg-[#ffb830]',
+  'limit-sanbaiman': 'bg-[#ff6e30]',
+  'limit-yakuman': 'bg-[#ff3333]',
+};
 
 /**
  * Renders a fixed 5-wide indicator row for the settlement screen: each tile the
@@ -50,7 +59,7 @@ function renderIndicatorTiles(
           key={`${keyPrefix}-${idx}`}
           src={getTileTexturePath(tileStr)}
           alt={tileStr}
-          className="result-tile-img"
+          className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
         />
       );
     }
@@ -59,7 +68,7 @@ function renderIndicatorTiles(
         key={`${keyPrefix}-${idx}`}
         src={getTileTexturePath('back')}
         alt="back"
-        className="result-tile-img"
+        className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
       />
     );
   });
@@ -124,8 +133,12 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const handleReturnToRoom = React.useCallback(() => {
     setShowFinalResults(false);
-    rabiriichi.returnToRoom();
-  }, []);
+    if (isReplay) {
+      stopReplay();
+    } else {
+      rabiriichi.returnToRoom();
+    }
+  }, [isReplay]);
 
   const submitAction = React.useCallback(
     async (action: ActionOption, choice?: number) => {
@@ -248,20 +261,24 @@ export function ResultPanel(): React.JSX.Element | null {
     if (doras.length === 0) return null;
 
     return (
-      <div className="result-dora-indicators-section">
-        <div className="dora-indicator-row">
-          <span className="dora-row-label">{t('result.dora')}</span>
-          <div className="dora-indicator-tiles-container">
+      <div className="relative z-[1] flex flex-col gap-3 bg-[#1e1e1e]/70 border border-[#333] rounded-[10px] p-4 box-border">
+        <div className="flex flex-row items-center gap-3 flex-wrap">
+          <span className="text-[0.8rem] text-[#80deea] font-bold uppercase tracking-[1px] whitespace-nowrap min-w-[135px]">
+            {t('result.dora')}
+          </span>
+          <div className="flex flex-row items-center gap-3 flex-wrap">
             {/* Dora Indicators */}
-            <div className="dora-indicator-tiles">
+            <div className="flex gap-1.5">
               {renderIndicatorTiles(doras, 'dora')}
             </div>
 
             {/* Uradora Indicators */}
             {showUradoras && uradoras.length > 0 && (
               <>
-                <span className="dora-separator">/</span>
-                <div className="dora-indicator-tiles">
+                <span className="text-[#666] text-[1.4rem] font-bold select-none mx-1">
+                  /
+                </span>
+                <div className="flex gap-1.5">
                   {renderIndicatorTiles(uradoras, 'uradora')}
                 </div>
               </>
@@ -280,7 +297,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
   if (room && isAwaitingNextRound) {
     return (
-      <div className="next-round-waiting">
+      <div className="absolute right-6 bottom-6 z-[120] px-4 py-2.5 rounded-xl bg-[#0a0a0a]/75 text-white font-sans text-sm shadow-[0_4px_16px_rgba(0,0,0,0.6)] backdrop-blur-[4px]">
         {t('result.waitingForNextRound')}
       </div>
     );
@@ -378,22 +395,40 @@ export function ResultPanel(): React.JSX.Element | null {
     const handTiles = player.gameState?.hand.freeTiles ?? [];
     const calledMelds = player.gameState?.hand.called ?? [];
 
+    const cardStyles = isNagashi
+      ? 'bg-[#1c304d]/85 border-[#00bcff]'
+      : 'bg-[#2b2b2b]/75 border-[#444]';
+
+    const badgeColor = isNagashi ? 'bg-[#00bcff]' : 'bg-[#ff3333]';
+
+    const finalLimitClass = isNagashi
+      ? 'bg-[#00bcff] text-[#1a1a1a]'
+      : `${LIMIT_BADGE_STYLES[limitClass] ?? 'bg-gray-500'} text-white`;
+
+    const finalHanFuColor = isNagashi ? 'text-[#00e5ff]' : 'text-[#ff7a99]';
+
     return (
       <div
         key={player.id}
-        className={`winner-details-card ${isNagashi ? 'nagashi-card' : ''}`}
+        className={`rounded-[10px] p-4 flex flex-col gap-3 border ${cardStyles}`}
       >
-        <div className="winner-name-row">
-          <span className="winner-badge">{badgeText}</span>
-          <span className="winner-name">{getPlayerDisplayName(player, t)}</span>
+        <div className="flex items-center gap-3">
+          <span
+            className={`text-[0.75rem] font-bold px-2.5 py-0.75 rounded-[50px] text-white ${badgeColor}`}
+          >
+            {badgeText}
+          </span>
+          <span className="text-[1.15rem] font-bold">
+            {getPlayerDisplayName(player, t)}
+          </span>
           {isTenpai ? (
             player.gameState?.awaitedTiles &&
             player.gameState.awaitedTiles.length > 0 && (
-              <div className="result-tenpai-waits-header">
-                <span className="tenpai-waits-label">
+              <div className="ml-auto flex items-center gap-2">
+                <span className="text-[0.9rem] text-[#aaa] font-bold">
                   {t('result.tenpaiWaits', 'Waits')}:
                 </span>
-                <div className="tenpai-waits-tiles">
+                <div className="flex gap-1.5">
                   {player.gameState.awaitedTiles.map((ti, idx) => {
                     const tileStr = Tile.fromByte(ti.winningTile).toString();
                     return (
@@ -401,7 +436,7 @@ export function ResultPanel(): React.JSX.Element | null {
                         key={idx}
                         src={getTileTexturePath(tileStr)}
                         alt={tileStr}
-                        className="result-tile-img-small"
+                        className="w-6 h-8 rounded-[2px] shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
                       />
                     );
                   })}
@@ -409,21 +444,29 @@ export function ResultPanel(): React.JSX.Element | null {
               </div>
             )
           ) : (
-            <div className="winner-summary-row">
+            <div className="ml-auto flex items-center gap-2">
               {limitLabel && (
-                <span className={`winner-limit-badge ${limitClass}`}>
+                <span
+                  className={`text-[0.8rem] font-bold px-3 py-1 rounded-[50px] shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${finalLimitClass}`}
+                >
                   {limitLabel}
                 </span>
               )}
-              {hanFuLabel && <span className="winner-hanfu">{hanFuLabel}</span>}
+              {hanFuLabel && (
+                <span className={`font-bold text-[1.1rem] ${finalHanFuColor}`}>
+                  {hanFuLabel}
+                </span>
+              )}
             </div>
           )}
         </div>
 
         {isNagashi ? (
-          <div className="winner-river-tiles">
-            <span className="river-label">{t('result.river')}</span>
-            <div className="river-tiles-grid">
+          <div className="flex flex-col gap-2 bg-[#141414]/40 p-3 rounded-md">
+            <span className="text-[0.8rem] text-[#88a8cc] uppercase font-bold">
+              {t('result.river')}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
               {(player.gameState?.hand.discarded ?? []).map((tileMsg, idx) => {
                 const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
                 return (
@@ -431,7 +474,7 @@ export function ResultPanel(): React.JSX.Element | null {
                     key={tileMsg.traceId ?? idx}
                     src={getTileTexturePath(tileStr)}
                     alt={tileStr}
-                    className="result-tile-img"
+                    className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
                   />
                 );
               })}
@@ -439,8 +482,8 @@ export function ResultPanel(): React.JSX.Element | null {
           </div>
         ) : (
           /* Display final sorted hand tiles */
-          <div className="winner-hand-tiles">
-            <div className="closed-hand-tiles">
+          <div className="flex flex-wrap gap-[3px] bg-[#1a1a1a] p-2 rounded-md items-center">
+            <div className="flex gap-[3px]">
               {handTiles.map((tileMsg, idx) => {
                 const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
                 return (
@@ -448,14 +491,14 @@ export function ResultPanel(): React.JSX.Element | null {
                     key={tileMsg.traceId ?? idx}
                     src={getTileTexturePath(tileStr)}
                     alt={tileStr}
-                    className="result-tile-img"
+                    className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
                   />
                 );
               })}
             </div>
             {/* Winning tile */}
             {agari.incoming && (
-              <div className="winning-tile-group">
+              <div className="flex items-center gap-1.5 ml-3 border-l-[1.5px] border-[#444] pl-3">
                 <span className="winning-tile-label">
                   {t('result.winTile')}:
                 </span>
@@ -464,7 +507,7 @@ export function ResultPanel(): React.JSX.Element | null {
                     Tile.fromByte(agari.incoming.tile ?? 0).toString(),
                   )}
                   alt="winning-tile"
-                  className="result-tile-img winning-tile"
+                  className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)] border-[1.5px] border-[#ff7a99]"
                 />
               </div>
             )}
@@ -472,7 +515,10 @@ export function ResultPanel(): React.JSX.Element | null {
             {calledMelds.map((meld, meldIdx) => {
               const tiles = meld.tiles ?? [];
               return (
-                <div key={meldIdx} className="result-meld-group">
+                <div
+                  key={meldIdx}
+                  className="flex gap-[3px] ml-3 border-l-[1.5px] border-[#444] pl-3"
+                >
                   {tiles.map((tile, tileIdx) => {
                     const tileStr = Tile.fromByte(tile.tile ?? 0).toString();
                     return (
@@ -480,7 +526,7 @@ export function ResultPanel(): React.JSX.Element | null {
                         key={tile.traceId ?? tileIdx}
                         src={getTileTexturePath(tileStr)}
                         alt={tileStr}
-                        className="result-tile-img"
+                        className="w-8 h-[42px] rounded-[3px] shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
                       />
                     );
                   })}
@@ -492,20 +538,23 @@ export function ResultPanel(): React.JSX.Element | null {
 
         {/* List of Yaku */}
         {!isNagashi && !isTenpai && (
-          <div className="yaku-list">
+          <div className="grid grid-cols-2 gap-2 text-[0.85rem]">
             {yakuList.map((yaku, idx) => {
               const typeLabel =
                 yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
                   ? t('result.yakuman')
                   : t('result.han', { count: yaku.Val });
               return (
-                <div key={idx} className="yaku-item">
-                  <span className="yaku-name">
+                <div
+                  key={idx}
+                  className="bg-white/[0.08] border border-white/15 rounded-[6px] px-2.5 py-1 flex items-center justify-between gap-1.5"
+                >
+                  <span className="text-[#ddd]">
                     {t(`yaku.${yaku.Src ?? ''}`, {
                       defaultValue: yaku.Src ?? '',
                     })}
                   </span>
-                  <span className="yaku-val">{typeLabel}</span>
+                  <span className="text-[#ffaa44] font-bold">{typeLabel}</span>
                 </div>
               );
             })}
@@ -517,13 +566,17 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const renderScoreChanges = () => {
     return (
-      <div className="result-score-changes">
-        <div className="score-changes-list">
+      <div className="relative z-[1] bg-[#252525]/75 border border-[#333] rounded-[10px] p-4">
+        <div className="flex flex-row gap-2.5 justify-between">
           {resultPlayers.map((p) => {
             const agari = p.gameState?.agari;
             const delta = (agari?.gainPoints ?? 0) - (agari?.losePoints ?? 0);
-            const deltaClass =
-              delta > 0 ? 'plus' : delta < 0 ? 'minus' : 'zero';
+            const deltaColor =
+              delta > 0
+                ? 'text-[#00ff00]'
+                : delta < 0
+                  ? 'text-[#ff3333]'
+                  : 'text-[#888]';
             const deltaText = delta > 0 ? `+${delta}` : `${delta}`;
             const currentPoints =
               p.gameState?.points ??
@@ -532,14 +585,19 @@ export function ResultPanel(): React.JSX.Element | null {
             const prevPoints = currentPoints - delta;
 
             return (
-              <div key={p.id} className="score-change-row">
-                <span className="player-name">
+              <div
+                key={p.id}
+                className="flex-1 flex flex-col items-center bg-black/20 border border-white/5 rounded-lg py-2 px-1.5 gap-1 box-border min-w-[90px]"
+              >
+                <span className="font-bold text-[0.9rem] truncate max-w-full text-center">
                   {getPlayerDisplayName(p, t)}
                 </span>
-                <span className="points-transition">
+                <span className="text-[#888] text-[0.85rem] font-mono">
                   {prevPoints} → {currentPoints}
                 </span>
-                <span className={`points-delta ${deltaClass}`}>
+                <span
+                  className={`font-bold font-mono text-[1.1rem] min-w-0 text-center ${deltaColor}`}
+                >
                   {deltaText}
                 </span>
               </div>
@@ -551,17 +609,17 @@ export function ResultPanel(): React.JSX.Element | null {
   };
 
   return (
-    <div className="result-overlay">
-      <div className="result-layout-container">
-        <div className="result-character-side">
+    <div className="absolute inset-0 bg-[#0a0a0a]/85 flex justify-center items-center z-[120] text-white font-sans backdrop-blur-md">
+      <div className="flex flex-row items-stretch gap-0 w-[95%] max-w-[1000px] max-h-[85vh] m-auto box-border z-[121] relative">
+        <div className="hidden md:block flex-[0_0_320px] relative z-[2] -mr-20 pointer-events-none">
           <img
             src={activeCharacter.visualUrl}
             alt={`${activeCharacter.id}-avatar`}
-            className="result-mimi-side-art"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none opacity-95"
           />
         </div>
-        <div className="result-panel">
-          <h2 className="result-title">
+        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-[20px] p-6 pl-4 md:pl-20 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-4 relative overflow-hidden box-border">
+          <h2 className="relative z-[1] text-[2.2rem] font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-1 tracking-[4px]">
             {isDraw
               ? hasNagashiWinner
                 ? t('yaku.NagashiMangan')
@@ -573,8 +631,8 @@ export function ResultPanel(): React.JSX.Element | null {
               : t('result.agari')}
           </h2>
 
-          <div className="result-content-scrollable">
-            <div className="result-winners-container">
+          <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-1">
+            <div className="relative z-[1] flex flex-col gap-4">
               {playersWithResult.map((w) => renderWinnerDetails(w))}
             </div>
 
@@ -585,11 +643,11 @@ export function ResultPanel(): React.JSX.Element | null {
           </div>
 
           {/* Proceed button */}
-          <div className="result-actions">
+          <div className="relative z-[1] flex justify-center">
             <Button
               onClick={handleProceed}
               disabled={!canProceed && !room.gameEnded}
-              className="w-full"
+              className="w-full min-w-[180px] md:w-auto"
             >
               {room.gameEnded
                 ? t('result.showFinalResults', 'Show Game Results')

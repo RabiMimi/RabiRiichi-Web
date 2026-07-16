@@ -166,18 +166,19 @@ export function TileTooltip(): React.JSX.Element | null {
 
   const junCapsule = buildJunCapsule(facts, t);
 
+  const baseOffset = window.innerWidth >= 1024 ? -60 : -36;
+
   return (
     <div
       ref={containerRef}
-      className="tile-tooltip-container"
+      className="absolute flex items-center gap-1.5 bg-[#0f1410]/96 border border-white/[0.12] rounded py-[3px] px-2 shadow-[0_4px_16px_rgba(0,0,0,0.6)] pointer-events-none select-none font-sans text-[0.68rem] leading-[1.2] text-white backdrop-blur h-6 transition-colors duration-200 whitespace-nowrap w-max lg:h-[42px] lg:py-1.5 lg:px-4 lg:gap-3 lg:text-[1.05rem] lg:rounded-lg lg:border-[1.5px]"
       style={{
-        transform: `translate(calc(-50% + ${offset.x}px), calc(var(--tile-tooltip-y-offset) + ${offset.y}px))`,
-        position: 'absolute',
+        transform: `translate(calc(-50% + ${offset.x}px), calc(${baseOffset}px + ${offset.y}px))`,
       }}
     >
       {/* Tile Face Badge */}
       <span
-        className="tile-tooltip-badge"
+        className="inline-flex items-center text-white rounded-[2px] py-[1px] px-1 text-[0.72rem] font-extrabold lg:py-[3px] lg:px-2 lg:text-[1.1rem] lg:rounded"
         style={{ background: badgeBackground }}
       >
         {tileName}
@@ -190,27 +191,25 @@ export function TileTooltip(): React.JSX.Element | null {
       */}
       {junCapsule && (
         <div
-          className="tile-tooltip-capsule"
+          className="flex items-center gap-1 rounded-[2px] py-[1px] px-[5px] font-bold lg:py-[3px] lg:px-2.5 lg:gap-2 lg:text-[1.05rem] lg:rounded"
           style={{
             background: junCapsule.background,
             color: junCapsule.color,
           }}
         >
           {junCapsule.label != null && (
-            <span style={{ opacity: 0.85, fontWeight: 600 }}>
-              {junCapsule.label}
-            </span>
+            <span className="opacity-85 font-semibold">{junCapsule.label}</span>
           )}
           <span>{junCapsule.value}</span>
         </div>
       )}
 
       {isClaimed && discarderName && (
-        <div className="tile-tooltip-claimed">
-          <span style={{ opacity: 0.85 }}>
+        <div className="flex items-center bg-red-500/[0.12] rounded-[2px] py-[1px] px-1 text-red-300 gap-[3px] lg:py-[3px] lg:px-2 lg:gap-1.5 lg:text-[1.05rem] lg:rounded">
+          <span className="opacity-85">
             {t('tileTooltip.claimedFrom', 'Claimed')}
           </span>
-          <span style={{ fontWeight: 700 }}>{discarderName}</span>
+          <span className="font-bold">{discarderName}</span>
         </div>
       )}
     </div>

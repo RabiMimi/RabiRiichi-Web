@@ -82,26 +82,26 @@ export function AddAiDropdown({
   };
 
   return (
-    <div className="add-ai-container">
+    <div className="ml-auto relative">
       <Button
         ref={buttonRef}
         size="compact"
-        className="add-ai-btn"
+        className="flex items-center gap-1"
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={disabled}
       >
-        {t('room.addAi')} <span className="arrow">▼</span>
+        {t('room.addAi')} <span className="text-[0.6rem] opacity-70">▼</span>
       </Button>
       {isOpen &&
         position &&
         createPortal(
           <>
             <div
-              className="dropdown-backdrop"
+              className="fixed inset-0 z-[100] cursor-default"
               onClick={() => setIsOpen(false)}
             />
             <div
-              className="dropdown-menu portal"
+              className="fixed top-auto mt-0 max-w-[220px] bg-[#222] border border-[#444] rounded shadow-[0_4px_12px_rgba(0,0,0,0.5)] z-[101] min-w-[140px] flex flex-col overflow-hidden py-1"
               style={{
                 right: position.right,
                 ...(position.top !== undefined ? { top: position.top } : {}),
@@ -113,7 +113,7 @@ export function AddAiDropdown({
               {AI_OPTIONS.map((aiType) => (
                 <button
                   key={aiType}
-                  className="dropdown-item"
+                  className="bg-transparent border-none px-3 py-2 text-[0.85rem] text-[#ccc] cursor-pointer whitespace-nowrap text-left w-full [font-family:inherit] transition-colors duration-200 hover:bg-[#ff7a99]/10 hover:text-[#ff7a99] disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handleSelect(aiType)}
                 >
                   {t(`ai.type.${AiType[aiType]}`)}

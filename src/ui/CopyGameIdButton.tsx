@@ -23,21 +23,15 @@ export function CopyGameIdButton({
   };
 
   return (
-    <div className="copy-game-id-container">
-      <Tooltip content={t('hud.copyGameId')} position="top">
+    <div className="inline-flex items-center">
+      <Tooltip
+        content={copied ? t('hud.copied') : t('hud.copyGameId')}
+        position="top"
+      >
         <button
           type="button"
-          className="copy-game-id-btn"
+          className="bg-transparent border-none text-[#ff7a99] cursor-pointer p-0 flex items-center"
           onClick={() => void handleCopy()}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#ff7a99',
-            cursor: 'pointer',
-            padding: 0,
-            display: 'flex',
-            alignItems: 'center',
-          }}
         >
           <svg
             viewBox="0 0 24 24"
@@ -52,7 +46,6 @@ export function CopyGameIdButton({
           </svg>
         </button>
       </Tooltip>
-      {copied && <span className="copied-tooltip">{t('hud.copied')}</span>}
     </div>
   );
 }

@@ -31,6 +31,7 @@ import type {
   IStopGameEventMsg,
   ISyncGameStateEventMsg,
   IServerRoomStateMsg,
+  ITenpaiInfoMsg,
 } from '../proto/index.js';
 import type {
   RoomModel,
@@ -373,12 +374,18 @@ function handleAddTile(state: RoomModel, _ev: IAddTileEventMsg): RoomModel {
   return state;
 }
 
+interface ReplayDiscardTileEventMsg extends IDiscardTileEventMsg {
+  awaitedTiles?: ITenpaiInfoMsg[] | null;
+}
+
 function handleDiscardTile(
   state: RoomModel,
   ev: IDiscardTileEventMsg,
 ): RoomModel {
   if (!state.info || !ev.discarded) return state;
   const discardedTile = ev.discarded;
+  const visibleKinds = collectVisibleTileKindsFromRoom(state);
+  const tileSetCounts = buildTileSetCounts(state.config);
 
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (p.seat !== ev.playerId || !p.gameState) return p;
@@ -401,12 +408,45 @@ function handleDiscardTile(
     const discarded = [...p.gameState.hand.discarded, discardedTile];
     const riichiTileId =
       (ev.isRiichi ? discardedTile.traceId : p.gameState.riichiTileId) ?? 0;
+    const rawWaits =
+      'awaitedTiles' in ev
+        ? (ev as ReplayDiscardTileEventMsg).awaitedTiles
+        : undefined;
+
+    const awaitedTiles =
+      rawWaits !== undefined && rawWaits !== null
+        ? rawWaits.map((ti): MappedTenpaiInfo => {
+            const winningTile = ti.winningTile ?? 0;
+            let han = ti.han ?? 0;
+            let yakuHan = ti.yakuHan ?? 0;
+            if (ev.isRiichi && (ti.yakuman ?? 0) === 0) {
+              han += 1;
+              yakuHan += 1;
+            }
+            return {
+              winningTile,
+              remainingCount: countRemainingWinningTile(
+                winningTile,
+                visibleKinds,
+                tileSetCounts,
+              ),
+              han,
+              yakuHan,
+              fu: ti.fu ?? 0,
+              yakuman: ti.yakuman ?? 0,
+              points: ti.points ?? 0,
+            };
+          })
+        : rawWaits === null
+          ? undefined
+          : p.gameState.awaitedTiles;
 
     return {
       ...p,
       gameState: {
         ...p.gameState,
         riichiTileId,
+        awaitedTiles,
         hand: {
           ...p.gameState.hand,
           freeTiles,

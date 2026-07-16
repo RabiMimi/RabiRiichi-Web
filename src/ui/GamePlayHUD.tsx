@@ -50,28 +50,36 @@ export function GameInfoPanel(): React.JSX.Element | null {
   const roundNumber = dealer + 1;
 
   return (
-    <div className="game-info-panel">
-      <div className="round-info-section">
-        <span className="round-text">
+    <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-2 px-3 flex flex-col gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)] min-w-[180px]">
+      <div className="flex justify-center items-center gap-4 border-b border-[#333] pb-[6px] text-[0.85rem] font-bold">
+        <span className="text-[#ccc] flex items-center">
           {windTranslated}
           {t('hud.windSpace')}
-          <span className="info-number">{roundNumber}</span>
+          <span className="text-[#80deea] text-[1.05rem] font-extrabold mx-[2px] [text-shadow:0_0_4px_rgba(128,222,234,0.3)]">
+            {roundNumber}
+          </span>
           {t('hud.roundSuffix')}
         </span>
-        <span className="honba-text">
-          <span className="info-number">{honba}</span>
+        <span className="text-[#ccc] flex items-center">
+          <span className="text-[#80deea] text-[1.05rem] font-extrabold mx-[2px] [text-shadow:0_0_4px_rgba(128,222,234,0.3)]">
+            {honba}
+          </span>
           {t('hud.honbaSuffix')}
         </span>
         {riichiStick > 0 && (
-          <span className="riichi-sticks-text">
-            <span className="info-number">{riichiStick}</span>
+          <span className="text-[#ff3333] bg-white/95 py-[1px] px-[6px] rounded text-[0.7rem] border-[1.5px] border-[#ff3333] font-extrabold shadow-[0_1px_3px_rgba(0,0,0,0.3)] flex items-center">
+            <span className="text-[#ff3333] text-[0.85rem] font-extrabold m-0">
+              {riichiStick}
+            </span>
             {t('hud.riichiSuffix')}
           </span>
         )}
       </div>
-      <div className="dora-section">
-        <div className="dora-panel-title">{t('hud.dora')}</div>
-        <div className="dora-tiles-row">
+      <div className="flex flex-col gap-1">
+        <div className="text-[0.75rem] font-bold text-[#80deea] tracking-[2px]">
+          {t('hud.dora')}
+        </div>
+        <div className="flex gap-1">
           {Array.from({ length: 5 }).map((_, idx) => {
             const doraTileMsg = idx < doras.length ? doras[idx] : null;
             let imgSrc = '/assets/hand_tiles/back.jpg';
@@ -86,7 +94,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
                 key={idx}
                 src={imgSrc}
                 alt={doraTileMsg ? 'Dora' : 'Locked'}
-                className="dora-tile-img"
+                className="w-[28px] h-[38px] rounded border border-[#333] shadow-[0_2px_4px_rgba(0,0,0,0.3)] object-cover bg-[#f7f4eb]"
               />
             );
           })}
@@ -121,13 +129,15 @@ export function TenpaiWaitPanel({
   if (awaitedTiles.length === 0) return null;
 
   return (
-    <div className={`tenpai-wait-panel ${className}`}>
+    <div
+      className={`absolute bg-[#121c32]/94 border-[1.5px] border-[#ff7a99]/70 rounded-lg py-2 px-3 shadow-[0_4px_15px_rgba(0,0,0,0.6)] backdrop-blur-md text-white font-sans z-[100] pointer-events-none w-fit box-border ${className}`}
+    >
       {isFuriten && (
-        <div className="tenpai-wait-panel-furiten-overlay">
+        <div className="absolute -top-[11px] left-1/2 -translate-x-1/2 bg-gradient-to-br from-[#ff0055] to-[#ff5500] text-white text-[0.65rem] font-bold tracking-[1px] px-2 py-[2px] rounded-full shadow-[0_0_8px_rgba(255,0,85,0.8)] whitespace-nowrap animate-[furiten-glow-pulse_1.5s_infinite_alternate] z-[101] uppercase border border-white/40">
           {t('hud.furiten')}
         </div>
       )}
-      <div className="awaited-tiles-list horizontal">
+      <div className="flex flex-row gap-2.5 max-w-[90vw] overflow-x-auto mt-1">
         {awaitedTiles.map((ti, idx) => {
           const tileStr = Tile.fromByte(ti.winningTile).toString();
           const imgSrc = getTileTexturePath(tileStr);
@@ -136,25 +146,33 @@ export function TenpaiWaitPanel({
           return (
             <div
               key={idx}
-              className={`awaited-tile-card vertical${
-                meetsMinHan ? '' : ' unwinnable'
+              className={`flex flex-col items-center gap-1 bg-white/5 py-1.5 px-2 rounded min-w-[48px] ${
+                meetsMinHan ? '' : 'opacity-45'
               }`}
             >
-              <img src={imgSrc} alt={tileStr} className="awaited-tile-img" />
-              <div className="awaited-tile-info center">
-                <span className="remaining-count">
+              <img
+                src={imgSrc}
+                alt={tileStr}
+                className={`w-7 h-auto rounded-[2px] shadow-[0_1px_3px_rgba(0,0,0,0.5)] ${
+                  meetsMinHan ? '' : 'grayscale'
+                }`}
+              />
+              <div className="flex flex-col items-center text-[0.68rem] leading-[1.2]">
+                <span className="text-[#ddd]">
                   {ti.remainingCount}
                   {t('hud.tilesRemaining')}
                 </span>
-                <span className="han-points">
+                <span className="text-[#aaa]">
                   {!meetsMinHan ? (
-                    <span className="yaku-required-text">
+                    <span className="text-[#ff5555] font-bold">
                       {ti.yakuman === 0 && ti.yakuHan + bonusYaku === 0
                         ? t('hud.yakuRequired')
                         : t('hud.minHanRequired')}
                     </span>
                   ) : yakuBound ? (
-                    <span className="yakuman-text">{t('hud.yakuman')}</span>
+                    <span className="text-[#ff3399] font-bold">
+                      {t('hud.yakuman')}
+                    </span>
                   ) : (
                     <span>
                       {displayHan(ti, bonusYaku)}
@@ -306,7 +324,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
   const timerLabel = hasPlayTile ? t('hud.discard') : t('hud.chooseAction');
 
   return (
-    <div className="game-play-hud">
+    <div className="absolute inset-0 pointer-events-none z-[40]">
       {/* Top Right HUD (Settings + Connection Status) */}
       <div className="pointer-events-auto absolute top-5 right-5 z-[50] flex items-center gap-2">
         <ConnectionStatusIndicator />
@@ -339,30 +357,41 @@ export function GamePlayHUD(): React.JSX.Element | null {
             awaitedTiles={activeDiscardCandidate.candidate.tenpaiInfos}
             minHan={minHan}
             bonusYaku={activeDiscardCandidate.isRiichi ? 1 : 0}
-            className={`hover-discard ${hasActionButtons ? 'with-buttons' : 'no-buttons'}`}
+            className={`absolute left-1/2 -translate-x-1/2 flex flex-col gap-1.5 ${
+              hasActionButtons ? 'bottom-[30vh]' : 'bottom-[18vh]'
+            }`}
             isFuriten={isFuritenDiscard}
+          />
+        )}
+
+      {/* Permanent Hover Tenpai Panel (Fixed Position) */}
+      {!activeDiscardCandidate &&
+        showPermanentWaits &&
+        permanentAwaitedTiles.length > 0 && (
+          <TenpaiWaitPanel
+            awaitedTiles={permanentAwaitedTiles}
+            minHan={minHan}
+            className={`absolute left-1/2 -translate-x-1/2 flex flex-col gap-1.5 ${
+              hasActionButtons ? 'bottom-[30vh]' : 'bottom-[18vh]'
+            }`}
+            isFuriten={isFuriten}
           />
         )}
 
       {/* 2D Permanent Tenpai/Furiten Badge Overlay (positioned near the hand) */}
       {(hasPermanentTenpai || isFuriten) && (
-        <div className="player-tenpai-badge-container permanent-badge">
+        <div className="absolute bottom-[13vh] left-[calc(50%-24vw)] z-[90] flex flex-col items-center pointer-events-auto">
           <div
-            className={`tenpai-badge-3d ${isFuriten ? 'furiten' : ''}`}
-            onPointerOver={() => setShowPermanentWaits(true)}
-            onPointerOut={() => setShowPermanentWaits(false)}
+            className={`min-w-[36px] h-[36px] rounded-[18px] px-2 box-border bg-[#121c32]/85 border-2 flex items-center justify-center text-[1.05rem] font-bold cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.5)] transition-all duration-200 select-none ${
+              isFuriten
+                ? 'border-[#cc3333] text-[#cc3333] hover:scale-110 hover:bg-[#cc3333] hover:text-white hover:shadow-[0_4px_15px_rgba(204,51,51,0.4)]'
+                : 'border-[#ff7a99] text-[#ff7a99] hover:scale-110 hover:bg-[#ff7a99] hover:text-white hover:shadow-[0_4px_15px_rgba(255,122,153,0.4)]'
+            }`}
+            onMouseEnter={() => setShowPermanentWaits(true)}
+            onMouseLeave={() => setShowPermanentWaits(false)}
           >
             {isFuriten ? t('hud.furiten') : t('hud.tenpai')}
           </div>
-
-          {showPermanentWaits && permanentAwaitedTiles.length > 0 && (
-            <TenpaiWaitPanel
-              awaitedTiles={permanentAwaitedTiles}
-              minHan={minHan}
-              className="badge-hover-panel"
-              isFuriten={isFuriten}
-            />
-          )}
         </div>
       )}
 
@@ -417,16 +446,23 @@ function HUDLeftPanel({
     room?.config?.doraOption !== undefined &&
     (room.config.doraOption & 128) !== 0;
 
+  const getToggleBtnClass = (isActive: boolean) =>
+    `flex-1 bg-[#141414]/85 border-[1.5px] rounded-[6px] py-1.5 text-[0.85rem] font-bold cursor-pointer pointer-events-auto transition-all duration-200 text-center select-none hover:-translate-y-[1px] active:translate-y-[1px] ${
+      isActive
+        ? 'bg-[#ff7a99]/15 border-[#ff7a99] text-[#ff7a99] shadow-[0_0_10px_rgba(255,122,153,0.3),inset_0_0_4px_rgba(255,122,153,0.2)] [text-shadow:0_0_4px_rgba(255,122,153,0.4)]'
+        : 'border-[#444] text-[#888] shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:border-[#ff7a99] hover:text-[#ccc]'
+    }`;
+
   return (
-    <div className="left-hud-panel">
+    <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-none z-50">
       {/* Game Info Panel (Doras + Round Info) */}
       <GameInfoPanel />
 
       {/* Settings Panel */}
-      <div className="settings-panel">
+      <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-1.5 px-3 flex flex-row items-center gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
         <label
           htmlFor="speed-select"
-          style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#aaa' }}
+          className="text-[0.8rem] font-bold text-[#aaa]"
         >
           {t('hud.speed')}
         </label>
@@ -434,16 +470,7 @@ function HUDLeftPanel({
           id="speed-select"
           value={animationSpeed}
           onChange={(e) => rabiriichi.setAnimationSpeed(Number(e.target.value))}
-          style={{
-            background: '#222',
-            color: '#fff',
-            border: '1px solid #555',
-            borderRadius: '4px',
-            padding: '2px 6px',
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            outline: 'none',
-          }}
+          className="bg-[#222] text-white border border-[#555] rounded py-0.5 px-1.5 text-[0.9rem] cursor-pointer outline-none"
         >
           <option value="0.25">x0.25</option>
           <option value="0.5">x0.5</option>
@@ -456,7 +483,7 @@ function HUDLeftPanel({
 
       {/* Auto-play Toggles Row */}
       {!isReplay && (
-        <div className="auto-play-toggles-row">
+        <div className="flex flex-row gap-[6px] w-full">
           <Tooltip
             content={t(
               'hud.autoAgariDesc',
@@ -467,7 +494,7 @@ function HUDLeftPanel({
           >
             <button
               type="button"
-              className={`auto-toggle-btn ${autoAgari ? 'active' : ''}`}
+              className={getToggleBtnClass(Boolean(autoAgari))}
               onClick={() => rabiriichi.toggleAutoAgari()}
             >
               {t('hud.autoAgari', 'Win')}
@@ -483,7 +510,7 @@ function HUDLeftPanel({
           >
             <button
               type="button"
-              className={`auto-toggle-btn ${noCalls ? 'active' : ''}`}
+              className={getToggleBtnClass(Boolean(noCalls))}
               onClick={() => rabiriichi.toggleNoCalls()}
             >
               {t('hud.noCalls', 'No Calls')}
@@ -499,7 +526,7 @@ function HUDLeftPanel({
           >
             <button
               type="button"
-              className={`auto-toggle-btn ${autoDiscard ? 'active' : ''}`}
+              className={getToggleBtnClass(Boolean(autoDiscard))}
               onClick={() => rabiriichi.toggleAutoDiscard()}
             >
               {t('hud.autoDiscard', 'Auto Discard')}
@@ -516,7 +543,7 @@ function HUDLeftPanel({
             >
               <button
                 type="button"
-                className={`auto-toggle-btn ${autoNuki ? 'active' : ''}`}
+                className={getToggleBtnClass(Boolean(autoNuki))}
                 onClick={() => rabiriichi.toggleAutoNuki()}
               >
                 {t('hud.autoNuki', 'Auto Nuki')}
@@ -526,7 +553,7 @@ function HUDLeftPanel({
         </div>
       )}
 
-      <div className="hud-buttons-row">
+      <div className="flex flex-row gap-2">
         <FullscreenButton />
 
         <Tooltip
@@ -633,9 +660,13 @@ function HUDTimer({
 }: HUDTimerProps): React.JSX.Element | null {
   if (!isVisible) return null;
   return (
-    <div className="player-timer-overlay">
-      <span className="timer-label">{timerLabel}</span>
-      <span className="timer-seconds">{Math.ceil(actionTimeout)}</span>
+    <div className="absolute bottom-[22vh] right-[12%] flex flex-col items-center gap-[2px] bg-[#141414]/85 border-2 border-[#ff3333] rounded-xl py-2 px-4 text-white shadow-[0_4px_15px_rgba(0,0,0,0.6)] pointer-events-none animate-[timer-pulse_1s_infinite_alternate] min-w-[90px] box-border">
+      <span className="text-[0.65rem] font-bold text-[#ff9999] tracking-[1px] text-center">
+        {timerLabel}
+      </span>
+      <span className="text-[2.8rem] font-bold font-['Courier_New',Courier,monospace] text-[#ff3333] [text-shadow:0_0_10px_rgba(255,51,51,0.5)] leading-none">
+        {Math.ceil(actionTimeout)}
+      </span>
     </div>
   );
 }
@@ -656,13 +687,16 @@ function HUDExitConfirmModal({
   const { t } = useTranslation();
   if (!isOpen) return null;
   return (
-    <div className="exit-confirm-modal-overlay">
-      <div className="exit-confirm-modal-content">
-        <p className="exit-confirm-message">{t('hud.confirmExit')}</p>
-        <div className="exit-confirm-buttons">
+    <div className="fixed inset-0 w-screen h-screen bg-black/70 flex justify-center items-center z-[1100] backdrop-blur-[3px] pointer-events-auto">
+      <div className="bg-[#2a2a2a] border-2 border-[#ff3333] rounded-xl p-6 w-[90%] max-w-[400px] shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-center box-border">
+        <p className="text-[1.05rem] text-white mb-5 font-medium leading-[1.4]">
+          {t('hud.confirmExit')}
+        </p>
+        <div className="flex gap-4 justify-center">
           <Button
             type="button"
             variant="danger"
+            className="flex-1 h-9 !p-0"
             onClick={onConfirm}
             disabled={isExiting}
           >
@@ -671,6 +705,7 @@ function HUDExitConfirmModal({
           <Button
             type="button"
             variant="secondary"
+            className="flex-1 h-9 !p-0"
             onClick={onCancel}
             disabled={isExiting}
           >

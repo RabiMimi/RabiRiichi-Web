@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useRoom,
@@ -20,7 +20,7 @@ import {
   jumpToRound,
   getRoundStartIndices,
 } from '../replay/replayDriver';
-import { GameInfoPanel } from './GamePlayHUD';
+import { GameInfoPanel, TenpaiWaitPanel } from './GamePlayHUD';
 import { FullscreenButton } from './FullscreenButton';
 import { GameInfoModal } from './GameInfoModal';
 import { InitialWallModal } from './InitialWallModal';
@@ -41,11 +41,33 @@ export function ReplayHUD(): React.JSX.Element | null {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isWallOpen, setIsWallOpen] = useState(false);
   const [isForceCollapsed, setIsForceCollapsed] = useState(false);
+  const [showPermanentWaits, setShowPermanentWaits] = useState(false);
+
+  const selfPlayer = useMemo(() => {
+    if (!room || !currentUser) return null;
+    return room.players.find((p) => p.id === currentUser.id) ?? null;
+  }, [room, currentUser]);
+
+  const permanentAwaitedTiles = useMemo(() => {
+    return selfPlayer?.gameState?.awaitedTiles ?? [];
+  }, [selfPlayer]);
+
+  const hasPermanentTenpai = permanentAwaitedTiles.length > 0;
+
+  const isFuriten = useMemo(() => {
+    if (!selfPlayer?.gameState?.furiten) return false;
+    return Object.values(selfPlayer.gameState.furiten).some(Boolean);
+  }, [selfPlayer]);
+
+  const minHan = room?.config?.minHan ?? 1;
 
   const currentRoundIdx = getCurrentRoundIndex();
   const roundStartIndices = getRoundStartIndices();
   const hasPrevRound = currentRoundIdx > 0;
   const hasNextRound = currentRoundIdx < roundStartIndices.length - 1;
+
+  const replayBtnBaseClass =
+    'bg-[#2a2a2a] border border-[#555] rounded-full text-white w-11 h-11 flex items-center justify-center transition-all duration-200 p-0 enabled:hover:border-[#ff7a99] enabled:hover:text-[#ff7a99] enabled:hover:scale-[1.05] disabled:opacity-40 disabled:cursor-not-allowed';
 
   const getRoundText = () => {
     if (!room?.info) return '';
@@ -67,16 +89,16 @@ export function ReplayHUD(): React.JSX.Element | null {
   const players = room.players;
 
   return (
-    <div className="game-play-hud replay-hud">
+    <div className="absolute inset-0 pointer-events-none z-[40]">
       {/* Left HUD Panel */}
-      <div className="left-hud-panel">
+      <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-none z-50">
         <GameInfoPanel />
 
         {/* Speed Settings (copied from GamePlayHUD settings-panel) */}
-        <div className="settings-panel">
+        <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-1.5 px-3 flex flex-row items-center gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
           <label
             htmlFor="speed-select"
-            style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#aaa' }}
+            className="text-[0.8rem] font-bold text-[#aaa]"
           >
             {t('hud.speed')}
           </label>
@@ -86,16 +108,7 @@ export function ReplayHUD(): React.JSX.Element | null {
             onChange={(e) =>
               rabiriichi.setAnimationSpeed(Number(e.target.value))
             }
-            style={{
-              background: '#222',
-              color: '#fff',
-              border: '1px solid #555',
-              borderRadius: '4px',
-              padding: '2px 6px',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
+            className="bg-[#222] text-white border border-[#555] rounded py-0.5 px-1.5 text-[0.9rem] cursor-pointer outline-none"
           >
             <option value="0.25">x0.25</option>
             <option value="0.5">x0.5</option>
@@ -106,9 +119,8 @@ export function ReplayHUD(): React.JSX.Element | null {
           </select>
         </div>
 
-        <div className="hud-buttons-row">
+        <div className="flex flex-row gap-2">
           <FullscreenButton />
-          <SettingsButton />
 
           <Tooltip
             content={
@@ -239,21 +251,39 @@ export function ReplayHUD(): React.JSX.Element | null {
         </div>
       </div>
 
+      {/* Top Right HUD (Settings) */}
+      <div className="pointer-events-auto absolute top-5 right-5 z-[50]">
+        <SettingsButton />
+      </div>
+
       {/* Replay Controls Toolbar (Bottom Center) */}
       <div
-        className={`replay-controls-toolbar ${isForceCollapsed ? 'force-collapsed' : ''}`}
+        className={`absolute bottom-0 left-1/2 -translate-x-1/2 bg-[#141414]/90 border-2 border-[#ff7a99] border-b-0 rounded-t-xl pt-4 px-6 pb-3 flex flex-col items-center gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.6)] z-[95] min-w-[450px] box-border transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-auto group ${
+          isForceCollapsed
+            ? 'translate-y-full'
+            : 'translate-y-full hover:translate-y-0'
+        }`}
         onMouseLeave={() => setIsForceCollapsed(false)}
       >
         <div
-          className="toolbar-expand-tab"
+          className={`absolute top-[-26px] left-1/2 -translate-x-1/2 bg-[#141414]/90 border-2 border-b-0 rounded-t-lg py-[2px] px-5 text-[0.8rem] cursor-pointer z-[96] transition-all duration-200 select-none ${
+            isForceCollapsed
+              ? 'text-[#ff7a99] border-[#ff7a99]'
+              : 'text-[#ff7a99] border-[#ff7a99] group-hover:text-white group-hover:border-white'
+          }`}
           onClick={() => setIsForceCollapsed((prev) => !prev)}
-          style={{ cursor: 'pointer' }}
         >
-          <span className="toolbar-expand-tab-icon">▲</span>
+          <span
+            className={`inline-block transition-transform duration-300 ${
+              isForceCollapsed ? 'rotate-0' : 'group-hover:rotate-180'
+            }`}
+          >
+            ▲
+          </span>
         </div>
 
-        <div className="replay-slider-container">
-          <span className="slider-time">
+        <div className="w-full flex flex-col items-center gap-1 mb-1">
+          <span className="text-xs text-[#aaa] font-mono">
             {progress} / {total}
           </span>
           <input
@@ -262,28 +292,19 @@ export function ReplayHUD(): React.JSX.Element | null {
             max={total}
             value={progress}
             onChange={(e) => seekToEvent(Number(e.target.value))}
-            className="replay-slider"
+            className="w-full appearance-none bg-[#333] h-1.5 rounded-[3px] outline-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#ff7a99] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:duration-100 [&::-webkit-slider-thumb]:hover:scale-[1.25] [&::-webkit-slider-thumb]:hover:bg-[#ff99b0]"
           />
         </div>
 
-        <div
-          className="toolbar-controls-row"
-          style={{
-            display: 'flex',
-            width: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '32px',
-          }}
-        >
-          <div className="playback-buttons">
+        <div className="w-full flex justify-center items-center gap-8">
+          <div className="flex gap-4 items-center">
             <Tooltip
               content={t('replay.stepBackward', 'Step Backward')}
               position="top"
             >
               <button
                 type="button"
-                className="replay-btn step-backward-btn"
+                className={replayBtnBaseClass}
                 onClick={() => stepReplay(-1)}
                 disabled={!isPaused}
               >
@@ -306,7 +327,7 @@ export function ReplayHUD(): React.JSX.Element | null {
             >
               <button
                 type="button"
-                className="replay-btn play-pause-btn"
+                className="rounded-full text-white w-[52px] h-[52px] flex items-center justify-center transition-all duration-200 p-0 bg-[#ff7a99] border border-[#ff7a99] enabled:hover:bg-[#ff99bb] enabled:hover:border-[#ff99bb] enabled:hover:text-white enabled:hover:scale-[1.05] disabled:opacity-40 disabled:cursor-not-allowed"
                 onClick={togglePause}
               >
                 {isPaused ? (
@@ -340,7 +361,7 @@ export function ReplayHUD(): React.JSX.Element | null {
             >
               <button
                 type="button"
-                className="replay-btn step-forward-btn"
+                className={replayBtnBaseClass}
                 onClick={() => stepReplay(1)}
                 disabled={!isPaused}
               >
@@ -359,14 +380,14 @@ export function ReplayHUD(): React.JSX.Element | null {
           </div>
 
           {/* Round Navigation Jumper */}
-          <div className="round-navigation">
+          <div className="flex items-center gap-3 bg-[#1e1e1e]/60 border border-[#ff7a99]/30 rounded-lg py-1 px-4">
             <Tooltip
               content={t('replay.prevRound', 'Previous Round')}
               position="top"
             >
               <button
                 type="button"
-                className="replay-btn prev-round-btn"
+                className={replayBtnBaseClass}
                 onClick={() => jumpToRound(currentRoundIdx - 1)}
                 disabled={!hasPrevRound}
               >
@@ -380,14 +401,16 @@ export function ReplayHUD(): React.JSX.Element | null {
                 </svg>
               </button>
             </Tooltip>
-            <span className="round-navigation-label">{getRoundText()}</span>
+            <span className="text-[#ff7a99] font-bold text-[0.95rem] min-w-[140px] text-center select-none">
+              {getRoundText()}
+            </span>
             <Tooltip
               content={t('replay.nextRound', 'Next Round')}
               position="top"
             >
               <button
                 type="button"
-                className="replay-btn next-round-btn"
+                className={replayBtnBaseClass}
                 onClick={() => jumpToRound(currentRoundIdx + 1)}
                 disabled={!hasNextRound}
               >
@@ -405,16 +428,22 @@ export function ReplayHUD(): React.JSX.Element | null {
         </div>
 
         {/* Player Perspective Selector (Move to separate row) */}
-        <div className="perspective-selector">
-          <span className="perspective-label">{t('replay.perspective')}:</span>
-          <div className="perspective-buttons-group">
+        <div className="flex flex-col items-center gap-1.5 w-full border-t border-[#333] pt-2">
+          <span className="text-xs font-bold text-[#aaa] uppercase tracking-[1px]">
+            {t('replay.perspective')}:
+          </span>
+          <div className="flex gap-1.5 flex-wrap justify-center">
             {players.map((p) => {
               const isCurrent = currentUser.id === p.id;
               return (
                 <button
                   key={p.id}
                   type="button"
-                  className={`perspective-btn ${isCurrent ? 'active' : ''}`}
+                  className={`bg-[#1a1a1a] border border-[#444] rounded-[6px] text-[#ccc] py-1 px-2.5 text-[0.8rem] cursor-pointer transition-all duration-200 hover:border-[#ff7a99] hover:text-white ${
+                    isCurrent
+                      ? 'bg-[#ff7a99]/15 border-[#ff7a99] text-[#ff7a99] font-bold'
+                      : ''
+                  }`}
                   onClick={() =>
                     p.seat !== undefined && setReplayPerspective(p.seat)
                   }
@@ -440,6 +469,32 @@ export function ReplayHUD(): React.JSX.Element | null {
         onClose={() => setIsWallOpen(false)}
         room={room}
       />
+      {/* Permanent Hover Tenpai Panel (Fixed Position) */}
+      {showPermanentWaits && permanentAwaitedTiles.length > 0 && (
+        <TenpaiWaitPanel
+          awaitedTiles={permanentAwaitedTiles}
+          minHan={minHan}
+          className="absolute left-1/2 -translate-x-1/2 flex flex-col gap-1.5 bottom-[18vh]"
+          isFuriten={isFuriten}
+        />
+      )}
+
+      {/* 2D Permanent Tenpai/Furiten Badge Overlay (positioned near the hand) */}
+      {(hasPermanentTenpai || isFuriten) && (
+        <div className="absolute bottom-[13vh] left-[calc(50%-24vw)] z-[90] flex flex-col items-center pointer-events-auto">
+          <div
+            className={`min-w-[36px] h-[36px] rounded-[18px] px-2 box-border bg-[#121c32]/85 border-2 flex items-center justify-center text-[1.05rem] font-bold cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.5)] transition-all duration-200 select-none ${
+              isFuriten
+                ? 'border-[#cc3333] text-[#cc3333] hover:scale-110 hover:bg-[#cc3333] hover:text-white hover:shadow-[0_4px_15px_rgba(204,51,51,0.4)]'
+                : 'border-[#ff7a99] text-[#ff7a99] hover:scale-110 hover:bg-[#ff7a99] hover:text-white hover:shadow-[0_4px_15px_rgba(255,122,153,0.4)]'
+            }`}
+            onMouseEnter={() => setShowPermanentWaits(true)}
+            onMouseLeave={() => setShowPermanentWaits(false)}
+          >
+            {isFuriten ? t('hud.furiten') : t('hud.tenpai')}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   UserStatus,
   TileSource,
   DiscardReason,
+  DiscardCandidateMsg,
   FuritenType,
   ScoringType,
   GameStateMsg,
@@ -19,6 +20,7 @@ import {
   ServerPlayerStateMsg,
   PlayerStateMsg,
   PlayerHandStateMsg,
+  PlayerActionMsg,
   WallStateMsg,
   MenLikeMsg,
   BeginGameEventMsg,
@@ -82,6 +84,7 @@ export {
   UserStatus,
   TileSource,
   DiscardReason,
+  DiscardCandidateMsg,
   FuritenType,
   ScoringType,
   GameStateMsg,
@@ -92,6 +95,7 @@ export {
   ServerPlayerStateMsg,
   PlayerStateMsg,
   PlayerHandStateMsg,
+  PlayerActionMsg,
   WallStateMsg,
   MenLikeMsg,
   BeginGameEventMsg,
@@ -198,3 +202,5 @@ export type IGetInfoResponse = GetInfoResponse.$Properties;
 export type IAddAiRequest = AddAiRequest.$Properties;
 export type IScoringMsg = ScoringMsg.$Properties;
 export type IPlayerChatMessage = PlayerChatMessage.$Properties;
+export type IPlayerActionMsg = PlayerActionMsg.$Properties;
+export type IDiscardCandidateMsg = DiscardCandidateMsg.$Properties;

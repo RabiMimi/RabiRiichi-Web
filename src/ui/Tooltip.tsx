@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface HTMLPropsWithEvents {
   onMouseEnter?: (e: React.MouseEvent) => void;
@@ -20,16 +21,23 @@ interface TooltipProps {
   style?: React.CSSProperties;
 }
 
-// Placement offsets (8px away from the trigger), keyed by tooltip position.
-const POSITION_CLASSES: Record<TooltipPosition, string> = {
-  top: 'bottom-full left-1/2 -translate-x-1/2 -translate-y-2',
-  bottom: 'top-full left-1/2 -translate-x-1/2 translate-y-2',
-  left: 'right-full top-1/2 -translate-x-2 -translate-y-1/2',
-  right: 'left-full top-1/2 translate-x-2 -translate-y-1/2',
+// Transforms template generators for setting transform style on bubble.
+const TRANSFORMS: Record<
+  TooltipPosition,
+  (shiftX: number, shiftY: number) => string
+> = {
+  top: (sx, sy) =>
+    `translate(calc(-50% + ${sx}px), calc(-100% + ${sy}px)) translateY(-8px)`,
+  bottom: (sx, sy) =>
+    `translate(calc(-50% + ${sx}px), calc(0% + ${sy}px)) translateY(8px)`,
+  left: (sx, sy) =>
+    `translate(calc(-100% + ${sx}px), calc(-50% + ${sy}px)) translateX(-8px)`,
+  right: (sx, sy) =>
+    `translate(calc(0% + ${sx}px), calc(-50% + ${sy}px)) translateX(8px)`,
 };
 
 const BUBBLE_CLASSES =
-  'absolute z-[1000] px-2.5 py-1.5 rounded border border-[#ff7a99] ' +
+  'absolute z-[9999] px-2.5 py-1.5 rounded border border-[#ff7a99] ' +
   'bg-[#141414]/95 text-white text-[0.72rem] leading-[1.2] ' +
   'font-[inherit] whitespace-nowrap pointer-events-none ' +
   'shadow-[0_4px_12px_rgba(0,0,0,0.5)]';
@@ -43,7 +51,12 @@ export function Tooltip({
 }: TooltipProps): React.JSX.Element {
   const [visible, setVisible] = useState(false);
   const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
+
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(
+    null,
+  );
   const [shiftStyle, setShiftStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
@@ -54,8 +67,44 @@ export function Tooltip({
     };
   }, []);
 
+  // 1. Calculate anchor screen coordinates of the wrapper div
   useLayoutEffect(() => {
-    if (visible && bubbleRef.current) {
+    if (visible && wrapperRef.current) {
+      const wrapperRect = wrapperRef.current.getBoundingClientRect();
+      const sX = window.scrollX;
+      const sY = window.scrollY;
+
+      let calcTop = 0;
+      let calcLeft = 0;
+
+      switch (position) {
+        case 'top':
+          calcTop = wrapperRect.top + sY;
+          calcLeft = wrapperRect.left + sX + wrapperRect.width / 2;
+          break;
+        case 'bottom':
+          calcTop = wrapperRect.bottom + sY;
+          calcLeft = wrapperRect.left + sX + wrapperRect.width / 2;
+          break;
+        case 'left':
+          calcTop = wrapperRect.top + sY + wrapperRect.height / 2;
+          calcLeft = wrapperRect.left + sX;
+          break;
+        case 'right':
+          calcTop = wrapperRect.top + sY + wrapperRect.height / 2;
+          calcLeft = wrapperRect.right + sX;
+          break;
+      }
+      setCoords({ top: calcTop, left: calcLeft });
+    } else {
+      setCoords(null);
+      setShiftStyle({});
+    }
+  }, [visible, position]);
+
+  // 2. Measure bubble to calculate overflow adjustments
+  useLayoutEffect(() => {
+    if (visible && coords && bubbleRef.current) {
       const rect = bubbleRef.current.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
@@ -76,16 +125,11 @@ export function Tooltip({
         shiftY = viewportHeight - margin - rect.bottom;
       }
 
-      if (shiftX !== 0 || shiftY !== 0) {
-        setShiftStyle({
-          marginLeft: shiftX !== 0 ? `${shiftX}px` : undefined,
-          marginTop: shiftY !== 0 ? `${shiftY}px` : undefined,
-        });
-      }
-    } else {
-      setShiftStyle({});
+      setShiftStyle({
+        transform: TRANSFORMS[position](shiftX, shiftY),
+      });
     }
-  }, [visible]);
+  }, [visible, coords, position]);
 
   if (disabled || !content) {
     return children;
@@ -135,17 +179,26 @@ export function Tooltip({
   });
 
   return (
-    <div className="relative inline-flex" style={style}>
+    <div ref={wrapperRef} className="relative inline-flex" style={style}>
       {trigger}
-      {visible && (
-        <div
-          ref={bubbleRef}
-          className={`${BUBBLE_CLASSES} ${POSITION_CLASSES[position]}`}
-          style={shiftStyle}
-        >
-          {content}
-        </div>
-      )}
+      {visible &&
+        coords &&
+        createPortal(
+          <div
+            ref={bubbleRef}
+            className={BUBBLE_CLASSES}
+            style={{
+              position: 'absolute',
+              top: coords.top,
+              left: coords.left,
+              transform: TRANSFORMS[position](0, 0),
+              ...shiftStyle,
+            }}
+          >
+            {content}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

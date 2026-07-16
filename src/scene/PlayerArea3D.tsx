@@ -58,13 +58,17 @@ function PlayerIndicator3D({
         userSelect: 'none',
       }}
     >
-      <div className="player-indicator-3d animate-pop">
+      <div className="group relative cursor-pointer flex items-center justify-center animate-pop">
         {isAi ? (
-          <div className="ai-rabbit-indicator" />
+          <div className="w-6 h-6 rounded-full relative border-[1.5px] border-white shadow-[0_0_8px_rgba(155,81,224,0.7)] bg-[linear-gradient(135deg,#4285f4,#9b51e0,#e91e63,#f2994a)] bg-[length:200%_200%] animate-[gemini-gradient_3s_ease_infinite] before:content-[''] before:absolute before:-top-2 before:w-1.5 before:h-3 before:[background:inherit] before:rounded-t-full before:border-t-[1.5px] before:border-x-[1.5px] before:border-white before:left-[3px] before:rotate-[-15deg] after:content-[''] after:absolute after:-top-2 after:w-1.5 after:h-3 after:[background:inherit] after:rounded-t-full after:border-t-[1.5px] after:border-x-[1.5px] after:border-white after:right-[3px] after:rotate-[15deg]" />
         ) : (
-          <div className="human-avatar-indicator">{initials}</div>
+          <div className="w-6 h-6 rounded-full bg-[#3f51b5] text-white flex items-center justify-center font-sans text-[10px] font-bold shadow-[0_0_6px_rgba(63,81,181,0.6)] border-[1.5px] border-white">
+            {initials}
+          </div>
         )}
-        <div className="tooltip-name">{displayName}</div>
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 -translate-y-1 bg-black/85 text-white py-1 px-2 rounded text-[11px] whitespace-nowrap opacity-0 pointer-events-none transition-all duration-200 shadow-[0_2px_8px_rgba(0,0,0,0.5)] border border-[#444] z-[1000] group-hover:opacity-100 group-hover:-translate-y-2">
+          {displayName}
+        </div>
         <StickerBubble sticker={sticker} className="sticker-bubble-3d" />
       </div>
     </Html>
