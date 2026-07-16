@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTexture, Text as DreiText } from '@react-three/drei';
 import * as THREE from 'three';
 import {
@@ -15,6 +15,7 @@ export function TableCenter(): React.JSX.Element | null {
   const currentUser = useSelf();
   const actionTimeout = useActionTimeout();
   const timerActiveSeat = useTimerActiveSeat();
+  const [isHovered, setIsHovered] = useState(false);
 
   // Load textures
   const bgTexture = useTexture(getTableMidTexturePath('bg'));
@@ -163,6 +164,29 @@ export function TableCenter(): React.JSX.Element | null {
         const isTimerActive = timerActiveSeat === p.seat && actionTimeout > 0;
         const isRiichi = p.gameState ? p.gameState.riichiTileId > 0 : false;
 
+        const selfPlayerObj = room.players.find((sp) => sp.seat === selfSeat);
+        const selfPoints =
+          selfPlayerObj?.gameState?.points ??
+          room.config?.pointThreshold?.initialPoints ??
+          25000;
+
+        let displayText = points.toString();
+        let displayColor = isTimerActive ? '#ff7a99' : '#ffffff';
+
+        if (isHovered && p.seat !== selfSeat) {
+          const diff = points - selfPoints;
+          if (diff > 0) {
+            displayText = `+${diff}`;
+            displayColor = '#00ff66';
+          } else if (diff < 0) {
+            displayText = `${diff}`;
+            displayColor = '#ff3366';
+          } else {
+            displayText = '0';
+            displayColor = '#ffffff';
+          }
+        }
+
         return (
           <group key={p.id} rotation={[0, rotY, 0]}>
             {/* Score Text (centered horizontally, pushed inwards to avoid lines) */}
@@ -170,13 +194,21 @@ export function TableCenter(): React.JSX.Element | null {
               position={[0, 0.004, 0.3]}
               rotation={[-Math.PI / 2, 0, 0]}
               fontSize={0.1}
-              color={isTimerActive ? '#ff7a99' : '#ffffff'}
+              color={displayColor}
               anchorX="center"
               anchorY="middle"
               font={ROBOTO_FONT_PATH}
               renderOrder={2}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                setIsHovered(true);
+              }}
+              onPointerOut={(e) => {
+                e.stopPropagation();
+                setIsHovered(false);
+              }}
             >
-              {points}
+              {displayText}
             </DreiText>
 
             {/* Seat Wind Icon (shifted to the bottom-left corner on the white corner, larger display) */}
