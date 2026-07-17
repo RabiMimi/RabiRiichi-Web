@@ -30,6 +30,10 @@ const CAPSULE_IN_HAND = {
   background: 'rgba(59, 130, 246, 0.12)',
   color: '#93c5fd',
 } as const;
+const CAPSULE_FORMED = {
+  background: 'rgba(16, 185, 129, 0.14)',
+  color: '#6ee7b7',
+} as const;
 
 /**
  * Condenses a tile's drawn/discarded jun into one compact capsule:
@@ -43,7 +47,7 @@ function buildJunCapsule(
   facts: TileInfoFacts,
   t: TFunction,
 ): JunCapsule | null {
-  const { drawnJun, discardJun, isTedashi } = facts;
+  const { drawnJun, discardJun, formJun, isTedashi } = facts;
   const junNum = (jun: number): string => t('tileTooltip.junNum', { jun });
 
   if (discardJun != null) {
@@ -58,6 +62,18 @@ function buildJunCapsule(
         : t('discardReasons.tsumogiri', 'Tsumogiri'),
       value: `${drawnPart}→${junNum(discardJun)}`,
       ...tint,
+    };
+  }
+
+  if (formJun != null) {
+    const drawnPart =
+      drawnJun != null
+        ? junNum(drawnJun)
+        : t('tileTooltip.initialHand', 'Initial hand');
+    return {
+      label: null,
+      value: `${drawnPart}→${junNum(formJun)}`,
+      ...CAPSULE_FORMED,
     };
   }
 

@@ -106,6 +106,19 @@ describe('deriveTileInfo', () => {
     ).toBe(false);
   });
 
+  it('reports when an in-hand tile joined a meld', () => {
+    const facts = deriveTileInfo(
+      tile({
+        drawnJun: 3,
+        formJun: 6,
+        source: TileSource.TILE_SOURCE_PON,
+      }),
+    );
+    expect(facts.drawnJun).toBe(3);
+    expect(facts.formJun).toBe(6);
+    expect(facts.discardJun).toBeNull();
+  });
+
   it('treats a negative discard "from" as no discarder', () => {
     const facts = deriveTileInfo(
       tile({

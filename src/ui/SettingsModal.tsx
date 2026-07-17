@@ -46,6 +46,25 @@ const StopIcon = (): React.JSX.Element => (
   </svg>
 );
 
+interface CreditCapsuleProps {
+  label: string;
+  value: string;
+}
+
+const CreditCapsule = ({
+  label,
+  value,
+}: CreditCapsuleProps): React.JSX.Element => (
+  <div className="inline-flex w-fit max-w-full items-stretch overflow-hidden rounded-full border border-white/15 bg-[#080b14]/90 text-[0.62rem] shadow-[0_2px_8px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:text-xs lg:text-sm">
+    <span className="flex w-9 shrink-0 items-center justify-center border-r border-[#fbbf24]/35 bg-[#fbbf24]/10 px-1 font-extrabold uppercase tracking-wide text-[#fbbf24]">
+      {label}
+    </span>
+    <span className="truncate px-2 py-0.5 font-medium leading-5 text-[#f3f4f6] lg:px-3 lg:py-1">
+      {value}
+    </span>
+  </div>
+);
+
 const VOLUME_SLIDER_CLASS =
   'flex-1 h-1 bg-white/15 rounded-lg outline-none appearance-none cursor-pointer ' +
   '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 ' +
@@ -204,26 +223,18 @@ export function SettingsModal({
                     className="max-w-full max-h-full object-contain"
                   />
                   {(activeCharacter.illustration ?? activeCharacter.cv) && (
-                    <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col gap-1">
+                    <div className="absolute bottom-1.5 left-1.5 right-1.5 flex flex-col gap-1.5">
                       {activeCharacter.illustration && (
-                        <div className="flex items-center bg-[#0a0c12]/85 border border-white/10 rounded-full px-2 py-0.5 lg:px-3 lg:py-1 text-[0.62rem] sm:text-xs lg:text-sm w-fit">
-                          <span className="text-[#fbbf24] font-bold mr-1 border-r border-white/20 pr-1 uppercase">
-                            {t('character.credits.illustration', 'Art')}
-                          </span>
-                          <span className="text-[#f3f4f6] font-medium">
-                            {activeCharacter.illustration}
-                          </span>
-                        </div>
+                        <CreditCapsule
+                          label={t('character.credits.illustration', 'Art')}
+                          value={activeCharacter.illustration}
+                        />
                       )}
                       {activeCharacter.cv && (
-                        <div className="flex items-center bg-[#0a0c12]/85 border border-white/10 rounded-full px-2 py-0.5 lg:px-3 lg:py-1 text-[0.62rem] sm:text-xs lg:text-sm w-fit">
-                          <span className="text-[#fbbf24] font-bold mr-1 border-r border-white/20 pr-1 uppercase">
-                            {t('character.credits.cv', 'CV')}
-                          </span>
-                          <span className="text-[#f3f4f6] font-medium">
-                            {activeCharacter.cv}
-                          </span>
-                        </div>
+                        <CreditCapsule
+                          label={t('character.credits.cv', 'CV')}
+                          value={activeCharacter.cv}
+                        />
                       )}
                     </div>
                   )}

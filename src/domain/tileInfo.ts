@@ -6,16 +6,19 @@ import { TileSource } from '../proto/index.js';
  * authoritative record the server stamps onto every `GameTileMsg`.
  *
  * The server records the turn (`jun`) a tile was drawn (`drawnJun`) and, once
- * discarded, the turn it was discarded (`discardInfo.jun`). We never re-derive
- * these from event timestamps on the client: a timestamp advances on every
- * player's action (draws, calls, kans, ...), so it does not map to a player's
- * own turn count.
+ * discarded, the turn it was discarded (`discardInfo.jun`). It also records the
+ * turn an in-hand tile joined a meld (`formJun`). We never re-derive these from
+ * event timestamps on the client: a timestamp advances on every player's
+ * action (draws, calls, kans, ...), so it does not map to a player's own turn
+ * count.
  */
 export interface TileInfoFacts {
   /** The turn the tile was drawn into a hand, or null if it was never drawn. */
   readonly drawnJun: number | null;
   /** The turn the tile was discarded, or null if it is not (yet) discarded. */
   readonly discardJun: number | null;
+  /** The turn this player's tile joined a meld, or null otherwise. */
+  readonly formJun: number | null;
   /** Seat that discarded the tile, or null if not discarded. */
   readonly discardedFrom: number | null;
   /**
@@ -53,6 +56,7 @@ export function deriveTileInfo(tile: IGameTileMsg): TileInfoFacts {
   const drawnJun = toJun(tile.drawnJun);
   const discardInfo = tile.discardInfo;
   const discardJun = toJun(discardInfo?.jun);
+  const formJun = toJun(tile.formJun);
   const discardedFrom =
     discardInfo?.from != null && discardInfo.from >= 0
       ? discardInfo.from
@@ -67,6 +71,7 @@ export function deriveTileInfo(tile: IGameTileMsg): TileInfoFacts {
   return {
     drawnJun,
     discardJun,
+    formJun,
     discardedFrom,
     isTedashi,
     isClaimed,
