@@ -1,8 +1,28 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 
 interface ChatBubbleProps {
   text: string | null | undefined;
   className?: string; // e.g. "chat-bubble-2d" or "chat-bubble-3d"
+}
+
+/** Keep this much space between the bubble and the viewport edge. */
+const VIEWPORT_MARGIN = 8;
+
+/**
+ * Horizontal offset (px) needed so a bubble centered on its anchor does not
+ * overflow the viewport. Positive nudges right (off the left edge), negative
+ * nudges left (off the right edge). The tail stays on the anchor; only the box
+ * body shifts, so the bubble reads as belonging to that player.
+ */
+function clampShift(rect: DOMRect): number {
+  if (rect.left < VIEWPORT_MARGIN) {
+    return VIEWPORT_MARGIN - rect.left;
+  }
+  const overflowRight = rect.right - (window.innerWidth - VIEWPORT_MARGIN);
+  if (overflowRight > 0) {
+    return -overflowRight;
+  }
+  return 0;
 }
 
 export function ChatBubble({
@@ -15,6 +35,8 @@ export function ChatBubble({
   const [prevText, setPrevText] = useState<string | null | undefined>(
     undefined,
   );
+  const bubbleRef = useRef<HTMLDivElement | null>(null);
+  const [shiftX, setShiftX] = useState(0);
 
   if (prevText !== text) {
     setPrevText(text);
@@ -47,10 +69,54 @@ export function ChatBubble({
     };
   }, [animState, text]);
 
-  if (!displayText) return null;
-
   const is3D = className.includes('chat-bubble-3d');
   const isLocal = className.includes('local');
+  // Only the non-local 3D bubble is centered on a fixed avatar position and can
+  // run off a screen edge (e.g. the left player). Clamp just that one.
+  const clampToViewport = is3D && !isLocal;
+
+  // Measure the bubble's natural (unshifted) position and nudge it back inside
+  // the viewport if it would overflow an edge (e.g. the left player's bubble
+  // running off the left of the screen). Only the non-local 3D bubble, which is
+  // centered on a fixed avatar position, needs this.
+  const measure = useCallback(() => {
+    const el = bubbleRef.current;
+    if (!el || !clampToViewport) {
+      setShiftX(0);
+      return;
+    }
+    // Neutralize any prior shift before measuring the natural position.
+    const prev = el.style.marginLeft;
+    el.style.marginLeft = '0px';
+    const shift = clampShift(el.getBoundingClientRect());
+    el.style.marginLeft = prev;
+    setShiftX(shift);
+  }, [clampToViewport]);
+
+  // Callback ref: measure on mount and whenever the bubble resizes (text wraps,
+  // font loads). This runs at commit time, so setState here does not trigger the
+  // effect-cascade the lint rule guards against.
+  const observerRef = useRef<ResizeObserver | null>(null);
+  const setBubbleRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      bubbleRef.current = el;
+      observerRef.current?.disconnect();
+      if (!el) return;
+      observerRef.current = new ResizeObserver(measure);
+      observerRef.current.observe(el);
+      measure();
+    },
+    [measure],
+  );
+
+  // Keep the bubble clamped when the viewport itself changes size.
+  useEffect(() => {
+    if (!clampToViewport) return;
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [measure, clampToViewport]);
+
+  if (!displayText) return null;
 
   const positionClass = is3D
     ? isLocal
@@ -83,7 +149,9 @@ export function ChatBubble({
 
   return (
     <div
+      ref={setBubbleRef}
       className={`${positionClass} ${baseBubbleClass} ${tailClass} ${animClass}`}
+      style={shiftX !== 0 ? { marginLeft: `${shiftX}px` } : undefined}
     >
       {displayText}
     </div>

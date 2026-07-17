@@ -19,7 +19,9 @@ function ChatIcon({ className = 'w-4 h-4' }: { className?: string }) {
 export function ChatInputBox(): React.JSX.Element | null {
   const { t } = useTranslation();
   const [text, setText] = useState('');
-  const [isOpen, setIsOpen] = useState(true);
+  // Collapsed by default so chat stays out of the way; opens on the icon and
+  // auto-collapses again after a message is sent.
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +29,7 @@ export function ChatInputBox(): React.JSX.Element | null {
     if (!trimmed || !rabiriichi.ws) return;
     sendChatMessage(rabiriichi.ws, trimmed, null);
     setText('');
+    setIsOpen(false);
   };
 
   return (
