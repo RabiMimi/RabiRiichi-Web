@@ -365,7 +365,7 @@
     },
     "llm": {
       "gemini": "Gemi狸",
-      "openai": "AI",
+      "openai": "OpenAI",
       "generic": "LLM"
     },
     "provider": {

@@ -34,10 +34,6 @@ function PlayerIndicator3D({
 }: PlayerIndicator3DProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const isAi = player.aiType !== AiType.AI_TYPE_NONE;
-  const isGeminiAi =
-    player.aiType === AiType.AI_TYPE_LLM &&
-    (player.nickname.startsWith('@llm:gemini') ||
-      player.nickname.toLowerCase().includes('gemini'));
   const displayName = getPlayerDisplayName(player, t);
   const initials = isAi ? 'AI' : displayName.slice(0, 2).toUpperCase();
   const activeStickers = useActiveStickers();
@@ -83,12 +79,8 @@ function PlayerIndicator3D({
         onPointerUp={showNameBind.onPointerUp}
         onPointerCancel={showNameBind.onPointerCancel}
       >
-        {isGeminiAi ? (
+        {isAi ? (
           <div className="w-6 h-6 rounded-full relative border-[1.5px] border-white shadow-[0_0_8px_rgba(155,81,224,0.7)] bg-[linear-gradient(135deg,#4285f4,#9b51e0,#e91e63,#f2994a)] bg-[length:200%_200%] animate-[gemini-gradient_3s_ease_infinite] before:content-[''] before:absolute before:-top-2 before:w-1.5 before:h-3 before:[background:inherit] before:rounded-t-full before:border-t-[1.5px] before:border-x-[1.5px] before:border-white before:left-[3px] before:rotate-[-15deg] after:content-[''] after:absolute after:-top-2 after:w-1.5 after:h-3 after:[background:inherit] after:rounded-t-full after:border-t-[1.5px] after:border-x-[1.5px] after:border-white after:right-[3px] after:rotate-[15deg]" />
-        ) : isAi ? (
-          <div className="w-6 h-6 rounded-full bg-[#7e57c2] text-white flex items-center justify-center font-sans text-[10px] font-bold shadow-[0_0_6px_rgba(126,87,194,0.6)] border-[1.5px] border-white">
-            AI
-          </div>
         ) : (
           <div className="w-6 h-6 rounded-full bg-[#3f51b5] text-white flex items-center justify-center font-sans text-[10px] font-bold shadow-[0_0_6px_rgba(63,81,181,0.6)] border-[1.5px] border-white">
             {initials}
