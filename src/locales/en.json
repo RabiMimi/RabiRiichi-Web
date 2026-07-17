@@ -360,8 +360,45 @@
     "type": {
       "AI_TYPE_NONE": "",
       "AI_TYPE_DUMMY": "Drooling Rabbit",
-      "AI_TYPE_RULE_BASED": "Nodocchi"
+      "AI_TYPE_RULE_BASED": "Nodocchi",
+      "AI_TYPE_LLM": "LLM"
+    },
+    "llm": {
+      "gemini": "Gemibo",
+      "openai": "OpenAI",
+      "generic": "LLM"
+    },
+    "provider": {
+      "openai": "OpenAI",
+      "gemini": "Gemini"
+    },
+    "llmConfig": {
+      "title": "Add LLM AI",
+      "provider": "Provider",
+      "model": "Model",
+      "apiToken": "API Token",
+      "apiTokenPlaceholder": "Enter API Key / Token",
+      "showToken": "Show",
+      "hideToken": "Hide",
+      "language": "Response Language",
+      "langZhs": "Simplified Chinese (zhs)",
+      "langEn": "English (en)",
+      "langJa": "Japanese (ja)",
+      "displayName": "Display Name (optional)",
+      "baseUrl": "Base URL (optional)",
+      "lessOptions": "▲ Less options",
+      "advancedOptions": "▼ Advanced options (Base URL)",
+      "forgetTokens": "Forget saved tokens",
+      "cancel": "Cancel",
+      "add": "Add AI",
+      "connecting": "Connecting..."
     }
+  },
+  "chat": {
+    "placeholder": "Send chat message...",
+    "send": "Send",
+    "open": "Open chat",
+    "close": "Close chat"
   },
   "orientation": {
     "rotatePrompt": "Please rotate your device to landscape to play!"
@@ -380,7 +417,21 @@
       "honbaPoints": "Honba points must be between 0 and 1,000,000.",
       "ryuukyokuPoints": "Ryuukyoku points must contain 2 values, each between 0 and 1,000,000.",
       "pointsRange": "Points limit must be between 0 and 1,000,000.",
-      "generic": "Invalid game configuration."
+      "generic": "Invalid game configuration.",
+      "llm": {
+        "auth": "Invalid API key or insufficient permission.",
+        "model": "Unable to send request to model.",
+        "timeout": "The LLM provider timed out. Try again.",
+        "rate_limit": "The LLM provider is rate-limiting requests.",
+        "unreachable": "Could not reach the LLM provider.",
+        "config": {
+          "token": "An API token is required.",
+          "model": "A model name is required.",
+          "provider": "Please choose a provider.",
+          "url": "The base URL is not a valid http(s) URL.",
+          "missing": "LLM configuration is missing."
+        }
+      }
     },
     "server": {
       "InvalidArgument": {
@@ -450,8 +501,8 @@
   },
   "tileTooltip": {
     "drawnLabel": "Drawn",
-    "initialHand": "Initial hand",
-    "claimedFrom": "Claimed From",
+    "initialHand": "Initial",
+    "claimedFrom": "From",
     "junNum": "Jun {{jun}}"
   },
   "discardReasons": {

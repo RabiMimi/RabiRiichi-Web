@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
-import { useRoom, useSelf, useActiveStickers } from '../state/store';
-import { UserStatus, AiType } from '../proto';
+import {
+  useRoom,
+  useSelf,
+  useActiveStickers,
+  useActiveChatTexts,
+} from '../state/store';
+import { UserStatus, AiType, type ILlmAiConfig } from '../proto';
 import { pollUntil } from '../lib';
+import { formatError } from '../lib/errors';
 import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
 import { AddAiDropdown } from './AddAiDropdown';
 import { StickerBubble } from './StickerBubble';
+import { ChatBubble } from './ChatBubble';
 import { Tooltip } from './Tooltip';
 import { Button } from './Button';
 import { SCREEN, FORM } from './styles';
@@ -16,6 +23,7 @@ export function RoomScreen(): React.JSX.Element | null {
   const room = useRoom();
   const currentUser = useSelf();
   const activeStickers = useActiveStickers();
+  const activeChatTexts = useActiveChatTexts();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,13 +50,16 @@ export function RoomScreen(): React.JSX.Element | null {
   });
   const firstEmptySeatIndex = seats.findIndex((p) => p === undefined);
 
-  const handleAddAi = async (aiType: AiType) => {
+  const handleAddAi = async (aiType: AiType, llmConfig?: ILlmAiConfig) => {
     setError(null);
     setIsLoading(true);
     try {
-      await rabiriichi.addAi(aiType);
+      await rabiriichi.addAi(aiType, llmConfig);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add AI');
+      if (aiType === AiType.AI_TYPE_LLM) {
+        throw err;
+      }
+      setError(formatError(err, t));
     } finally {
       setIsLoading(false);
     }
@@ -152,11 +163,15 @@ export function RoomScreen(): React.JSX.Element | null {
                       : 'border-[#444]'
                   } rounded-lg p-3 gap-3 transition-colors duration-200`}
                 >
-                  <div className="relative shrink-0">
+                  <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
                     {renderAvatar(player)}
                     <StickerBubble
                       sticker={activeStickers[player.id]}
                       className="sticker-bubble-2d"
+                    />
+                    <ChatBubble
+                      text={activeChatTexts[player.id]}
+                      className="chat-bubble-2d"
                     />
                   </div>
                   <div className="flex-grow">
@@ -222,7 +237,9 @@ export function RoomScreen(): React.JSX.Element | null {
                   {isOwner && index === firstEmptySeatIndex && (
                     <AddAiDropdown
                       disabled={isLoading}
-                      onSelect={(aiType) => void handleAddAi(aiType)}
+                      onSelect={(aiType, llmConfig) =>
+                        handleAddAi(aiType, llmConfig)
+                      }
                     />
                   )}
                 </div>

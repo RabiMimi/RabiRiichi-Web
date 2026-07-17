@@ -25,6 +25,7 @@ import type {
   IGameConfigMsg,
   IGameLogMsg,
   IPlayerChatMessage,
+  ILlmAiConfig,
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
 import { applyRiichiBonusToWaits } from '../domain/model';
@@ -129,6 +130,8 @@ export class RabiRiichiClient {
   public availableYakus: YakuInfo[] = YAKUS;
   public activeStickers: Record<string, string> = {};
   private stickerTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  public activeChatTexts: Record<number, string> = {};
+  private chatTextTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
   public isRiichiSelectMode = false;
   public pendingActionOption: ActionOption | null = null;
@@ -325,11 +328,42 @@ export class RabiRiichiClient {
     this.stickerTimers.set(senderId, timer);
   }
 
+  public showChatTextLocally(senderId: number, text: string): void {
+    const prevTimer = this.chatTextTimers.get(senderId);
+    if (prevTimer) {
+      clearTimeout(prevTimer);
+    }
+
+    const trimmed = text.trim().slice(0, 300);
+    if (!trimmed) return;
+
+    this.activeChatTexts = {
+      ...this.activeChatTexts,
+      [senderId]: trimmed,
+    };
+    this.onChange.emit();
+
+    const timer = setTimeout(() => {
+      const next = { ...this.activeChatTexts };
+      delete next[senderId];
+      this.activeChatTexts = next;
+      this.chatTextTimers.delete(senderId);
+      this.onChange.emit();
+    }, 6000);
+
+    this.chatTextTimers.set(senderId, timer);
+  }
+
   private handleChatMessage(msg: IPlayerChatMessage): void {
-    if (msg.senderId === null || msg.senderId === undefined || !msg.sticker) {
+    if (msg.senderId === null || msg.senderId === undefined) {
       return;
     }
-    this.showStickerLocally(msg.senderId, msg.sticker);
+    if (msg.sticker) {
+      this.showStickerLocally(msg.senderId, msg.sticker);
+    }
+    if (msg.text) {
+      this.showChatTextLocally(msg.senderId, msg.text);
+    }
   }
 
   public get ws(): RabiSocket | null {
@@ -896,10 +930,10 @@ export class RabiRiichiClient {
     }
   }
 
-  public async addAi(type: AiType): Promise<void> {
+  public async addAi(type: AiType, llmConfig?: ILlmAiConfig): Promise<void> {
     this.logger.info(`Adding AI to room: ${type}`);
     const client = await this.getWSClient(true);
-    const resp = await addAi(client, type);
+    const resp = await addAi(client, type, llmConfig);
     if (resp.state) {
       this.handleRoomState(resp.state);
     }

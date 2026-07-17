@@ -24,6 +24,7 @@ import { ResultPanel } from './ui/ResultPanel';
 import { OrientationGuard } from './ui/OrientationGuard';
 import { FullscreenButton } from './ui/FullscreenButton';
 import { StickerPanel } from './ui/StickerPanel';
+import { ChatInputBox } from './ui/ChatInputBox';
 import { Tooltip } from './ui/Tooltip';
 import { IconButton } from './ui/IconButton';
 import { SettingsButton } from './ui/SettingsButton';
@@ -282,7 +283,12 @@ function App(): React.JSX.Element {
           </div>
         </>
       )}
-      {room && <StickerPanel />}
+      {room && (
+        <>
+          <StickerPanel />
+          <ChatInputBox />
+        </>
+      )}
       {isSettingsOpen && (
         <SettingsModal onClose={() => setSettingsOpen(false)} />
       )}

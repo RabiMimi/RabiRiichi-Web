@@ -93,6 +93,7 @@ describe('RabiRiichi Store', () => {
       autoDiscard: false,
       autoNuki: false,
       activeStickers: {},
+      activeChatTexts: {},
       characterId: 'mimi',
       volumeSE: 1.0,
       volumeBGM: 1.0,

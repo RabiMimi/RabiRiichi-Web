@@ -4,6 +4,7 @@ import {
   prevPlayerSeat,
   getPlayerBySeat,
   getPlayerById,
+  getPlayerDisplayName,
   getWindKey,
   isTsumoTile,
   shouldRevealHand,
@@ -295,5 +296,70 @@ describe('deadWallRinshanCount', () => {
         initialTiles: [NORTH, NORTH, NORTH, NORTH, 17, 18],
       }),
     ).toBe(NUM_RINSHAN + 4);
+  });
+});
+
+describe('getPlayerDisplayName', () => {
+  const mockTranslate = (key: string) => {
+    const translations: Record<string, string> = {
+      'ai.type.AI_TYPE_DUMMY': 'Drooling Rabbit',
+      'ai.type.AI_TYPE_RULE_BASED': 'Nodocchi',
+      'ai.llm.gemini': 'Gemi狸',
+      'ai.llm.openai': 'AI',
+      'ai.llm.generic': 'LLM',
+    };
+    return translations[key] ?? key;
+  };
+
+  it('localizes LLM sentinel nicknames', () => {
+    const geminiPlayer: PlayerModel = {
+      id: 1,
+      nickname: '@llm:gemini',
+      status: UserStatus.USER_STATUS_PLAYING,
+      seat: 0,
+      gameState: null,
+      aiType: AiType.AI_TYPE_LLM,
+    };
+    expect(getPlayerDisplayName(geminiPlayer, mockTranslate)).toBe('Gemi狸');
+
+    const openaiPlayer: PlayerModel = {
+      ...geminiPlayer,
+      nickname: '@llm:openai',
+    };
+    expect(getPlayerDisplayName(openaiPlayer, mockTranslate)).toBe('AI');
+
+    const unknownPlayer: PlayerModel = {
+      ...geminiPlayer,
+      nickname: '@llm:unknown_provider',
+    };
+    expect(getPlayerDisplayName(unknownPlayer, mockTranslate)).toBe('LLM');
+  });
+
+  it('returns custom display name verbatim for LLM AI', () => {
+    const customPlayer: PlayerModel = {
+      id: 1,
+      nickname: 'Custom Gemini Bot',
+      status: UserStatus.USER_STATUS_PLAYING,
+      seat: 0,
+      gameState: null,
+      aiType: AiType.AI_TYPE_LLM,
+    };
+    expect(getPlayerDisplayName(customPlayer, mockTranslate)).toBe(
+      'Custom Gemini Bot',
+    );
+  });
+
+  it('localizes built-in AI enum types when nickname matches enum name', () => {
+    const dummyPlayer: PlayerModel = {
+      id: 1,
+      nickname: 'DUMMY',
+      status: UserStatus.USER_STATUS_PLAYING,
+      seat: 0,
+      gameState: null,
+      aiType: AiType.AI_TYPE_DUMMY,
+    };
+    expect(getPlayerDisplayName(dummyPlayer, mockTranslate)).toBe(
+      'Drooling Rabbit',
+    );
   });
 });

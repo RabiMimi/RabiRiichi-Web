@@ -360,8 +360,45 @@
     "type": {
       "AI_TYPE_NONE": "",
       "AI_TYPE_DUMMY": "よだれうさぎ",
-      "AI_TYPE_RULE_BASED": "のどっち"
+      "AI_TYPE_RULE_BASED": "のどっち",
+      "AI_TYPE_LLM": "LLM"
+    },
+    "llm": {
+      "gemini": "Gemiヌ",
+      "openai": "OpenAI",
+      "generic": "LLM"
+    },
+    "provider": {
+      "openai": "OpenAI",
+      "gemini": "Gemini"
+    },
+    "llmConfig": {
+      "title": "LLM AI を追加",
+      "provider": "プロバイダー",
+      "model": "モデル",
+      "apiToken": "API トークン",
+      "apiTokenPlaceholder": "APIキー / トークンを入力",
+      "showToken": "表示",
+      "hideToken": "非表示",
+      "language": "応答言語",
+      "langZhs": "簡体字中国語 (zhs)",
+      "langEn": "英語 (en)",
+      "langJa": "日本語 (ja)",
+      "displayName": "表示名（任意）",
+      "baseUrl": "Base URL（任意）",
+      "lessOptions": "▲ 詳細設定を閉じる",
+      "advancedOptions": "▼ 詳細設定 (Base URL)",
+      "forgetTokens": "保存されたトークンを削除",
+      "cancel": "キャンセル",
+      "add": "AI を追加",
+      "connecting": "接続中..."
     }
+  },
+  "chat": {
+    "placeholder": "チャットメッセージを送信...",
+    "send": "送信",
+    "open": "チャットを開く",
+    "close": "チャットを閉じる"
   },
   "orientation": {
     "rotatePrompt": "プレイするには画面を横向きにしてください！"
@@ -380,7 +417,21 @@
       "honbaPoints": "本場棒点数は0〜1,000,000でなければなりません。",
       "ryuukyokuPoints": "罰符の設定は2つの値が必要で、それぞれ0〜1,000,000でなければなりません。",
       "pointsRange": "点数制限は0〜1,000,000でなければなりません。",
-      "generic": "無効なゲーム設定です。"
+      "generic": "無効なゲーム設定です。",
+      "llm": {
+        "auth": "APIキーが無効か権限が不足しています。",
+        "model": "指定されたモデルにリクエストを送信できません。",
+        "timeout": "LLMプロバイダーがタイムアウトしました。再試行してください。",
+        "rate_limit": "LLMプロバイダーのレート制限に達しました。",
+        "unreachable": "LLMプロバイダーに接続できません。",
+        "config": {
+          "token": "APIトークンが必要です。",
+          "model": "モデル名が必要です。",
+          "provider": "プロバイダーを選択してください。",
+          "url": "Base URL が有効な http(s) URL ではありません。",
+          "missing": "LLM設定が見つかりません。"
+        }
+      }
     },
     "server": {
       "InvalidArgument": {

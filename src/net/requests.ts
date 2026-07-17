@@ -7,6 +7,7 @@ import type {
   IGameConfigMsg,
   IGetInfoResponse,
   AiType,
+  ILlmAiConfig,
   IGameLogMsg,
 } from '../proto';
 import { RabiError, ServerError } from '../lib';
@@ -109,6 +110,7 @@ export function getInfo(ws: RabiSocket): Promise<IGetInfoResponse> {
 export function addAi(
   ws: RabiSocket,
   type: AiType,
+  llmConfig?: ILlmAiConfig,
 ): Promise<IServerRoomStateResponse> {
   return throwIfRespondError(
     ws,
@@ -116,6 +118,7 @@ export function addAi(
       clientRequest: {
         addAi: {
           type,
+          llmConfig: llmConfig ?? null,
         },
       },
     },

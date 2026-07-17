@@ -1,12 +1,13 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { AiType } from '../proto';
+import { AiType, type ILlmAiConfig } from '../proto';
 import { Button } from './Button';
+import { LlmConfigDialog } from './LlmConfigDialog';
 
 interface AddAiDropdownProps {
   disabled: boolean;
-  onSelect: (aiType: AiType) => void;
+  onSelect: (aiType: AiType, llmConfig?: ILlmAiConfig) => Promise<void> | void;
 }
 
 interface MenuPosition {
@@ -22,7 +23,11 @@ const MENU_GAP = 4;
 const MENU_MAX_WIDTH = 220;
 const VIEWPORT_MARGIN = 8;
 
-const AI_OPTIONS: AiType[] = [AiType.AI_TYPE_DUMMY, AiType.AI_TYPE_RULE_BASED];
+const AI_OPTIONS: AiType[] = [
+  AiType.AI_TYPE_DUMMY,
+  AiType.AI_TYPE_RULE_BASED,
+  AiType.AI_TYPE_LLM,
+];
 
 /**
  * "Add AI" button whose option menu is rendered in a portal with fixed
@@ -76,9 +81,15 @@ export function AddAiDropdown({
     };
   }, [isOpen, updatePosition]);
 
+  const [isLlmDialogOpen, setIsLlmDialogOpen] = useState(false);
+
   const handleSelect = (aiType: AiType) => {
     setIsOpen(false);
-    onSelect(aiType);
+    if (aiType === AiType.AI_TYPE_LLM) {
+      setIsLlmDialogOpen(true);
+    } else {
+      void onSelect(aiType);
+    }
   };
 
   return (
@@ -123,6 +134,14 @@ export function AddAiDropdown({
           </>,
           document.body,
         )}
+      {isLlmDialogOpen && (
+        <LlmConfigDialog
+          onClose={() => setIsLlmDialogOpen(false)}
+          onSubmit={async (config) => {
+            await onSelect(AiType.AI_TYPE_LLM, config);
+          }}
+        />
+      )}
     </div>
   );
 }

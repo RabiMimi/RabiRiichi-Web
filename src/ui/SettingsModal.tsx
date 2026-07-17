@@ -56,7 +56,7 @@ const CreditCapsule = ({
   value,
 }: CreditCapsuleProps): React.JSX.Element => (
   <div className="inline-flex w-fit max-w-full items-stretch overflow-hidden rounded-full border border-white/15 bg-[#080b14]/90 text-[0.62rem] shadow-[0_2px_8px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:text-xs lg:text-sm">
-    <span className="flex w-9 shrink-0 items-center justify-center border-r border-[#fbbf24]/35 bg-[#fbbf24]/10 px-1 font-extrabold uppercase tracking-wide text-[#fbbf24]">
+    <span className="flex w-12 shrink-0 items-center justify-center border-r border-[#fbbf24]/35 bg-[#fbbf24]/10 px-1 font-extrabold uppercase tracking-wide text-[#fbbf24]">
       {label}
     </span>
     <span className="truncate px-2 py-0.5 font-medium leading-5 text-[#f3f4f6] lg:px-3 lg:py-1">

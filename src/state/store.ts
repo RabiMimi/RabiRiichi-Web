@@ -33,6 +33,7 @@ export interface RabiRiichiState {
   autoDiscard: boolean;
   autoNuki: boolean;
   activeStickers: Record<string, string>;
+  activeChatTexts: Record<number, string>;
   characterId: string;
   volumeSE: number;
   volumeBGM: number;
@@ -78,6 +79,7 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.autoDiscard !== rabiriichi.autoDiscard ||
     lastSnapshot.autoNuki !== rabiriichi.autoNuki ||
     lastSnapshot.activeStickers !== rabiriichi.activeStickers ||
+    lastSnapshot.activeChatTexts !== rabiriichi.activeChatTexts ||
     lastSnapshot.characterId !== rabiriichi.visuals.characterId ||
     lastSnapshot.volumeSE !== rabiriichi.sounds.volumeSE ||
     lastSnapshot.volumeBGM !== rabiriichi.sounds.volumeBGM ||
@@ -114,6 +116,7 @@ function getSnapshot(): RabiRiichiState {
       autoDiscard: rabiriichi.autoDiscard,
       autoNuki: rabiriichi.autoNuki,
       activeStickers: rabiriichi.activeStickers,
+      activeChatTexts: rabiriichi.activeChatTexts,
       characterId: rabiriichi.visuals.characterId,
       volumeSE: rabiriichi.sounds.volumeSE,
       volumeBGM: rabiriichi.sounds.volumeBGM,
@@ -317,6 +320,14 @@ export function useActiveStickers(): Record<string, string> {
     subscribe,
     () => rabiriichi.activeStickers,
     () => rabiriichi.activeStickers,
+  );
+}
+
+export function useActiveChatTexts(): Record<number, string> {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.activeChatTexts,
+    () => rabiriichi.activeChatTexts,
   );
 }
 

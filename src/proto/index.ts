@@ -70,6 +70,8 @@ import {
   PointsDeductionPolicy,
   AiType,
   AddAiRequest,
+  LlmAiConfig,
+  LlmProvider,
   PlayerChatMessage,
 } from '../generated/protos.js';
 
@@ -145,6 +147,8 @@ export {
   PointsDeductionPolicy,
   AiType,
   AddAiRequest,
+  LlmAiConfig,
+  LlmProvider,
   PlayerChatMessage,
 };
 
@@ -200,6 +204,7 @@ export type IServerRoomStateResponse = ServerRoomStateResponse.$Properties;
 export type ICreateRoomRequest = CreateRoomRequest.$Properties;
 export type IGetInfoResponse = GetInfoResponse.$Properties;
 export type IAddAiRequest = AddAiRequest.$Properties;
+export type ILlmAiConfig = LlmAiConfig.$Properties;
 export type IScoringMsg = ScoringMsg.$Properties;
 export type IPlayerChatMessage = PlayerChatMessage.$Properties;
 export type IPlayerActionMsg = PlayerActionMsg.$Properties;

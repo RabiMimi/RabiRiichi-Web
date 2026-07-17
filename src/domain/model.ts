@@ -228,10 +228,21 @@ export function getWindKey(round: number): string {
   return winds[index] ?? 'east';
 }
 
+const LLM_SENTINEL = '@llm:';
+
 export function getPlayerDisplayName(
   player: PlayerModel,
   t: (key: string) => string,
 ): string {
+  if (
+    player.aiType === AiType.AI_TYPE_LLM &&
+    player.nickname.startsWith(LLM_SENTINEL)
+  ) {
+    const providerTag = player.nickname.slice(LLM_SENTINEL.length);
+    const key = `ai.llm.${providerTag}`;
+    const localized = t(key);
+    return localized && localized !== key ? localized : t('ai.llm.generic');
+  }
   if (player.aiType !== AiType.AI_TYPE_NONE) {
     const enumKey = AiType[player.aiType];
     if (enumKey) {
