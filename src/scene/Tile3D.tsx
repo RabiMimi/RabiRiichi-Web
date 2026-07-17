@@ -43,6 +43,8 @@ import {
   TILE_LIFT_HOVERED,
 } from '../domain/constants';
 import { Logger } from '../lib/logger';
+import { soundManager } from '../lib/sound';
+import { SOUND_EFFECTS } from '../lib/soundEffects';
 
 const logger = new Logger('Tile3D');
 
@@ -622,6 +624,9 @@ export function Tile3D({
       onPointerOver={(e: ThreeEvent<PointerEvent>) => {
         if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
+          if (isInteractive && !isHovered) {
+            soundManager.playEffect(SOUND_EFFECTS.tile.hover);
+          }
           setIsHovered(true);
           if (traceId !== undefined) {
             rabiriichi.hoverTile(traceId);

@@ -271,6 +271,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
     if (isExiting) return;
 
     setIsExiting(true);
+    rabiriichi.beginExitGame();
     try {
       await rabiriichi.updateRoom(UserStatus.USER_STATUS_NONE);
 
@@ -286,6 +287,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
         throw new Error('Failed to exit game (timeout)');
       }
     } catch (err) {
+      rabiriichi.cancelExitGame();
       console.error('Failed to exit game:', err);
       alert(
         t('room.leave') +

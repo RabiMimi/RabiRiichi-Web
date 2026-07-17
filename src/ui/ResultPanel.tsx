@@ -21,6 +21,7 @@ import { type ActionOption } from '../domain/inquiry';
 import type { IGameTileMsg } from '../proto';
 import { FinalResultPanel } from './FinalResultPanel';
 import { soundManager } from '../lib/sound';
+import { SOUND_EFFECTS } from '../lib/soundEffects';
 import { UiTile } from './UiTile';
 
 import { Logger } from '../lib/logger';
@@ -291,6 +292,7 @@ export function ResultPanel(): React.JSX.Element | null {
             ...prev,
             [pIdx]: true,
           }));
+          soundManager.playEffect(SOUND_EFFECTS.result.hanReveal);
         }
 
         // Pause slightly before moving to the next winner

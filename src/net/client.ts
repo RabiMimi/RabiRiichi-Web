@@ -56,6 +56,8 @@ import {
   updateRoom as sendUpdateRoom,
   respondInquiry as sendRespondInquiry,
 } from './messages';
+import { soundManager } from '../lib/sound';
+import { SOUND_EFFECTS } from '../lib/soundEffects';
 
 const TOKEN_STORE_KEY = 'rabiriichi_token';
 
@@ -199,6 +201,9 @@ export class RabiRiichiClient {
   private actionTimerId: ReturnType<typeof setInterval> | null = null;
   public resultAnimation: 'agari' | 'ryuukyoku' | null = null;
   private resultAnimationTimerId: ReturnType<typeof setTimeout> | null = null;
+  private isDealingHand = false;
+  private hasPlayedActionSequenceSound = false;
+  private hasExitedGame = false;
 
   public updateClientSettings(patch: Partial<ClientSettings>): void {
     if (patch.animationSpeed !== undefined) {
@@ -206,6 +211,7 @@ export class RabiRiichiClient {
     }
     this.visuals.update(patch);
     this.sounds.update(patch);
+    soundManager.updateAllVolumes();
 
     this.onChange.emit();
 
@@ -293,6 +299,7 @@ export class RabiRiichiClient {
         );
       }
     }
+    soundManager.setVolumeProvider(() => this.sounds);
   }
 
   public showStickerLocally(senderId: number, sticker: string): void {
@@ -503,6 +510,11 @@ export class RabiRiichiClient {
 
   private handleRoomState(roomState: IServerRoomStateMsg): void {
     this.room = applyRoomState(this.room, roomState);
+    if (!this.room?.info) {
+      this.clearTimer();
+      soundManager.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
+      this.hasPlayedActionSequenceSound = false;
+    }
     this.logger.info(`Room state updated: ${this.room?.id}`);
     this.onChange.emit();
   }
@@ -515,12 +527,20 @@ export class RabiRiichiClient {
       this.logger.warn('Received game event but not in a room');
       return;
     }
+    if (this.hasExitedGame && !gameEvent.beginGameEvent) {
+      this.logger.info('Ignoring game event after leaving the game.');
+      return;
+    }
     if (gameEvent.beginGameEvent) {
+      this.hasExitedGame = false;
       this.autoAgari = false;
       this.noCalls = false;
       this.autoDiscard = false;
       this.autoNuki = false;
+      this.isDealingHand = true;
+      this.hasPlayedActionSequenceSound = false;
     }
+    this.playDealSoundIfNeeded(gameEvent);
     this.room = applyEvent(this.room, gameEvent);
     this.logger.info(
       `Game event applied. Current player: ${this.room.info?.currentPlayer}`,
@@ -534,17 +554,21 @@ export class RabiRiichiClient {
       this.hoveredTileTraceId = null;
     }
 
+    this.playGameEventSound(gameEvent);
+
     const configTimeout =
       this.room.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
     const visualTimeout = configTimeout;
 
     if (gameEvent.drawTileEvent) {
+      this.hasPlayedActionSequenceSound = false;
       this.startTimer(
         gameEvent.drawTileEvent.playerId ?? 0,
         visualTimeout,
         false,
       );
     } else if (gameEvent.dealerFirstTurnEvent) {
+      this.hasPlayedActionSequenceSound = false;
       this.startTimer(this.room.info?.dealer ?? 0, visualTimeout, false);
     } else if (gameEvent.claimTileEvent) {
       this.startTimer(
@@ -553,6 +577,7 @@ export class RabiRiichiClient {
         false,
       );
     } else if (gameEvent.discardTileEvent) {
+      this.hasPlayedActionSequenceSound = false;
       this.clearTimer();
     } else if (gameEvent.endInquiryEvent) {
       const playerId = gameEvent.endInquiryEvent.playerId;
@@ -592,6 +617,25 @@ export class RabiRiichiClient {
         setTimeout(resolve, delay / speed);
       });
     }
+  }
+
+  private playGameEventSound(gameEvent: IEventMsg): void {
+    if (gameEvent.discardTileEvent) {
+      soundManager.playEffect(SOUND_EFFECTS.tile.discard);
+    } else if (gameEvent.agariEvent) {
+      soundManager.playEffect(SOUND_EFFECTS.game.agari);
+    } else if (gameEvent.revealDoraEvent) {
+      soundManager.playEffect(SOUND_EFFECTS.game.doraReveal);
+    } else if (gameEvent.setRiichiEvent) {
+      soundManager.playEffect(SOUND_EFFECTS.game.riichi);
+    }
+  }
+
+  private playDealSoundIfNeeded(gameEvent: IEventMsg): void {
+    if (!gameEvent.dealHandEvent || !this.isDealingHand) return;
+
+    this.isDealingHand = false;
+    soundManager.playEffect(SOUND_EFFECTS.game.deal);
   }
 
   private getEventDelay(eventMsg: IEventMsg): number {
@@ -638,6 +682,10 @@ export class RabiRiichiClient {
     inquiry: ISinglePlayerInquiryMsg,
     respondTo: number,
   ): void {
+    if (this.hasExitedGame) {
+      this.logger.info('Ignoring inquiry after leaving the game.');
+      return;
+    }
     this.isRiichiSelectMode = false;
     this.pendingActionOption = null;
     this.currentInquiry = {
@@ -655,6 +703,22 @@ export class RabiRiichiClient {
       original: inquiry,
     };
     this.logger.info(`Received inquiry ${respondTo}`);
+    const isTurnInquiry = this.currentInquiry.mapped.playTile != null;
+    const hasCallAction = this.currentInquiry.mapped.buttons.some(
+      (button) =>
+        button.type === 'chii' ||
+        button.type === 'pon' ||
+        button.type === 'kan',
+    );
+    if (!this.hasPlayedActionSequenceSound) {
+      if (hasCallAction) {
+        soundManager.playEffect(SOUND_EFFECTS.game.call);
+        this.hasPlayedActionSequenceSound = true;
+      } else if (isTurnInquiry) {
+        soundManager.playEffect(SOUND_EFFECTS.game.turn);
+        this.hasPlayedActionSequenceSound = true;
+      }
+    }
     const configTimeout =
       this.room?.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
     const fallbackTimeout = configTimeout;
@@ -857,6 +921,7 @@ export class RabiRiichiClient {
   }
 
   public returnToRoom(): void {
+    this.beginExitGame();
     if (this.room) {
       this.room = {
         ...this.room,
@@ -867,6 +932,17 @@ export class RabiRiichiClient {
       };
       this.onChange.emit();
     }
+  }
+
+  public beginExitGame(): void {
+    this.hasExitedGame = true;
+    this.clearTimer();
+    soundManager.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
+    this.hasPlayedActionSequenceSound = false;
+  }
+
+  public cancelExitGame(): void {
+    this.hasExitedGame = false;
   }
 
   public setRiichiSelectMode(active: boolean): void {
@@ -1001,6 +1077,9 @@ export class RabiRiichiClient {
     this.clearTimer();
     this.timerActiveSeat = seat;
     this.actionTimeout = seconds;
+    if (interactive && seconds <= 5) {
+      soundManager.playEffect(SOUND_EFFECTS.game.timeoutWarning);
+    }
     this.onChange.emit();
 
     const tick = 0.1; // 100ms in seconds
@@ -1017,6 +1096,9 @@ export class RabiRiichiClient {
       } else {
         const prevSec = Math.ceil(this.actionTimeout + tick);
         const currSec = Math.ceil(this.actionTimeout);
+        if (interactive && currSec <= 5 && prevSec !== currSec) {
+          soundManager.playEffect(SOUND_EFFECTS.game.timeoutWarning);
+        }
         if (prevSec !== currSec) {
           this.onChange.emit();
         }

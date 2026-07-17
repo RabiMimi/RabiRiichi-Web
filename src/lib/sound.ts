@@ -1,5 +1,6 @@
 import { Howl } from 'howler';
-import { rabiriichi } from '../net/client';
+import type { SoundsSettings } from '../domain/settings';
+import type { SoundEffect } from './soundEffects';
 
 export interface AudioPlayback {
   stop(): void;
@@ -11,23 +12,24 @@ class SoundManager {
   private bgmAudio: Howl | null = null;
   private activeVoices = new Set<AudioPlayback>();
   private activeSEs = new Set<AudioPlayback>();
+  private activeEffects = new Map<SoundEffect, AudioPlayback>();
+  private volumeProvider: (() => SoundsSettings) | null = null;
 
-  constructor() {
-    // Subscribe to store updates to dynamically adjust volumes
-    if (typeof window !== 'undefined') {
-      rabiriichi.onChange.subscribe(() => this.updateAllVolumes());
-    }
+  public setVolumeProvider(provider: () => SoundsSettings): void {
+    this.volumeProvider = provider;
+    this.updateAllVolumes();
   }
 
   private getEffectiveVolume(type: 'bgm' | 'se' | 'voice'): number {
-    if (rabiriichi.sounds.muteAll) return 0;
+    const sounds = this.volumeProvider?.();
+    if (!sounds || sounds.muteAll) return 0;
     switch (type) {
       case 'bgm':
-        return rabiriichi.sounds.muteBGM ? 0 : rabiriichi.sounds.volumeBGM;
+        return sounds.muteBGM ? 0 : sounds.volumeBGM;
       case 'se':
-        return rabiriichi.sounds.muteSE ? 0 : rabiriichi.sounds.volumeSE;
+        return sounds.muteSE ? 0 : sounds.volumeSE;
       case 'voice':
-        return rabiriichi.sounds.muteVoice ? 0 : rabiriichi.sounds.volumeVoice;
+        return sounds.muteVoice ? 0 : sounds.volumeVoice;
     }
   }
 
@@ -120,6 +122,26 @@ class SoundManager {
     } catch {
       return null;
     }
+  }
+
+  /** Plays a named gameplay sound effect from the shared public catalog. */
+  public playEffect(effect: SoundEffect): AudioPlayback | null {
+    this.activeEffects.get(effect)?.stop();
+
+    const playback = this.playSE(effect);
+    if (!playback) return null;
+
+    this.activeEffects.set(effect, playback);
+    playback.onEnded(() => {
+      if (this.activeEffects.get(effect) === playback) {
+        this.activeEffects.delete(effect);
+      }
+    });
+    return playback;
+  }
+
+  public stopEffect(effect: SoundEffect): void {
+    this.activeEffects.get(effect)?.stop();
   }
 
   /** Plays a character voice line. Stops any currently playing voice lines. */
