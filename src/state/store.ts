@@ -4,7 +4,7 @@ import type { ConnectionStatus, ActiveInquiry } from '../net/client';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import type { ActionOption } from '../domain/inquiry';
 import type { YakuInfo } from '../domain/yakus';
-import { Tile } from '../domain/tile';
+import { Tile, isTileUnknown } from '../domain/tile';
 
 // Note: GameState is folded into RoomModel (specifically via RoomModel.info and players[].gameState)
 export interface RabiRiichiState {
@@ -338,7 +338,8 @@ const getActiveComparisonTile = (): string | null => {
   const traceId = hoveredTraceId ?? selectedTraceId;
   if (traceId == null || !room?.tileRegistry) return null;
   const tileMsg = room.tileRegistry.get(traceId);
-  if (tileMsg?.tile == null) return null;
+  // Unknown/face-down tiles have no identity to compare against.
+  if (tileMsg?.tile == null || isTileUnknown(tileMsg.tile)) return null;
   try {
     return Tile.fromByte(tileMsg.tile).toString();
   } catch {

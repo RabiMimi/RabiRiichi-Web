@@ -119,6 +119,51 @@ describe('Reducer - Hydration', () => {
     expect(p1?.gameState?.hand.freeTiles).toHaveLength(1);
   });
 
+  it('sorts free tiles on hydration (unsorted snapshot after refresh)', () => {
+    // Regression: a reconnect snapshot may send the hand in an unsorted order.
+    // Hydration must sort it (like the event path) so the hand is not shown
+    // partially unsorted until the next event re-sorts it.
+    const initialState: RoomModel = {
+      id: 1,
+      config: null,
+      info: null,
+      players: [],
+      tileRegistry: createEmptyTileRegistry(),
+    };
+    const snapshot: IGameStateMsg = {
+      config: { playerCount: 2 },
+      info: { round: 0, dealer: 0, currentPlayer: 0 },
+      wall: { doras: [], remaining: 70, rinshanRemaining: 4 },
+      players: [
+        {
+          id: 0,
+          points: 25000,
+          hand: {
+            // Deliberately out of order: 5p(37), 1m(17), 9s(57), 3m(19).
+            freeTiles: [
+              { traceId: 1, tile: 37 },
+              { traceId: 2, tile: 17 },
+              { traceId: 3, tile: 57 },
+              { traceId: 4, tile: 19 },
+            ],
+            called: [],
+            discarded: [],
+            jun: 1,
+          },
+        },
+      ],
+      currentPlayer: 0,
+    };
+
+    const nextState = hydrateFromGameState(initialState, snapshot);
+    const faces = nextState.players
+      .find((p) => p.seat === 0)
+      ?.gameState?.hand.freeTiles.map((t) => t.tile);
+
+    // Man (1m,3m) before pin (5p) before sou (9s): 17, 19, 37, 57.
+    expect(faces).toEqual([17, 19, 37, 57]);
+  });
+
   it('should update existing players in room preserving nicknames', () => {
     const initialState: RoomModel = {
       id: 1234,

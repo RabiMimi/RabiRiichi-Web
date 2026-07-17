@@ -166,8 +166,13 @@ export function hydrateFromGameState(
         [FuritenType.FURITEN_TYPE_TEMP]: handState?.isTempFuriten ?? false,
       },
       hand: {
-        freeTiles: (handState?.freeTiles ?? []).map((t) =>
-          resolveTileFace(tileRegistry, t),
+        // Sort on hydration to match the event path (every event handler sorts
+        // via sortGameTiles). Without this, a reconnect snapshot renders the
+        // hand in the server's raw order until the next event re-sorts it.
+        freeTiles: sortGameTiles(
+          (handState?.freeTiles ?? []).map((t) =>
+            resolveTileFace(tileRegistry, t),
+          ),
         ),
         called: handState?.called ?? [],
         discarded: (handState?.discarded ?? [])

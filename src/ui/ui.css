@@ -125,13 +125,17 @@
 }
 
 /* Animations */
+/* Chat bubbles scale from their bottom-center (the tail) so the tail stays
+   pinned to the player while the bubble grows upward. */
 @keyframes pop-bounce {
   0% {
     transform: translateX(-50%) scale(0.5);
+    transform-origin: bottom center;
     opacity: 0;
   }
   100% {
     transform: translateX(-50%) scale(1);
+    transform-origin: bottom center;
     opacity: 1;
   }
 }
@@ -150,10 +154,12 @@
 @keyframes pop-close {
   0% {
     transform: translateX(-50%) scale(1);
+    transform-origin: bottom center;
     opacity: 1;
   }
   100% {
     transform: translateX(-50%) scale(0.5);
+    transform-origin: bottom center;
     opacity: 0;
   }
 }

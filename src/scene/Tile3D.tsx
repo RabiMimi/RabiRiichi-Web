@@ -226,7 +226,14 @@ export function Tile3D({
   const hoveredTileTraceId = useHoveredTileTraceId();
   const isSelected = selectedTileTraceId === traceId;
 
+  // A face-down / unknown tile (opponent's concealed hand, wall back, ...) has
+  // no identity to hover: it must not drive the tooltip or the same-tile
+  // comparison dim. Gate purely on whether the face is known, not on whose hand
+  // it is, so this holds for every face-down tile uniformly.
+  const isIdentifiable = !isTileUnknown(tile);
+
   const showTooltip =
+    isIdentifiable &&
     traceId !== undefined &&
     (hoveredTileTraceId === traceId ||
       (hoveredTileTraceId === null && selectedTileTraceId === traceId));
@@ -486,7 +493,10 @@ export function Tile3D({
             lastPose &&
             ((lastPose.area === 'hand' && area === 'river') ||
               (lastPose.area === 'river' && area === 'meld') ||
-              (lastPose.area === 'hand' && area === 'meld'));
+              (lastPose.area === 'hand' && area === 'meld') ||
+              // Pulled North (拔北) flies from the hand to the nuki row, mirroring
+              // how a called meld animates from hand to meld.
+              (lastPose.area === 'hand' && area === 'nuki'));
 
           if (lastPose && isAllowedTransition && groupRef.current.parent) {
             activeTransition.current = {
@@ -628,7 +638,9 @@ export function Tile3D({
             soundManager.playEffect(SOUND_EFFECTS.tile.hover);
           }
           setIsHovered(true);
-          if (traceId !== undefined) {
+          // Do not report hover for face-down tiles: they have no identity, so
+          // hovering must not open a tooltip or trigger the same-tile dim.
+          if (traceId !== undefined && isIdentifiable) {
             rabiriichi.hoverTile(traceId);
           }
         }
@@ -651,7 +663,7 @@ export function Tile3D({
         dragStartY.current = e.nativeEvent.clientY;
         lastClientY.current = e.nativeEvent.clientY;
         const isMouse = e.nativeEvent.pointerType === 'mouse';
-        if (!isMouse && traceId !== undefined) {
+        if (!isMouse && traceId !== undefined && isIdentifiable) {
           setIsHovered(true);
           rabiriichi.hoverTile(traceId);
         }

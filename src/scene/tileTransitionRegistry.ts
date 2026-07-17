@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export type TileArea = 'hand' | 'river' | 'meld' | 'wall' | 'ui';
+export type TileArea = 'hand' | 'river' | 'meld' | 'nuki' | 'wall' | 'ui';
 
 interface LastKnownPose {
   worldPosition: THREE.Vector3;
