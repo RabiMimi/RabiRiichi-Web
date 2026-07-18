@@ -10,6 +10,7 @@ import {
 import { formatError } from '../lib/errors';
 import { Button } from './Button';
 import { FORM, MODAL } from './styles';
+import { GEMINI_MODELS, DEFAULT_GEMINI_MODEL } from '../config/constants';
 
 interface LlmConfigDialogProps {
   onClose: () => void;
@@ -17,7 +18,7 @@ interface LlmConfigDialogProps {
 }
 
 const DEFAULT_MODELS: Record<LlmProvider, string> = {
-  [LlmProvider.LLM_PROVIDER_GEMINI]: 'gemini-3.5-flash',
+  [LlmProvider.LLM_PROVIDER_GEMINI]: DEFAULT_GEMINI_MODEL,
   [LlmProvider.LLM_PROVIDER_OPENAI]: 'gpt-4o-mini',
   [LlmProvider.LLM_PROVIDER_UNSPECIFIED]: '',
 };
@@ -41,8 +42,19 @@ export function LlmConfigDialog({
   const savedProviderConfig = savedAll.byProvider[provider] ?? {};
 
   const [apiToken, setApiToken] = useState(savedProviderConfig.apiToken ?? '');
-  const [modelName, setModelName] = useState(
-    savedProviderConfig.model ?? DEFAULT_MODELS[provider],
+
+  const getNormalizedModel = (p: LlmProvider, m: string) => {
+    if (p === LlmProvider.LLM_PROVIDER_GEMINI) {
+      return GEMINI_MODELS.includes(m as any) ? m : DEFAULT_GEMINI_MODEL;
+    }
+    return m;
+  };
+
+  const [modelName, setModelName] = useState(() =>
+    getNormalizedModel(
+      provider,
+      savedProviderConfig.model ?? DEFAULT_MODELS[provider],
+    ),
   );
   const [language, setLanguage] = useState(
     savedProviderConfig.language ??
@@ -72,7 +84,8 @@ export function LlmConfigDialog({
     setProvider(newProvider);
     const conf = loadLlmConfig().byProvider[newProvider] ?? {};
     setApiToken(conf.apiToken ?? '');
-    setModelName(conf.model ?? DEFAULT_MODELS[newProvider]);
+    const rawModel = conf.model ?? DEFAULT_MODELS[newProvider];
+    setModelName(getNormalizedModel(newProvider, rawModel));
     setBaseUrl(conf.baseUrl ?? '');
     if (conf.displayName !== undefined) setDisplayName(conf.displayName);
     if (conf.language !== undefined) setLanguage(conf.language);
@@ -155,35 +168,53 @@ export function LlmConfigDialog({
         >
           {errorMsg && <div className={FORM.error}>{errorMsg}</div>}
 
-          {/* Provider */}
-          <div className={FORM.group}>
-            <label className={FORM.label}>{t('ai.llmConfig.provider')}</label>
-            <select
-              className={FORM.input}
-              value={provider}
-              onChange={(e) => handleProviderChange(Number(e.target.value))}
-              disabled={isSubmitting}
-            >
-              <option value={LlmProvider.LLM_PROVIDER_GEMINI}>
-                {t('ai.provider.gemini')}
-              </option>
-              <option value={LlmProvider.LLM_PROVIDER_OPENAI}>
-                {t('ai.provider.openai')}
-              </option>
-            </select>
-          </div>
+          {/* Provider & Model */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Provider */}
+            <div className={FORM.group}>
+              <label className={FORM.label}>{t('ai.llmConfig.provider')}</label>
+              <select
+                className={FORM.input}
+                value={provider}
+                onChange={(e) => handleProviderChange(Number(e.target.value))}
+                disabled={isSubmitting}
+              >
+                <option value={LlmProvider.LLM_PROVIDER_GEMINI}>
+                  {t('ai.provider.gemini')}
+                </option>
+                <option value={LlmProvider.LLM_PROVIDER_OPENAI}>
+                  {t('ai.provider.openai')}
+                </option>
+              </select>
+            </div>
 
-          {/* Model */}
-          <div className={FORM.group}>
-            <label className={FORM.label}>{t('ai.llmConfig.model')}</label>
-            <input
-              type="text"
-              className={FORM.input}
-              placeholder={DEFAULT_MODELS[provider]}
-              value={modelName}
-              onChange={(e) => setModelName(e.target.value)}
-              disabled={isSubmitting}
-            />
+            {/* Model */}
+            <div className={FORM.group}>
+              <label className={FORM.label}>{t('ai.llmConfig.model')}</label>
+              {provider === LlmProvider.LLM_PROVIDER_GEMINI ? (
+                <select
+                  className={FORM.input}
+                  value={modelName}
+                  onChange={(e) => setModelName(e.target.value)}
+                  disabled={isSubmitting}
+                >
+                  {GEMINI_MODELS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  className={FORM.input}
+                  placeholder={DEFAULT_MODELS[provider]}
+                  value={modelName}
+                  onChange={(e) => setModelName(e.target.value)}
+                  disabled={isSubmitting}
+                />
+              )}
+            </div>
           </div>
 
           {/* API Token */}
@@ -210,21 +241,6 @@ export function LlmConfigDialog({
             </div>
           </div>
 
-          {/* Language */}
-          <div className={FORM.group}>
-            <label className={FORM.label}>{t('ai.llmConfig.language')}</label>
-            <select
-              className={FORM.input}
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              disabled={isSubmitting}
-            >
-              <option value="zhs">{t('ai.llmConfig.langZhs')}</option>
-              <option value="en">{t('ai.llmConfig.langEn')}</option>
-              <option value="ja">{t('ai.llmConfig.langJa')}</option>
-            </select>
-          </div>
-
           {/* Display Name */}
           <div className={FORM.group}>
             <label className={FORM.label}>
@@ -240,24 +256,42 @@ export function LlmConfigDialog({
             />
           </div>
 
-          {/* Prompt template */}
-          <div className={FORM.group}>
-            <label className={FORM.label}>
-              {t('ai.llmConfig.promptTemplate.label')}
-            </label>
-            <select
-              className={FORM.input}
-              value={promptTemplate}
-              onChange={(e) => setPromptTemplate(Number(e.target.value))}
-              disabled={isSubmitting}
-            >
-              <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_CUTE_JK}>
-                {t('ai.llmConfig.promptTemplate.cuteJk')}
-              </option>
-              <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_MESUGAKI}>
-                {t('ai.llmConfig.promptTemplate.mesugaki')}
-              </option>
-            </select>
+          {/* Language & Persona */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Language */}
+            <div className={FORM.group}>
+              <label className={FORM.label}>{t('ai.llmConfig.language')}</label>
+              <select
+                className={FORM.input}
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                disabled={isSubmitting}
+              >
+                <option value="zhs">{t('ai.llmConfig.langZhs')}</option>
+                <option value="en">{t('ai.llmConfig.langEn')}</option>
+                <option value="ja">{t('ai.llmConfig.langJa')}</option>
+              </select>
+            </div>
+
+            {/* Prompt template (Persona) */}
+            <div className={FORM.group}>
+              <label className={FORM.label}>
+                {t('ai.llmConfig.promptTemplate.label')}
+              </label>
+              <select
+                className={FORM.input}
+                value={promptTemplate}
+                onChange={(e) => setPromptTemplate(Number(e.target.value))}
+                disabled={isSubmitting}
+              >
+                <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_CUTE_JK}>
+                  {t('ai.llmConfig.promptTemplate.cuteJk')}
+                </option>
+                <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_MESUGAKI}>
+                  {t('ai.llmConfig.promptTemplate.mesugaki')}
+                </option>
+              </select>
+            </div>
           </div>
 
           {/* Advanced / Base URL */}
