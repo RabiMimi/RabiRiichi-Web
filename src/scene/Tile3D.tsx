@@ -53,11 +53,7 @@ export const DORA_SHEEN_WIDTH = 0.2; // Width of the diagonal reflection sheen (
 export const DORA_SHEEN_SPEED = 2.0; // Speed of the sliding animation (increase for faster sliding)
 
 export type TileDisplayState =
-  | 'hand'
-  | 'opponent-hand'
-  | 'face'
-  | 'back'
-  | 'sideways';
+  'hand' | 'opponent-hand' | 'face' | 'back' | 'sideways';
 
 function createMappedMaterial(
   mat: THREE.Material,
@@ -573,8 +569,7 @@ export function Tile3D({
         tileRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             const childMat = child.material as
-              | THREE.Material
-              | THREE.Material[];
+              THREE.Material | THREE.Material[];
             const mats = Array.isArray(childMat) ? childMat : [childMat];
             mats.forEach((mat) => {
               if (mat instanceof THREE.MeshStandardMaterial) {

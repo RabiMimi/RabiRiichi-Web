@@ -2,12 +2,7 @@ import React from 'react';
 import { getTileTexturePath } from '../scene/assets';
 
 export type UiTileSize =
-  | 'result'
-  | 'dora'
-  | 'action'
-  | 'info'
-  | 'tenpai'
-  | 'custom';
+  'result' | 'dora' | 'action' | 'info' | 'tenpai' | 'custom';
 
 interface UiTileProps {
   tile: string;

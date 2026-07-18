@@ -1,4 +1,4 @@
-import type { LlmProvider } from '../proto';
+import type { LlmPromptTemplate, LlmProvider } from '../proto';
 
 export const STORAGE_KEY_LLM_CONFIG = 'rabiriichi.llm.config.v1';
 
@@ -8,6 +8,7 @@ export interface PerProviderConfig {
   baseUrl?: string;
   displayName?: string;
   language?: string;
+  promptTemplate?: LlmPromptTemplate;
 }
 
 export interface StoredLlmConfig {

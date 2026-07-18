@@ -105,7 +105,7 @@
     }
   },
   "hud": {
-    "dora": "宝牌",
+    "dora": "宝牌指示牌",
     "speed": "动画速度",
     "discard": "请出牌",
     "chooseAction": "请选择",
@@ -385,6 +385,10 @@
       "langEn": "English (en)",
       "langJa": "日本語 (ja)",
       "displayName": "显示名称（可选）",
+      "promptTemplate": {
+        "label": "角色",
+        "cuteJk": "可爱"
+      },
       "baseUrl": "Base URL（可选）",
       "lessOptions": "▲ 折叠高级选项",
       "advancedOptions": "▼ 高级选项 (Base URL)",

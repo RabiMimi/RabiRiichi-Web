@@ -113,8 +113,7 @@ export function TileSpotlightParticles(): React.JSX.Element {
     }
 
     const posAttr = pointsRef.current?.geometry.getAttribute('position') as
-      | THREE.BufferAttribute
-      | undefined;
+      THREE.BufferAttribute | undefined;
     if (!posAttr) return;
 
     sim.step(Math.min(delta * animationSpeed, 0.05 * animationSpeed));

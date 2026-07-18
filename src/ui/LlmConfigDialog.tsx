@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { LlmProvider, type ILlmAiConfig } from '../proto';
+import { LlmPromptTemplate, LlmProvider, type ILlmAiConfig } from '../proto';
 import {
   loadLlmConfig,
   saveLlmConfig,
@@ -55,6 +55,10 @@ export function LlmConfigDialog({
   const [displayName, setDisplayName] = useState(
     savedProviderConfig.displayName ?? '',
   );
+  const [promptTemplate, setPromptTemplate] = useState<LlmPromptTemplate>(
+    savedProviderConfig.promptTemplate ??
+      LlmPromptTemplate.LLM_PROMPT_TEMPLATE_CUTE_JK,
+  );
   const [baseUrl, setBaseUrl] = useState(savedProviderConfig.baseUrl ?? '');
   const [showAdvanced, setShowAdvanced] = useState(
     Boolean(savedProviderConfig.baseUrl),
@@ -72,6 +76,9 @@ export function LlmConfigDialog({
     setBaseUrl(conf.baseUrl ?? '');
     if (conf.displayName !== undefined) setDisplayName(conf.displayName);
     if (conf.language !== undefined) setLanguage(conf.language);
+    setPromptTemplate(
+      conf.promptTemplate ?? LlmPromptTemplate.LLM_PROMPT_TEMPLATE_CUTE_JK,
+    );
     setErrorMsg(null);
   };
 
@@ -103,6 +110,7 @@ export function LlmConfigDialog({
       language,
       displayName: displayName.trim() !== '' ? displayName.trim() : null,
       baseUrl: baseUrl.trim() !== '' ? baseUrl.trim() : null,
+      promptTemplate,
     };
 
     setIsSubmitting(true);
@@ -114,6 +122,7 @@ export function LlmConfigDialog({
         language,
         displayName: displayName.trim(),
         baseUrl: baseUrl.trim(),
+        promptTemplate,
       });
       onClose();
     } catch (err) {
@@ -229,6 +238,23 @@ export function LlmConfigDialog({
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={isSubmitting}
             />
+          </div>
+
+          {/* Prompt template */}
+          <div className={FORM.group}>
+            <label className={FORM.label}>
+              {t('ai.llmConfig.promptTemplate.label')}
+            </label>
+            <select
+              className={FORM.input}
+              value={promptTemplate}
+              onChange={(e) => setPromptTemplate(Number(e.target.value))}
+              disabled={isSubmitting}
+            >
+              <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_CUTE_JK}>
+                {t('ai.llmConfig.promptTemplate.cuteJk')}
+              </option>
+            </select>
           </div>
 
           {/* Advanced / Base URL */}

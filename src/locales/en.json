@@ -105,7 +105,7 @@
     }
   },
   "hud": {
-    "dora": "Dora",
+    "dora": "Dora Indicators",
     "speed": "Animation Speed",
     "discard": "Please Discard",
     "chooseAction": "Choose Action",
@@ -385,6 +385,10 @@
       "langEn": "English (en)",
       "langJa": "Japanese (ja)",
       "displayName": "Display Name (optional)",
+      "promptTemplate": {
+        "label": "Persona",
+        "cuteJk": "Cute"
+      },
       "baseUrl": "Base URL (optional)",
       "lessOptions": "▲ Less options",
       "advancedOptions": "▼ Advanced options (Base URL)",

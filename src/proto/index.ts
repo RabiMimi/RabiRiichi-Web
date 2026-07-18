@@ -72,6 +72,7 @@ import {
   AddAiRequest,
   LlmAiConfig,
   LlmProvider,
+  LlmPromptTemplate,
   PlayerChatMessage,
 } from '../generated/protos.js';
 
@@ -149,6 +150,7 @@ export {
   AddAiRequest,
   LlmAiConfig,
   LlmProvider,
+  LlmPromptTemplate,
   PlayerChatMessage,
 };
 
