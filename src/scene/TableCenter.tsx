@@ -174,7 +174,7 @@ export function TableCenter(): React.JSX.Element | null {
         let displayColor = isTimerActive ? '#ff7a99' : '#ffffff';
 
         if (isHovered && p.seat !== selfSeat) {
-          const diff = points - selfPoints;
+          const diff = selfPoints - points;
           if (diff > 0) {
             displayText = `+${diff}`;
             displayColor = '#00ff66';
