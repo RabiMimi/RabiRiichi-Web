@@ -387,7 +387,8 @@
       "displayName": "Display Name (optional)",
       "promptTemplate": {
         "label": "Persona",
-        "cuteJk": "Cute"
+        "cuteJk": "Cute",
+        "mesugaki": "Mesugaki"
       },
       "baseUrl": "Base URL (optional)",
       "lessOptions": "▲ Less options",

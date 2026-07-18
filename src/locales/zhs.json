@@ -387,7 +387,8 @@
       "displayName": "显示名称（可选）",
       "promptTemplate": {
         "label": "角色",
-        "cuteJk": "可爱"
+        "cuteJk": "可爱",
+        "mesugaki": "雌小鬼"
       },
       "baseUrl": "Base URL（可选）",
       "lessOptions": "▲ 折叠高级选项",

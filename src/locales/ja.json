@@ -387,7 +387,8 @@
       "displayName": "表示名（任意）",
       "promptTemplate": {
         "label": "ペルソナ",
-        "cuteJk": "かわいい"
+        "cuteJk": "かわいい",
+        "mesugaki": "メスガキ"
       },
       "baseUrl": "Base URL（任意）",
       "lessOptions": "▲ 詳細設定を閉じる",

@@ -254,6 +254,9 @@ export function LlmConfigDialog({
               <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_CUTE_JK}>
                 {t('ai.llmConfig.promptTemplate.cuteJk')}
               </option>
+              <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_MESUGAKI}>
+                {t('ai.llmConfig.promptTemplate.mesugaki')}
+              </option>
             </select>
           </div>
 
