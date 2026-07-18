@@ -124,6 +124,7 @@ export function GameTable(): React.JSX.Element {
             player={player}
             isLocal={isLocal}
             seat={player.seat}
+            screenPos={screenPos}
             playerCount={playerCount}
             tileRegistry={room.tileRegistry}
             winningTileTraceId={winningTileTraceId}

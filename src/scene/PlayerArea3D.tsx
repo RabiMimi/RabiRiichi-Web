@@ -26,11 +26,13 @@ import { ChatBubble } from '../ui/ChatBubble';
 interface PlayerIndicator3DProps {
   player: PlayerModel;
   isLocal: boolean;
+  screenPos?: number | undefined;
 }
 
 function PlayerIndicator3D({
   player,
   isLocal,
+  screenPos,
 }: PlayerIndicator3DProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const isAi = player.aiType !== AiType.AI_TYPE_NONE;
@@ -63,6 +65,8 @@ function PlayerIndicator3D({
     );
   }
 
+  const placement = screenPos === 2 ? 'bottom' : 'top';
+
   return (
     <Html
       position={[1.2, 0.15, -0.2]}
@@ -93,8 +97,17 @@ function PlayerIndicator3D({
         >
           {displayName}
         </div>
-        <StickerBubble sticker={sticker} className="sticker-bubble-3d" />
-        <ChatBubble text={chatText} className="chat-bubble-3d" />
+        <StickerBubble
+          sticker={sticker}
+          className="sticker-bubble-3d"
+          placement={placement}
+        />
+        <ChatBubble
+          text={chatText}
+          className="chat-bubble-3d"
+          placement={placement}
+          hasSticker={Boolean(sticker)}
+        />
       </div>
     </Html>
   );
@@ -104,6 +117,7 @@ interface PlayerArea3DProps {
   player: PlayerModel;
   isLocal: boolean;
   seat: number;
+  screenPos?: number | undefined;
   playerCount: number;
   tileRegistry: TileRegistry;
   winningTileTraceId: number | null;
@@ -113,6 +127,7 @@ export function PlayerArea3D({
   player,
   isLocal,
   seat,
+  screenPos,
   playerCount,
   tileRegistry,
   winningTileTraceId,
@@ -149,7 +164,11 @@ export function PlayerArea3D({
   return (
     <group>
       {/* Player Indicator Overlay (Billboarded near hand) */}
-      <PlayerIndicator3D player={player} isLocal={isLocal} />
+      <PlayerIndicator3D
+        player={player}
+        isLocal={isLocal}
+        screenPos={screenPos}
+      />
 
       {/* Hand (closed tiles + drawn tile) - pushed towards center */}
       <group position={[0, 0, -0.2]}>
