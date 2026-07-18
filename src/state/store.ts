@@ -1,6 +1,10 @@
 import { useSyncExternalStore, useMemo } from 'react';
 import { rabiriichi } from '../net/client';
-import type { ConnectionStatus, ActiveInquiry } from '../net/client';
+import type {
+  ConnectionStatus,
+  ActiveInquiry,
+  ChatHistoryEntry,
+} from '../net/client';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import type { ActionOption } from '../domain/inquiry';
 import type { YakuInfo } from '../domain/yakus';
@@ -34,6 +38,7 @@ export interface RabiRiichiState {
   autoNuki: boolean;
   activeStickers: Record<string, string>;
   activeChatTexts: Record<number, string>;
+  chatHistory: ChatHistoryEntry[];
   characterId: string;
   volumeSE: number;
   volumeBGM: number;
@@ -80,6 +85,7 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.autoNuki !== rabiriichi.autoNuki ||
     lastSnapshot.activeStickers !== rabiriichi.activeStickers ||
     lastSnapshot.activeChatTexts !== rabiriichi.activeChatTexts ||
+    lastSnapshot.chatHistory !== rabiriichi.chatHistory ||
     lastSnapshot.characterId !== rabiriichi.visuals.characterId ||
     lastSnapshot.volumeSE !== rabiriichi.sounds.volumeSE ||
     lastSnapshot.volumeBGM !== rabiriichi.sounds.volumeBGM ||
@@ -117,6 +123,7 @@ function getSnapshot(): RabiRiichiState {
       autoNuki: rabiriichi.autoNuki,
       activeStickers: rabiriichi.activeStickers,
       activeChatTexts: rabiriichi.activeChatTexts,
+      chatHistory: rabiriichi.chatHistory,
       characterId: rabiriichi.visuals.characterId,
       volumeSE: rabiriichi.sounds.volumeSE,
       volumeBGM: rabiriichi.sounds.volumeBGM,
@@ -328,6 +335,14 @@ export function useActiveChatTexts(): Record<number, string> {
     subscribe,
     () => rabiriichi.activeChatTexts,
     () => rabiriichi.activeChatTexts,
+  );
+}
+
+export function useChatHistory(): ChatHistoryEntry[] {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.chatHistory,
+    () => rabiriichi.chatHistory,
   );
 }
 

@@ -99,6 +99,15 @@ function parseClientSettings(raw: string | null): ClientSettings {
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
+export interface ChatHistoryEntry {
+  id: string;
+  senderId: number;
+  senderName: string;
+  text?: string | null;
+  sticker?: string | null;
+  timestamp: number;
+}
+
 export interface ActiveInquiry {
   messageId: number;
   mapped: MappedInquiry;
@@ -132,6 +141,7 @@ export class RabiRiichiClient {
   private stickerTimers = new Map<number, ReturnType<typeof setTimeout>>();
   public activeChatTexts: Record<number, string> = {};
   private chatTextTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  public chatHistory: ChatHistoryEntry[] = [];
 
   public isRiichiSelectMode = false;
   public pendingActionOption: ActionOption | null = null;
@@ -358,12 +368,44 @@ export class RabiRiichiClient {
     if (msg.senderId === null || msg.senderId === undefined) {
       return;
     }
+    const player = this.room?.players.find((p) => p.id === msg.senderId);
+    const senderName = player ? player.nickname : `Player ${msg.senderId}`;
+    const newEntry: ChatHistoryEntry = {
+      id: `${Date.now()}-${Math.random()}`,
+      senderId: msg.senderId,
+      senderName,
+      text: msg.text ?? null,
+      sticker: msg.sticker ?? null,
+      timestamp: Date.now(),
+    };
+    this.chatHistory = [...this.chatHistory, newEntry];
+
+    // Retain up to 500 messages
+    while (this.chatHistory.length > 500) {
+      this.chatHistory.shift();
+    }
+    // Retain up to 16K characters
+    const getHistoryChars = (list: ChatHistoryEntry[]) => {
+      return list.reduce(
+        (sum, item) =>
+          sum + (item.text?.length ?? 0) + (item.sticker?.length ?? 0),
+        0,
+      );
+    };
+    while (
+      this.chatHistory.length > 0 &&
+      getHistoryChars(this.chatHistory) > 16384
+    ) {
+      this.chatHistory.shift();
+    }
+
     if (msg.sticker) {
       this.showStickerLocally(msg.senderId, msg.sticker);
     }
     if (msg.text) {
       this.showChatTextLocally(msg.senderId, msg.text);
     }
+    this.onChange.emit();
   }
 
   public get ws(): RabiSocket | null {
@@ -401,6 +443,7 @@ export class RabiRiichiClient {
     this.accessToken = accessToken ?? null;
     this.self = null;
     this.room = null;
+    this.chatHistory = [];
     this.currentInquiry = null;
     this.setConnectionStatus('connecting');
     await this.connectWS();
@@ -538,12 +581,17 @@ export class RabiRiichiClient {
       this.handleRoomState(userInfo.room);
     } else {
       this.room = null;
+      this.chatHistory = [];
     }
     this.onChange.emit();
   }
 
   private handleRoomState(roomState: IServerRoomStateMsg): void {
+    const oldRoomId = this.room?.id;
     this.room = applyRoomState(this.room, roomState);
+    if (oldRoomId !== undefined && this.room && oldRoomId !== this.room.id) {
+      this.chatHistory = [];
+    }
     if (!this.room?.info) {
       this.clearTimer();
       soundManager.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
@@ -1071,6 +1119,7 @@ export class RabiRiichiClient {
     }
     this.self = null;
     this.room = null;
+    this.chatHistory = [];
     this.currentInquiry = null;
     this.isRiichiSelectMode = false;
     this.pendingActionOption = null;

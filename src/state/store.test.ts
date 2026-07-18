@@ -94,6 +94,7 @@ describe('RabiRiichi Store', () => {
       autoNuki: false,
       activeStickers: {},
       activeChatTexts: {},
+      chatHistory: [],
       characterId: 'mimi',
       volumeSE: 1.0,
       volumeBGM: 1.0,
