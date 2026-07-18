@@ -5,6 +5,7 @@ import { getPlayerDisplayName } from '../domain/model';
 
 interface ScoreTransferPanelProps {
   resultPlayers: PlayerModel[];
+  dealerSeat: number | null | undefined;
   room: RoomModel;
 }
 
@@ -18,6 +19,7 @@ interface ScoreTransferPanelProps {
  */
 export function ScoreTransferPanel({
   resultPlayers,
+  dealerSeat,
   room,
 }: ScoreTransferPanelProps): React.JSX.Element {
   const { t } = useTranslation();
@@ -37,7 +39,7 @@ export function ScoreTransferPanel({
         {resultPlayers.map((p) => {
           const agari = p.gameState?.agari;
           const delta = (agari?.gainPoints ?? 0) - (agari?.losePoints ?? 0);
-          const isDealer = p.seat === room.info?.dealer;
+          const isDealer = p.seat === dealerSeat;
           const currentPoints =
             p.gameState?.points ??
             room.config?.pointThreshold?.initialPoints ??

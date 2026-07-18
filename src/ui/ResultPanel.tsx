@@ -535,7 +535,11 @@ export function ResultPanel(): React.JSX.Element | null {
                   : 'opacity-0 translate-y-6 pointer-events-none'
               }`}
             >
-              <ScoreTransferPanel resultPlayers={resultPlayers} room={room} />
+              <ScoreTransferPanel
+                resultPlayers={resultPlayers}
+                dealerSeat={room.roundResultDealer ?? room.info?.dealer}
+                room={room}
+              />
             </div>
           </div>
 

@@ -118,6 +118,9 @@ export interface RoomModel {
   // stays static even if a player leaves the room while it is shown. Cleared
   // when the next hand deals.
   roundResultPlayers?: PlayerModel[] | null;
+  // Dealer seat for the same frozen result. The live dealer advances on
+  // NextGameEvent before the result panel closes, so it cannot be used there.
+  roundResultDealer?: number | null;
   gameId?: string | null;
 }
 

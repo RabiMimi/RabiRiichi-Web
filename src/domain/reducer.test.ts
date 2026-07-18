@@ -1423,6 +1423,7 @@ describe('Reducer - Events', () => {
 
     // Snapshot captured for both players at conclusion.
     expect(settled.roundResultPlayers).toHaveLength(2);
+    expect(settled.roundResultDealer).toBe(0);
 
     // Bob (102) leaves: the server pushes a room state with only Alice.
     const afterLeave = applyRoomState(settled, {
@@ -1435,6 +1436,7 @@ describe('Reducer - Events', () => {
     // Live players shrank, but the frozen result still lists both.
     expect(afterLeave?.players).toHaveLength(1);
     expect(afterLeave?.roundResultPlayers).toHaveLength(2);
+    expect(afterLeave?.roundResultDealer).toBe(0);
     expect(afterLeave?.roundResultPlayers?.map((p) => p.id)).toEqual([
       101, 102,
     ]);
@@ -1487,12 +1489,31 @@ describe('Reducer - Events', () => {
       ryuukyokuEvent: { scoreChange: [] },
     });
     expect(nextState.roundResultPlayers).toHaveLength(2);
+    expect(nextState.roundResultDealer).toBe(0);
+  });
+
+  it('keeps the completed hand dealer after nextGame advances live metadata', () => {
+    const settled = applyEvent(createInitializedRoom(), {
+      applyScoreEvent: { scoreChange: [] },
+    });
+    const advanced = applyEvent(settled, {
+      nextGameEvent: {
+        nextRound: 1,
+        nextDealer: 1,
+        nextHonba: 0,
+        riichiStick: 0,
+      },
+    });
+
+    expect(advanced.info?.dealer).toBe(1);
+    expect(advanced.roundResultDealer).toBe(0);
   });
 
   it('clears the round-result snapshot when the next hand begins', () => {
     const state: RoomModel = {
       ...createInitializedRoom(),
       roundResultPlayers: [...createInitializedRoom().players],
+      roundResultDealer: 0,
     };
     const nextState = applyEvent(state, {
       beginGameEvent: {
@@ -1504,6 +1525,7 @@ describe('Reducer - Events', () => {
       },
     });
     expect(nextState.roundResultPlayers).toBeNull();
+    expect(nextState.roundResultDealer).toBeNull();
   });
 
   it('should handle concludeGameEvent', () => {
