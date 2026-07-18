@@ -124,14 +124,14 @@ export function TenpaiWaitPanel({
 
   return (
     <div
-      className={`absolute bg-[#121c32]/94 border-[1.5px] border-[#ff7a99]/70 rounded-lg py-1.5 px-2 sm:py-3 sm:px-4 shadow-[0_4px_15px_rgba(0,0,0,0.6)] backdrop-blur-md text-white font-sans z-[100] pointer-events-none w-fit box-border ${className}`}
+      className={`absolute bg-[#121c32]/94 border-[1.5px] border-[#ff7a99]/70 rounded-lg py-2 px-2 shadow-[0_4px_15px_rgba(0,0,0,0.6)] backdrop-blur-md text-white font-sans z-[100] pointer-events-none w-fit box-border ${className}`}
     >
       {isFuriten && (
         <div className="absolute -top-[9px] md:-top-[11px] left-1/2 -translate-x-1/2 bg-gradient-to-br from-[#ff0055] to-[#ff5500] text-white text-[0.6rem] md:text-xs font-bold tracking-[1px] px-1.5 py-[1px] md:px-2 md:py-[2px] rounded-full shadow-[0_0_8px_rgba(255,0,85,0.8)] whitespace-nowrap animate-[furiten-glow-pulse_1.5s_infinite_alternate] z-[101] uppercase border border-white/40">
           {t('hud.furiten')}
         </div>
       )}
-      <div className="flex flex-row gap-1.5 sm:gap-3 max-w-[90vw] overflow-x-auto mt-0.5 sm:mt-1">
+      <div className="flex flex-row gap-1 sm:gap-1.5 max-w-[90vw] overflow-x-auto">
         {awaitedTiles.map((ti, idx) => {
           const tileStr = Tile.fromByte(ti.winningTile).toString();
           const yakuBound = ti.yakuman > 0;
@@ -139,7 +139,7 @@ export function TenpaiWaitPanel({
           return (
             <div
               key={idx}
-              className={`flex flex-col items-center gap-0.5 sm:gap-1 bg-white/5 py-1 px-1.5 sm:py-2 sm:px-3 rounded min-w-[36px] sm:min-w-[48px] sm:min-w-[58px] ${
+              className={`flex flex-col items-center gap-0.5 sm:gap-1 bg-white/5 py-0.5 px-1 sm:py-1 sm:px-1.5 rounded min-w-[32px] sm:min-w-[44px] ${
                 meetsMinHan ? '' : 'opacity-45'
               }`}
             >

@@ -424,6 +424,7 @@
         "timeout": "LLM 服务响应超时，请重试。",
         "rate_limit": "LLM 服务受请求频率限制。",
         "unreachable": "无法连接至 LLM 服务。",
+        "no_output": "模型未返回文本，请换一个模型试试。",
         "config": {
           "token": "请输入 API Token。",
           "model": "请输入模型名称。",

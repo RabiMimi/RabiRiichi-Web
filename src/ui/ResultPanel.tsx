@@ -189,6 +189,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
       if (isDraw) {
         if (isActive()) {
+          setAnimatingPlayerIndex(playersWithResult.length - 1);
           setShowScoreChanges(true);
           setAnimationFinished(true);
         }

@@ -424,6 +424,7 @@
         "timeout": "The LLM provider timed out. Try again.",
         "rate_limit": "The LLM provider is rate-limiting requests.",
         "unreachable": "Could not reach the LLM provider.",
+        "no_output": "The model returned no text. Try a different model.",
         "config": {
           "token": "An API token is required.",
           "model": "A model name is required.",
