@@ -3,6 +3,6 @@ export const GEMINI_MODELS = [
   'gemini-3.5-flash',
 ] as const;
 
-export type GeminiModel = typeof GEMINI_MODELS[number];
+export type GeminiModel = (typeof GEMINI_MODELS)[number];
 
 export const DEFAULT_GEMINI_MODEL: GeminiModel = 'gemini-3.5-flash';

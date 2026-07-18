@@ -45,7 +45,9 @@ export function LlmConfigDialog({
 
   const getNormalizedModel = (p: LlmProvider, m: string) => {
     if (p === LlmProvider.LLM_PROVIDER_GEMINI) {
-      return GEMINI_MODELS.includes(m as any) ? m : DEFAULT_GEMINI_MODEL;
+      return (GEMINI_MODELS as readonly string[]).includes(m)
+        ? m
+        : DEFAULT_GEMINI_MODEL;
     }
     return m;
   };
