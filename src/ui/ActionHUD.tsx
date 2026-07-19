@@ -1,6 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useCurrentInquiry, useIsRiichiSelectMode } from '../state/store';
+import {
+  useCurrentInquiry,
+  useIsRiichiSelectMode,
+  useRoom,
+  useSelf,
+} from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Logger } from '../lib/logger';
 import { type ActionOption, type InquiryOptionType } from '../domain/inquiry';
@@ -24,7 +29,7 @@ interface FlattenedOption {
   key: string;
   label: string;
   type: InquiryOptionType;
-  tiles?: { traceId: number; tile: number }[];
+  tiles?: { traceId: number; tile: number; isCalled?: boolean }[];
   onClick: () => void;
 }
 
@@ -32,6 +37,14 @@ export function ActionHUD(): React.JSX.Element | null {
   const { t } = useTranslation();
   const currentInquiry = useCurrentInquiry();
   const isRiichiSelectMode = useIsRiichiSelectMode();
+  const room = useRoom();
+  const currentUser = useSelf();
+  const selfPlayer =
+    room && currentUser
+      ? room.players.find((p) => p.id === currentUser.id)
+      : null;
+  const pendingTileId =
+    selfPlayer?.gameState?.hand.pendingTile?.traceId ?? null;
 
   const setIsRiichiSelectMode = (active: boolean) => {
     rabiriichi.setRiichiSelectMode(active);
@@ -161,7 +174,18 @@ export function ActionHUD(): React.JSX.Element | null {
                 <div className="flex gap-[1px] bg-[#141414]/60 px-0.5 py-[1px] rounded border border-[#444]">
                   {opt.tiles.map((tileMsg, idx) => {
                     const tileStr = Tile.fromByte(tileMsg.tile).toString();
-                    return <UiTile key={idx} tile={tileStr} size="action" />;
+                    const isHighlighted =
+                      (tileMsg.isCalled ?? false) ||
+                      (pendingTileId !== null &&
+                        tileMsg.traceId === pendingTileId);
+                    return (
+                      <UiTile
+                        key={idx}
+                        tile={tileStr}
+                        size="action"
+                        isHighlighted={isHighlighted}
+                      />
+                    );
                   })}
                 </div>
               </div>

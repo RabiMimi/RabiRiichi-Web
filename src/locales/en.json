@@ -6,6 +6,9 @@
     "nicknamePlaceholder": "Enter your nickname",
     "connect": "Connect",
     "connecting": "Connecting...",
+    "connectingPublic": "Connecting to Server... (Click to Cancel)",
+    "authenticating": "Authenticating... (Click to Cancel)",
+    "cancelled": "Connection cancelled",
     "urlError": "URL must start with ws:// or wss://",
     "nicknameError": "Nickname cannot be empty",
     "officialServer": "Rabimimi",
@@ -70,12 +73,13 @@
     "2": "East-South (Hanchan)"
   },
   "tileSetOpt": {
-    "regular": "Regular (136 tiles)",
-    "sanma": "Sanma (108 tiles)",
-    "twoSets": "2 Sets (272 tiles)",
-    "onlySZ": "Only Sou & Honor (64 tiles)",
-    "tenchiSouzou": "Tenchi Souzou (136 tiles)",
-    "customize": "Customize..."
+    "regular": "Regular",
+    "sanma": "Sanma",
+    "twoSets": "2 Sets",
+    "onlySZ": "Only Sou & Honor",
+    "tenchiSouzou": "Tenchi Souzou",
+    "customize": "Customize...",
+    "labelWithCount": "{{name}} ({{count}} tiles)"
   },
   "customTileSet": {
     "title": "Custom Tile Sets",

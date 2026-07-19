@@ -6,6 +6,9 @@
     "nicknamePlaceholder": "请输入昵称",
     "connect": "连接",
     "connecting": "正在连接...",
+    "connectingPublic": "正在连接服务器... (点击取消)",
+    "authenticating": "正在验证并登录... (点击取消)",
+    "cancelled": "连接已取消",
     "urlError": "服务器地址必须以 ws:// 或 wss:// 开头",
     "nicknameError": "昵称不能为空",
     "officialServer": "兔兔服",
@@ -70,12 +73,13 @@
     "2": "半庄战 (Hanchan)"
   },
   "tileSetOpt": {
-    "regular": "普通 (136张)",
-    "sanma": "三人麻将 (108张)",
-    "twoSets": "两副牌 (272张)",
-    "onlySZ": "仅条子与字牌 (64张)",
-    "tenchiSouzou": "天地创造 (136张)",
-    "customize": "自定义..."
+    "regular": "普通",
+    "sanma": "三人麻将",
+    "twoSets": "两副牌",
+    "onlySZ": "仅条子与字牌",
+    "tenchiSouzou": "天地创造",
+    "customize": "自定义...",
+    "labelWithCount": "{{name}} ({{count}}张)"
   },
   "customTileSet": {
     "title": "自定义牌张配置",

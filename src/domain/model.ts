@@ -113,15 +113,14 @@ export interface RoomModel {
   gameEnded?: boolean;
   endGamePoints?: number[] | null;
   concludedPlayers?: PlayerModel[] | null;
-  // Frozen snapshot of players' result state captured when a round concludes
-  // (agari or ryuukyoku). The round-result panel renders this so the settlement
-  // stays static even if a player leaves the room while it is shown. Cleared
-  // when the next hand deals.
-  roundResultPlayers?: PlayerModel[] | null;
-  // Dealer seat for the same frozen result. The live dealer advances on
-  // NextGameEvent before the result panel closes, so it cannot be used there.
-  roundResultDealer?: number | null;
+  roundResult?: RoundResultSnapshot | null;
   gameId?: string | null;
+}
+
+export interface RoundResultSnapshot {
+  players: PlayerModel[];
+  dealer: number;
+  scoringOption: number;
 }
 
 // Helper functions for seat math and player lookups

@@ -26,9 +26,20 @@ export function ConnectScreen(): React.JSX.Element {
     }
   });
   const [error, setError] = useState<string | null>(null);
+  const [connectPhase, setConnectPhase] = useState<
+    'idle' | 'connecting_public' | 'authenticating'
+  >('idle');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (connectPhase !== 'idle' || connectionStatus === 'connecting') {
+      rabiriichi.close();
+      setConnectPhase('idle');
+      setError(t('connect.cancelled'));
+      return;
+    }
+
     setError(null);
 
     if (!targetUrl.startsWith('ws://') && !targetUrl.startsWith('wss://')) {
@@ -42,10 +53,20 @@ export function ConnectScreen(): React.JSX.Element {
     }
 
     try {
+      setConnectPhase('connecting_public');
       // 1. Connect to public socket first
       await rabiriichi.connect(targetUrl);
+
+      // Check if cancelled
+      if (rabiriichi.connectionStatus === 'disconnected') {
+        throw new Error('aborted');
+      }
+
+      setConnectPhase('authenticating');
       // 2. Register user (which gets token and reconnects with token)
       await rabiriichi.registerUser(nickname.trim());
+
+      setConnectPhase('idle');
       try {
         const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
         const settings: ServerSettings = stored
@@ -60,9 +81,13 @@ export function ConnectScreen(): React.JSX.Element {
         // ignore
       }
     } catch (err) {
+      if (err instanceof Error && err.message === 'aborted') {
+        return;
+      }
       setError(err instanceof Error ? err.message : String(err));
       // Close client on error to clean up
       rabiriichi.close();
+      setConnectPhase('idle');
     }
   };
 
@@ -70,7 +95,15 @@ export function ConnectScreen(): React.JSX.Element {
     void handleSubmit(e);
   };
 
-  const isConnecting = connectionStatus === 'connecting';
+  let effectivePhase: 'idle' | 'connecting_public' | 'authenticating' =
+    connectPhase;
+  if (connectionStatus === 'connecting' && connectPhase === 'idle') {
+    effectivePhase = rabiriichi.accessToken
+      ? 'authenticating'
+      : 'connecting_public';
+  }
+
+  const isConnecting = effectivePhase !== 'idle';
 
   return (
     <div className={SCREEN.base}>
@@ -124,8 +157,12 @@ export function ConnectScreen(): React.JSX.Element {
 
           {error && <div className={FORM.error}>{error}</div>}
 
-          <Button type="submit" disabled={isConnecting}>
-            {isConnecting ? t('connect.connecting') : t('connect.connect')}
+          <Button type="submit" variant={isConnecting ? 'danger' : 'primary'}>
+            {effectivePhase === 'connecting_public'
+              ? t('connect.connectingPublic')
+              : effectivePhase === 'authenticating'
+                ? t('connect.authenticating')
+                : t('connect.connect')}
           </Button>
         </form>
       </div>

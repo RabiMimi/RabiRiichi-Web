@@ -37,6 +37,10 @@ export function WinnerDetailCard({
   if (!agari) return null;
   if (!agari.scores && !agari.isTenpai) return null;
 
+  const scoringOption =
+    room.roundResult?.scoringOption ?? room.config?.scoringOption;
+  const isAotenjou = scoringOption != null && (scoringOption & 2) === 0;
+
   const isNagashi = agari.isNagashi ?? false;
   const isTenpai = agari.isTenpai ?? false;
 
@@ -56,15 +60,16 @@ export function WinnerDetailCard({
     // nothing
   } else if (agari.scores?.result) {
     const result = agari.scores.result;
-    const isAotenjou =
-      room.config?.scoringOption != null &&
-      (room.config.scoringOption & 2) === 0;
 
-    if (result.finalYakuman && result.finalYakuman > 0) {
+    const effectiveHan = isAotenjou
+      ? (result.han ?? 0) + (result.yakuman ?? 0) * 13
+      : (result.han ?? 0);
+
+    if (result.finalYakuman && result.finalYakuman > 0 && !isAotenjou) {
       limitClass = 'limit-yakuman';
-      if (result.kazoeYakuman && result.kazoeYakuman > 0 && !isAotenjou) {
+      if (result.kazoeYakuman && result.kazoeYakuman > 0) {
         limitLabel = t('result.yakuman');
-        hanFuLabel = t('result.han', { count: result.han });
+        hanFuLabel = t('result.han', { count: effectiveHan });
       } else {
         const yakumanCount = result.finalYakuman;
         if (yakumanCount > 1) {
@@ -81,33 +86,26 @@ export function WinnerDetailCard({
     } else {
       const limit = isAotenjou
         ? null
-        : getLimitName(
-            result.han ?? 0,
-            result.fu ?? 0,
-            room.config?.scoringOption ?? 0,
-          );
+        : getLimitName(effectiveHan, result.fu ?? 0, scoringOption ?? 0);
 
       if (limit) {
         limitLabel = t(`result.${limit}`);
         limitClass = `limit-${limit}`;
         hanFuLabel = t('result.fuAndHan', {
           fu: result.fu,
-          han: result.han,
+          han: effectiveHan,
         });
       } else {
         hanFuLabel = t('result.fuAndHan', {
           fu: result.fu,
-          han: result.han,
+          han: effectiveHan,
         });
       }
     }
   }
 
   const rawYakuList = agari.scores?.items ?? [];
-  const yakuList = filterYakuListForDisplay(
-    rawYakuList,
-    room.config?.scoringOption,
-  );
+  const yakuList = filterYakuListForDisplay(rawYakuList, scoringOption);
 
   const handTiles = player.gameState?.hand.freeTiles ?? [];
   const calledMelds = player.gameState?.hand.called ?? [];
@@ -264,9 +262,15 @@ export function WinnerDetailCard({
                 const typeLabel =
                   yaku.Src === 'NagashiMangan'
                     ? ''
-                    : yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
+                    : yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN &&
+                        !isAotenjou
                       ? t('result.yakuman')
-                      : t('result.han', { count: yaku.Val });
+                      : t('result.han', {
+                          count:
+                            yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
+                              ? (yaku.Val ?? 1) * 13
+                              : (yaku.Val ?? 0),
+                        });
                 const isRevealed = globalIdx < visibleYakuCount;
                 return (
                   <div
@@ -298,9 +302,15 @@ export function WinnerDetailCard({
               const typeLabel =
                 yaku.Src === 'NagashiMangan'
                   ? ''
-                  : yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
+                  : yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN &&
+                      !isAotenjou
                     ? t('result.yakuman')
-                    : t('result.han', { count: yaku.Val });
+                    : t('result.han', {
+                        count:
+                          yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
+                            ? (yaku.Val ?? 1) * 13
+                            : (yaku.Val ?? 0),
+                      });
               const isRevealed = globalIdx < visibleYakuCount;
               return (
                 <div

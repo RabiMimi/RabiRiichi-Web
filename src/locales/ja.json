@@ -6,6 +6,9 @@
     "nicknamePlaceholder": "ニックネームを入力してください",
     "connect": "接続",
     "connecting": "接続中...",
+    "connectingPublic": "サーバーに接続中... (クリックでキャンセル)",
+    "authenticating": "認証中... (クリックでキャンセル)",
+    "cancelled": "接続がキャンセルされました",
     "urlError": "サーバーアドレスは ws:// または wss:// で始まる必要があります",
     "nicknameError": "ニックネームを入力してください",
     "officialServer": "ミミサーバー",
@@ -70,12 +73,13 @@
     "2": "半荘戦"
   },
   "tileSetOpt": {
-    "regular": "通常 (136枚)",
-    "sanma": "三人麻雀 (108枚)",
-    "twoSets": "2セット (272枚)",
-    "onlySZ": "索子と字牌のみ (64枚)",
-    "tenchiSouzou": "天地創造 (136枚)",
-    "customize": "カスタマイズ..."
+    "regular": "通常",
+    "sanma": "三人麻雀",
+    "twoSets": "2セット",
+    "onlySZ": "索子と字牌のみ",
+    "tenchiSouzou": "天地創造",
+    "customize": "カスタマイズ...",
+    "labelWithCount": "{{name}} ({{count}}枚)"
   },
   "customTileSet": {
     "title": "カスタム使用牌設定",

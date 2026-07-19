@@ -1422,8 +1422,8 @@ describe('Reducer - Events', () => {
     });
 
     // Snapshot captured for both players at conclusion.
-    expect(settled.roundResultPlayers).toHaveLength(2);
-    expect(settled.roundResultDealer).toBe(0);
+    expect(settled.roundResult?.players).toHaveLength(2);
+    expect(settled.roundResult?.dealer).toBe(0);
 
     // Bob (102) leaves: the server pushes a room state with only Alice.
     const afterLeave = applyRoomState(settled, {
@@ -1435,15 +1435,15 @@ describe('Reducer - Events', () => {
 
     // Live players shrank, but the frozen result still lists both.
     expect(afterLeave?.players).toHaveLength(1);
-    expect(afterLeave?.roundResultPlayers).toHaveLength(2);
-    expect(afterLeave?.roundResultDealer).toBe(0);
-    expect(afterLeave?.roundResultPlayers?.map((p) => p.id)).toEqual([
+    expect(afterLeave?.roundResult?.players).toHaveLength(2);
+    expect(afterLeave?.roundResult?.dealer).toBe(0);
+    expect(afterLeave?.roundResult?.players.map((p) => p.id)).toEqual([
       101, 102,
     ]);
 
     // The array reference must be preserved, not just its contents: the reveal
     // animation keys off it, so a new array would restart it.
-    expect(afterLeave?.roundResultPlayers).toBe(settled.roundResultPlayers);
+    expect(afterLeave?.roundResult?.players).toBe(settled.roundResult?.players);
   });
 
   it('preserves the frozen result reference across repeated room-state pushes', () => {
@@ -1462,7 +1462,7 @@ describe('Reducer - Events', () => {
     });
     settled.concludedPlayers = settled.players.map((p) => ({ ...p }));
 
-    const frozenResult = settled.roundResultPlayers;
+    const frozenResult = settled.roundResult?.players;
     const frozenConcluded = settled.concludedPlayers;
 
     let current = settled;
@@ -1477,7 +1477,7 @@ describe('Reducer - Events', () => {
       const next = applyRoomState(current, { id: 1234, players });
       expect(next).not.toBeNull();
       if (!next) return;
-      expect(next.roundResultPlayers).toBe(frozenResult);
+      expect(next.roundResult?.players).toBe(frozenResult);
       expect(next.concludedPlayers).toBe(frozenConcluded);
       current = next;
     }
@@ -1488,8 +1488,8 @@ describe('Reducer - Events', () => {
     const nextState = applyEvent(state, {
       ryuukyokuEvent: { scoreChange: [] },
     });
-    expect(nextState.roundResultPlayers).toHaveLength(2);
-    expect(nextState.roundResultDealer).toBe(0);
+    expect(nextState.roundResult?.players).toHaveLength(2);
+    expect(nextState.roundResult?.dealer).toBe(0);
   });
 
   it('keeps the completed hand dealer after nextGame advances live metadata', () => {
@@ -1506,14 +1506,17 @@ describe('Reducer - Events', () => {
     });
 
     expect(advanced.info?.dealer).toBe(1);
-    expect(advanced.roundResultDealer).toBe(0);
+    expect(advanced.roundResult?.dealer).toBe(0);
   });
 
   it('clears the round-result snapshot when the next hand begins', () => {
     const state: RoomModel = {
       ...createInitializedRoom(),
-      roundResultPlayers: [...createInitializedRoom().players],
-      roundResultDealer: 0,
+      roundResult: {
+        players: [...createInitializedRoom().players],
+        dealer: 0,
+        scoringOption: 0,
+      },
     };
     const nextState = applyEvent(state, {
       beginGameEvent: {
@@ -1524,8 +1527,7 @@ describe('Reducer - Events', () => {
         remainingTiles: 100,
       },
     });
-    expect(nextState.roundResultPlayers).toBeNull();
-    expect(nextState.roundResultDealer).toBeNull();
+    expect(nextState.roundResult).toBeNull();
   });
 
   it('should handle concludeGameEvent', () => {

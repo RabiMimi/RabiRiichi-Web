@@ -8,6 +8,7 @@ interface UiTileProps {
   tile: string;
   size?: UiTileSize;
   isWinningTile?: boolean;
+  isHighlighted?: boolean;
   className?: string;
 }
 
@@ -24,6 +25,7 @@ export function UiTile({
   tile,
   size = 'result',
   isWinningTile = false,
+  isHighlighted = false,
   className = '',
 }: UiTileProps): React.JSX.Element {
   const isBack = tile === 'back';
@@ -40,7 +42,9 @@ export function UiTile({
     ? ''
     : isWinningTile
       ? 'border-2 border-[#ff7a99]'
-      : 'border border-[#333]';
+      : isHighlighted
+        ? 'border-2 border-[#66ccff] shadow-[0_0_4px_rgba(102,204,255,0.8)]'
+        : 'border border-[#333]';
 
   return (
     <img

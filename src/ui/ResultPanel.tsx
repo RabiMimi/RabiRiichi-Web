@@ -120,8 +120,8 @@ export function ResultPanel(): React.JSX.Element | null {
 
   // Prefer the frozen snapshot captured at round conclusion, depending on the
   // array refs (not the whole `room`) so room-state churn can't restart the
-  // reveal. The reducer preserves `roundResultPlayers` across room updates.
-  const frozenResultPlayers = room?.roundResultPlayers ?? null;
+  // reveal. The reducer preserves `roundResult` across room updates.
+  const frozenResultPlayers = room?.roundResult?.players ?? null;
   const livePlayers = room?.players ?? null;
   const resultPlayers = React.useMemo(() => {
     return frozenResultPlayers ?? livePlayers ?? [];
@@ -148,9 +148,8 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const isDraw = !hasNormalWinner && !hasNagashiWinner;
 
-  // The only `room` field the reveal reads; kept as a primitive so the effect
-  // need not depend on the churning `room` object.
-  const scoringOption = room?.config?.scoringOption;
+  const scoringOption =
+    room?.roundResult?.scoringOption ?? room?.config?.scoringOption;
 
   // Voice & Animation states
   const [animatingPlayerIndex, setAnimatingPlayerIndex] =
@@ -537,7 +536,7 @@ export function ResultPanel(): React.JSX.Element | null {
             >
               <ScoreTransferPanel
                 resultPlayers={resultPlayers}
-                dealerSeat={room.roundResultDealer ?? room.info?.dealer}
+                dealerSeat={room.roundResult?.dealer ?? room.info?.dealer}
                 room={room}
               />
             </div>

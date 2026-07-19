@@ -8,6 +8,7 @@ import {
   type TileSetPresetName,
   loadCustomTileSets,
   type CustomTileSet,
+  getTileSet,
 } from '../domain/tilesets';
 import { CustomTileSetModal } from './CustomTileSetModal';
 import { FORM } from './styles';
@@ -188,16 +189,44 @@ export function GameSettingsTab({
           disabled={isLoading}
           className={FORM.inputInline}
         >
-          <option value="Regular">{t('tileSetOpt.regular')}</option>
-          <option value="Sanma">{t('tileSetOpt.sanma')}</option>
-          <option value="TwoSets">{t('tileSetOpt.twoSets')}</option>
-          <option value="OnlySZ">{t('tileSetOpt.onlySZ')}</option>
-          <option value="TenchiSouzou">{t('tileSetOpt.tenchiSouzou')}</option>
+          <option value="Regular">
+            {t('tileSetOpt.labelWithCount', {
+              name: t('tileSetOpt.regular'),
+              count: getTileSet('Regular').length,
+            })}
+          </option>
+          <option value="Sanma">
+            {t('tileSetOpt.labelWithCount', {
+              name: t('tileSetOpt.sanma'),
+              count: getTileSet('Sanma').length,
+            })}
+          </option>
+          <option value="TwoSets">
+            {t('tileSetOpt.labelWithCount', {
+              name: t('tileSetOpt.twoSets'),
+              count: getTileSet('TwoSets').length,
+            })}
+          </option>
+          <option value="OnlySZ">
+            {t('tileSetOpt.labelWithCount', {
+              name: t('tileSetOpt.onlySZ'),
+              count: getTileSet('OnlySZ').length,
+            })}
+          </option>
+          <option value="TenchiSouzou">
+            {t('tileSetOpt.labelWithCount', {
+              name: t('tileSetOpt.tenchiSouzou'),
+              count: getTileSet('TenchiSouzou').length,
+            })}
+          </option>
           {customSets.length > 0 && (
             <optgroup label={t('customTileSet.title')}>
               {customSets.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name}
+                  {t('tileSetOpt.labelWithCount', {
+                    name: s.name,
+                    count: s.tiles.length,
+                  })}
                 </option>
               ))}
             </optgroup>
