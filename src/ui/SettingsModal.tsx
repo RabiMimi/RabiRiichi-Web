@@ -11,7 +11,7 @@ import {
   useMuteSE,
   useMuteBGM,
   useMuteVoice,
-  useMuteAll,
+  useVolumeAll,
   updateClientSettings,
 } from '../state/store';
 import {
@@ -20,6 +20,7 @@ import {
   type VoiceLineConfig,
 } from '../domain/character';
 import { soundManager } from '../lib/sound';
+import { VolumeSlider } from './VolumeSlider';
 import { FORM, MODAL } from './styles';
 
 interface SettingsModalProps {
@@ -65,15 +66,6 @@ const CreditCapsule = ({
   </div>
 );
 
-const VOLUME_SLIDER_CLASS =
-  'flex-1 h-1 bg-white/15 rounded-lg outline-none appearance-none cursor-pointer ' +
-  '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 ' +
-  '[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#fbbf24] [&::-webkit-slider-thumb]:cursor-pointer ' +
-  '[&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(0,0,0,0.5)] [&::-webkit-slider-thumb]:transition-transform ' +
-  '[&::-webkit-slider-thumb]:duration-100 hover:[&::-webkit-slider-thumb]:scale-[1.2] ' +
-  'disabled:bg-white/5 disabled:cursor-not-allowed disabled:[&::-webkit-slider-thumb]:bg-[#4b5563] ' +
-  'disabled:[&::-webkit-slider-thumb]:cursor-not-allowed';
-
 export function SettingsModal({
   onClose,
 }: SettingsModalProps): React.JSX.Element {
@@ -89,7 +81,7 @@ export function SettingsModal({
   const muteSE = useMuteSE();
   const muteBGM = useMuteBGM();
   const muteVoice = useMuteVoice();
-  const muteAll = useMuteAll();
+  const volumeAll = useVolumeAll();
 
   const [activeTab, setActiveTab] = useState<'visuals' | 'sounds'>('visuals');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
@@ -328,159 +320,61 @@ export function SettingsModal({
               onTouchMove={(e) => e.stopPropagation()}
               onTouchEnd={(e) => e.stopPropagation()}
             >
-              {/* Global Mute Toggle */}
-              <div className="flex justify-start items-center gap-3 py-1.5 px-3 rounded-lg border border-white/[0.04] bg-white/[0.02]">
-                <span className="text-sm lg:text-base font-bold text-[#fbbf24] w-[140px] lg:w-[180px] shrink-0 text-left">
-                  {t('settings.globalMute', 'Mute All')}
-                </span>
-                <div className="sound-row-controls">
-                  <button
-                    type="button"
-                    className={`inline-flex items-center justify-center w-7 h-7 lg:w-9 lg:h-9 border text-white cursor-pointer text-base lg:text-lg rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
-                      muteAll
-                        ? 'bg-red-500/[0.06] border-red-500/20'
-                        : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
-                    }`}
-                    onClick={() => updateClientSettings({ muteAll: !muteAll })}
-                  >
-                    {muteAll ? '🔇' : '🔊'}
-                  </button>
-                </div>
-              </div>
+              <VolumeSlider
+                label={t('settings.volumeAll', 'Master Volume')}
+                volume={volumeAll}
+                isMuted={volumeAll === 0}
+                disableSlider={false}
+                onMuteToggle={() =>
+                  updateClientSettings({
+                    volumeAll: volumeAll > 0 ? 0 : 1.0,
+                  })
+                }
+                onVolumeChange={(value) =>
+                  updateClientSettings({
+                    volumeAll: value,
+                  })
+                }
+                highlightLabel
+              />
 
-              {/* BGM Vol */}
-              <div
-                className={`flex justify-start items-center gap-3 py-1 px-1 transition-opacity duration-200 ${
-                  muteAll ? 'opacity-40 pointer-events-none' : ''
-                }`}
-              >
-                <div className="text-sm lg:text-base font-semibold text-[#e5e7eb] w-[140px] lg:w-[180px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-xs">
-                  {t('settings.volumeBGM', 'BGM Volume')}
-                </div>
-                <div className="flex items-center gap-2.5 flex-grow justify-start">
-                  <button
-                    type="button"
-                    className={`inline-flex items-center justify-center w-6.5 h-6.5 lg:w-8 lg:h-8 border text-white cursor-pointer text-sm lg:text-base rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
-                      muteBGM || muteAll
-                        ? 'bg-red-500/[0.06] border-red-500/20'
-                        : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
-                    }`}
-                    disabled={muteAll}
-                    onClick={() => updateClientSettings({ muteBGM: !muteBGM })}
-                  >
-                    {muteBGM || muteAll ? '🔇' : '🔊'}
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    disabled={muteAll || muteBGM}
-                    value={volumeBGM}
-                    onChange={(e) =>
-                      updateClientSettings({
-                        volumeBGM: parseFloat(e.target.value),
-                      })
-                    }
-                    className={VOLUME_SLIDER_CLASS}
-                  />
-                  <span className="text-sm lg:text-base font-bold w-10 lg:w-14 text-[#888] shrink-0 text-right">
-                    {muteBGM || muteAll
-                      ? '0%'
-                      : `${Math.round(volumeBGM * 100)}%`}
-                  </span>
-                </div>
-              </div>
+              <VolumeSlider
+                label={t('settings.volumeBGM', 'BGM Volume')}
+                volume={volumeBGM}
+                isMuted={muteBGM}
+                onMuteToggle={() => updateClientSettings({ muteBGM: !muteBGM })}
+                onVolumeChange={(value) =>
+                  updateClientSettings({
+                    volumeBGM: value,
+                  })
+                }
+              />
 
-              {/* SE Vol */}
-              <div
-                className={`flex justify-start items-center gap-3 py-1 px-1 transition-opacity duration-200 ${
-                  muteAll ? 'opacity-40 pointer-events-none' : ''
-                }`}
-              >
-                <div className="text-sm lg:text-base font-semibold text-[#e5e7eb] w-[140px] lg:w-[180px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-xs">
-                  {t('settings.volumeSE', 'Sound Effects')}
-                </div>
-                <div className="flex items-center gap-2.5 flex-grow justify-start">
-                  <button
-                    type="button"
-                    className={`inline-flex items-center justify-center w-6.5 h-6.5 lg:w-8 lg:h-8 border text-white cursor-pointer text-sm lg:text-base rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
-                      muteSE || muteAll
-                        ? 'bg-red-500/[0.06] border-red-500/20'
-                        : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
-                    }`}
-                    disabled={muteAll}
-                    onClick={() => updateClientSettings({ muteSE: !muteSE })}
-                  >
-                    {muteSE || muteAll ? '🔇' : '🔊'}
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    disabled={muteAll || muteSE}
-                    value={volumeSE}
-                    onChange={(e) =>
-                      updateClientSettings({
-                        volumeSE: parseFloat(e.target.value),
-                      })
-                    }
-                    className={VOLUME_SLIDER_CLASS}
-                  />
-                  <span className="text-sm lg:text-base font-bold w-10 lg:w-14 text-[#888] shrink-0 text-right">
-                    {muteSE || muteAll
-                      ? '0%'
-                      : `${Math.round(volumeSE * 100)}%`}
-                  </span>
-                </div>
-              </div>
+              <VolumeSlider
+                label={t('settings.volumeSE', 'Sound Effects')}
+                volume={volumeSE}
+                isMuted={muteSE}
+                onMuteToggle={() => updateClientSettings({ muteSE: !muteSE })}
+                onVolumeChange={(value) =>
+                  updateClientSettings({
+                    volumeSE: value,
+                  })
+                }
+              />
 
-              {/* Voice Vol */}
-              <div
-                className={`flex justify-start items-center gap-3 py-1 px-1 transition-opacity duration-200 ${
-                  muteAll ? 'opacity-40 pointer-events-none' : ''
-                }`}
-              >
-                <div className="text-sm lg:text-base font-semibold text-[#e5e7eb] w-[140px] lg:w-[180px] max-[480px]:w-[100px] shrink-0 text-left max-[480px]:text-xs">
-                  {t('settings.volumeVoice', 'Voice Volume')}
-                </div>
-                <div className="flex items-center gap-2.5 flex-grow justify-start">
-                  <button
-                    type="button"
-                    className={`inline-flex items-center justify-center w-6.5 h-6.5 border text-[#e5e7eb] cursor-pointer text-sm rounded transition-all duration-120 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
-                      muteVoice || muteAll
-                        ? 'bg-red-500/[0.06] border-red-500/20'
-                        : 'bg-white/[0.04] border-white/10 hover:not-disabled:border-[#fbbf24] hover:not-disabled:bg-[#fbbf24]/[0.08]'
-                    }`}
-                    disabled={muteAll}
-                    onClick={() =>
-                      updateClientSettings({ muteVoice: !muteVoice })
-                    }
-                  >
-                    {muteVoice || muteAll ? '🔇' : '🔊'}
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    disabled={muteAll || muteVoice}
-                    value={volumeVoice}
-                    onChange={(e) =>
-                      updateClientSettings({
-                        volumeVoice: parseFloat(e.target.value),
-                      })
-                    }
-                    className={VOLUME_SLIDER_CLASS}
-                  />
-                  <span className="text-sm lg:text-base font-bold w-10 lg:w-14 text-[#888] shrink-0 text-right">
-                    {muteVoice || muteAll
-                      ? '0%'
-                      : `${Math.round(volumeVoice * 100)}%`}
-                  </span>
-                </div>
-              </div>
+              <VolumeSlider
+                label={t('settings.volumeVoice', 'Voice Volume')}
+                volume={volumeVoice}
+                isMuted={muteVoice}
+                onMuteToggle={() =>
+                  updateClientSettings({ muteVoice: !muteVoice })
+                }
+                onVolumeChange={(value) =>
+                  updateClientSettings({
+                    volumeVoice: value,
+                  })
+                }
+              />
             </div>
           )}
         </div>

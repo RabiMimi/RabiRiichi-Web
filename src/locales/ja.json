@@ -548,7 +548,7 @@
     "characterSelector": "キャラクター",
     "voicelines": "ボイス試聴",
     "stickers": "スタンププレビュー",
-    "globalMute": "全ミュート",
+    "volumeAll": "主音量",
     "volumeSE": "効果音音量",
     "volumeBGM": "BGM音量",
     "volumeVoice": "ボイス音量",

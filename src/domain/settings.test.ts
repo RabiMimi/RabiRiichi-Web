@@ -33,7 +33,7 @@ describe('SoundsSettings', () => {
     expect(s.muteSE).toBe(false);
     expect(s.muteBGM).toBe(false);
     expect(s.muteVoice).toBe(false);
-    expect(s.muteAll).toBe(false);
+    expect(s.volumeAll).toBe(1.0);
   });
 
   it('should initialize with customized client settings', () => {
@@ -51,9 +51,9 @@ describe('SoundsSettings', () => {
 
   it('should update properties via update method', () => {
     const s = new SoundsSettings();
-    s.update({ volumeSE: 0.7, muteAll: true });
+    s.update({ volumeSE: 0.7, volumeAll: 0.5 });
     expect(s.volumeSE).toBe(0.7);
-    expect(s.muteAll).toBe(true);
+    expect(s.volumeAll).toBe(0.5);
     expect(s.volumeBGM).toBe(1.0); // unchanged
   });
 
@@ -65,7 +65,7 @@ describe('SoundsSettings', () => {
       muteSE: true,
       muteBGM: false,
       muteVoice: true,
-      muteAll: false,
+      volumeAll: 0.8,
     });
     expect(s.toJSON()).toEqual({
       volumeSE: 0.4,
@@ -74,7 +74,7 @@ describe('SoundsSettings', () => {
       muteSE: true,
       muteBGM: false,
       muteVoice: true,
-      muteAll: false,
+      volumeAll: 0.8,
     });
   });
 });

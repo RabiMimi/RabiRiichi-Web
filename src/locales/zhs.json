@@ -548,7 +548,7 @@
     "characterSelector": "角色",
     "voicelines": "语音试听",
     "stickers": "表情预览",
-    "globalMute": "全部静音",
+    "volumeAll": "主音量",
     "volumeSE": "音效音量",
     "volumeBGM": "背景音乐",
     "volumeVoice": "角色语音",

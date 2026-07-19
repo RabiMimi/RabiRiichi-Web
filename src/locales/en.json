@@ -548,7 +548,7 @@
     "characterSelector": "Character",
     "voicelines": "Voice Lines",
     "stickers": "Stickers Preview",
-    "globalMute": "Mute All",
+    "volumeAll": "Master Volume",
     "volumeSE": "Sound Effects Volume",
     "volumeBGM": "BGM Volume",
     "volumeVoice": "Voice Volume",

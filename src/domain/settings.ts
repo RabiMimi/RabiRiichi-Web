@@ -26,10 +26,10 @@ export class SoundsSettings {
   public volumeSE = 1.0;
   public volumeBGM = 1.0;
   public volumeVoice = 1.0;
+  public volumeAll = 1.0;
   public muteSE = false;
   public muteBGM = false;
   public muteVoice = false;
-  public muteAll = false;
 
   constructor(settings?: ClientSettings) {
     if (settings?.volumeSE !== undefined) this.volumeSE = settings.volumeSE;
@@ -39,7 +39,7 @@ export class SoundsSettings {
     if (settings?.muteSE !== undefined) this.muteSE = settings.muteSE;
     if (settings?.muteBGM !== undefined) this.muteBGM = settings.muteBGM;
     if (settings?.muteVoice !== undefined) this.muteVoice = settings.muteVoice;
-    if (settings?.muteAll !== undefined) this.muteAll = settings.muteAll;
+    if (settings?.volumeAll !== undefined) this.volumeAll = settings.volumeAll;
   }
 
   public update(
@@ -51,7 +51,7 @@ export class SoundsSettings {
       | 'muteSE'
       | 'muteBGM'
       | 'muteVoice'
-      | 'muteAll'
+      | 'volumeAll'
     >,
   ): void {
     if (patch.volumeSE !== undefined) this.volumeSE = patch.volumeSE;
@@ -60,7 +60,7 @@ export class SoundsSettings {
     if (patch.muteSE !== undefined) this.muteSE = patch.muteSE;
     if (patch.muteBGM !== undefined) this.muteBGM = patch.muteBGM;
     if (patch.muteVoice !== undefined) this.muteVoice = patch.muteVoice;
-    if (patch.muteAll !== undefined) this.muteAll = patch.muteAll;
+    if (patch.volumeAll !== undefined) this.volumeAll = patch.volumeAll;
   }
 
   public toJSON(): Omit<ClientSettings, 'animationSpeed' | 'characterId'> {
@@ -71,7 +71,7 @@ export class SoundsSettings {
       muteSE: this.muteSE,
       muteBGM: this.muteBGM,
       muteVoice: this.muteVoice,
-      muteAll: this.muteAll,
+      volumeAll: this.volumeAll,
     };
   }
 }

@@ -46,7 +46,7 @@ export interface RabiRiichiState {
   muteSE: boolean;
   muteBGM: boolean;
   muteVoice: boolean;
-  muteAll: boolean;
+  volumeAll: number;
   isSettingsOpen: boolean;
 }
 
@@ -93,7 +93,7 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.muteSE !== rabiriichi.sounds.muteSE ||
     lastSnapshot.muteBGM !== rabiriichi.sounds.muteBGM ||
     lastSnapshot.muteVoice !== rabiriichi.sounds.muteVoice ||
-    lastSnapshot.muteAll !== rabiriichi.sounds.muteAll ||
+    lastSnapshot.volumeAll !== rabiriichi.sounds.volumeAll ||
     lastSnapshot.isSettingsOpen !== rabiriichi.isSettingsOpen
   ) {
     lastSnapshot = {
@@ -131,7 +131,7 @@ function getSnapshot(): RabiRiichiState {
       muteSE: rabiriichi.sounds.muteSE,
       muteBGM: rabiriichi.sounds.muteBGM,
       muteVoice: rabiriichi.sounds.muteVoice,
-      muteAll: rabiriichi.sounds.muteAll,
+      volumeAll: rabiriichi.sounds.volumeAll,
       isSettingsOpen: rabiriichi.isSettingsOpen,
     };
   }
@@ -464,11 +464,11 @@ export function useMuteVoice(): boolean {
   );
 }
 
-export function useMuteAll(): boolean {
+export function useVolumeAll(): number {
   return useSyncExternalStore(
     subscribe,
-    () => rabiriichi.sounds.muteAll,
-    () => rabiriichi.sounds.muteAll,
+    () => rabiriichi.sounds.volumeAll,
+    () => rabiriichi.sounds.volumeAll,
   );
 }
 

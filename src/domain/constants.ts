@@ -144,5 +144,5 @@ export interface ClientSettings {
   muteSE?: boolean;
   muteBGM?: boolean;
   muteVoice?: boolean;
-  muteAll?: boolean;
+  volumeAll?: number;
 }

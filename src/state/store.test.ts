@@ -102,7 +102,7 @@ describe('RabiRiichi Store', () => {
       muteSE: false,
       muteBGM: false,
       muteVoice: false,
-      muteAll: false,
+      volumeAll: 1.0,
       isSettingsOpen: false,
     });
   });

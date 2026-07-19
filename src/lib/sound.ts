@@ -22,14 +22,15 @@ class SoundManager {
 
   private getEffectiveVolume(type: 'bgm' | 'se' | 'voice'): number {
     const sounds = this.volumeProvider?.();
-    if (!sounds || sounds.muteAll) return 0;
+    if (!sounds) return 0;
+    const globalVol = sounds.volumeAll;
     switch (type) {
       case 'bgm':
-        return sounds.muteBGM ? 0 : sounds.volumeBGM;
+        return (sounds.muteBGM ? 0 : sounds.volumeBGM) * globalVol;
       case 'se':
-        return sounds.muteSE ? 0 : sounds.volumeSE;
+        return (sounds.muteSE ? 0 : sounds.volumeSE) * globalVol;
       case 'voice':
-        return sounds.muteVoice ? 0 : sounds.volumeVoice;
+        return (sounds.muteVoice ? 0 : sounds.volumeVoice) * globalVol;
     }
   }
 
