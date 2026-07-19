@@ -512,9 +512,7 @@ export function RoomConfigPanel({
         ryuukyokuPoints: [ryuukyokuPoints0, ryuukyokuPoints1],
         validPointsRange: [0, upperPoints],
       },
-      initialTiles: getTileSet(tileSetPreset).map((tile) =>
-        tile.toByte(),
-      ),
+      initialTiles: getTileSet(tileSetPreset).map((tile) => tile.toByte()),
       allowedYakus: buildAllowedYakusPayload(allowedYakus),
     });
   };

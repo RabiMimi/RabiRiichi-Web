@@ -87,7 +87,7 @@ export interface CustomTileSet {
 export function loadCustomTileSets(): CustomTileSet[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_TILE_SETS);
-    return stored ? JSON.parse(stored) as CustomTileSet[] : [];
+    return stored ? (JSON.parse(stored) as CustomTileSet[]) : [];
   } catch {
     return [];
   }
@@ -106,7 +106,9 @@ export function getTileSet(presetName: string): Tile[] {
     return TILE_SET_PRESETS[presetName as keyof typeof TILE_SET_PRESETS]();
   }
   const customSets = loadCustomTileSets();
-  const found = customSets.find((s) => s.id === presetName || s.name === presetName);
+  const found = customSets.find(
+    (s) => s.id === presetName || s.name === presetName,
+  );
   if (found) {
     return found.tiles.map((t) => Tile.fromString(t));
   }

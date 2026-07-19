@@ -57,7 +57,9 @@ export function GameSettingsTab({
 }: GameSettingsTabProps) {
   const { t } = useTranslation();
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
-  const [customSets, setCustomSets] = useState<CustomTileSet[]>(() => loadCustomTileSets());
+  const [customSets, setCustomSets] = useState<CustomTileSet[]>(() =>
+    loadCustomTileSets(),
+  );
 
   return (
     <div className="grid grid-cols-1 min-[480px]:grid-cols-2 min-[768px]:grid-cols-3 gap-x-4 gap-y-2.5 w-full box-border">
