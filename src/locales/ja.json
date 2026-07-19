@@ -73,7 +73,29 @@
     "regular": "通常 (136枚)",
     "sanma": "三人麻雀 (108枚)",
     "twoSets": "2セット (272枚)",
-    "onlySZ": "索子と字牌のみ (64枚)"
+    "onlySZ": "索子と字牌のみ (64枚)",
+    "tenchiSouzou": "天地創造 (136枚)",
+    "customize": "カスタマイズ..."
+  },
+  "customTileSet": {
+    "title": "カスタム使用牌設定",
+    "listTitle": "保存されたセット",
+    "createNew": "新規作成",
+    "edit": "編集",
+    "delete": "削除",
+    "deleteConfirm": "このカスタム使用牌セットを削除してもよろしいですか？",
+    "noSets": "カスタムセットはありません",
+    "editorTitleCreate": "カスタムセット作成",
+    "editorTitleEdit": "カスタムセット編集",
+    "nameLabel": "セット名",
+    "namePlaceholder": "セット名を入力してください",
+    "totalCount": "合計枚数: {{count}} 枚",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "manzu": "萬子 (Characters)",
+    "pinzu": "筒子 (Dots)",
+    "souzu": "索子 (Bamboos)",
+    "zihai": "字牌 (Honors)"
   },
   "yakuGroup": {
     "1han": "1飜",

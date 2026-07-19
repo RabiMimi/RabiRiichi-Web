@@ -73,7 +73,29 @@
     "regular": "普通 (136张)",
     "sanma": "三人麻将 (108张)",
     "twoSets": "两副牌 (272张)",
-    "onlySZ": "仅条子与字牌 (64张)"
+    "onlySZ": "仅条子与字牌 (64张)",
+    "tenchiSouzou": "天地创造 (136张)",
+    "customize": "自定义..."
+  },
+  "customTileSet": {
+    "title": "自定义牌张配置",
+    "listTitle": "已保存的套组",
+    "createNew": "新建套组",
+    "edit": "编辑",
+    "delete": "删除",
+    "deleteConfirm": "确认要删除此自定义套组吗？",
+    "noSets": "暂无自定义套组",
+    "editorTitleCreate": "创建自定义套组",
+    "editorTitleEdit": "编辑自定义套组",
+    "nameLabel": "套组名称",
+    "namePlaceholder": "输入套组名称",
+    "totalCount": "总牌张数：{{count}} 张",
+    "save": "保存",
+    "cancel": "取消",
+    "manzu": "万子 (Characters)",
+    "pinzu": "筒子 (Dots)",
+    "souzu": "条子 (Bamboos)",
+    "zihai": "字牌 (Honors)"
   },
   "yakuGroup": {
     "1han": "1番",

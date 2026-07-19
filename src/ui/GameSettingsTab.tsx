@@ -1,9 +1,15 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   DEFAULT_ACTION_TIMEOUT,
   DEFAULT_NEXT_ROUND_ACK_TIMEOUT,
 } from '../domain/constants';
-import type { TileSetPresetName } from '../domain/tilesets';
+import {
+  type TileSetPresetName,
+  loadCustomTileSets,
+  type CustomTileSet,
+} from '../domain/tilesets';
+import { CustomTileSetModal } from './CustomTileSetModal';
 import { FORM } from './styles';
 
 interface GameSettingsTabProps {
@@ -50,6 +56,9 @@ export function GameSettingsTab({
   setTileSetPreset,
 }: GameSettingsTabProps) {
   const { t } = useTranslation();
+  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [customSets, setCustomSets] = useState<CustomTileSet[]>(() => loadCustomTileSets());
+
   return (
     <div className="grid grid-cols-1 min-[480px]:grid-cols-2 min-[768px]:grid-cols-3 gap-x-4 gap-y-2.5 w-full box-border">
       <div className={FORM.groupInline}>
@@ -132,6 +141,7 @@ export function GameSettingsTab({
           <span className={FORM.fieldError}>{timeoutError}</span>
         )}
       </div>
+
       <div className={FORM.groupInlineWrapper}>
         <div className={FORM.groupInline}>
           <label htmlFor="next-round-ack-timeout" className={FORM.labelInline}>
@@ -165,9 +175,14 @@ export function GameSettingsTab({
         <select
           id="tile-set"
           value={tileSetPreset}
-          onChange={(e) =>
-            setTileSetPreset(e.target.value as TileSetPresetName)
-          }
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === '__CUSTOMIZE__') {
+              setShowCustomizeModal(true);
+            } else {
+              setTileSetPreset(val);
+            }
+          }}
           disabled={isLoading}
           className={FORM.inputInline}
         >
@@ -175,7 +190,28 @@ export function GameSettingsTab({
           <option value="Sanma">{t('tileSetOpt.sanma')}</option>
           <option value="TwoSets">{t('tileSetOpt.twoSets')}</option>
           <option value="OnlySZ">{t('tileSetOpt.onlySZ')}</option>
+          <option value="TenchiSouzou">{t('tileSetOpt.tenchiSouzou')}</option>
+          {customSets.length > 0 && (
+            <optgroup label={t('customTileSet.title')}>
+              {customSets.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          <option value="__CUSTOMIZE__">{t('tileSetOpt.customize')}</option>
         </select>
+
+        {showCustomizeModal && (
+          <CustomTileSetModal
+            onClose={() => setShowCustomizeModal(false)}
+            onSaved={(newId) => {
+              setCustomSets(loadCustomTileSets());
+              setTileSetPreset(newId);
+            }}
+          />
+        )}
       </div>
     </div>
   );

@@ -73,7 +73,29 @@
     "regular": "Regular (136 tiles)",
     "sanma": "Sanma (108 tiles)",
     "twoSets": "2 Sets (272 tiles)",
-    "onlySZ": "Only Sou & Honor (64 tiles)"
+    "onlySZ": "Only Sou & Honor (64 tiles)",
+    "tenchiSouzou": "Tenchi Souzou (136 tiles)",
+    "customize": "Customize..."
+  },
+  "customTileSet": {
+    "title": "Custom Tile Sets",
+    "listTitle": "Saved Sets",
+    "createNew": "Create New Set",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete this custom tile set?",
+    "noSets": "No custom tile sets",
+    "editorTitleCreate": "Create Custom Tile Set",
+    "editorTitleEdit": "Edit Custom Tile Set",
+    "nameLabel": "Set Name",
+    "namePlaceholder": "Enter set name",
+    "totalCount": "Total: {{count}} tiles",
+    "save": "Save",
+    "cancel": "Cancel",
+    "manzu": "Manzu (Characters)",
+    "pinzu": "Pinzu (Dots)",
+    "souzu": "Souzu (Bamboos)",
+    "zihai": "Zihai (Honors)"
   },
   "yakuGroup": {
     "1han": "1 Han",
