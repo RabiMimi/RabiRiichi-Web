@@ -210,6 +210,38 @@
   scrollbar-width: none; /* Firefox */
 }
 
+/* Call prompt entrance: scale up from center with a slight bounce */
+@keyframes call-prompt-entrance {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-call-prompt-entrance {
+  animation: call-prompt-entrance 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Call prompt float: gentle vertical bob */
+@keyframes call-prompt-float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-call-prompt-float {
+  animation: call-prompt-float 2.5s ease-in-out infinite;
+}
+
+/* Call prompt exit: fade + scale down */
+@keyframes call-prompt-exit {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.6); opacity: 0; }
+}
+
+.animate-call-prompt-exit {
+  animation: call-prompt-exit 0.3s ease-in forwards;
+}
+
 @keyframes chat-msg-fade-in {
   from {
     opacity: 0;

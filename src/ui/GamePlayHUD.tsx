@@ -17,6 +17,7 @@ import {
   useAutoNuki,
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
+import { CallPrompt } from './CallPrompt';
 import { Button } from './Button';
 import { useHoverOrTouchHold } from './useHoverOrTouchHold';
 import { rabiriichi } from '../net/client';
@@ -339,6 +340,9 @@ export function GamePlayHUD(): React.JSX.Element | null {
         actionTimeout={actionTimeout}
         isVisible={Boolean(currentInquiry && actionTimeout > 0)}
       />
+
+      {/* Call flash at player positions */}
+      <CallPrompt />
 
       {/* 2D Action HUD overlay buttons */}
       <ActionHUD />
