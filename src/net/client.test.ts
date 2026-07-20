@@ -120,7 +120,7 @@ describe('RabiRiichiClient', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser', status: 1 },
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
       },
     });
 
@@ -167,7 +167,12 @@ describe('RabiRiichiClient', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser', status: 1 },
+        userInfo: {
+          id: 123,
+          userData: { nickname: 'TestUser' },
+          status: 1,
+          accessToken: 'updated-token',
+        },
       },
     });
 
@@ -201,7 +206,12 @@ describe('RabiRiichiClient', () => {
       STORAGE_KEY_SERVER_SETTINGS,
       JSON.stringify({ lastUrl: 'ws://localhost:1234' }),
     );
-    expect(setItemMock).toHaveBeenCalledWith('rabiriichi_token', 'my-token');
+    // Server issued a new token; the client must persist the updated token.
+    expect(setItemMock).toHaveBeenCalledWith(
+      'rabiriichi_token',
+      'updated-token',
+    );
+    expect(client.accessToken).toBe('updated-token');
 
     vi.useRealTimers();
   });
@@ -268,7 +278,10 @@ describe('RabiRiichiClient', () => {
     expect(mockWS1.send).toHaveBeenCalledTimes(1);
     const registerBytes = mockWS1.send.mock.calls[0]![0];
     const registerMsg = ClientMessageDto.decode(new Uint8Array(registerBytes));
-    expect(registerMsg.clientRequest?.createUser?.nickname).toBe('NewPlayer');
+    expect(registerMsg.clientRequest?.createUser?.userData?.nickname).toBe(
+      'NewPlayer',
+    );
+    expect(registerMsg.clientRequest?.createUser?.username).toBe('NewPlayer');
 
     // Respond to createUser
     sendServerMsg(mockWS1, {
@@ -301,7 +314,11 @@ describe('RabiRiichiClient', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 456, nickname: 'NewPlayer', status: 1 },
+        userInfo: {
+          id: 456,
+          userData: { nickname: 'NewPlayer' },
+          status: 1,
+        },
       },
     });
 
@@ -347,7 +364,9 @@ describe('RabiRiichiClient', () => {
     sendServerMsg(mockWS, {
       id: -1,
       respondTo: signInMsg.id,
-      serverResp: { userInfo: { id: 123, nickname: 'TestUser', status: 1 } },
+      serverResp: {
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
+      },
     });
     await vi.advanceTimersByTimeAsync(0);
     sendServerMsg(mockWS, {
@@ -381,7 +400,11 @@ describe('RabiRiichiClient', () => {
       id: 11,
       respondTo: reqMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUserUpdated', status: 2 },
+        userInfo: {
+          id: 123,
+          userData: { nickname: 'TestUserUpdated' },
+          status: 2,
+        },
       },
     });
 
@@ -443,7 +466,7 @@ describe('RabiRiichiClient', () => {
       serverResp: {
         userInfo: {
           id: 123,
-          nickname: 'TestUser',
+          userData: { nickname: 'TestUser' },
           status: UserStatus.USER_STATUS_IN_ROOM,
         },
       },

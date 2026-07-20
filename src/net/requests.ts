@@ -40,7 +40,8 @@ export function createUser(
     {
       clientRequest: {
         createUser: {
-          nickname,
+          username: nickname,
+          userData: { nickname },
         },
       },
     },

@@ -10,6 +10,7 @@ import { WS_CONNECT_TIMEOUT } from '../transport/constants';
 import {
   createUser,
   getUserInfo,
+  getInfo,
   createRoom,
   joinRoom,
   addAi,
@@ -344,10 +345,7 @@ export class RabiRiichiClient {
       // Bound the open+handshake time. Without this, an unreachable server
       // leaves the browser socket in CONNECTING for minutes and the UI stuck
       // on "connecting". On timeout we close the doomed socket and reject.
-      await waitTimeout(
-        ws.handShake(this.updateUserInfo.bind(this)),
-        WS_CONNECT_TIMEOUT,
-      );
+      await waitTimeout(this.handshakeAndVerify(ws), WS_CONNECT_TIMEOUT);
       if (this._ws !== ws) {
         // This connection was superseded by a newer one while handshaking
         ws.close();
@@ -374,6 +372,17 @@ export class RabiRiichiClient {
         this._ws = null;
       }
       throw e;
+    }
+  }
+
+  // Performs the WebSocket handshake and, for authenticated connections, checks
+  // the server info to verify version compatibility before the connection is
+  // considered established. This ensures the server is reachable and compatible
+  // every time we (re)connect, including hard reconnection from a stored token.
+  private async handshakeAndVerify(ws: RabiSocket): Promise<void> {
+    await ws.handShake(this.updateUserInfo.bind(this));
+    if (ws.accessToken) {
+      await getInfo(ws);
     }
   }
 
@@ -420,9 +429,12 @@ export class RabiRiichiClient {
   }
 
   private updateUserInfo(userInfo: IUserInfoResponse): void {
+    if (userInfo.accessToken) {
+      this.accessToken = userInfo.accessToken;
+    }
     this.self = {
       id: userInfo.id ?? -1,
-      nickname: userInfo.nickname ?? '',
+      nickname: userInfo.userData?.nickname ?? '',
       status: userInfo.status ?? 0,
       gameState: null,
       aiType: AiType.AI_TYPE_NONE,

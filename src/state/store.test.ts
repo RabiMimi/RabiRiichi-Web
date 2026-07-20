@@ -287,7 +287,7 @@ describe('RabiRiichi Store', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser', status: 1 },
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
       },
     });
     await vi.advanceTimersByTimeAsync(0);

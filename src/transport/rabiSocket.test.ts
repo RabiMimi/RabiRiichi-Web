@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { RabiSocket } from './rabiSocket';
 import { ClientMessageDto, ServerMessageDto } from '../proto';
 import { CLIENT_VERSION, MIN_SERVER_VERSION } from './constants';
-import type { IServerMessageDto } from '../proto';
+import type { IServerMessageDto, IUserInfoResponse } from '../proto';
 import { MockWebSocket } from './mockWebSocket';
 
 describe('RabiSocket', () => {
@@ -78,7 +78,7 @@ describe('RabiSocket', () => {
   it('should complete handshake and start heartbeat', async () => {
     vi.useFakeTimers();
     const socket = new RabiSocket('ws://localhost:1234', 'my-token');
-    const onUserInfo = vi.fn();
+    const onUserInfo = vi.fn<(info: IUserInfoResponse) => void>();
     const handshakePromise = socket.handShake(onUserInfo);
 
     // Advance to trigger socket open
@@ -99,7 +99,7 @@ describe('RabiSocket', () => {
       id: -1,
       respondTo: signInId,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser' },
+        userInfo: { id: 123, userData: { nickname: 'TestUser' } },
       },
     }).finish();
     mockWS.triggerMessage(
@@ -111,9 +111,10 @@ describe('RabiSocket', () => {
 
     // Wait for promise microtasks
     await vi.advanceTimersByTimeAsync(0);
-    expect(onUserInfo).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 123, nickname: 'TestUser' }),
-    );
+    expect(onUserInfo).toHaveBeenCalledTimes(1);
+    const receivedUserInfo = onUserInfo.mock.calls[0]![0];
+    expect(receivedUserInfo.id).toBe(123);
+    expect(receivedUserInfo.userData?.nickname).toBe('TestUser');
 
     // Simulate server sending version check
     const versionCheck = ServerMessageDto.encode({
