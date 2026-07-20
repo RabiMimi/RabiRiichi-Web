@@ -29,6 +29,8 @@ import {
 } from '../domain/constants';
 
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
+import type { KeyValueStore } from '../platform/storage';
+import type { WebSocketFactory } from '../platform/socket';
 import type { RoomModel } from '../domain/model';
 import { createEmptyTileRegistry } from '../domain/tileRegistry';
 import { mapInquiry } from '../domain/inquiry';
@@ -1255,6 +1257,130 @@ describe('RabiRiichiClient', () => {
         mockLocalStorage[STORAGE_KEY_CLIENT_SETTINGS] ?? '{}',
       ) as ClientSettings;
       expect(saved.animationSpeed).toBe(2.5);
+    });
+  });
+
+  // Proves the client is host-agnostic: given an injected platform (custom
+  // socket factory, in-memory store, no-op sound, custom crypto) it never
+  // touches the browser globals stubbed in beforeEach. This is the seam a CLI
+  // host plugs into.
+  describe('Platform injection (CLI-ready)', () => {
+    function memoryStore(): {
+      store: KeyValueStore;
+      backing: Record<string, string>;
+    } {
+      const backing: Record<string, string> = {};
+      return {
+        backing,
+        store: {
+          getItem: (k) => backing[k] ?? null,
+          setItem: (k, v) => {
+            backing[k] = v;
+          },
+          removeItem: (k) => {
+            delete backing[k];
+          },
+        },
+      };
+    }
+
+    it('routes persistence through an injected store, not localStorage', () => {
+      const { store, backing } = memoryStore();
+      const client = new RabiRiichiClient({ store });
+
+      client.setAnimationSpeed(3);
+
+      // Persisted to the injected store...
+      expect(
+        JSON.parse(
+          backing[STORAGE_KEY_CLIENT_SETTINGS] ?? '{}',
+        ) as ClientSettings,
+      ).toEqual({ animationSpeed: 3 });
+      // ...and NOT to the (stubbed) browser localStorage.
+      expect(mockLocalStorage[STORAGE_KEY_CLIENT_SETTINGS]).toBeUndefined();
+      expect(setItemMock).not.toHaveBeenCalled();
+    });
+
+    it('connects via an injected socket factory and injected crypto', async () => {
+      vi.useFakeTimers();
+      const { store, backing } = memoryStore();
+      const created: MockWebSocket[] = [];
+      const sha256 = vi.fn().mockResolvedValue('deadbeef');
+
+      // MockWebSocket mimics the WebSocket surface; its send() mock signature
+      // is narrower than the interface's, so cast the factory.
+      const socketFactory = ((url: string | URL) => {
+        const ws = new MockWebSocket(String(url));
+        created.push(ws);
+        return ws;
+      }) as unknown as WebSocketFactory;
+
+      const client = new RabiRiichiClient({
+        store,
+        crypto: { sha256 },
+        socketFactory,
+      });
+
+      client.wsurl = 'ws://cli-host:5150';
+      const registerPromise = client.registerUser('CliPlayer');
+
+      await vi.advanceTimersByTimeAsync(15);
+      expect(created.length).toBe(1);
+      const ws = created[0]!;
+      respondToGetInfo(ws);
+      await vi.advanceTimersByTimeAsync(0);
+
+      // The password hash used the injected crypto provider.
+      expect(sha256).toHaveBeenCalled();
+
+      const registerBytes = ws.send.mock.calls[1]![0];
+      const registerMsg = ClientMessageDto.decode(
+        new Uint8Array(registerBytes),
+      );
+      expect(registerMsg.clientRequest?.createUser?.passwordHash).toBe(
+        'deadbeef',
+      );
+
+      sendServerMsg(ws, {
+        id: 1,
+        respondTo: registerMsg.id,
+        serverResp: {
+          userInfo: {
+            id: 7,
+            userData: { nickname: 'CliPlayer' },
+            accessToken: 'cli-token',
+          },
+        },
+      });
+      await vi.advanceTimersByTimeAsync(15);
+
+      // Token persisted to the injected store, not the browser stub.
+      expect(backing.rabiriichi_token).toBe('cli-token');
+      expect(mockLocalStorage.rabiriichi_token).toBeUndefined();
+
+      client.close();
+      await registerPromise.catch(() => undefined);
+      vi.useRealTimers();
+    });
+
+    it('loadStoredCredentials reads from the injected store', () => {
+      const { store, backing } = memoryStore();
+      backing[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+        lastUrl: 'ws://cli-host:5150',
+      });
+      backing.rabiriichi_token = 'cli-token';
+
+      const client = new RabiRiichiClient({ store });
+      expect(client.loadStoredCredentials()).toEqual({
+        url: 'ws://cli-host:5150',
+        token: 'cli-token',
+      });
+    });
+
+    it('returns null from loadStoredCredentials when nothing is stored', () => {
+      const { store } = memoryStore();
+      const client = new RabiRiichiClient({ store });
+      expect(client.loadStoredCredentials()).toBeNull();
     });
   });
 });

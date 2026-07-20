@@ -11,11 +11,19 @@ import { ClientMessageWrapper } from './messageWrapper';
 import { CLIENT_NAME, WS_HEARTBEAT_INTERVAL } from './constants';
 import { Version, isServerSupported } from './version';
 import i18n from '../lib/i18n';
+import {
+  type RabiWebSocket,
+  type WebSocketFactory,
+  browserWebSocketFactory,
+  SOCKET_OPEN,
+  SOCKET_CLOSING,
+  SOCKET_CLOSED,
+} from '../platform/socket';
 
 export class RabiSocket {
   private readonly serverLog = new Logger('Server');
   private readonly clientLog = new Logger('Client');
-  public readonly ws: WebSocket;
+  public readonly ws: RabiWebSocket;
 
   public readonly waitOpen: Promise<void>;
   public readonly waitClose: Promise<void>;
@@ -33,12 +41,20 @@ export class RabiSocket {
     return this._ping;
   }
 
+  /**
+   * @param url Server WebSocket URL.
+   * @param accessToken Optional JWT for the authenticated `/ws/connect` socket.
+   * @param socketFactory Creates the underlying socket. Defaults to the browser
+   *   global `WebSocket`; non-browser hosts (e.g. a Node CLI backed by `ws`)
+   *   inject their own.
+   */
   public constructor(
     url: string | URL,
     accessToken: string | undefined = undefined,
+    socketFactory: WebSocketFactory = browserWebSocketFactory,
   ) {
     this.accessToken = accessToken;
-    this.ws = new WebSocket(url);
+    this.ws = socketFactory(url);
     this.ws.binaryType = 'arraybuffer';
 
     this.waitOpen = new Promise((resolve, reject) => {
@@ -89,13 +105,13 @@ export class RabiSocket {
 
   public get isClosing(): boolean {
     return (
-      this.ws.readyState === WebSocket.CLOSING ||
-      this.ws.readyState === WebSocket.CLOSED
+      this.ws.readyState === SOCKET_CLOSING ||
+      this.ws.readyState === SOCKET_CLOSED
     );
   }
 
   public get isConnected(): boolean {
-    return this.ws.readyState === WebSocket.OPEN;
+    return this.ws.readyState === SOCKET_OPEN;
   }
 
   public send(
@@ -119,7 +135,7 @@ export class RabiSocket {
     try {
       const bytes = ClientMessageDto.encode(wrapper.msg).finish();
       this.clientLog.debug('Send', wrapper.msg);
-      this.ws.send(bytes as unknown as ArrayBufferView<ArrayBuffer>);
+      this.ws.send(bytes);
     } catch (e) {
       this.clientLog.error('Failed to encode/send message', e);
       wrapper.rejectResponse(e);
@@ -298,8 +314,15 @@ export class RabiSocket {
     });
   }
 
-  private handleMessage(ev: MessageEvent): void {
-    const data = ev.data as ArrayBuffer;
+  private handleMessage(ev: Event): void {
+    // Typed as the generic Event so the handler is assignable to the
+    // platform-agnostic EventListener; the binary payload lives on `.data`
+    // for both browser MessageEvent and the `ws` package's message event.
+    const data = (ev as { data?: unknown }).data;
+    if (!(data instanceof ArrayBuffer)) {
+      this.serverLog.error('Received non-binary message', data);
+      return;
+    }
     let dto: IServerMessageDto;
     try {
       dto = ServerMessageDto.decode(new Uint8Array(data));
@@ -311,7 +334,7 @@ export class RabiSocket {
     this.msgs.onReceive(dto);
   }
 
-  private handleClose(_ev: CloseEvent): void {
+  private handleClose(): void {
     this.clientLog.info('Connection closed');
     this.msgs.onClose();
   }

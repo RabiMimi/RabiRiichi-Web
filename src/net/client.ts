@@ -4,10 +4,17 @@ import {
   AuthError,
   RabiEvent,
   waitTimeout,
-  sha256,
 } from '../lib';
 import { RabiSocket } from '../transport/rabiSocket';
 import { WS_CONNECT_TIMEOUT } from '../transport/constants';
+import {
+  type ClientPlatform,
+  type GameSoundPlayer,
+  createClientPlatform,
+} from '../platform';
+import { getPublicWSUrl, getUserWSUrl } from './wsUrl';
+import { CredentialStore } from './credentialStore';
+import { soundEffectForEvent } from './eventSound';
 import {
   createUser,
   getUserInfo,
@@ -38,9 +45,6 @@ import {
   DEFAULT_ACTION_TIMEOUT,
   INQUIRY_DEFAULT_INDEX,
   RESULT_ANIMATION_DURATION_MS,
-  STORAGE_KEY_SERVER_SETTINGS,
-  STORAGE_KEY_CLIENT_SETTINGS,
-  type ServerSettings,
   type ClientSettings,
 } from '../domain/constants';
 import { VisualsSettings, SoundsSettings } from '../domain/settings';
@@ -61,45 +65,7 @@ import {
   updateRoom as sendUpdateRoom,
   respondInquiry as sendRespondInquiry,
 } from './messages';
-import { soundManager } from '../lib/sound';
 import { SOUND_EFFECTS } from '../lib/soundEffects';
-
-const TOKEN_STORE_KEY = 'rabiriichi_token';
-
-function getPublicWSUrl(baseUrl: string): string {
-  // Support relative URLs or ensure proper absolute URL
-  try {
-    return new URL('/ws/public', baseUrl).href;
-  } catch {
-    // If baseUrl is not absolute, try to construct it assuming ws:// or wss://
-    if (!baseUrl.startsWith('ws://') && !baseUrl.startsWith('wss://')) {
-      baseUrl = 'ws://' + baseUrl;
-    }
-    return new URL('/ws/public', baseUrl).href;
-  }
-}
-
-function getUserWSUrl(baseUrl: string): string {
-  try {
-    return new URL('/ws/connect', baseUrl).href;
-  } catch {
-    if (!baseUrl.startsWith('ws://') && !baseUrl.startsWith('wss://')) {
-      baseUrl = 'ws://' + baseUrl;
-    }
-    return new URL('/ws/connect', baseUrl).href;
-  }
-}
-
-// Parses persisted client settings from a raw localStorage string. Returns an
-// empty object for missing/corrupt data so callers can merge safely.
-function parseClientSettings(raw: string | null): ClientSettings {
-  if (!raw) return {};
-  const parsed: unknown = JSON.parse(raw);
-  if (typeof parsed !== 'object' || parsed === null) return {};
-  // ClientSettings has only optional fields, so any object satisfies it; unknown
-  // extra keys are harmless.
-  return parsed;
-}
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -121,6 +87,8 @@ export interface ActiveInquiry {
 export class RabiRiichiClient {
   private readonly logger = new Logger('RabiRiichiClient');
   private readonly messagePump = new MessagePump();
+  private readonly platform: ClientPlatform;
+  private readonly credentials: CredentialStore;
 
   public wsurl: string | null = null;
   public accessToken: string | null = null;
@@ -231,30 +199,27 @@ export class RabiRiichiClient {
     }
     this.visuals.update(patch);
     this.sounds.update(patch);
-    soundManager.updateAllVolumes();
+    this.platform.sound.updateAllVolumes();
 
     this.onChange.emit();
 
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY_CLIENT_SETTINGS);
-        const settings = parseClientSettings(stored);
-        Object.assign(settings, patch);
-        localStorage.setItem(
-          STORAGE_KEY_CLIENT_SETTINGS,
-          JSON.stringify(settings),
-        );
-      } catch (err) {
-        this.logger.error(
-          'Failed to save client settings to localStorage:',
-          err,
-        );
-      }
-    }
+    this.credentials.mergeClientSettings(patch);
   }
 
   public setAnimationSpeed(speed: number): void {
     this.updateClientSettings({ animationSpeed: speed });
+  }
+
+  /**
+   * Swaps the sound player after construction. The web composition root uses
+   * this to install the `howler`-backed player onto the shared singleton
+   * (which defaults to no audio), keeping the audio engine out of the core.
+   * Re-registers the volume provider so the new player honors current settings.
+   */
+  public setSoundPlayer(sound: GameSoundPlayer): void {
+    this.platform.sound = sound;
+    sound.setVolumeProvider(() => this.sounds);
+    sound.updateAllVolumes();
   }
 
   // Backdoor for replay and testing helpers (e.g. replay driver, test mocks)
@@ -297,29 +262,32 @@ export class RabiRiichiClient {
     },
   };
 
-  public constructor() {
+  /**
+   * @param platform Host capabilities (socket, storage, sound, crypto). Omit to
+   *   use the browser defaults (global WebSocket + localStorage + Web Crypto,
+   *   no audio); web callers wanting sound pass a real sound player. A CLI host
+   *   injects Node-backed implementations.
+   */
+  public constructor(platform?: Partial<ClientPlatform>) {
+    this.platform = createClientPlatform(platform);
+    this.credentials = new CredentialStore(this.platform.store);
+
     this.messagePump.subscribeRoomState(this.handleRoomState.bind(this));
     this.messagePump.subscribeGameEvent(this.handleGameEvent.bind(this));
     this.messagePump.subscribeInquiry(this.handleInquiry.bind(this));
     this.messagePump.subscribeChatMessage(this.handleChatMessage.bind(this));
 
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY_CLIENT_SETTINGS);
-        const settings = parseClientSettings(stored);
-        this.visuals = new VisualsSettings(settings);
-        this.sounds = new SoundsSettings(settings);
-        if (typeof settings.animationSpeed === 'number') {
-          this.animationSpeed = settings.animationSpeed;
-        }
-      } catch (err) {
-        this.logger.error(
-          'Failed to load client settings from localStorage:',
-          err,
-        );
+    try {
+      const settings = this.credentials.loadClientSettings();
+      this.visuals = new VisualsSettings(settings);
+      this.sounds = new SoundsSettings(settings);
+      if (typeof settings.animationSpeed === 'number') {
+        this.animationSpeed = settings.animationSpeed;
       }
+    } catch (err) {
+      this.logger.error('Failed to load client settings:', err);
     }
-    soundManager.setVolumeProvider(() => this.sounds);
+    this.platform.sound.setVolumeProvider(() => this.sounds);
   }
 
   public showStickerLocally(senderId: number, sticker: string): void {
@@ -457,22 +425,11 @@ export class RabiRiichiClient {
   }
 
   private storeCredentials(): void {
-    if (typeof localStorage !== 'undefined') {
-      if (this.wsurl) {
-        try {
-          const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
-          const settings = stored ? (JSON.parse(stored) as ServerSettings) : {};
-          settings.lastUrl = this.wsurl;
-          localStorage.setItem(
-            STORAGE_KEY_SERVER_SETTINGS,
-            JSON.stringify(settings),
-          );
-        } catch {
-          // ignore
-        }
-      }
-      if (this.accessToken)
-        localStorage.setItem(TOKEN_STORE_KEY, this.accessToken);
+    if (this.wsurl) {
+      this.credentials.saveLastUrl(this.wsurl);
+    }
+    if (this.accessToken) {
+      this.credentials.saveToken(this.accessToken);
     }
   }
 
@@ -493,8 +450,16 @@ export class RabiRiichiClient {
     }
     this.setConnectionStatus('connecting');
     const ws = this.accessToken
-      ? new RabiSocket(getUserWSUrl(this.wsurl), this.accessToken)
-      : new RabiSocket(getPublicWSUrl(this.wsurl));
+      ? new RabiSocket(
+          getUserWSUrl(this.wsurl),
+          this.accessToken,
+          this.platform.socketFactory,
+        )
+      : new RabiSocket(
+          getPublicWSUrl(this.wsurl),
+          undefined,
+          this.platform.socketFactory,
+        );
     this._ws = ws;
 
     try {
@@ -613,7 +578,7 @@ export class RabiRiichiClient {
     }
     if (!this.room?.info) {
       this.clearTimer();
-      soundManager.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
+      this.platform.sound.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
       this.hasPlayedActionSequenceSound = false;
     }
     this.logger.info(`Room state updated: ${this.room?.id}`);
@@ -721,14 +686,9 @@ export class RabiRiichiClient {
   }
 
   private playGameEventSound(gameEvent: IEventMsg): void {
-    if (gameEvent.discardTileEvent) {
-      soundManager.playEffect(SOUND_EFFECTS.tile.discard);
-    } else if (gameEvent.agariEvent) {
-      soundManager.playEffect(SOUND_EFFECTS.game.agari);
-    } else if (gameEvent.revealDoraEvent) {
-      soundManager.playEffect(SOUND_EFFECTS.game.doraReveal);
-    } else if (gameEvent.setRiichiEvent) {
-      soundManager.playEffect(SOUND_EFFECTS.game.riichi);
+    const effect = soundEffectForEvent(gameEvent);
+    if (effect) {
+      this.platform.sound.playEffect(effect);
     }
   }
 
@@ -736,7 +696,7 @@ export class RabiRiichiClient {
     if (!gameEvent.dealHandEvent || !this.isDealingHand) return;
 
     this.isDealingHand = false;
-    soundManager.playEffect(SOUND_EFFECTS.game.deal);
+    this.platform.sound.playEffect(SOUND_EFFECTS.game.deal);
   }
 
   private getEventDelay(eventMsg: IEventMsg): number {
@@ -813,10 +773,10 @@ export class RabiRiichiClient {
     );
     if (!this.hasPlayedActionSequenceSound) {
       if (hasCallAction) {
-        soundManager.playEffect(SOUND_EFFECTS.game.call);
+        this.platform.sound.playEffect(SOUND_EFFECTS.game.call);
         this.hasPlayedActionSequenceSound = true;
       } else if (isTurnInquiry) {
-        soundManager.playEffect(SOUND_EFFECTS.game.turn);
+        this.platform.sound.playEffect(SOUND_EFFECTS.game.turn);
         this.hasPlayedActionSequenceSound = true;
       }
     }
@@ -967,7 +927,7 @@ export class RabiRiichiClient {
     passwordRaw: string,
     salt: string,
   ): Promise<string> {
-    return sha256(passwordRaw + '@' + salt);
+    return this.platform.crypto.sha256(passwordRaw + '@' + salt);
   }
 
   public async registerUser(
@@ -1090,7 +1050,7 @@ export class RabiRiichiClient {
   public beginExitGame(): void {
     this.hasExitedGame = true;
     this.clearTimer();
-    soundManager.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
+    this.platform.sound.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
     this.hasPlayedActionSequenceSound = false;
   }
 
@@ -1207,22 +1167,8 @@ export class RabiRiichiClient {
   }
 
   public logout(): void {
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
-        if (stored) {
-          const settings = JSON.parse(stored) as ServerSettings;
-          delete settings.lastUrl;
-          localStorage.setItem(
-            STORAGE_KEY_SERVER_SETTINGS,
-            JSON.stringify(settings),
-          );
-        }
-      } catch {
-        // ignore
-      }
-      localStorage.removeItem(TOKEN_STORE_KEY);
-    }
+    this.credentials.clearLastUrl();
+    this.credentials.clearToken();
     this.accessToken = null;
     this.wsurl = null;
     this.close();
@@ -1236,7 +1182,7 @@ export class RabiRiichiClient {
     this.timerActiveSeat = seat;
     this.actionTimeout = seconds;
     if (interactive && seconds <= 5) {
-      soundManager.playEffect(SOUND_EFFECTS.game.timeoutWarning);
+      this.platform.sound.playEffect(SOUND_EFFECTS.game.timeoutWarning);
     }
     this.onChange.emit();
 
@@ -1255,7 +1201,7 @@ export class RabiRiichiClient {
         const prevSec = Math.ceil(this.actionTimeout + tick);
         const currSec = Math.ceil(this.actionTimeout);
         if (interactive && currSec <= 5 && prevSec !== currSec) {
-          soundManager.playEffect(SOUND_EFFECTS.game.timeoutWarning);
+          this.platform.sound.playEffect(SOUND_EFFECTS.game.timeoutWarning);
         }
         if (prevSec !== currSec) {
           this.onChange.emit();
@@ -1293,26 +1239,29 @@ export class RabiRiichiClient {
       this.logger.error('Failed to submit server default response:', err);
     }
   }
+
+  /**
+   * Returns the persisted last-server URL and access token, if both are present.
+   * Reads through the injected credential store, so it works on any host.
+   */
+  public loadStoredCredentials(): { url: string; token: string } | null {
+    const url = this.credentials.loadLastUrl();
+    const token = this.credentials.loadToken();
+    if (!url || !token) {
+      return null;
+    }
+    return { url, token };
+  }
 }
 
 export const rabiriichi = new RabiRiichiClient();
 
 export async function initRabiRiichi(): Promise<void> {
-  if (typeof localStorage === 'undefined') {
+  const stored = rabiriichi.loadStoredCredentials();
+  if (!stored) {
     return;
   }
-  let url: string | undefined;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
-    const settings = stored ? (JSON.parse(stored) as ServerSettings) : {};
-    url = settings.lastUrl;
-  } catch {
-    // ignore
-  }
-  const token = localStorage.getItem(TOKEN_STORE_KEY);
-  if (!url || !token) {
-    return;
-  }
+  const { url, token } = stored;
   const logger = new Logger('AutoReconnect');
   logger.info(`Auto-reconnecting to server: ${url}, token: ${token}`);
   try {
