@@ -91,18 +91,16 @@ const SERVER_ERROR_DETAIL_MAP: Record<string, string> = {
   'Player not found in room': 'playerNotFound',
   'Cannot remove player from room': 'cannotRemovePlayer',
   'User does not exist': 'userDoesNotExist',
+  'Invalid username or password': 'invalidCredentials',
+  'Username already exists': 'usernameAlreadyExists',
+  'Username cannot be empty': 'usernameEmpty',
+  'Password cannot be empty': 'passwordEmpty',
 };
 
 const STATUS_REGEX = /^Status\(StatusCode="([A-Za-z]+)",\s*Detail="(.*)"\)$/;
 
 export function formatError(err: unknown, t: TFunction): string {
-  const parseStatusAndLocalize = (msg: string): string | null => {
-    const match = STATUS_REGEX.exec(msg);
-    if (!match) return null;
-    const statusCode = match[1];
-    const detail = match[2];
-    if (!statusCode || !detail) return null;
-
+  const getLocalization = (statusCode: string, detail: string): string => {
     const mappedKey = SERVER_ERROR_DETAIL_MAP[detail];
     if (mappedKey) {
       return t(`error.server.${statusCode}.${mappedKey}`, {
@@ -123,6 +121,27 @@ export function formatError(err: unknown, t: TFunction): string {
     });
   };
 
+  const parseStatusAndLocalize = (msg: string): string | null => {
+    const match = STATUS_REGEX.exec(msg);
+    if (!match) return null;
+    const statusCode = match[1];
+    const detail = match[2];
+    if (!statusCode || !detail) return null;
+    return getLocalization(statusCode, detail);
+  };
+
+  const parsePlainAndLocalize = (msg: string): string | null => {
+    const parts = msg.split(': ');
+    if (parts.length >= 2) {
+      const statusCode = parts[0];
+      const detail = parts.slice(1).join(': ');
+      if (statusCode && detail) {
+        return getLocalization(statusCode, detail);
+      }
+    }
+    return null;
+  };
+
   if (err instanceof RabiError) {
     try {
       const payload = JSON.parse(err.detail) as unknown;
@@ -141,20 +160,36 @@ export function formatError(err: unknown, t: TFunction): string {
       // ignore
     }
 
-    // Try parsing status error from the message (which contains status details)
-    const localized = parseStatusAndLocalize(err.message);
+    // Try parsing status error from type, detail, or message using STATUS_REGEX
+    let localized =
+      parseStatusAndLocalize(err.type) ??
+      parseStatusAndLocalize(err.detail) ??
+      parseStatusAndLocalize(err.message);
     if (localized) return localized;
 
-    // Or try parsing from detail (some errors might put status string in detail)
-    const localizedFromDetail = parseStatusAndLocalize(err.detail);
-    if (localizedFromDetail) return localizedFromDetail;
+    // Or try using type and detail directly
+    if (err.type && err.detail) {
+      const mappedKey = SERVER_ERROR_DETAIL_MAP[err.detail];
+      if (mappedKey) {
+        return getLocalization(err.type, err.detail);
+      }
+    }
+
+    // Or try parsing plain "StatusCode: Detail" format
+    localized =
+      parsePlainAndLocalize(err.message) ?? parsePlainAndLocalize(err.detail);
+    if (localized) return localized;
 
     return err.message;
   }
 
   if (err instanceof Error) {
-    const localized = parseStatusAndLocalize(err.message);
+    let localized = parseStatusAndLocalize(err.message);
     if (localized) return localized;
+
+    localized = parsePlainAndLocalize(err.message);
+    if (localized) return localized;
+
     return err.message;
   }
 

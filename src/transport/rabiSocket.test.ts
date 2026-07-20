@@ -99,7 +99,7 @@ describe('RabiSocket', () => {
       id: -1,
       respondTo: signInId,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser' },
+        userInfo: { id: 123, userData: { nickname: 'TestUser' } },
       },
     }).finish();
     mockWS.triggerMessage(
@@ -112,7 +112,7 @@ describe('RabiSocket', () => {
     // Wait for promise microtasks
     await vi.advanceTimersByTimeAsync(0);
     expect(onUserInfo).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 123, nickname: 'TestUser' }),
+      expect.objectContaining({ id: 123, userData: { nickname: 'TestUser' } }),
     );
 
     // Simulate server sending version check

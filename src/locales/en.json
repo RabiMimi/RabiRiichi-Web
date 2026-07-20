@@ -22,7 +22,17 @@
     "versionErrorServerTooOld": "Server version too old ({{serverVersion}} < {{minServerVersion}})",
     "versionErrorClientTooOld": "Client version too old ({{clientVersion}} < {{minClientVersion}})",
     "versionErrorMissingFields": "Missing version check fields",
-    "versionErrorValidationFailed": "Version validation failed"
+    "versionErrorValidationFailed": "Version validation failed",
+    "loginTab": "Login",
+    "registerTab": "Register",
+    "username": "Username",
+    "usernamePlaceholder": "Enter your username",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "usernameError": "Username cannot be empty",
+    "passwordError": "Password cannot be empty",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "kickedByOtherClient": "Your account has been logged in from another client."
   },
   "lobby": {
     "title": "Lobby",
@@ -469,6 +479,8 @@
       "InvalidArgument": {
         "invalidGameId": "Invalid Game ID",
         "invalidAiType": "Invalid or unsupported AI type",
+        "usernameEmpty": "Username cannot be empty",
+        "passwordEmpty": "Password cannot be empty",
         "generic": "Invalid argument"
       },
       "NotFound": {
@@ -497,7 +509,12 @@
       },
       "Unauthenticated": {
         "userDoesNotExist": "User does not exist",
+        "invalidCredentials": "Invalid username or password",
         "generic": "Unauthenticated"
+      },
+      "AlreadyExists": {
+        "usernameAlreadyExists": "Username already exists",
+        "generic": "Already exists"
       },
       "generic": "Server error"
     }

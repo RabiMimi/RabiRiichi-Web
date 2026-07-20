@@ -4,6 +4,7 @@ import {
   AuthError,
   RabiEvent,
   waitTimeout,
+  sha256,
 } from '../lib';
 import { RabiSocket } from '../transport/rabiSocket';
 import { WS_CONNECT_TIMEOUT } from '../transport/constants';
@@ -15,6 +16,8 @@ import {
   addAi,
   removeRoomPlayer,
   getReplay,
+  loginUser,
+  getInfo,
 } from './requests';
 import { UserStatus, AiType } from '../proto';
 import type {
@@ -26,6 +29,7 @@ import type {
   IGameLogMsg,
   IPlayerChatMessage,
   ILlmAiConfig,
+  IServerMessageDto,
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
 import { applyRiichiBonusToWaits } from '../domain/model';
@@ -129,6 +133,9 @@ export class RabiRiichiClient {
   // the other's socket via the shared `_ws` field below.
   private connectPromise: Promise<void> | null = null;
   private connectingKey: string | null = null;
+  public disconnectReason: 'kicked' | null = null;
+  private serverMessageListener: ((msg: IServerMessageDto) => void) | null =
+    null;
 
   public connectionStatus: ConnectionStatus = 'disconnected';
   public currentInquiry: ActiveInquiry | null = null;
@@ -506,6 +513,14 @@ export class RabiRiichiClient {
       this.messagePump.attach(ws);
       this.storeCredentials();
       ws.onPingUpdated.subscribe(this.pingListener);
+      this.serverMessageListener = (msg: IServerMessageDto) => {
+        const error = msg.serverResp?.serverError;
+        if (error?.message === 'Logged in from another client') {
+          this.disconnectReason = 'kicked';
+          this.close();
+        }
+      };
+      ws.onMessage.subscribe(this.serverMessageListener);
       this.ping = ws.ping;
       this.setConnectionStatus('connected');
 
@@ -572,11 +587,15 @@ export class RabiRiichiClient {
   private updateUserInfo(userInfo: IUserInfoResponse): void {
     this.self = {
       id: userInfo.id ?? -1,
-      nickname: userInfo.nickname ?? '',
+      nickname: userInfo.userData?.nickname ?? '',
       status: userInfo.status ?? 0,
       gameState: null,
       aiType: AiType.AI_TYPE_NONE,
     };
+    if (userInfo.accessToken) {
+      this.accessToken = userInfo.accessToken;
+      this.storeCredentials();
+    }
     if (userInfo.room) {
       this.handleRoomState(userInfo.room);
     } else {
@@ -929,20 +948,72 @@ export class RabiRiichiClient {
     return false;
   }
 
-  public async registerUser(nickname: string): Promise<void> {
-    this.logger.info(`Registering user: ${nickname}`);
+  public serverPasswordSalt = 'RABIRIICHI'; // default fallback
+
+  public async fetchServerSalt(): Promise<string> {
+    try {
+      const client = await this.getWSClient();
+      const info = await getInfo(client);
+      if (info.passwordSalt) {
+        this.serverPasswordSalt = info.passwordSalt;
+      }
+    } catch (err) {
+      this.logger.error('Failed to fetch server salt, using fallback:', err);
+    }
+    return this.serverPasswordSalt;
+  }
+
+  public async computePasswordHash(
+    passwordRaw: string,
+    salt: string,
+  ): Promise<string> {
+    return sha256(passwordRaw + '@' + salt);
+  }
+
+  public async registerUser(
+    username: string,
+    nickname = username,
+    passwordRaw = 'default_password',
+  ): Promise<void> {
+    this.logger.info(`Registering user: ${username}`);
     const client = await this.getWSClient();
-    const resp = await createUser(client, nickname);
+    const salt = await this.fetchServerSalt();
+    const passwordHash = await this.computePasswordHash(passwordRaw, salt);
+    const resp = await createUser(client, username, nickname, passwordHash);
     this.logger.info(`Registration succeeded`, resp);
 
     this.self = {
       id: resp.id ?? -1,
-      nickname: nickname,
+      nickname: resp.userData?.nickname ?? nickname,
       status: UserStatus.USER_STATUS_NONE,
       gameState: null,
       aiType: AiType.AI_TYPE_NONE,
     };
     this.accessToken = resp.accessToken ?? null;
+    this.storeCredentials();
+    await this.connectWS();
+  }
+
+  public async loginUser(
+    username: string,
+    passwordRaw = 'default_password',
+  ): Promise<void> {
+    this.logger.info(`Logging in user: ${username}`);
+    const client = await this.getWSClient();
+    const salt = await this.fetchServerSalt();
+    const passwordHash = await this.computePasswordHash(passwordRaw, salt);
+    const resp = await loginUser(client, username, passwordHash);
+    this.logger.info(`Login succeeded`, resp);
+
+    this.self = {
+      id: resp.id ?? -1,
+      nickname: resp.userData?.nickname ?? username,
+      status: UserStatus.USER_STATUS_NONE,
+      gameState: null,
+      aiType: AiType.AI_TYPE_NONE,
+    };
+    this.accessToken = resp.accessToken ?? null;
+    this.storeCredentials();
     await this.connectWS();
   }
 
@@ -1114,6 +1185,10 @@ export class RabiRiichiClient {
     this.messagePump.detach();
     if (this._ws) {
       this._ws.onPingUpdated.unsubscribe(this.pingListener);
+      if (this.serverMessageListener) {
+        this._ws.onMessage.unsubscribe(this.serverMessageListener);
+        this.serverMessageListener = null;
+      }
       this._ws.close();
       this._ws = null;
     }

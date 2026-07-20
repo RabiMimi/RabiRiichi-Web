@@ -52,6 +52,12 @@ describe('RabiRiichiClient', () => {
     vi.stubGlobal('WebSocket', MockWebSocket);
     MockWebSocket.instances = [];
 
+    vi.stubGlobal('crypto', {
+      subtle: {
+        digest: vi.fn().mockResolvedValue(new Uint8Array(32)),
+      },
+    });
+
     mockLocalStorage = {};
     setItemMock = vi.fn((key: string, value: string) => {
       mockLocalStorage[key] = value;
@@ -122,7 +128,7 @@ describe('RabiRiichiClient', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser', status: 1 },
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
       },
     });
 
@@ -169,7 +175,7 @@ describe('RabiRiichiClient', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser', status: 1 },
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
       },
     });
 
@@ -263,22 +269,27 @@ describe('RabiRiichiClient', () => {
     expect(mockWS1).toBeDefined();
 
     // Since we don't have token, the handshake resolves immediately after open.
-    // So getWSClient should return the client, and then createUser is called.
-    // Wait for registerUser to send createUser message.
+    // So getWSClient should return the client, which starts the registerUser flow.
+    // Wait for the client to send getInfo to fetch the salt.
+    await vi.advanceTimersByTimeAsync(0);
+    respondToGetInfo(mockWS1);
     await vi.advanceTimersByTimeAsync(0);
 
-    expect(mockWS1.send).toHaveBeenCalledTimes(1);
-    const registerBytes = mockWS1.send.mock.calls[0]![0];
+    expect(mockWS1.send).toHaveBeenCalledTimes(2);
+    const registerBytes = mockWS1.send.mock.calls[1]![0];
     const registerMsg = ClientMessageDto.decode(new Uint8Array(registerBytes));
-    expect(registerMsg.clientRequest?.createUser?.nickname).toBe('NewPlayer');
+    expect(registerMsg.clientRequest?.createUser?.userData?.nickname).toBe(
+      'NewPlayer',
+    );
 
     // Respond to createUser
     sendServerMsg(mockWS1, {
       id: 1,
       respondTo: registerMsg.id,
       serverResp: {
-        createUser: {
+        userInfo: {
           id: 456,
+          userData: { nickname: 'NewPlayer' },
           accessToken: 'new-token',
         },
       },
@@ -303,7 +314,7 @@ describe('RabiRiichiClient', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 456, nickname: 'NewPlayer', status: 1 },
+        userInfo: { id: 456, userData: { nickname: 'NewPlayer' }, status: 1 },
       },
     });
 
@@ -349,7 +360,9 @@ describe('RabiRiichiClient', () => {
     sendServerMsg(mockWS, {
       id: -1,
       respondTo: signInMsg.id,
-      serverResp: { userInfo: { id: 123, nickname: 'TestUser', status: 1 } },
+      serverResp: {
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
+      },
     });
     await vi.advanceTimersByTimeAsync(0);
     sendServerMsg(mockWS, {
@@ -383,7 +396,11 @@ describe('RabiRiichiClient', () => {
       id: 11,
       respondTo: reqMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUserUpdated', status: 2 },
+        userInfo: {
+          id: 123,
+          userData: { nickname: 'TestUserUpdated' },
+          status: 2,
+        },
       },
     });
 
@@ -445,7 +462,7 @@ describe('RabiRiichiClient', () => {
       serverResp: {
         userInfo: {
           id: 123,
-          nickname: 'TestUser',
+          userData: { nickname: 'TestUser' },
           status: UserStatus.USER_STATUS_IN_ROOM,
         },
       },

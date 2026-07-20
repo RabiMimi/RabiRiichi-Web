@@ -230,6 +230,10 @@ export function LlmConfigDialog({
                 value={apiToken}
                 onChange={(e) => setApiToken(e.target.value)}
                 disabled={isSubmitting}
+                autoComplete="one-time-code"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-protonpass-ignore="true"
               />
               <button
                 type="button"

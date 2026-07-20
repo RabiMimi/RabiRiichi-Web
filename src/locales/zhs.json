@@ -22,7 +22,17 @@
     "versionErrorServerTooOld": "服务器版本过旧 ({{serverVersion}} < {{minServerVersion}})",
     "versionErrorClientTooOld": "客户端版本过旧 ({{clientVersion}} < {{minClientVersion}})",
     "versionErrorMissingFields": "缺少版本校验字段",
-    "versionErrorValidationFailed": "版本校验失败"
+    "versionErrorValidationFailed": "版本校验失败",
+    "loginTab": "登录",
+    "registerTab": "注册",
+    "username": "用户名",
+    "usernamePlaceholder": "输入您的用户名",
+    "password": "密码",
+    "passwordPlaceholder": "输入您的密码",
+    "usernameError": "用户名不能为空",
+    "passwordError": "密码不能为空",
+    "passwordTooShort": "密码长度必须至少为 6 个字符",
+    "kickedByOtherClient": "您的账号已在其他客户端登录。"
   },
   "lobby": {
     "title": "大厅",
@@ -469,6 +479,8 @@
       "InvalidArgument": {
         "invalidGameId": "无效的对局 ID",
         "invalidAiType": "无效或不支持的 AI 类型",
+        "usernameEmpty": "用户名不能为空",
+        "passwordEmpty": "密码不能为空",
         "generic": "参数错误"
       },
       "NotFound": {
@@ -497,7 +509,12 @@
       },
       "Unauthenticated": {
         "userDoesNotExist": "用户不存在",
+        "invalidCredentials": "用户名或密码错误",
         "generic": "未登录"
+      },
+      "AlreadyExists": {
+        "usernameAlreadyExists": "用户名已存在",
+        "generic": "已存在"
       },
       "generic": "服务器错误"
     }

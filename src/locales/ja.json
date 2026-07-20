@@ -22,7 +22,17 @@
     "versionErrorServerTooOld": "サーバーのバージョンが古すぎます ({{serverVersion}} < {{minServerVersion}})",
     "versionErrorClientTooOld": "クライアントのバージョンが古すぎます ({{clientVersion}} < {{minClientVersion}})",
     "versionErrorMissingFields": "バージョンチェックのフィールドが不足しています",
-    "versionErrorValidationFailed": "バージョン検証に失敗しました"
+    "versionErrorValidationFailed": "バージョン検証に失敗しました",
+    "loginTab": "ログイン",
+    "registerTab": "新規登録",
+    "username": "ユーザー名",
+    "usernamePlaceholder": "ユーザー名を入力してください",
+    "password": "パスワード",
+    "passwordPlaceholder": "パスワードを入力してください",
+    "usernameError": "ユーザー名を入力してください",
+    "passwordError": "パスワードを入力してください",
+    "passwordTooShort": "パスワードは6文字以上で入力してください",
+    "kickedByOtherClient": "あなたのアカウントは別のクライアントからログインされました。"
   },
   "lobby": {
     "title": "ロビー",
@@ -468,7 +478,9 @@
     "server": {
       "InvalidArgument": {
         "invalidGameId": "無効なゲームID",
-        "invalidAiType": "無効または未サポートのAIタイプ",
+        "invalidAiType": "無効または未サポート of AIタイプ",
+        "usernameEmpty": "ユーザー名を入力してください",
+        "passwordEmpty": "パスワードを入力してください",
         "generic": "無効な引数"
       },
       "NotFound": {
@@ -497,7 +509,12 @@
       },
       "Unauthenticated": {
         "userDoesNotExist": "ユーザーが存在しません",
+        "invalidCredentials": "ユーザー名またはパスワードが正しくありません",
         "generic": "認証されていません"
+      },
+      "AlreadyExists": {
+        "usernameAlreadyExists": "ユーザー名は既に存在します",
+        "generic": "既に存在します"
       },
       "generic": "サーバーエラー"
     }

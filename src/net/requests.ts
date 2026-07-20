@@ -1,6 +1,5 @@
 import type {
   IClientMessageDto,
-  ICreateUserResponse,
   IUserInfoResponse,
   IServerResponse,
   IServerRoomStateResponse,
@@ -34,18 +33,43 @@ async function throwIfRespondError<T>(
 
 export function createUser(
   ws: RabiSocket,
+  username: string,
   nickname: string,
-): Promise<ICreateUserResponse> {
+  passwordHash: string,
+): Promise<IUserInfoResponse> {
   return throwIfRespondError(
     ws,
     {
       clientRequest: {
         createUser: {
-          nickname,
+          username,
+          userData: {
+            nickname,
+          },
+          passwordHash,
         },
       },
     },
-    (resp) => resp.createUser,
+    (resp) => resp.userInfo,
+  );
+}
+
+export function loginUser(
+  ws: RabiSocket,
+  username: string,
+  passwordHash: string,
+): Promise<IUserInfoResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        loginUser: {
+          username,
+          passwordHash,
+        },
+      },
+    },
+    (resp) => resp.userInfo,
   );
 }
 
