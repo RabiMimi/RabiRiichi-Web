@@ -5,6 +5,7 @@ import {
   USERNAME_STORE_KEY,
   SERVER_CREDENTIALS_STORE_KEY,
   parseClientSettings,
+  type ServerCredentials,
 } from './credentialStore';
 import type { KeyValueStore } from '../platform/storage';
 import {
@@ -176,7 +177,9 @@ describe('CredentialStore', () => {
       expect(backing[USERNAME_STORE_KEY]).toBeUndefined();
 
       // Mapped credentials are saved
-      const storedMap = JSON.parse(backing[SERVER_CREDENTIALS_STORE_KEY] ?? '{}');
+      const storedMap = JSON.parse(
+        backing[SERVER_CREDENTIALS_STORE_KEY] ?? '{}',
+      ) as Record<string, ServerCredentials>;
       expect(storedMap[url]).toEqual({
         token: 'legacy-token',
         username: 'legacy-user',

@@ -28,6 +28,7 @@ import {
   type ClientSettings,
 } from '../domain/constants';
 
+import type { ServerCredentials } from './credentialStore';
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
 import type { KeyValueStore } from '../platform/storage';
 import type { WebSocketFactory } from '../platform/socket';
@@ -1369,8 +1370,9 @@ describe('RabiRiichiClient', () => {
       });
       await vi.advanceTimersByTimeAsync(15);
 
-      // Token persisted to the injected store, not the browser stub.
-      const storedCreds = JSON.parse(backing.rabiriichi_server_credentials || '{}');
+      const storedCreds = JSON.parse(
+        backing.rabiriichi_server_credentials ?? '{}',
+      ) as Record<string, ServerCredentials>;
       expect(storedCreds['ws://cli-host:5150']).toEqual({
         token: 'cli-token',
         username: 'CliPlayer',
@@ -1435,7 +1437,9 @@ describe('RabiRiichiClient', () => {
       await changePromise;
 
       expect(client.accessToken).toBe('rotated-token');
-      const storedCreds = JSON.parse(backing.rabiriichi_server_credentials || '{}');
+      const storedCreds = JSON.parse(
+        backing.rabiriichi_server_credentials ?? '{}',
+      ) as Record<string, ServerCredentials>;
       expect(storedCreds['ws://host:5150']).toEqual({
         token: 'rotated-token',
         username: 'alice',

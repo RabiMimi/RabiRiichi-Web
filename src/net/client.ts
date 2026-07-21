@@ -462,15 +462,17 @@ export class RabiRiichiClient {
     if (this.wsurl) {
       this.credentials.saveLastUrl(this.wsurl);
       if (this.accessToken) {
-        const oldCreds = this.credentials.loadCredentialsForServer(this.wsurl) ?? {
+        const oldCreds = this.credentials.loadCredentialsForServer(
+          this.wsurl,
+        ) ?? {
           token: '',
           username: '',
           nickname: '',
         };
         this.credentials.saveCredentialsForServer(this.wsurl, {
           token: this.accessToken,
-          username: this.username || oldCreds.username,
-          nickname: this.self?.nickname || oldCreds.nickname || this.username || '',
+          username: this.username ?? oldCreds.username,
+          nickname: this.self?.nickname ?? (oldCreds.nickname !== '' ? oldCreds.nickname : (this.username ?? '')),
         });
       }
     }
@@ -758,11 +760,9 @@ export class RabiRiichiClient {
       decision.voiceId,
     );
     if (url) {
-      const speakerSeat = getGameVoiceSpeakerSeat(
-        gameEvent,
-        this.selfSeat,
-        decision.voiceId,
-      );
+      const speakerSeat =
+        decision.speakerSeat ??
+        getGameVoiceSpeakerSeat(gameEvent, this.selfSeat, decision.voiceId);
       const channel =
         speakerSeat === undefined ? 'game' : `game-player-${speakerSeat}`;
       this.platform.sound.playVoice(url, channel);

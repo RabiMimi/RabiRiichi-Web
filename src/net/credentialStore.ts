@@ -60,7 +60,9 @@ export class CredentialStore {
     }
   }
 
-  private saveAllServerCredentials(all: Record<string, ServerCredentials>): void {
+  private saveAllServerCredentials(
+    all: Record<string, ServerCredentials>,
+  ): void {
     if (Object.keys(all).length === 0) {
       this.store.removeItem(SERVER_CREDENTIALS_STORE_KEY);
     } else {
@@ -81,7 +83,9 @@ export class CredentialStore {
           creds = {
             token: oldToken,
             username: oldUsername,
-            nickname: this.loadServerSettings().nickname || oldUsername || 'User',
+            nickname:
+              this.loadServerSettings().nickname ??
+              (oldUsername !== '' ? oldUsername : 'User'),
           };
           all[url] = creds;
           this.saveAllServerCredentials(all);
@@ -122,7 +126,11 @@ export class CredentialStore {
   public saveToken(token: string): void {
     const lastUrl = this.loadLastUrl();
     if (lastUrl) {
-      const creds = this.loadCredentialsForServer(lastUrl) ?? { token: '', username: '', nickname: '' };
+      const creds = this.loadCredentialsForServer(lastUrl) ?? {
+        token: '',
+        username: '',
+        nickname: '',
+      };
       creds.token = token;
       this.saveCredentialsForServer(lastUrl, creds);
     } else {
@@ -155,7 +163,11 @@ export class CredentialStore {
   public saveUsername(username: string): void {
     const lastUrl = this.loadLastUrl();
     if (lastUrl) {
-      const creds = this.loadCredentialsForServer(lastUrl) ?? { token: '', username: '', nickname: '' };
+      const creds = this.loadCredentialsForServer(lastUrl) ?? {
+        token: '',
+        username: '',
+        nickname: '',
+      };
       creds.username = username;
       this.saveCredentialsForServer(lastUrl, creds);
     } else {

@@ -77,9 +77,7 @@ export function SoundsTab(): React.JSX.Element {
         label={t('settings.volumeVoice', 'Voice Volume')}
         volume={volumeVoice}
         isMuted={muteVoice}
-        onMuteToggle={() =>
-          updateClientSettings({ muteVoice: !muteVoice })
-        }
+        onMuteToggle={() => updateClientSettings({ muteVoice: !muteVoice })}
         onVolumeChange={(value) =>
           updateClientSettings({
             volumeVoice: value,

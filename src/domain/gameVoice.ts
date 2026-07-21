@@ -12,24 +12,27 @@ const LOCAL_REACTION_VOICES = new Set([
   'tenpai',
   'noten',
   'wallLow',
-  'discardDora',
-  'repeatDiscard',
-  'opponentCalls',
   'bigTenpai',
 ]);
 
-export interface GameVoiceState {
-  readonly playedGameStart: boolean;
+export interface PlayerVoiceState {
   readonly lastDiscardKind: number | null;
   readonly repeatedDiscardCount: number;
   readonly opponentCallCount: number;
   readonly awaitingOpponentCall: boolean;
+}
+
+export interface GameVoiceState {
+  readonly playedGameStart: boolean;
   readonly playedBigTenpai: boolean;
+  readonly players: Readonly<Record<number, PlayerVoiceState>>;
 }
 
 export interface GameVoiceDecision {
   readonly state: GameVoiceState;
   readonly voiceId: string | null;
+  /** Seat whose character voices the line; undefined = no specific seat. */
+  readonly speakerSeat?: number | undefined;
 }
 
 export interface GameVoiceContext {
@@ -57,14 +60,25 @@ export function getGameVoiceSpeakerSeat(
   );
 }
 
-export function createGameVoiceState(): GameVoiceState {
+function createPlayerVoiceState(): PlayerVoiceState {
   return {
-    playedGameStart: false,
     lastDiscardKind: null,
     repeatedDiscardCount: 0,
     opponentCallCount: 0,
     awaitingOpponentCall: false,
+  };
+}
+
+export function createGameVoiceState(): GameVoiceState {
+  return {
+    playedGameStart: false,
     playedBigTenpai: false,
+    players: {
+      0: createPlayerVoiceState(),
+      1: createPlayerVoiceState(),
+      2: createPlayerVoiceState(),
+      3: createPlayerVoiceState(),
+    },
   };
 }
 
@@ -85,38 +99,60 @@ function localWaits(room: RoomModel, selfSeat: number): MappedTenpaiInfo[] {
   );
 }
 
-function localDiscardDecision(
+function discardDecision(
   state: GameVoiceState,
   context: GameVoiceContext,
+  discarderSeat: number,
 ): GameVoiceDecision {
   const discarded = context.event.discardTileEvent?.discarded;
-  if (!discarded || context.selfSeat === undefined) {
+  if (!discarded) {
     return { state, voiceId: null };
   }
 
+  const pState = state.players[discarderSeat] ?? createPlayerVoiceState();
   const tileKind = (discarded.tile ?? 0) & 0x7f;
   const repeatedDiscardCount =
-    tileKind > 0 && tileKind === state.lastDiscardKind
-      ? state.repeatedDiscardCount + 1
+    tileKind > 0 && tileKind === pState.lastDiscardKind
+      ? pState.repeatedDiscardCount + 1
       : 1;
-  const nextState: GameVoiceState = {
-    ...state,
+
+  const updatedPlayerState: PlayerVoiceState = {
+    ...pState,
     lastDiscardKind: tileKind,
     repeatedDiscardCount,
-    opponentCallCount: state.awaitingOpponentCall ? 0 : state.opponentCallCount,
+    opponentCallCount: pState.awaitingOpponentCall
+      ? 0
+      : pState.opponentCallCount,
     awaitingOpponentCall: true,
   };
 
-  const waits = localWaits(context.after, context.selfSeat);
-  if (!state.playedBigTenpai && highestPointTenpaiIsYakuman(waits)) {
-    return {
-      state: { ...nextState, playedBigTenpai: true },
-      voiceId: 'bigTenpai',
-    };
+  const nextPlayers = {
+    ...state.players,
+    [discarderSeat]: updatedPlayerState,
+  };
+
+  const nextState: GameVoiceState = {
+    ...state,
+    players: nextPlayers,
+  };
+
+  if (discarderSeat === context.selfSeat) {
+    const waits = localWaits(context.after, context.selfSeat);
+    if (!state.playedBigTenpai && highestPointTenpaiIsYakuman(waits)) {
+      return {
+        state: { ...nextState, playedBigTenpai: true },
+        voiceId: 'bigTenpai',
+        speakerSeat: discarderSeat,
+      };
+    }
   }
 
   if (repeatedDiscardCount === REPEATED_DISCARD_COUNT) {
-    return { state: nextState, voiceId: 'repeatDiscard' };
+    return {
+      state: nextState,
+      voiceId: 'repeatDiscard',
+      speakerSeat: discarderSeat,
+    };
   }
 
   const indicators = (context.before.info?.doras ?? [])
@@ -126,7 +162,11 @@ function localDiscardDecision(
   const isDora =
     tileKind > 0 && checkIsDora(Tile.fromByte(discarded.tile ?? 0), indicators);
   if (isDora && (context.randomValue ?? 1) < DORA_VOICE_CHANCE) {
-    return { state: nextState, voiceId: 'discardDora' };
+    return {
+      state: nextState,
+      voiceId: 'discardDora',
+      speakerSeat: discarderSeat,
+    };
   }
 
   return { state: nextState, voiceId: null };
@@ -141,35 +181,54 @@ function claimDecision(
     return { state, voiceId: null };
   }
 
-  let nextState = state;
-  let opponentCallVoice: string | null = null;
-  if (
-    context.selfSeat !== undefined &&
-    claim.playerId !== context.selfSeat &&
-    claim.tile?.discardInfo?.from === context.selfSeat &&
-    state.awaitingOpponentCall
-  ) {
-    const opponentCallCount = state.opponentCallCount + 1;
-    nextState = {
-      ...state,
-      opponentCallCount,
-      awaitingOpponentCall: false,
-    };
-    opponentCallVoice =
-      opponentCallCount === OPPONENT_CALL_COUNT ? 'opponentCalls' : null;
+  const claimerSeat = claim.playerId;
+  if (claimerSeat === undefined || claimerSeat === null) {
+    return { state, voiceId: null };
   }
 
-  if (opponentCallVoice) {
-    return { state: nextState, voiceId: opponentCallVoice };
+  const discardedFromSeat = claim.tile?.discardInfo?.from;
+
+  let nextState = state;
+
+  if (
+    discardedFromSeat !== undefined &&
+    discardedFromSeat !== null &&
+    claimerSeat !== discardedFromSeat
+  ) {
+    const discarderState = state.players[discardedFromSeat];
+    if (discarderState?.awaitingOpponentCall) {
+      const opponentCallCount = discarderState.opponentCallCount + 1;
+      const updatedDiscarderState: PlayerVoiceState = {
+        ...discarderState,
+        opponentCallCount,
+        awaitingOpponentCall: false,
+      };
+
+      nextState = {
+        ...state,
+        players: {
+          ...state.players,
+          [discardedFromSeat]: updatedDiscarderState,
+        },
+      };
+
+      if (opponentCallCount === OPPONENT_CALL_COUNT) {
+        return {
+          state: nextState,
+          voiceId: 'opponentCalls',
+          speakerSeat: discardedFromSeat,
+        };
+      }
+    }
   }
   if (claim.reason === DiscardReason.DISCARD_REASON_CHII) {
-    return { state: nextState, voiceId: 'chii' };
+    return { state: nextState, voiceId: 'chii', speakerSeat: claimerSeat };
   }
   if (claim.reason === DiscardReason.DISCARD_REASON_PON) {
-    return { state: nextState, voiceId: 'pon' };
+    return { state: nextState, voiceId: 'pon', speakerSeat: claimerSeat };
   }
   if ((claim.group?.tiles?.length ?? 0) === 4) {
-    return { state: nextState, voiceId: 'kan' };
+    return { state: nextState, voiceId: 'kan', speakerSeat: claimerSeat };
   }
   return { state: nextState, voiceId: null };
 }
@@ -191,37 +250,57 @@ function riichiVoice(room: RoomModel, playerId: number): string {
   return opponentAlreadyRiichi ? 'okkakeRiichi' : 'riichi';
 }
 
-function directEventVoice(context: GameVoiceContext): string | null {
+function directEventVoice(context: GameVoiceContext): {
+  voiceId: string | null;
+  speakerSeat: number | undefined;
+} {
   const { event: gameEvent, before, after, selfSeat } = context;
 
   if (
     gameEvent.kanEvent &&
     gameEvent.kanEvent.kanSource !== TileSource.TILE_SOURCE_DAIMINKAN
   ) {
-    return 'kan';
+    return {
+      voiceId: 'kan',
+      speakerSeat: gameEvent.kanEvent.playerId ?? undefined,
+    };
   }
-  if (gameEvent.nukiDoraEvent) return 'nuki';
+  if (gameEvent.nukiDoraEvent) {
+    return {
+      voiceId: 'nuki',
+      speakerSeat: gameEvent.nukiDoraEvent.playerId ?? undefined,
+    };
+  }
 
   if ((gameEvent.agariEvent?.agariInfos?.length ?? 0) > 0) {
-    return gameEvent.agariEvent?.isTsumo ? 'tsumo' : 'ron';
+    const winnerId = gameEvent.agariEvent?.agariInfos?.[0]?.playerId;
+    return {
+      voiceId: gameEvent.agariEvent?.isTsumo ? 'tsumo' : 'ron',
+      speakerSeat: winnerId ?? undefined,
+    };
   }
 
   const draw = gameEvent.ryuukyokuEvent;
   if (draw?.midGameRyuukyoku?.name === 'kyuushu_kyuuhai') {
-    return 'kyuushuKyuuhai';
+    const speaker = before.info?.currentPlayer;
+    return { voiceId: 'kyuushuKyuuhai', speakerSeat: speaker ?? undefined };
   }
   if (draw?.endGameRyuukyoku && selfSeat !== undefined) {
-    return draw.endGameRyuukyoku.tenpaiPlayers?.includes(selfSeat)
-      ? 'tenpai'
-      : 'noten';
+    const isTenpai = draw.endGameRyuukyoku.tenpaiPlayers?.includes(selfSeat);
+    return {
+      voiceId: isTenpai ? 'tenpai' : 'noten',
+      speakerSeat: selfSeat,
+    };
   }
 
   const crossedLowWall =
     (before.info?.remainingTiles ?? 0) > LOW_WALL_THRESHOLD &&
     (after.info?.remainingTiles ?? 0) <= LOW_WALL_THRESHOLD;
-  if (gameEvent.drawTileEvent && crossedLowWall) return 'wallLow';
+  if (gameEvent.drawTileEvent && crossedLowWall) {
+    return { voiceId: 'wallLow', speakerSeat: selfSeat };
+  }
 
-  return null;
+  return { voiceId: null, speakerSeat: undefined };
 }
 
 export function reduceGameVoice(
@@ -236,28 +315,29 @@ export function reduceGameVoice(
     return {
       state: nextState,
       voiceId: state.playedGameStart ? null : 'gameStart',
+      speakerSeat: context.selfSeat,
     };
   }
 
   const discard = context.event.discardTileEvent;
-  if (discard && discard.playerId === context.selfSeat) {
-    const decision = localDiscardDecision(state, context);
+  if (discard?.playerId != null) {
+    const decision = discardDecision(state, context, discard.playerId);
     return discard.isRiichi
       ? {
           state: decision.state,
-          voiceId: riichiVoice(context.before, discard.playerId ?? 0),
+          voiceId: riichiVoice(context.before, discard.playerId),
+          speakerSeat: discard.playerId,
         }
       : decision;
-  }
-  if (discard?.isRiichi) {
-    return {
-      state,
-      voiceId: riichiVoice(context.before, discard.playerId ?? 0),
-    };
   }
   if (context.event.claimTileEvent) {
     return claimDecision(state, context);
   }
 
-  return { state, voiceId: directEventVoice(context) };
+  const direct = directEventVoice(context);
+  return {
+    state,
+    voiceId: direct.voiceId,
+    speakerSeat: direct.speakerSeat,
+  };
 }

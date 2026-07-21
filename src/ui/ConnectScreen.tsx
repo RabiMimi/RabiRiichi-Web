@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { useConnectionStatus } from '../state/store';
@@ -10,7 +10,7 @@ import {
 } from '../domain/constants';
 import { SCREEN, FORM } from './styles';
 import { formatError } from '../lib/errors';
-import type { ServerCredentials } from '../net/credentialStore';
+
 import { LanguageSelector } from './LanguageSelector';
 import { TabSelector } from './TabSelector';
 import { KickedModal } from './KickedModal';
@@ -47,36 +47,29 @@ export function ConnectScreen(): React.JSX.Element {
     return false;
   });
 
-  const [showSavedCard, setShowSavedCard] = useState(false);
-  const [savedCreds, setSavedCreds] = useState<ServerCredentials | null>(null);
-  const [bypassedUrls, setBypassedUrls] = useState<Set<string>>(() => new Set());
-  const [prevUrl, setPrevUrl] = useState('');
+  const [bypassedUrls, setBypassedUrls] = useState<Set<string>>(
+    () => new Set(),
+  );
 
-  useEffect(() => {
-    if (targetUrl !== prevUrl) {
-      setPrevUrl(targetUrl);
-      setBypassedUrls((prev) => {
+  const handleTargetUrlChange = (url: string) => {
+    setTargetUrl(url);
+    setBypassedUrls((prev) => {
+      if (prev.has(url)) {
         const next = new Set(prev);
-        next.delete(targetUrl);
+        next.delete(url);
         return next;
-      });
-    }
-  }, [targetUrl, prevUrl]);
+      }
+      return prev;
+    });
+  };
 
-  useEffect(() => {
-    if (!targetUrl) {
-      setSavedCreds(null);
-      setShowSavedCard(false);
-      return;
-    }
-    const creds = rabiriichi.getCredentialsForServer(targetUrl);
-    setSavedCreds(creds);
-    if (creds && creds.token && !bypassedUrls.has(targetUrl)) {
-      setShowSavedCard(true);
-    } else {
-      setShowSavedCard(false);
-    }
-  }, [targetUrl, bypassedUrls]);
+  const savedCreds = useMemo(() => {
+    return targetUrl ? rabiriichi.getCredentialsForServer(targetUrl) : null;
+  }, [targetUrl]);
+
+  const showSavedCard = useMemo(() => {
+    return Boolean(savedCreds?.token && !bypassedUrls.has(targetUrl));
+  }, [savedCreds, bypassedUrls, targetUrl]);
 
   const handleUseDifferentAccount = () => {
     if (targetUrl) {
@@ -106,7 +99,7 @@ export function ConnectScreen(): React.JSX.Element {
     }
 
     if (showSavedCard) {
-      if (!savedCreds || !savedCreds.token) return;
+      if (!savedCreds?.token) return;
       try {
         setConnectPhase('connecting_public');
         await rabiriichi.connect(targetUrl, savedCreds.token);
@@ -253,7 +246,7 @@ export function ConnectScreen(): React.JSX.Element {
               {t('connect.serverAddress')}
             </label>
             <ServerSelector
-              onTargetUrlChange={setTargetUrl}
+              onTargetUrlChange={handleTargetUrlChange}
               isConnecting={isConnecting}
             />
           </div>

@@ -193,17 +193,13 @@ export function PlayerTab(): React.JSX.Element {
                             ? 'bg-[#fbbf24]/[0.12] border-[#fbbf24] text-[#fbbf24]'
                             : 'bg-white/[0.03] border-white/[0.05] text-[#d1d5db] hover:bg-[#fbbf24]/[0.08] hover:text-[#fbbf24]'
                         }`}
-                        onClick={() =>
-                          handlePlayVoice(v.id, v.audioUrl)
-                        }
+                        onClick={() => handlePlayVoice(v.id, v.audioUrl)}
                       >
                         <span className="opacity-75 inline-flex items-center justify-center w-[18px] h-[18px] shrink-0">
                           {isPlaying ? <StopIcon /> : <PlayIcon />}
                         </span>
                         <span className="truncate">
-                          {t(
-                            `character.${activeCharacter.id}.voices.${v.id}`,
-                          )}
+                          {t(`character.${activeCharacter.id}.voices.${v.id}`)}
                         </span>
                       </button>
                     );

@@ -10,6 +10,7 @@ import {
   highestPointTenpaiIsYakuman,
   reduceGameVoice,
   type GameVoiceState,
+  type GameVoiceDecision,
 } from './gameVoice';
 
 function room(
@@ -127,7 +128,7 @@ describe('game voice decisions', () => {
         0,
         'opponentCalls',
       ),
-    ).toBe(0);
+    ).toBe(2);
   });
 
   it('plays the game-start greeting only for the first hand', () => {
@@ -275,9 +276,9 @@ describe('game voice decisions', () => {
         discarded: { tile: Tile.fromString('2m').toByte() },
       },
     };
-    expect(decide(state, event, before, before, 0.24).voiceId).toBe(
-      'discardDora',
-    );
+    const dec = decide(state, event, before, before, 0.24);
+    expect(dec.voiceId).toBe('discardDora');
+    expect(dec.speakerSeat).toBe(0);
     expect(decide(state, event, before, before, 0.25).voiceId).toBeNull();
   });
 
@@ -295,27 +296,108 @@ describe('game voice decisions', () => {
     state = decision.state;
     decision = decide(state, event);
     expect(decision.voiceId).toBe('repeatDiscard');
+    expect(decision.speakerSeat).toBe(0);
     expect(decide(decision.state, event).voiceId).toBeNull();
   });
 
   it('plays the opponent-call line after three consecutive claimed discards', () => {
     let state = createGameVoiceState();
-    let voiceId: string | null = null;
+    let lastDecision: GameVoiceDecision | null = null;
     for (const tileName of ['1m', '2m', '3m']) {
       const tile = Tile.fromString(tileName).toByte();
       state = decide(state, {
         discardTileEvent: { playerId: 0, discarded: { tile } },
       }).state;
-      const claim = decide(state, {
+      lastDecision = decide(state, {
         claimTileEvent: {
           playerId: 1,
           tile: { tile, discardInfo: { from: 0 } },
         },
       });
-      state = claim.state;
-      voiceId = claim.voiceId;
+      state = lastDecision.state;
     }
-    expect(voiceId).toBe('opponentCalls');
+    expect(lastDecision?.voiceId).toBe('opponentCalls');
+    expect(lastDecision?.speakerSeat).toBe(0);
+  });
+
+  it('plays dora discard, repeat discard and opponent calls for opponents as well', () => {
+    let state = createGameVoiceState();
+    const before = room();
+    before.info!.doras = [{ tile: Tile.fromString('1m').toByte() }];
+
+    // 1. Dora discard by opponent (seat 1)
+    const decDora = reduceGameVoice(state, {
+      event: {
+        discardTileEvent: {
+          playerId: 1,
+          discarded: { tile: Tile.fromString('2m').toByte() },
+        },
+      },
+      before,
+      after: before,
+      selfSeat: 0,
+      randomValue: 0.1,
+    });
+    expect(decDora.voiceId).toBe('discardDora');
+    expect(decDora.speakerSeat).toBe(1);
+    state = decDora.state;
+
+    // 2. Repeat discard by opponent (seat 1)
+    const repeatEvent = {
+      discardTileEvent: {
+        playerId: 1,
+        discarded: { tile: Tile.fromString('4p').toByte() },
+      },
+    };
+    let decRepeat = reduceGameVoice(state, {
+      event: repeatEvent,
+      before,
+      after: before,
+      selfSeat: 0,
+    });
+    state = decRepeat.state;
+    decRepeat = reduceGameVoice(state, {
+      event: repeatEvent,
+      before,
+      after: before,
+      selfSeat: 0,
+    });
+    state = decRepeat.state;
+    decRepeat = reduceGameVoice(state, {
+      event: repeatEvent,
+      before,
+      after: before,
+      selfSeat: 0,
+    });
+    expect(decRepeat.voiceId).toBe('repeatDiscard');
+    expect(decRepeat.speakerSeat).toBe(1);
+    state = decRepeat.state;
+
+    // 3. Opponent (seat 1) got claimed by seat 0 (local player) 3 times
+    let lastClaimDec: GameVoiceDecision | null = null;
+    for (const tileName of ['5s', '6s', '7s']) {
+      const tile = Tile.fromString(tileName).toByte();
+      state = reduceGameVoice(state, {
+        event: { discardTileEvent: { playerId: 1, discarded: { tile } } },
+        before,
+        after: before,
+        selfSeat: 0,
+      }).state;
+      lastClaimDec = reduceGameVoice(state, {
+        event: {
+          claimTileEvent: {
+            playerId: 0,
+            tile: { tile, discardInfo: { from: 1 } },
+          },
+        },
+        before,
+        after: before,
+        selfSeat: 0,
+      });
+      state = lastClaimDec.state;
+    }
+    expect(lastClaimDec?.voiceId).toBe('opponentCalls');
+    expect(lastClaimDec?.speakerSeat).toBe(1); // Opponent complains about being claimed
   });
 
   it('requires the highest-value wait to be yakuman', () => {
