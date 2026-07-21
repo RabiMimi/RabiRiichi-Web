@@ -11,8 +11,12 @@ import type { SoundEffect } from '../lib/soundEffects';
 import type { SoundsSettings } from '../domain/settings';
 
 export interface GameSoundPlayer {
+  /** Begins loading character voices so event playback can start immediately. */
+  preloadVoices(urls: readonly string[]): void;
   /** Plays a named one-shot gameplay sound effect. */
   playEffect(effect: SoundEffect): void;
+  /** Plays a character voice, interrupting any voice already in progress. */
+  playVoice(url: string): void;
   /** Stops a currently-playing named effect (e.g. the timeout warning loop). */
   stopEffect(effect: SoundEffect): void;
   /** Re-applies volume settings to all active playback. */
@@ -23,7 +27,9 @@ export interface GameSoundPlayer {
 
 /** A sound player that ignores every call. Used by non-audio hosts (CLI). */
 export const nullSoundPlayer: GameSoundPlayer = {
+  preloadVoices: () => undefined,
   playEffect: () => undefined,
+  playVoice: () => undefined,
   stopEffect: () => undefined,
   updateAllVolumes: () => undefined,
   setVolumeProvider: () => undefined,

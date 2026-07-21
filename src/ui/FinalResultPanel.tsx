@@ -1,11 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRoom, useCharacterId } from '../state/store';
+import { useRoom, useCharacterId, useSelf } from '../state/store';
 import { getPlayerDisplayName } from '../domain/model';
 import { AiType } from '../proto';
 import { CHARACTERS } from '../domain/character';
 import { Button } from './Button';
 import { CopyGameIdButton } from './CopyGameIdButton';
+import { soundManager } from '../lib/sound';
+import { getFinalPlacementVoiceLineId } from '../domain/resultHelpers';
 
 interface FinalResultPanelProps {
   onReturnToRoom: () => void;
@@ -16,6 +18,7 @@ export function FinalResultPanel({
 }: FinalResultPanelProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const room = useRoom();
+  const selfId = useSelf()?.id;
   const characterId = useCharacterId();
   const activeCharacter = React.useMemo(() => {
     const found = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
@@ -37,6 +40,23 @@ export function FinalResultPanel({
     });
     return list.sort((a, b) => b.points - a.points);
   }, [room]);
+
+  const playedReaction = React.useRef(false);
+  React.useEffect(() => {
+    if (playedReaction.current || selfId === undefined) return;
+    const rank =
+      rankedPlayers.findIndex((item) => item.player.id === selfId) + 1;
+    const voiceId = getFinalPlacementVoiceLineId(rank, rankedPlayers.length);
+    if (!voiceId) return;
+
+    const voiceLine = activeCharacter.voiceLines.find(
+      (line) => line.id === voiceId,
+    );
+    if (voiceLine) {
+      playedReaction.current = true;
+      soundManager.playVoice(voiceLine.audioUrl);
+    }
+  }, [activeCharacter, rankedPlayers, selfId]);
 
   const rankStyles = (rank: number) => {
     switch (rank) {

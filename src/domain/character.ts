@@ -36,10 +36,13 @@ export interface CharacterConfig {
   readonly cv?: string;
 }
 
-// A silent 1-second WAV data URL used as a placeholder until real voice audio is
-// recorded. Every line points here for now so the UI is fully wired.
+// A silent 1-second WAV data URL used only for script entries without a
+// recording. Keeping the entry lets the settings UI show the complete script.
 const SILENT_WAV_URL =
   'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
+
+const MIMI_VOICE_ROOT = '/assets/mimi/voices';
+const MISSING_MIMI_VOICE_IDS = new Set(['shiisuuputa']);
 
 /**
  * Every voice line id for Mimi, transcribed from the character voice script.
@@ -203,9 +206,20 @@ export const CHARACTERS: readonly CharacterConfig[] = [
     voiceLines: MIMI_VOICE_IDS.map(({ id, category }) => ({
       id,
       category,
-      audioUrl: SILENT_WAV_URL,
+      audioUrl: MISSING_MIMI_VOICE_IDS.has(id)
+        ? SILENT_WAV_URL
+        : `${MIMI_VOICE_ROOT}/${id}.mp3`,
     })),
   },
 ];
 
 export const DEFAULT_CHARACTER_ID = 'mimi';
+
+export function getCharacterVoiceUrl(
+  characterId: string,
+  voiceId: string,
+): string | undefined {
+  return CHARACTERS.find(
+    (character) => character.id === characterId,
+  )?.voiceLines.find((line) => line.id === voiceId)?.audioUrl;
+}

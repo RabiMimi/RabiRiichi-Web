@@ -40,6 +40,12 @@ import type {
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
 import { applyRiichiBonusToWaits } from '../domain/model';
+import { CHARACTERS, getCharacterVoiceUrl } from '../domain/character';
+import {
+  createGameVoiceState,
+  reduceGameVoice,
+  type GameVoiceState,
+} from '../domain/gameVoice';
 import { MessagePump } from './messagePump';
 import {
   DEFAULT_ACTION_TIMEOUT,
@@ -192,6 +198,7 @@ export class RabiRiichiClient {
   private isDealingHand = false;
   private hasPlayedActionSequenceSound = false;
   private hasExitedGame = false;
+  private gameVoiceState: GameVoiceState = createGameVoiceState();
 
   public updateClientSettings(patch: Partial<ClientSettings>): void {
     if (patch.animationSpeed !== undefined) {
@@ -220,6 +227,13 @@ export class RabiRiichiClient {
     this.platform.sound = sound;
     sound.setVolumeProvider(() => this.sounds);
     sound.updateAllVolumes();
+    sound.preloadVoices(
+      CHARACTERS.flatMap((character) =>
+        character.voiceLines
+          .map((line) => line.audioUrl)
+          .filter((url) => !url.startsWith('data:')),
+      ),
+    );
   }
 
   // Backdoor for replay and testing helpers (e.g. replay driver, test mocks)
@@ -580,6 +594,7 @@ export class RabiRiichiClient {
       this.clearTimer();
       this.platform.sound.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
       this.hasPlayedActionSequenceSound = false;
+      this.gameVoiceState = createGameVoiceState();
     }
     this.logger.info(`Room state updated: ${this.room?.id}`);
     this.onChange.emit();
@@ -607,6 +622,7 @@ export class RabiRiichiClient {
       this.hasPlayedActionSequenceSound = false;
     }
     this.playDealSoundIfNeeded(gameEvent);
+    const roomBeforeEvent = this.room;
     this.room = applyEvent(this.room, gameEvent);
     this.logger.info(
       `Game event applied. Current player: ${this.room.info?.currentPlayer}`,
@@ -621,6 +637,7 @@ export class RabiRiichiClient {
     }
 
     this.playGameEventSound(gameEvent);
+    this.playGameEventVoice(gameEvent, roomBeforeEvent);
 
     const configTimeout =
       this.room.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
@@ -689,6 +706,30 @@ export class RabiRiichiClient {
     const effect = soundEffectForEvent(gameEvent);
     if (effect) {
       this.platform.sound.playEffect(effect);
+    }
+  }
+
+  private playGameEventVoice(
+    gameEvent: IEventMsg,
+    roomBeforeEvent: RoomModel,
+  ): void {
+    if (!this.room) return;
+    const decision = reduceGameVoice(this.gameVoiceState, {
+      event: gameEvent,
+      before: roomBeforeEvent,
+      after: this.room,
+      selfSeat: this.selfSeat,
+      randomValue: Math.random(),
+    });
+    this.gameVoiceState = decision.state;
+    if (!decision.voiceId) return;
+
+    const url = getCharacterVoiceUrl(
+      this.visuals.characterId,
+      decision.voiceId,
+    );
+    if (url) {
+      this.platform.sound.playVoice(url);
     }
   }
 
@@ -1035,6 +1076,7 @@ export class RabiRiichiClient {
 
   public returnToRoom(): void {
     this.beginExitGame();
+    this.gameVoiceState = createGameVoiceState();
     if (this.room) {
       this.room = {
         ...this.room,
