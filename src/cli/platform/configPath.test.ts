@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { join } from 'node:path';
 import { resolveConfigPath } from './configPath';
 
 describe('resolveConfigPath', () => {
@@ -26,7 +27,9 @@ describe('resolveConfigPath', () => {
 
   it('uses XDG_CONFIG_HOME when set', () => {
     process.env.XDG_CONFIG_HOME = '/xdg';
-    expect(resolveConfigPath()).toBe('/xdg/rabiriichi-cli/config.json');
+    expect(resolveConfigPath()).toBe(
+      join('/xdg', 'rabiriichi-cli', 'config.json'),
+    );
   });
 
   it('falls back to ~/.config when no env vars are set', () => {

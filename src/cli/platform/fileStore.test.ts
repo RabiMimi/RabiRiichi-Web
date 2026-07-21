@@ -47,8 +47,9 @@ describe('FileStore', () => {
   });
 
   it('tolerates a corrupt existing file by starting empty', () => {
-    writeFileSync(path.replace('/nested', ''), 'not json', 'utf8');
-    const store = new FileStore(path.replace('/nested', ''));
+    const unnestedPath = join(dir, 'config.json');
+    writeFileSync(unnestedPath, 'not json', 'utf8');
+    const store = new FileStore(unnestedPath);
     expect(store.getItem('anything')).toBeNull();
     // ...and can still write.
     store.setItem('x', 'y');
@@ -56,11 +57,9 @@ describe('FileStore', () => {
   });
 
   it('ignores non-string values in an existing file', () => {
-    writeFileSync(
-      path.replace('/nested', ''),
-      JSON.stringify({ a: 1, b: 'ok' }),
-    );
-    const store = new FileStore(path.replace('/nested', ''));
+    const unnestedPath = join(dir, 'config.json');
+    writeFileSync(unnestedPath, JSON.stringify({ a: 1, b: 'ok' }));
+    const store = new FileStore(unnestedPath);
     expect(store.getItem('a')).toBeNull();
     expect(store.getItem('b')).toBe('ok');
   });
