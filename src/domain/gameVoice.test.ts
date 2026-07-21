@@ -84,14 +84,12 @@ function decide(
   event: IEventMsg,
   before = room(),
   after = before,
-  randomValue = 1,
 ) {
   return reduceGameVoice(state, {
     event,
     before,
     after,
     selfSeat: 0,
-    randomValue,
   });
 }
 
@@ -266,7 +264,7 @@ describe('game voice decisions', () => {
     ).toBeNull();
   });
 
-  it('plays the dora-discard line on a 25 percent roll', () => {
+  it('plays the dora-discard line on the first dora discard only', () => {
     const state = createGameVoiceState();
     const before = room();
     before.info!.doras = [{ tile: Tile.fromString('1m').toByte() }];
@@ -276,10 +274,49 @@ describe('game voice decisions', () => {
         discarded: { tile: Tile.fromString('2m').toByte() },
       },
     };
-    const dec = decide(state, event, before, before, 0.24);
+    const dec = decide(state, event, before);
     expect(dec.voiceId).toBe('discardDora');
     expect(dec.speakerSeat).toBe(0);
-    expect(decide(state, event, before, before, 0.25).voiceId).toBeNull();
+    // A second dora discard by the same player this round is silent.
+    expect(decide(dec.state, event, before).voiceId).toBeNull();
+  });
+
+  it('treats akadora as a dora discard', () => {
+    const state = createGameVoiceState();
+    const before = room();
+    // No dora indicator matches, so only the red-five flag qualifies.
+    before.info!.doras = [{ tile: Tile.fromString('9s').toByte() }];
+    const event = {
+      discardTileEvent: {
+        playerId: 0,
+        discarded: { tile: Tile.fromString('r5m').toByte() },
+      },
+    };
+    expect(decide(state, event, before).voiceId).toBe('discardDora');
+  });
+
+  it('tracks the dora discard per player independently', () => {
+    let state = createGameVoiceState();
+    const before = room();
+    before.info!.doras = [{ tile: Tile.fromString('1m').toByte() }];
+    const doraTile = { tile: Tile.fromString('2m').toByte() };
+
+    const first = decide(
+      state,
+      { discardTileEvent: { playerId: 0, discarded: doraTile } },
+      before,
+    );
+    expect(first.voiceId).toBe('discardDora');
+    state = first.state;
+
+    // A different player's first dora discard still fires.
+    const second = decide(
+      state,
+      { discardTileEvent: { playerId: 1, discarded: doraTile } },
+      before,
+    );
+    expect(second.voiceId).toBe('discardDora');
+    expect(second.speakerSeat).toBe(1);
   });
 
   it('plays the repeat-discard line on the third consecutive tile kind', () => {
@@ -336,7 +373,6 @@ describe('game voice decisions', () => {
       before,
       after: before,
       selfSeat: 0,
-      randomValue: 0.1,
     });
     expect(decDora.voiceId).toBe('discardDora');
     expect(decDora.speakerSeat).toBe(1);

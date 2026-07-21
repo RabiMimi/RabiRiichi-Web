@@ -3,7 +3,6 @@ import type { IEventMsg } from '../proto';
 import type { MappedTenpaiInfo, RoomModel } from './model';
 import { checkIsDora, Tile } from './tile';
 
-const DORA_VOICE_CHANCE = 0.25;
 const REPEATED_DISCARD_COUNT = 3;
 const OPPONENT_CALL_COUNT = 3;
 const LOW_WALL_THRESHOLD = 10;
@@ -20,6 +19,8 @@ export interface PlayerVoiceState {
   readonly repeatedDiscardCount: number;
   readonly opponentCallCount: number;
   readonly awaitingOpponentCall: boolean;
+  /** Whether this player already voiced a dora discard this round. */
+  readonly playedDiscardDora: boolean;
 }
 
 export interface GameVoiceState {
@@ -40,7 +41,6 @@ export interface GameVoiceContext {
   readonly before: RoomModel;
   readonly after: RoomModel;
   readonly selfSeat: number | undefined;
-  readonly randomValue?: number;
 }
 
 export function getGameVoiceSpeakerSeat(
@@ -66,6 +66,7 @@ function createPlayerVoiceState(): PlayerVoiceState {
     repeatedDiscardCount: 0,
     opponentCallCount: 0,
     awaitingOpponentCall: false,
+    playedDiscardDora: false,
   };
 }
 
@@ -161,9 +162,17 @@ function discardDecision(
     .map((tile) => Tile.fromByte(tile));
   const isDora =
     tileKind > 0 && checkIsDora(Tile.fromByte(discarded.tile ?? 0), indicators);
-  if (isDora && (context.randomValue ?? 1) < DORA_VOICE_CHANCE) {
+  // Play at most once per player per round, on their first dora (incl. akadora)
+  // discard. Nukidora is a separate event and never reaches here.
+  if (isDora && !pState.playedDiscardDora) {
     return {
-      state: nextState,
+      state: {
+        ...nextState,
+        players: {
+          ...nextPlayers,
+          [discarderSeat]: { ...updatedPlayerState, playedDiscardDora: true },
+        },
+      },
       voiceId: 'discardDora',
       speakerSeat: discarderSeat,
     };

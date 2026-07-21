@@ -750,7 +750,6 @@ export class RabiRiichiClient {
       before: roomBeforeEvent,
       after: this.room,
       selfSeat: this.selfSeat,
-      randomValue: Math.random(),
     });
     this.gameVoiceState = decision.state;
     if (!decision.voiceId) return;
