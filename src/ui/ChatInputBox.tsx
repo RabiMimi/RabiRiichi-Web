@@ -38,7 +38,7 @@ export function ChatInputBox(): React.JSX.Element | null {
   return (
     <div className="pointer-events-auto absolute bottom-3 left-3 md:bottom-5 md:left-5 z-[999] flex flex-col items-start gap-0 font-sans">
       {isOpen && (
-        <div className="w-[200px] sm:w-[270px] md:w-[380px] lg:w-[420px] max-h-48 sm:max-h-56 md:max-h-80 lg:max-h-[380px] flex flex-col rounded-t-lg rounded-b-none border border-white/10 border-b-0 bg-[#121c32]/15 p-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)] backdrop-blur-sm text-[11px] md:text-[13px] text-white">
+        <div className="w-[200px] sm:w-[270px] md:w-[380px] lg:w-[420px] max-h-48 sm:max-h-56 md:max-h-80 lg:max-h-[380px] flex flex-col rounded-t-lg rounded-b-none border border-white/10 border-b-0 bg-[#121c32]/15 p-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)] backdrop-blur-sm text-[11px] md:text-[13px] text-white select-text">
           <div className="overflow-y-auto pr-1 flex-grow flex flex-col-reverse gap-1.5 scrollbar-thin">
             {chatHistory
               .slice()
