@@ -3,8 +3,12 @@ node_modules/
 
 # Build output
 dist/
+dist-cli/
 dist-ssr/
 *.local
+
+# CLI local config (persisted credentials / settings)
+.rabiriichi-cli.json
 
 # Generated proto code
 src/generated/

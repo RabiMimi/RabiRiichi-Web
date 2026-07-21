@@ -1196,8 +1196,12 @@ function updateTileRegistry(state: RoomModel, eventMsg: IEventMsg): RoomModel {
 }
 
 function applyEventToState(state: RoomModel, eventMsg: IEventMsg): RoomModel {
-  // Warn on unhandled event variants to catch gaps early (F3)
-  if (import.meta.env.DEV) {
+  // Warn on unhandled event variants to catch gaps early (F3). Read `env`
+  // through a widened local so non-Vite hosts (e.g. the Node CLI, where
+  // `import.meta.env` is undefined) don't throw, while keeping the check clean
+  // under the web app's `vite/client` types.
+  const meta = import.meta as { env?: { DEV?: boolean } };
+  if (meta.env?.DEV) {
     const activeKeys = Object.keys(eventMsg).filter(
       (k) =>
         !k.startsWith('$') &&

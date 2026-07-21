@@ -28,5 +28,5 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src"],
-  "exclude": ["src/generated"]
+  "exclude": ["src/generated", "src/cli"]
 }
