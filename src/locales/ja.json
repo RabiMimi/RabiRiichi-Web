@@ -35,7 +35,12 @@
     "passwordError": "パスワードを入力してください",
     "passwordTooShort": "パスワードは6文字以上で入力してください",
     "passwordMismatch": "パスワードが一致しません",
-    "kickedByOtherClient": "あなたのアカウントは別のクライアントからログインされました。"
+    "kickedByOtherClient": "あなたのアカウントは別のクライアントからログインされました。",
+    "savedAccountCardTitle": "保存されたアカウント",
+    "loginAsButton": "{{nickname}} としてログイン",
+    "useDifferentAccountButton": "別のアカウントを使用",
+    "savedTokenExpiredError": "保存されたセッションの期限が切れました。再度ログインしてください。",
+    "savedAccountUsername": "ユーザー名: {{username}}"
   },
   "lobby": {
     "title": "ロビー",
@@ -46,6 +51,7 @@
     "joinRoom": "部屋に入る",
     "joinRoomLabel": "既存の部屋に入る",
     "logout": "ログアウト",
+    "disconnect": "切断",
     "viewReplay": "牌譜再生",
     "roomSettings": "部屋設定",
     "seed": "乱数シード",

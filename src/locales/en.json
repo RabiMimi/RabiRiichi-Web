@@ -35,7 +35,12 @@
     "passwordError": "Password cannot be empty",
     "passwordTooShort": "Password must be at least 6 characters",
     "passwordMismatch": "Passwords do not match",
-    "kickedByOtherClient": "Your account has been logged in from another client."
+    "kickedByOtherClient": "Your account has been logged in from another client.",
+    "savedAccountCardTitle": "Saved Account",
+    "loginAsButton": "Log In as {{nickname}}",
+    "useDifferentAccountButton": "Use another account",
+    "savedTokenExpiredError": "Saved session has expired. Please log in again.",
+    "savedAccountUsername": "Username: {{username}}"
   },
   "lobby": {
     "title": "Lobby",
@@ -46,6 +51,7 @@
     "joinRoom": "Join Room",
     "joinRoomLabel": "Join Existing Room",
     "logout": "Logout",
+    "disconnect": "Disconnect",
     "viewReplay": "View Replay",
     "roomSettings": "Room Settings",
     "seed": "Seed",

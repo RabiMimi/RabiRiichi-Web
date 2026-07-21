@@ -35,7 +35,12 @@
     "passwordError": "密码不能为空",
     "passwordTooShort": "密码长度必须至少为 6 个字符",
     "passwordMismatch": "两次输入的密码不一致",
-    "kickedByOtherClient": "您的账号已在其他客户端登录。"
+    "kickedByOtherClient": "您的账号已在其他客户端登录。",
+    "savedAccountCardTitle": "已保存的账号",
+    "loginAsButton": "以 {{nickname}} 登录",
+    "useDifferentAccountButton": "使用其他账号",
+    "savedTokenExpiredError": "保存的登录会话已过期，请重新登录。",
+    "savedAccountUsername": "用户名: {{username}}"
   },
   "lobby": {
     "title": "大厅",
@@ -46,6 +51,7 @@
     "joinRoom": "加入房间",
     "joinRoomLabel": "加入已有房间",
     "logout": "登出",
+    "disconnect": "断开连接",
     "viewReplay": "观看回放",
     "roomSettings": "房间设置",
     "seed": "随机数种子",

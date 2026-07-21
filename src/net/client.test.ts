@@ -211,7 +211,16 @@ describe('RabiRiichiClient', () => {
       STORAGE_KEY_SERVER_SETTINGS,
       JSON.stringify({ lastUrl: 'ws://localhost:1234' }),
     );
-    expect(setItemMock).toHaveBeenCalledWith('rabiriichi_token', 'my-token');
+    expect(setItemMock).toHaveBeenCalledWith(
+      'rabiriichi_server_credentials',
+      JSON.stringify({
+        'ws://localhost:1234': {
+          token: 'my-token',
+          username: '',
+          nickname: 'TestUser',
+        },
+      }),
+    );
 
     vi.useRealTimers();
   });
@@ -1011,9 +1020,15 @@ describe('RabiRiichiClient', () => {
   it('should clear stored credentials and close connection on logout', async () => {
     vi.useFakeTimers();
     mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
-      lastUrl: 'ws://localhost:5150',
+      lastUrl: 'ws://localhost:1234',
     });
-    mockLocalStorage.rabiriichi_token = 'my-token';
+    mockLocalStorage.rabiriichi_server_credentials = JSON.stringify({
+      'ws://localhost:1234': {
+        token: 'my-token',
+        username: 'alice',
+        nickname: 'Alice',
+      },
+    });
 
     const client = new RabiRiichiClient();
     await setupConnectedClient(client);
@@ -1032,7 +1047,7 @@ describe('RabiRiichiClient', () => {
         ) as ServerSettings
       ).lastUrl,
     ).toBeUndefined();
-    expect(mockLocalStorage.rabiriichi_token).toBeUndefined();
+    expect(mockLocalStorage.rabiriichi_server_credentials).toBeUndefined();
     expect(client.connectionStatus).toBe('disconnected');
 
     vi.useRealTimers();
@@ -1355,10 +1370,13 @@ describe('RabiRiichiClient', () => {
       await vi.advanceTimersByTimeAsync(15);
 
       // Token persisted to the injected store, not the browser stub.
-      expect(backing.rabiriichi_token).toBe('cli-token');
-      expect(mockLocalStorage.rabiriichi_token).toBeUndefined();
-      // The login username is persisted for later password changes.
-      expect(backing.rabiriichi_username).toBe('CliPlayer');
+      const storedCreds = JSON.parse(backing.rabiriichi_server_credentials || '{}');
+      expect(storedCreds['ws://cli-host:5150']).toEqual({
+        token: 'cli-token',
+        username: 'CliPlayer',
+        nickname: 'CliPlayer',
+      });
+      expect(mockLocalStorage.rabiriichi_server_credentials).toBeUndefined();
 
       client.close();
       await registerPromise.catch(() => undefined);
@@ -1417,7 +1435,12 @@ describe('RabiRiichiClient', () => {
       await changePromise;
 
       expect(client.accessToken).toBe('rotated-token');
-      expect(backing.rabiriichi_token).toBe('rotated-token');
+      const storedCreds = JSON.parse(backing.rabiriichi_server_credentials || '{}');
+      expect(storedCreds['ws://host:5150']).toEqual({
+        token: 'rotated-token',
+        username: 'alice',
+        nickname: 'alice',
+      });
 
       client.close();
       vi.useRealTimers();

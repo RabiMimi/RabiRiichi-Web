@@ -15,7 +15,7 @@ import {
   createClientPlatform,
 } from '../platform';
 import { getPublicWSUrl, getUserWSUrl } from './wsUrl';
-import { CredentialStore } from './credentialStore';
+import { CredentialStore, type ServerCredentials } from './credentialStore';
 import { soundEffectForEvent } from './eventSound';
 import {
   createUser,
@@ -461,12 +461,18 @@ export class RabiRiichiClient {
   private storeCredentials(): void {
     if (this.wsurl) {
       this.credentials.saveLastUrl(this.wsurl);
-    }
-    if (this.accessToken) {
-      this.credentials.saveToken(this.accessToken);
-    }
-    if (this.username) {
-      this.credentials.saveUsername(this.username);
+      if (this.accessToken) {
+        const oldCreds = this.credentials.loadCredentialsForServer(this.wsurl) ?? {
+          token: '',
+          username: '',
+          nickname: '',
+        };
+        this.credentials.saveCredentialsForServer(this.wsurl, {
+          token: this.accessToken,
+          username: this.username || oldCreds.username,
+          nickname: this.self?.nickname || oldCreds.nickname || this.username || '',
+        });
+      }
     }
   }
 
@@ -1275,9 +1281,10 @@ export class RabiRiichiClient {
   }
 
   public logout(): void {
-    this.credentials.clearLastUrl();
-    this.credentials.clearToken();
-    this.credentials.clearUsername();
+    if (this.wsurl) {
+      this.credentials.clearCredentialsForServer(this.wsurl);
+      this.credentials.clearLastUrl();
+    }
     this.accessToken = null;
     this.username = null;
     this.wsurl = null;
@@ -1366,6 +1373,10 @@ export class RabiRiichiClient {
   /** Restores the persisted login username so it survives reloads. */
   public restoreStoredUsername(): void {
     this.username = this.credentials.loadUsername();
+  }
+
+  public getCredentialsForServer(url: string): ServerCredentials | null {
+    return this.credentials.loadCredentialsForServer(url);
   }
 }
 

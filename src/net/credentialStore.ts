@@ -34,6 +34,14 @@ export function parseClientSettings(raw: string | null): ClientSettings {
   }
 }
 
+export interface ServerCredentials {
+  token: string;
+  username: string;
+  nickname: string;
+}
+
+export const SERVER_CREDENTIALS_STORE_KEY = 'rabiriichi_server_credentials';
+
 export class CredentialStore {
   private readonly logger = new Logger('CredentialStore');
   private readonly store: KeyValueStore;
@@ -42,31 +50,130 @@ export class CredentialStore {
     this.store = store;
   }
 
+  private loadAllServerCredentials(): Record<string, ServerCredentials> {
+    const raw = this.store.getItem(SERVER_CREDENTIALS_STORE_KEY);
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw) as Record<string, ServerCredentials>;
+    } catch {
+      return {};
+    }
+  }
+
+  private saveAllServerCredentials(all: Record<string, ServerCredentials>): void {
+    if (Object.keys(all).length === 0) {
+      this.store.removeItem(SERVER_CREDENTIALS_STORE_KEY);
+    } else {
+      this.store.setItem(SERVER_CREDENTIALS_STORE_KEY, JSON.stringify(all));
+    }
+  }
+
+  public loadCredentialsForServer(url: string): ServerCredentials | null {
+    const all = this.loadAllServerCredentials();
+    let creds = all[url];
+    if (!creds) {
+      // Fallback: check if we can migrate from old keys
+      const oldLastUrl = this.loadLastUrl();
+      if (oldLastUrl === url) {
+        const oldToken = this.store.getItem(TOKEN_STORE_KEY);
+        if (oldToken) {
+          const oldUsername = this.store.getItem(USERNAME_STORE_KEY) ?? '';
+          creds = {
+            token: oldToken,
+            username: oldUsername,
+            nickname: this.loadServerSettings().nickname || oldUsername || 'User',
+          };
+          all[url] = creds;
+          this.saveAllServerCredentials(all);
+          // Clean up old keys
+          this.store.removeItem(TOKEN_STORE_KEY);
+          if (oldUsername) {
+            this.store.removeItem(USERNAME_STORE_KEY);
+          }
+        }
+      }
+    }
+    return creds ?? null;
+  }
+
+  public saveCredentialsForServer(url: string, creds: ServerCredentials): void {
+    const all = this.loadAllServerCredentials();
+    all[url] = creds;
+    this.saveAllServerCredentials(all);
+  }
+
+  public clearCredentialsForServer(url: string): void {
+    const all = this.loadAllServerCredentials();
+    if (all[url] === undefined) return;
+    delete all[url];
+    this.saveAllServerCredentials(all);
+  }
+
+  // Deprecated: kept for tests and compatibility
   public loadToken(): string | null {
+    const lastUrl = this.loadLastUrl();
+    if (lastUrl) {
+      const creds = this.loadCredentialsForServer(lastUrl);
+      if (creds) return creds.token;
+    }
     return this.store.getItem(TOKEN_STORE_KEY);
   }
 
   public saveToken(token: string): void {
-    this.store.setItem(TOKEN_STORE_KEY, token);
+    const lastUrl = this.loadLastUrl();
+    if (lastUrl) {
+      const creds = this.loadCredentialsForServer(lastUrl) ?? { token: '', username: '', nickname: '' };
+      creds.token = token;
+      this.saveCredentialsForServer(lastUrl, creds);
+    } else {
+      this.store.setItem(TOKEN_STORE_KEY, token);
+    }
   }
 
   public clearToken(): void {
-    this.store.removeItem(TOKEN_STORE_KEY);
+    const lastUrl = this.loadLastUrl();
+    if (lastUrl) {
+      const creds = this.loadCredentialsForServer(lastUrl);
+      if (creds) {
+        creds.token = '';
+        this.saveCredentialsForServer(lastUrl, creds);
+      }
+    } else {
+      this.store.removeItem(TOKEN_STORE_KEY);
+    }
   }
 
-  // The login username is persisted so a password change (which is verified by
-  // the old password over the public socket) works even after a token-only
-  // reconnect, when the username would otherwise be unrecoverable.
   public loadUsername(): string | null {
+    const lastUrl = this.loadLastUrl();
+    if (lastUrl) {
+      const creds = this.loadCredentialsForServer(lastUrl);
+      if (creds) return creds.username;
+    }
     return this.store.getItem(USERNAME_STORE_KEY);
   }
 
   public saveUsername(username: string): void {
-    this.store.setItem(USERNAME_STORE_KEY, username);
+    const lastUrl = this.loadLastUrl();
+    if (lastUrl) {
+      const creds = this.loadCredentialsForServer(lastUrl) ?? { token: '', username: '', nickname: '' };
+      creds.username = username;
+      this.saveCredentialsForServer(lastUrl, creds);
+    } else {
+      this.store.setItem(USERNAME_STORE_KEY, username);
+    }
   }
 
   public clearUsername(): void {
-    this.store.removeItem(USERNAME_STORE_KEY);
+    const lastUrl = this.loadLastUrl();
+    if (lastUrl) {
+      const creds = this.loadCredentialsForServer(lastUrl);
+      if (creds) {
+        creds.username = '';
+        this.saveCredentialsForServer(lastUrl, creds);
+      }
+    } else {
+      this.store.removeItem(USERNAME_STORE_KEY);
+    }
   }
 
   private loadServerSettings(): ServerSettings {
