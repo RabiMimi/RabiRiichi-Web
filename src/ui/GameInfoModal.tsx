@@ -7,6 +7,7 @@ import { UserStatus } from '../proto';
 import { CopyGameIdButton } from './CopyGameIdButton';
 import { Button } from './Button';
 import { UiTile } from './UiTile';
+import { TabButton } from './TabButton';
 import { MODAL } from './styles';
 import {
   RENCHAN_POLICIES,
@@ -139,39 +140,24 @@ export function GameInfoModal({
               {t('hud.gameInfo')}
             </h3>
             <div className="flex gap-1">
-              <button
-                type="button"
-                className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
-                  activeTab === 'info'
-                    ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
-                    : 'text-[#888] hover:text-white hover:bg-[#333]'
-                }`}
+              <TabButton
+                active={activeTab === 'info'}
                 onClick={() => setActiveTab('info')}
               >
                 {t('hud.tabLiveInfo')}
-              </button>
-              <button
-                type="button"
-                className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
-                  activeTab === 'config'
-                    ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
-                    : 'text-[#888] hover:text-white hover:bg-[#333]'
-                }`}
+              </TabButton>
+              <TabButton
+                active={activeTab === 'config'}
                 onClick={() => setActiveTab('config')}
               >
                 {t('hud.tabConfig')}
-              </button>
-              <button
-                type="button"
-                className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
-                  activeTab === 'yaku'
-                    ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
-                    : 'text-[#888] hover:text-white hover:bg-[#333]'
-                }`}
+              </TabButton>
+              <TabButton
+                active={activeTab === 'yaku'}
                 onClick={() => setActiveTab('yaku')}
               >
                 {t('hud.tabYakuYama')}
-              </button>
+              </TabButton>
             </div>
           </div>
           <button type="button" className={MODAL.closeButton} onClick={onClose}>
