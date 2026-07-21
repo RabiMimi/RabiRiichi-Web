@@ -2,6 +2,7 @@ import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { AiType, type ILlmAiConfig } from '../proto';
+import { getAiTypeName } from '../domain/model';
 import { Button } from './Button';
 import { LlmConfigDialog } from './LlmConfigDialog';
 
@@ -127,7 +128,7 @@ export function AddAiDropdown({
                   className="bg-transparent border-none px-3 py-2 text-[0.85rem] text-[#ccc] cursor-pointer whitespace-nowrap text-left w-full [font-family:inherit] transition-colors duration-200 hover:bg-[#ff7a99]/10 hover:text-[#ff7a99] disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handleSelect(aiType)}
                 >
-                  {t(`ai.type.${AiType[aiType]}`)}
+                  {getAiTypeName(aiType, t)}
                 </button>
               ))}
             </div>

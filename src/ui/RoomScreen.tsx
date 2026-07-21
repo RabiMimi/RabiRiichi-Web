@@ -10,7 +10,11 @@ import {
 import { UserStatus, AiType, type ILlmAiConfig } from '../proto';
 import { pollUntil } from '../lib';
 import { formatError } from '../lib/errors';
-import { type PlayerModel, getPlayerDisplayName } from '../domain/model';
+import {
+  type PlayerModel,
+  getPlayerDisplayName,
+  getAiTypeName,
+} from '../domain/model';
 import { AddAiDropdown } from './AddAiDropdown';
 import { StickerBubble } from './StickerBubble';
 import { ChatBubble } from './ChatBubble';
@@ -180,7 +184,7 @@ export function RoomScreen(): React.JSX.Element | null {
                       {isMe && `(${t('lobby.you')})`}
                       {player.aiType !== AiType.AI_TYPE_NONE && (
                         <Tooltip
-                          content={t(`ai.type.${player.aiType}`)}
+                          content={getAiTypeName(player.aiType, t)}
                           position="top"
                         >
                           <span className="bg-[#3f51b5] text-white text-[0.75rem] px-1.5 py-0.5 rounded ml-2 align-middle font-normal">

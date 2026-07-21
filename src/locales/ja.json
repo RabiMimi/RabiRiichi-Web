@@ -394,10 +394,10 @@
   },
   "ai": {
     "type": {
-      "AI_TYPE_NONE": "",
-      "AI_TYPE_DUMMY": "よだれうさぎ",
-      "AI_TYPE_RULE_BASED": "のどっち",
-      "AI_TYPE_LLM": "LLM"
+      "0": "",
+      "1": "よだれうさぎ",
+      "2": "のどっち",
+      "3": "LLM"
     },
     "llm": {
       "gemini": "Gemiヌ",

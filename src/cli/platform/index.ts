@@ -9,6 +9,7 @@ import { createNodeWebSocketFactory } from './nodeSocket';
 import { nodeCryptoProvider } from './nodeCrypto';
 import { FileStore } from './fileStore';
 import { resolveConfigPath } from './configPath';
+import { t } from '../i18n';
 
 export { resolveConfigPath } from './configPath';
 export { FileStore } from './fileStore';
@@ -23,5 +24,6 @@ export function createCliPlatform(configPath?: string): ClientPlatform {
     store: new FileStore(resolveConfigPath(configPath)),
     crypto: nodeCryptoProvider,
     sound: nullSoundPlayer,
+    translate: (key) => t(key),
   };
 }

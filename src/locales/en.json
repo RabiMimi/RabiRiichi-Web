@@ -394,10 +394,10 @@
   },
   "ai": {
     "type": {
-      "AI_TYPE_NONE": "",
-      "AI_TYPE_DUMMY": "Drooling Rabbit",
-      "AI_TYPE_RULE_BASED": "Nodocchi",
-      "AI_TYPE_LLM": "LLM"
+      "0": "",
+      "1": "Drooling Rabbit",
+      "2": "Nodocchi",
+      "3": "LLM"
     },
     "llm": {
       "gemini": "Gemibo",

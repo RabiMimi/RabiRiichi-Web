@@ -209,3 +209,66 @@ npm run test` all pass.
 - `protos/` — the wire contract (source of truth for messages).
 - `../RabiRiichi-Cocos/assets/Scripts/Rabi/` and `.../Game/` — reference
   implementations to mirror (transport, reducers, inquiry mapping).
+
+## 10. The CLI/TUI client (`src/cli/`)
+
+A second, **pure keyboard-driven terminal client** lives in `src/cli/`. It
+reuses the platform-agnostic core (transport + domain/view-model + i18n) and
+must NOT affect the web app. It is a separate TS project built with Ink (React
+for the terminal).
+
+### Platform seam
+
+`RabiRiichiClient` accepts a `Partial<ClientPlatform>` (socketFactory, store,
+sound, crypto) via `src/platform/`. The CLI injects Node impls
+(`src/cli/platform/`: `nodeSocket.ts` ws, `nodeCrypto.ts`, `fileStore.ts`,
+`configPath.ts`, `index.ts` `createCliPlatform`). Core reads browser globals
+only behind `typeof` guards; non-Vite hosts must not touch `import.meta.env`
+directly (guard as `(import.meta as {env?:{DEV?:boolean}}).env?.DEV`).
+
+### Project / toolchain wiring
+
+- `tsconfig.cli.json` (new): DOM+Node libs (isomorphic core references DOM
+  ambient types behind runtime guards), `moduleResolution: bundler`, `noEmit`.
+  Added to root `tsconfig.json` references AND excluded from `tsconfig.app.json`.
+- `eslint.config.js` has a `src/cli/**` override: `globals.node`, disables
+  `react-refresh` and `no-shadow` (DOM `Text`/`self` false conflicts).
+- `src/cli/cli-env.d.ts` declares `__COMMIT_HASH__` and `import.meta.env`.
+- Scripts: `cli` (tsx), `cli:dev`, `cli:typecheck`, `cli:build` (esbuild).
+  `.gitignore` adds `dist-cli/` and `.rabiriichi-cli.json` (gitignored JSON
+  config). Env note: `npm` may be corepack-only (`corepack npm run …`).
+
+### Strict-TS gotchas (already handled — keep them)
+
+`erasableSyntaxOnly` (no TS parameter properties), `noUncheckedIndexedAccess`,
+`exactOptionalPropertyTypes` (Ink `color`/`backgroundColor` reject explicit
+`undefined` → use `optionalColors()` in `src/cli/ui/inkProps.ts`). Ink hooks
+must be unconditional (call `useInput` before any early return).
+
+### Rendering facts
+
+- Unicode Mahjong block U+1F000–U+1F02B: m=U+1F007..00F, s=U+1F010..018,
+  p=U+1F019..021, winds(E,S,W,N)=U+1F000..003, dragons white/green/red=
+  U+1F006/1F005/1F004, back=U+1F02B. No red-five glyph → append `*` + red color.
+  First run offers Unicode/ASCII tile choice (prefer Unicode); stored in
+  `settings.ts` (`tileMode`/`language`/`tileModeConfirmed`).
+- tedashi/tsumogiri is derived from the tile via `src/domain/tileInfo.ts`
+  `deriveTileInfo(tile).isTedashi` (tsumogiri iff `drawnJun === discardInfo.jun`)
+  — do NOT modify the reducer/model for this.
+
+### Localization principle (applies to web too)
+
+Human-facing localization is client-side. The domain layer stamps hardcoded
+Chinese _fallback_ labels on `ActionOption`; the UI must localize via
+`hud.action.*` / `result.*` keys, not the raw `.label`. Pure `actionLabel()` in
+`src/cli/render/actionBar.ts` maps action type → key (`next-round`→
+`result.confirm`; agari→tsumo/ron via `label === '自摸'`).
+
+### Layers (all pure render/* modules are unit-tested with Vitest)
+
+`render/`: `tileGlyph.ts`, `tableView.ts`, `actionBar.ts`, `roomConfig.ts`,
+`resultView.ts`. `ui/`, `screens/`, `App.tsx`, `main.tsx`, `i18n.ts`,
+`locales.ts` (CLI-only `cli.*` strings, all 3 langs). Replay is self-contained
+in `replayController.ts` (the shared `replayDriver` is singleton-coupled — do
+NOT reuse it from the CLI). Testing policy is the same as §4: unit-test domain
+and view-model/render logic; NO GUI/visual/snapshot tests.

@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { sendChatMessage } from '../net/messages';
-import { useRoom, useSelf, useChatHistory } from '../state/store';
-import { getPlayerDisplayName } from '../domain/model';
+import { useSelf, useChatHistory } from '../state/store';
 
 function ChatIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -20,7 +19,6 @@ function ChatIcon({ className = 'w-4 h-4' }: { className?: string }) {
 
 export function ChatInputBox(): React.JSX.Element | null {
   const { t } = useTranslation();
-  const room = useRoom();
   const currentUser = useSelf();
   const chatHistory = useChatHistory();
   const [text, setText] = useState('');
@@ -46,12 +44,7 @@ export function ChatInputBox(): React.JSX.Element | null {
               .slice()
               .reverse()
               .map((entry) => {
-                const player = room?.players.find(
-                  (p) => p.id === entry.senderId,
-                );
-                const displayName = player
-                  ? getPlayerDisplayName(player, t)
-                  : entry.senderName;
+                const displayName = entry.senderName;
                 const isMe = entry.senderId === currentUser?.id;
                 const nameColor = isMe ? 'text-[#ff7a99]' : 'text-[#80deea]';
 

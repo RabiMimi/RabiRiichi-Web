@@ -10,6 +10,7 @@ import { WS_CONNECT_TIMEOUT } from '../transport/constants';
 import {
   type ClientPlatform,
   type GameSoundPlayer,
+  type TranslateFn,
   createClientPlatform,
 } from '../platform';
 import { getPublicWSUrl, getUserWSUrl } from './wsUrl';
@@ -39,7 +40,7 @@ import type {
   IServerMessageDto,
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
-import { applyRiichiBonusToWaits } from '../domain/model';
+import { applyRiichiBonusToWaits, getPlayerDisplayName } from '../domain/model';
 import { CHARACTERS, getCharacterVoiceUrl } from '../domain/character';
 import {
   createGameVoiceState,
@@ -79,6 +80,7 @@ export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 export interface ChatHistoryEntry {
   id: string;
   senderId: number;
+  /** Processed display name at send time (AI sentinels already resolved). */
   senderName: string;
   text?: string | null;
   sticker?: string | null;
@@ -237,6 +239,15 @@ export class RabiRiichiClient {
     );
   }
 
+  /**
+   * Installs a localizer after construction. Used to resolve AI display names
+   * (e.g. "@llm:gemini" → "Gemibo") when caching chat sender names. Defaults to
+   * the identity function so the core stays i18n-agnostic.
+   */
+  public setTranslate(translate: TranslateFn): void {
+    this.platform.translate = translate;
+  }
+
   // Backdoor for replay and testing helpers (e.g. replay driver, test mocks)
   public readonly replay = {
     setConnectionStatus: (newStatus: ConnectionStatus) =>
@@ -359,7 +370,10 @@ export class RabiRiichiClient {
       return;
     }
     const player = this.room?.players.find((p) => p.id === msg.senderId);
-    const senderName = player ? player.nickname : `Player ${msg.senderId}`;
+    // Cache the processed name so a later room-state snapshot can't revert it.
+    const senderName = player
+      ? getPlayerDisplayName(player, this.platform.translate)
+      : `Player ${msg.senderId}`;
     const newEntry: ChatHistoryEntry = {
       id: `${Date.now()}-${Math.random()}`,
       senderId: msg.senderId,

@@ -394,10 +394,10 @@
   },
   "ai": {
     "type": {
-      "AI_TYPE_NONE": "",
-      "AI_TYPE_DUMMY": "口水兔",
-      "AI_TYPE_RULE_BASED": "小和和",
-      "AI_TYPE_LLM": "LLM"
+      "0": "",
+      "1": "口水兔",
+      "2": "小和和",
+      "3": "LLM"
     },
     "llm": {
       "gemini": "Gemi狸",

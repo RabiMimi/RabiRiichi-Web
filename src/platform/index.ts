@@ -28,18 +28,25 @@ import { type KeyValueStore, browserLocalStore } from './storage';
 import { type GameSoundPlayer, nullSoundPlayer } from './sound';
 import { type CryptoProvider, browserCryptoProvider } from './crypto';
 
+/** Localizes an i18n key; defaults to the identity function. */
+export type TranslateFn = (key: string) => string;
+
+const identityTranslate: TranslateFn = (key) => key;
+
 /** The complete set of host capabilities the client requires. */
 export interface ClientPlatform {
   socketFactory: WebSocketFactory;
   store: KeyValueStore;
   sound: GameSoundPlayer;
   crypto: CryptoProvider;
+  translate: TranslateFn;
 }
 
 /**
  * Builds a {@link ClientPlatform}, filling any omitted capability with a safe
- * default: browser socket/store/crypto and a no-op sound player. Web callers
- * that want audio pass a real sound player (see `platform/soundBrowser`).
+ * default: browser socket/store/crypto, a no-op sound player, and an identity
+ * translator. Web callers that want audio pass a real sound player (see
+ * `platform/soundBrowser`); localized callers pass a real `translate`.
  */
 export function createClientPlatform(
   overrides: Partial<ClientPlatform> = {},
@@ -49,5 +56,6 @@ export function createClientPlatform(
     store: overrides.store ?? browserLocalStore,
     sound: overrides.sound ?? nullSoundPlayer,
     crypto: overrides.crypto ?? browserCryptoProvider,
+    translate: overrides.translate ?? identityTranslate,
   };
 }
