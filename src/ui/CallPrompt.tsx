@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRoom, useSelf } from '../state/store';
 import { isTsumoTile } from '../domain/model';
-import { TileSource } from '../proto';
 import type { IMenLikeMsg } from '../proto';
+import { getScreenPosition } from '../scene/seat';
+import { getCallPromptSeatClass } from './callPromptPosition';
+import { findNewMeldCallType, type MeldCallType } from './callPromptEvents';
 
-type CallType = 'chii' | 'pon' | 'kan' | 'agari' | 'tsumo' | 'riichi';
+type CallType = MeldCallType | 'agari' | 'tsumo' | 'riichi';
 
 const CALL_IMAGES: Record<CallType, string> = {
   chii: '/assets/ui/吃.png',
@@ -27,13 +29,16 @@ interface FlashEntry {
 
 export function CallPrompt(): React.JSX.Element | null {
   const room = useRoom();
-  const self = useSelf();
+  const currentUser = useSelf();
   const [flashes, setFlashes] = useState<FlashEntry[]>([]);
 
-  const prevCalledCounts = useRef<Map<number, number>>(new Map());
+  const prevCalledMelds = useRef<Map<number, IMenLikeMsg[]>>(new Map());
   const prevAgariPlayers = useRef<Set<number>>(new Set());
   const prevRiichiIds = useRef<Map<number, number>>(new Map());
-  const timerRefs = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const initializedPlayerIds = useRef<Set<number>>(new Set());
+  const timerRefs = useRef<Map<number, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
 
   function trigger(playerId: number, seat: number, type: CallType) {
     const old = timerRefs.current.get(playerId);
@@ -45,7 +50,11 @@ export function CallPrompt(): React.JSX.Element | null {
     ]);
 
     const hideId = setTimeout(() => {
-      setFlashes((prev) => prev.map((f) => (f.playerId === playerId ? { ...f, exiting: true } : f)));
+      setFlashes((prev) =>
+        prev.map((f) =>
+          f.playerId === playerId ? { ...f, exiting: true } : f,
+        ),
+      );
     }, DISPLAY_DURATION);
 
     const removeId = setTimeout(() => {
@@ -54,7 +63,10 @@ export function CallPrompt(): React.JSX.Element | null {
 
     timerRefs.current.set(playerId, removeId);
     timerRefs.current.set(playerId, hideId);
-    setTimeout(() => timerRefs.current.set(playerId, removeId), DISPLAY_DURATION);
+    setTimeout(
+      () => timerRefs.current.set(playerId, removeId),
+      DISPLAY_DURATION,
+    );
   }
 
   useEffect(() => {
@@ -64,14 +76,25 @@ export function CallPrompt(): React.JSX.Element | null {
       if (!gs || p.seat === undefined) continue;
       const pid = p.id;
 
-      let pc = prevCalledCounts.current.get(pid) ?? 0;
-      const called = gs.hand.called;
-      if (called.length > pc && pc >= 0) {
-        for (const m of called.slice(pc)) {
-          if (m?.tiles?.length) { trigger(pid, p.seat, detectCallType(m)); break; }
-        }
+      // A refreshed/reconnected room is an authoritative snapshot, not a
+      // sequence of newly played events. Seed the baseline the first time a
+      // player is observed so historical melds, riichi, and results do not
+      // replay their prompt animations.
+      if (!initializedPlayerIds.current.has(pid)) {
+        initializedPlayerIds.current.add(pid);
+        prevCalledMelds.current.set(pid, gs.hand.called);
+        prevRiichiIds.current.set(pid, gs.riichiTileId);
+        if (gs.agari) prevAgariPlayers.current.add(pid);
+        continue;
       }
-      prevCalledCounts.current.set(pid, called.length);
+
+      const called = gs.hand.called;
+      const callType = findNewMeldCallType(
+        prevCalledMelds.current.get(pid) ?? [],
+        called,
+      );
+      if (callType) trigger(pid, p.seat, callType);
+      prevCalledMelds.current.set(pid, called);
 
       if (gs.agari && !prevAgariPlayers.current.has(pid)) {
         // Only flash if this player actually won (has incoming tile or isTsumo)
@@ -83,39 +106,53 @@ export function CallPrompt(): React.JSX.Element | null {
       }
       if (!gs.agari) prevAgariPlayers.current.delete(pid);
 
-      const rid = gs.riichiTileId ?? 0;
+      const rid = gs.riichiTileId;
       const prvRid = prevRiichiIds.current.get(pid) ?? 0;
       if (rid !== 0 && prvRid === 0) trigger(pid, p.seat, 'riichi');
       prevRiichiIds.current.set(pid, rid);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
 
-  useEffect(() => () => { for (const t of timerRefs.current.values()) clearTimeout(t); }, []);
+  useEffect(
+    () => () => {
+      for (const t of timerRefs.current.values()) clearTimeout(t);
+    },
+    [],
+  );
 
   if (flashes.length === 0 || !room) return null;
 
-  const selfPlayer = self ? room.players.find((p) => p.id === self.id) : undefined;
+  const selfPlayer = currentUser
+    ? room.players.find((p) => p.id === currentUser.id)
+    : undefined;
   const selfSeat = selfPlayer?.seat;
-  const playerCount = room.players.length;
+  const playerCount = room.config?.playerCount ?? room.players.length;
 
   return (
     <div className="absolute inset-0 pointer-events-none z-[55]">
       {flashes.map((f) => {
-        const relSeat = selfSeat !== undefined
-          ? ((f.seat - selfSeat) % playerCount + playerCount) % playerCount
-          : 0;
-        const pos = getSeatClass(relSeat);
+        const screenPos =
+          selfSeat !== undefined
+            ? getScreenPosition(f.seat, selfSeat, playerCount)
+            : 0;
+        const pos = getCallPromptSeatClass(screenPos);
         return (
-          <div key={f.playerId} className={`absolute ${pos} flex flex-col items-center`}>
+          <div
+            key={f.playerId}
+            className={`absolute ${pos} flex flex-col items-center`}
+          >
             <div
-              className={f.exiting ? 'animate-call-prompt-exit' : 'animate-call-prompt-entrance'}
+              className={
+                f.exiting
+                  ? 'animate-call-prompt-exit'
+                  : 'animate-call-prompt-entrance'
+              }
               style={{ filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.8))' }}
             >
               <img
                 src={CALL_IMAGES[f.type]}
                 alt={f.type}
-                className="w-16 h-auto sm:w-24 lg:w-32 object-contain"
+                className="h-auto w-16 object-contain sm:w-24 lg:w-40"
                 draggable={false}
               />
             </div>
@@ -124,22 +161,4 @@ export function CallPrompt(): React.JSX.Element | null {
       })}
     </div>
   );
-}
-
-function getSeatClass(relSeat: number): string {
-  switch (relSeat) {
-    case 0: return 'bottom-[20vh] left-1/2 -translate-x-1/2';
-    case 1: return 'top-[41%] left-[58%] -translate-x-1/2 -translate-y-1/2';
-    case 2: return 'top-[22vh] left-1/2 -translate-x-1/2';
-    case 3: return 'top-[41%] left-[42%] -translate-x-1/2 -translate-y-1/2';
-    default: return 'bottom-[20vh] left-1/2 -translate-x-1/2';
-  }
-}
-
-function detectCallType(meld: IMenLikeMsg): CallType {
-  const s = meld.tiles?.[0]?.source;
-  if (s === TileSource.TILE_SOURCE_PON) return 'pon';
-  if (s === TileSource.TILE_SOURCE_CHII) return 'chii';
-  if (s === TileSource.TILE_SOURCE_DAIMINKAN || s === TileSource.TILE_SOURCE_KAKAN || s === TileSource.TILE_SOURCE_ANKAN) return 'kan';
-  return (meld.tiles ?? []).length >= 4 ? 'kan' : 'pon';
 }
