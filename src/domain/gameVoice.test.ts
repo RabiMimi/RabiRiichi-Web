@@ -6,6 +6,7 @@ import type { MappedTenpaiInfo, RoomModel } from './model';
 import { Tile } from './tile';
 import {
   createGameVoiceState,
+  getGameVoiceSpeakerSeat,
   highestPointTenpaiIsYakuman,
   reduceGameVoice,
   type GameVoiceState,
@@ -106,6 +107,29 @@ function wait(points: number, yakuman: number): MappedTenpaiInfo {
 }
 
 describe('game voice decisions', () => {
+  it('routes event voices to the player who speaks them', () => {
+    expect(
+      getGameVoiceSpeakerSeat({ claimTileEvent: { playerId: 2 } }, 0, 'pon'),
+    ).toBe(2);
+    expect(
+      getGameVoiceSpeakerSeat(
+        { agariEvent: { agariInfos: [{ playerId: 3 }] } },
+        0,
+        'ron',
+      ),
+    ).toBe(3);
+    expect(
+      getGameVoiceSpeakerSeat({ beginGameEvent: {} }, 0, 'gameStart'),
+    ).toBe(0);
+    expect(
+      getGameVoiceSpeakerSeat(
+        { claimTileEvent: { playerId: 2 } },
+        0,
+        'opponentCalls',
+      ),
+    ).toBe(0);
+  });
+
   it('plays the game-start greeting only for the first hand', () => {
     const firstHand = decide(createGameVoiceState(), { beginGameEvent: {} });
     expect(firstHand.voiceId).toBe('gameStart');

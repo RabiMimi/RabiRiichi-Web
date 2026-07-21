@@ -8,9 +8,15 @@
 import type { GameSoundPlayer } from './sound';
 import { soundManager } from '../lib/sound';
 
-/**
- * The shared sound manager already exposes exactly the methods
- * {@link GameSoundPlayer} requires; its `playEffect`/`stopEffect` return values
- * are structurally compatible with the `void`-returning interface.
- */
-export const browserSoundPlayer: GameSoundPlayer = soundManager;
+export const browserSoundPlayer: GameSoundPlayer = {
+  preloadVoices: (urls) => soundManager.preloadVoices(urls),
+  playEffect: (effect) => {
+    soundManager.playEffect(effect);
+  },
+  playVoice: (url, channel) => {
+    soundManager.playVoice(url, undefined, undefined, channel);
+  },
+  stopEffect: (effect) => soundManager.stopEffect(effect),
+  updateAllVolumes: () => soundManager.updateAllVolumes(),
+  setVolumeProvider: (provider) => soundManager.setVolumeProvider(provider),
+};

@@ -8,9 +8,10 @@ export interface AudioPlayback {
   setVolume(vol: number): void;
 }
 
-class SoundManager {
+export class SoundManager {
   private bgmAudio: Howl | null = null;
   private activeVoices = new Set<AudioPlayback>();
+  private readonly activeVoiceChannels = new Map<string, AudioPlayback>();
   private readonly voiceAudio = new Map<string, Howl>();
   private activeSEs = new Set<AudioPlayback>();
   private activeEffects = new Map<SoundEffect, AudioPlayback>();
@@ -167,20 +168,31 @@ class SoundManager {
     return durationSeconds > 0 ? durationSeconds * 1000 : fallbackMs;
   }
 
-  /** Plays a character voice line. Stops any currently playing voice lines. */
+  /** Plays a voice line, replacing all voices or only its named channel. */
   public playVoice(
     url: string,
     onEnded?: () => void,
     onError?: () => void,
+    channel?: string,
   ): AudioPlayback | null {
-    // Stop all active voice lines before playing a new one
-    this.stopAllVoices();
+    if (channel === undefined) {
+      this.stopAllVoices();
+    } else {
+      this.activeVoiceChannels.get(channel)?.stop();
+    }
 
     if (url.startsWith('data:audio/wav;base64')) {
       let timerId: ReturnType<typeof setTimeout> | null = null;
       const endedCallbacks = new Set<() => void>();
+      let finalized = false;
 
       const triggerEnd = () => {
+        if (finalized) return;
+        finalized = true;
+        this.activeVoices.delete(mockPlayback);
+        if (channel && this.activeVoiceChannels.get(channel) === mockPlayback) {
+          this.activeVoiceChannels.delete(channel);
+        }
         onEnded?.();
         for (const cb of endedCallbacks) {
           cb();
@@ -202,11 +214,11 @@ class SoundManager {
       };
 
       timerId = setTimeout(() => {
-        this.activeVoices.delete(mockPlayback);
         mockPlayback.stop();
       }, 1000);
 
       this.activeVoices.add(mockPlayback);
+      if (channel) this.activeVoiceChannels.set(channel, mockPlayback);
       return mockPlayback;
     }
 
@@ -225,6 +237,9 @@ class SoundManager {
         if (finalized) return;
         finalized = true;
         this.activeVoices.delete(playback);
+        if (channel && this.activeVoiceChannels.get(channel) === playback) {
+          this.activeVoiceChannels.delete(channel);
+        }
         if (failed) onError?.();
         onEnded?.();
         for (const cb of endedCallbacks) cb();
@@ -248,6 +263,7 @@ class SoundManager {
       sound.once('loaderror', () => finalize(true), soundId);
       sound.once('playerror', () => finalize(true), soundId);
       this.activeVoices.add(playback);
+      if (channel) this.activeVoiceChannels.set(channel, playback);
       return playback;
     } catch (e) {
       console.error('Failed to create Howl for voice line:', e);
@@ -285,6 +301,7 @@ class SoundManager {
       playback.stop();
     }
     this.activeVoices.clear();
+    this.activeVoiceChannels.clear();
   }
 }
 

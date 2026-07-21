@@ -6,43 +6,8 @@ export interface YakuInfo {
 }
 
 export const YAKUS: YakuInfo[] = [
-  // 1 Han
-  { name: 'Riichi', group: '1han' },
-  { name: 'DoubleRiichi', group: '2han' },
-  { name: 'Ippatsu', group: '1han' },
-  { name: 'MenzenchinTsumohou', group: '1han' },
-  { name: 'Tanyao', group: '1han' },
-  { name: 'Pinfu', group: '1han' },
-  { name: 'Iipeikou', group: '1han' },
-  { name: 'YakuhaiBakaze', group: '1han' },
-  { name: 'YakuhaiJikaze', group: '1han' },
-  { name: 'YakuhaiHaku', group: '1han' },
-  { name: 'YakuhaiHatsu', group: '1han' },
-  { name: 'YakuhaiChun', group: '1han' },
-  { name: 'RinshanKaihou', group: '1han' },
-  { name: 'Chankan', group: '1han' },
-  { name: 'HaiteiRaoyue', group: '1han' },
-  { name: 'HouteiRaoyui', group: '1han' },
-
-  // 2 Han
-  { name: 'SanshokuDoujun', group: '2han' },
-  { name: 'Ittsu', group: '2han' },
-  { name: 'Chantaiyao', group: '2han' },
-  { name: 'Toitoi', group: '2han' },
-  { name: 'Sanankou', group: '2han' },
-  { name: 'SanshokuDoukou', group: '2han' },
-  { name: 'Sankantsu', group: '2han' },
-  { name: 'Honroutou', group: '2han' },
-  { name: 'Shousangen', group: '2han' },
-  { name: 'Chiitoitsu', group: '2han' },
-
-  // 3 Han
-  { name: 'Honitsu', group: '3han' },
-  { name: 'JunchanTaiyao', group: '3han' },
-  { name: 'Ryanpeikou', group: '3han' },
-
-  // 6 Han
-  { name: 'Chinitsu', group: '6han' },
+  // Other
+  { name: 'HelloWorld', group: 'other' },
 
   // Yakuman
   { name: 'Tenhou', group: 'yakuman' },
@@ -61,8 +26,43 @@ export const YAKUS: YakuInfo[] = [
   { name: 'ChuurenPoutou', group: 'yakuman' },
   { name: 'JunseiChuurenPoutou', group: 'yakuman' },
 
-  // Other
-  { name: 'HelloWorld', group: 'other' },
+  // 6 Han
+  { name: 'Chinitsu', group: '6han' },
+
+  // 3 Han
+  { name: 'Honitsu', group: '3han' },
+  { name: 'JunchanTaiyao', group: '3han' },
+  { name: 'Ryanpeikou', group: '3han' },
+
+  // 2 Han
+  { name: 'SanshokuDoujun', group: '2han' },
+  { name: 'Ittsu', group: '2han' },
+  { name: 'Chantaiyao', group: '2han' },
+  { name: 'Toitoi', group: '2han' },
+  { name: 'Sanankou', group: '2han' },
+  { name: 'SanshokuDoukou', group: '2han' },
+  { name: 'Sankantsu', group: '2han' },
+  { name: 'Honroutou', group: '2han' },
+  { name: 'Shousangen', group: '2han' },
+  { name: 'Chiitoitsu', group: '2han' },
+
+  // 1 Han
+  { name: 'Riichi', group: '1han' },
+  { name: 'DoubleRiichi', group: '2han' },
+  { name: 'Ippatsu', group: '1han' },
+  { name: 'MenzenchinTsumohou', group: '1han' },
+  { name: 'Tanyao', group: '1han' },
+  { name: 'Pinfu', group: '1han' },
+  { name: 'Iipeikou', group: '1han' },
+  { name: 'YakuhaiBakaze', group: '1han' },
+  { name: 'YakuhaiJikaze', group: '1han' },
+  { name: 'YakuhaiHaku', group: '1han' },
+  { name: 'YakuhaiHatsu', group: '1han' },
+  { name: 'YakuhaiChun', group: '1han' },
+  { name: 'RinshanKaihou', group: '1han' },
+  { name: 'Chankan', group: '1han' },
+  { name: 'HaiteiRaoyue', group: '1han' },
+  { name: 'HouteiRaoyui', group: '1han' },
 ];
 
 /**
@@ -102,7 +102,7 @@ YAKUS.forEach((yaku, idx) => {
   YAKU_ORDER_MAP[yaku.name] = idx;
 });
 
-const DORA_ITEMS = ['Dora', 'Akadora', 'Uradora', 'NukiDora'];
+const DORA_ITEMS = ['Dora', 'Akadora', 'NukiDora', 'Uradora'];
 DORA_ITEMS.forEach((doraName, idx) => {
   YAKU_ORDER_MAP[doraName] = 1000 + idx;
 });

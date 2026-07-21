@@ -15,8 +15,8 @@ export interface GameSoundPlayer {
   preloadVoices(urls: readonly string[]): void;
   /** Plays a named one-shot gameplay sound effect. */
   playEffect(effect: SoundEffect): void;
-  /** Plays a character voice, interrupting any voice already in progress. */
-  playVoice(url: string): void;
+  /** Plays a character voice, interrupting only the same optional channel. */
+  playVoice(url: string, channel?: string): void;
   /** Stops a currently-playing named effect (e.g. the timeout warning loop). */
   stopEffect(effect: SoundEffect): void;
   /** Re-applies volume settings to all active playback. */

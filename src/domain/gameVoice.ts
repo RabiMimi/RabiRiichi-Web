@@ -7,6 +7,16 @@ const DORA_VOICE_CHANCE = 0.25;
 const REPEATED_DISCARD_COUNT = 3;
 const OPPONENT_CALL_COUNT = 3;
 const LOW_WALL_THRESHOLD = 10;
+const LOCAL_REACTION_VOICES = new Set([
+  'gameStart',
+  'tenpai',
+  'noten',
+  'wallLow',
+  'discardDora',
+  'repeatDiscard',
+  'opponentCalls',
+  'bigTenpai',
+]);
 
 export interface GameVoiceState {
   readonly playedGameStart: boolean;
@@ -28,6 +38,23 @@ export interface GameVoiceContext {
   readonly after: RoomModel;
   readonly selfSeat: number | undefined;
   readonly randomValue?: number;
+}
+
+export function getGameVoiceSpeakerSeat(
+  gameEvent: IEventMsg,
+  selfSeat: number | undefined,
+  voiceId: string,
+): number | undefined {
+  if (LOCAL_REACTION_VOICES.has(voiceId)) return selfSeat;
+
+  return (
+    gameEvent.discardTileEvent?.playerId ??
+    gameEvent.claimTileEvent?.playerId ??
+    gameEvent.kanEvent?.playerId ??
+    gameEvent.nukiDoraEvent?.playerId ??
+    gameEvent.agariEvent?.agariInfos?.[0]?.playerId ??
+    selfSeat
+  );
 }
 
 export function createGameVoiceState(): GameVoiceState {

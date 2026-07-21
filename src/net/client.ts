@@ -43,6 +43,7 @@ import { applyRiichiBonusToWaits } from '../domain/model';
 import { CHARACTERS, getCharacterVoiceUrl } from '../domain/character';
 import {
   createGameVoiceState,
+  getGameVoiceSpeakerSeat,
   reduceGameVoice,
   type GameVoiceState,
 } from '../domain/gameVoice';
@@ -729,7 +730,14 @@ export class RabiRiichiClient {
       decision.voiceId,
     );
     if (url) {
-      this.platform.sound.playVoice(url);
+      const speakerSeat = getGameVoiceSpeakerSeat(
+        gameEvent,
+        this.selfSeat,
+        decision.voiceId,
+      );
+      const channel =
+        speakerSeat === undefined ? 'game' : `game-player-${speakerSeat}`;
+      this.platform.sound.playVoice(url, channel);
     }
   }
 
