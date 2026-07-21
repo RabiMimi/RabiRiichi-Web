@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRoom, useCharacterId, useSelf } from '../state/store';
+import { useRoom, useCharacterId, useSelf, useIsReplay } from '../state/store';
 import { getPlayerDisplayName } from '../domain/model';
 import { AiType } from '../proto';
 import { CHARACTERS } from '../domain/character';
@@ -22,6 +22,7 @@ export function FinalResultPanel({
   const room = useRoom();
   const selfId = useSelf()?.id;
   const characterId = useCharacterId();
+  const isReplay = useIsReplay();
   const [shareCopied, setShareCopied] = React.useState(false);
 
   const handleShareReplay = async () => {
@@ -206,7 +207,9 @@ export function FinalResultPanel({
 
           <div className="flex gap-3">
             <Button onClick={onReturnToRoom} className="w-full">
-              {t('result.returnToRoom', 'Return to Room')}
+              {isReplay
+                ? t('result.returnToReplay', 'Return to Replay')
+                : t('result.returnToRoom', 'Return to Room')}
             </Button>
           </div>
         </div>

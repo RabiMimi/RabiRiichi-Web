@@ -1426,12 +1426,15 @@ async function handleParamAutoConnect(
         if (!isNaN(roomId)) {
           if (rabiriichi.room) {
             if (rabiriichi.room.id === roomId) {
-              logger.info(`Already in target room ${roomId}. Sign in as normal.`);
+              logger.info(
+                `Already in target room ${roomId}. Sign in as normal.`,
+              );
             } else {
               logger.warn(
                 `Already in a different room ${rabiriichi.room.id}. Aborting join.`,
               );
-              rabiriichi.autoConnectError = 'connect.error.alreadyInDifferentRoom';
+              rabiriichi.autoConnectError =
+                'connect.error.alreadyInDifferentRoom';
               rabiriichi.close();
             }
           } else {

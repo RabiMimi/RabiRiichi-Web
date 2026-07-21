@@ -30,7 +30,6 @@ import {
   getCurrentRoundIndex,
   getRoundStartIndices,
   jumpToRound,
-  stopReplay,
 } from '../replay/replayDriver';
 import { filterYakuListForDisplay } from '../domain/yakus';
 import {
@@ -99,14 +98,12 @@ export function ResultPanel(): React.JSX.Element | null {
     return isReplay ? getRoundStartIndices() : [];
   }, [isReplay]);
 
-  const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(8);
+  const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(30);
   const [showFinalResults, setShowFinalResults] = React.useState(false);
 
   const handleReturnToRoom = React.useCallback(() => {
     setShowFinalResults(false);
-    if (isReplay) {
-      stopReplay();
-    } else {
+    if (!isReplay) {
       rabiriichi.returnToRoom();
     }
   }, [isReplay]);
@@ -174,11 +171,20 @@ export function ResultPanel(): React.JSX.Element | null {
     false;
 
   const showPanel = React.useMemo(() => {
+    if (isReplay) {
+      return isWaitingForProceed && !resultAnimation;
+    }
     return (
       (playersWithResult.length > 0 || hasNextRound || isWaitingForProceed) &&
       !resultAnimation
     );
-  }, [playersWithResult, hasNextRound, isWaitingForProceed, resultAnimation]);
+  }, [
+    isReplay,
+    playersWithResult,
+    hasNextRound,
+    isWaitingForProceed,
+    resultAnimation,
+  ]);
 
   React.useEffect(() => {
     if (!showPanel) return;
@@ -388,6 +394,7 @@ export function ResultPanel(): React.JSX.Element | null {
         }
       } else {
         setShowFinalResults(true);
+        proceedReplay();
       }
       return;
     }
@@ -425,7 +432,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
     return () => {
       clearInterval(intervalId);
-      setLocalSecondsLeft(8);
+      setLocalSecondsLeft(30);
     };
   }, [isWaitingForProceed, isPaused, handleProceed]);
 

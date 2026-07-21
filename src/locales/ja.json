@@ -270,6 +270,7 @@
     "waitingForNextRound": "次の局の開始を待っています...",
     "finalTitle": "対局終了",
     "returnToRoom": "部屋に戻る",
+    "returnToReplay": "リプレイに戻る",
     "showFinalResults": "結果発表",
     "ryuukyoku": {
       "suufon_renda": "四風連打",
