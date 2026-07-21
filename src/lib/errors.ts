@@ -95,6 +95,8 @@ const SERVER_ERROR_DETAIL_MAP: Record<string, string> = {
   'Username already exists': 'usernameAlreadyExists',
   'Username cannot be empty': 'usernameEmpty',
   'Password cannot be empty': 'passwordEmpty',
+  'Nickname cannot be empty': 'nicknameEmpty',
+  'Cannot update profile': 'cannotUpdateProfile',
 };
 
 const STATUS_REGEX = /^Status\(StatusCode="([A-Za-z]+)",\s*Detail="(.*)"\)$/;

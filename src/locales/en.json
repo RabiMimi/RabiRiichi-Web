@@ -29,9 +29,12 @@
     "usernamePlaceholder": "Enter your username",
     "password": "Password",
     "passwordPlaceholder": "Enter your password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter your password",
     "usernameError": "Username cannot be empty",
     "passwordError": "Password cannot be empty",
     "passwordTooShort": "Password must be at least 6 characters",
+    "passwordMismatch": "Passwords do not match",
     "kickedByOtherClient": "Your account has been logged in from another client."
   },
   "lobby": {
@@ -481,6 +484,7 @@
         "invalidAiType": "Invalid or unsupported AI type",
         "usernameEmpty": "Username cannot be empty",
         "passwordEmpty": "Password cannot be empty",
+        "nicknameEmpty": "Nickname cannot be empty",
         "generic": "Invalid argument"
       },
       "NotFound": {
@@ -505,6 +509,7 @@
       "Internal": {
         "cannotAddUser": "Cannot add user",
         "cannotAddAi": "Cannot add AI to room",
+        "cannotUpdateProfile": "Could not update profile",
         "generic": "Internal server error"
       },
       "Unauthenticated": {
@@ -560,8 +565,36 @@
   },
   "settings": {
     "title": "System Settings",
-    "visualsTab": "Visuals",
+    "playerTab": "Player",
+    "profileTab": "Profile",
     "soundsTab": "Sounds",
+    "profile": {
+      "username": "Username",
+      "nickname": "Nickname",
+      "nicknamePlaceholder": "Enter a nickname",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Profile updated",
+      "nicknameEmpty": "Nickname cannot be empty",
+      "changePassword": "Change Password",
+      "notSignedIn": "Sign in to edit your profile."
+    },
+    "password": {
+      "title": "Change Password",
+      "current": "Current Password",
+      "new": "New Password",
+      "confirm": "Confirm New Password",
+      "currentPlaceholder": "Enter your current password",
+      "newPlaceholder": "Enter a new password",
+      "confirmPlaceholder": "Re-enter the new password",
+      "submit": "Update Password",
+      "submitting": "Updating...",
+      "success": "Password updated",
+      "cancel": "Cancel",
+      "mismatch": "Passwords do not match",
+      "tooShort": "Password must be at least 6 characters",
+      "empty": "Please fill in all fields"
+    },
     "characterSelector": "Character",
     "voicelines": "Voice Lines",
     "stickers": "Stickers Preview",

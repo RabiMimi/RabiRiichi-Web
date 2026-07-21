@@ -140,6 +140,7 @@ function getSnapshot(): RabiRiichiState {
 
 const getConnectionStatus = () => rabiriichi.connectionStatus;
 const getSelf = () => rabiriichi.self;
+const getUsername = () => rabiriichi.username;
 const getRoom = () => rabiriichi.room;
 const getCurrentInquiry = () => rabiriichi.currentInquiry;
 const getIsRiichiSelectMode = () => rabiriichi.isRiichiSelectMode;
@@ -193,6 +194,10 @@ export function useConnectionStatus(): ConnectionStatus {
 
 export function useSelf(): PlayerModel | null {
   return useSyncExternalStore(subscribe, getSelf, getSelf);
+}
+
+export function useUsername(): string | null {
+  return useSyncExternalStore(subscribe, getUsername, getUsername);
 }
 
 export function useRoom(): RoomModel | null {

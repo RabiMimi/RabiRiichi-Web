@@ -17,6 +17,7 @@ import {
 } from '../domain/constants';
 
 export const TOKEN_STORE_KEY = 'rabiriichi_token';
+export const USERNAME_STORE_KEY = 'rabiriichi_username';
 
 // Parses persisted client settings from a raw store string. Returns an empty
 // object for missing/corrupt data so callers can merge safely.
@@ -51,6 +52,21 @@ export class CredentialStore {
 
   public clearToken(): void {
     this.store.removeItem(TOKEN_STORE_KEY);
+  }
+
+  // The login username is persisted so a password change (which is verified by
+  // the old password over the public socket) works even after a token-only
+  // reconnect, when the username would otherwise be unrecoverable.
+  public loadUsername(): string | null {
+    return this.store.getItem(USERNAME_STORE_KEY);
+  }
+
+  public saveUsername(username: string): void {
+    this.store.setItem(USERNAME_STORE_KEY, username);
+  }
+
+  public clearUsername(): void {
+    this.store.removeItem(USERNAME_STORE_KEY);
   }
 
   private loadServerSettings(): ServerSettings {

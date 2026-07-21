@@ -21,6 +21,7 @@ import {
 } from '../domain/character';
 import { soundManager } from '../lib/sound';
 import { VolumeSlider } from './VolumeSlider';
+import { ProfileTab } from './ProfileTab';
 import { FORM, MODAL } from './styles';
 
 interface SettingsModalProps {
@@ -83,7 +84,9 @@ export function SettingsModal({
   const muteVoice = useMuteVoice();
   const volumeAll = useVolumeAll();
 
-  const [activeTab, setActiveTab] = useState<'visuals' | 'sounds'>('visuals');
+  const [activeTab, setActiveTab] = useState<'player' | 'profile' | 'sounds'>(
+    'player',
+  );
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
 
   const inGame = useMemo(() => {
@@ -149,13 +152,24 @@ export function SettingsModal({
               <button
                 type="button"
                 className={`bg-transparent border-none text-sm lg:text-base font-bold px-3 py-1.5 lg:px-4 lg:py-2 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
-                  activeTab === 'visuals'
+                  activeTab === 'player'
                     ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
                     : 'text-[#888] hover:text-white hover:bg-[#333]'
                 }`}
-                onClick={() => setActiveTab('visuals')}
+                onClick={() => setActiveTab('player')}
               >
-                {t('settings.visualsTab', 'Visuals')}
+                {t('settings.playerTab', 'Player')}
+              </button>
+              <button
+                type="button"
+                className={`bg-transparent border-none text-sm lg:text-base font-bold px-3 py-1.5 lg:px-4 lg:py-2 cursor-pointer rounded transition-all duration-200 focus:outline-none ${
+                  activeTab === 'profile'
+                    ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
+                    : 'text-[#888] hover:text-white hover:bg-[#333]'
+                }`}
+                onClick={() => setActiveTab('profile')}
+              >
+                {t('settings.profileTab', 'Profile')}
               </button>
               <button
                 type="button"
@@ -177,7 +191,9 @@ export function SettingsModal({
 
         {/* Content */}
         <div className="flex-grow flex flex-col overflow-hidden min-h-0">
-          {activeTab === 'visuals' && (
+          {activeTab === 'profile' && <ProfileTab />}
+
+          {activeTab === 'player' && (
             <div className="flex flex-1 gap-4 overflow-hidden min-h-0 sm:flex-row flex-col">
               {/* Column 1: Selector & Portrait */}
               <div className="w-full sm:w-[28%] lg:w-[32%] flex flex-col gap-2 shrink-0">

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   CredentialStore,
   TOKEN_STORE_KEY,
+  USERNAME_STORE_KEY,
   parseClientSettings,
 } from './credentialStore';
 import type { KeyValueStore } from '../platform/storage';
@@ -60,6 +61,15 @@ describe('CredentialStore', () => {
     expect(creds.loadToken()).toBe('tok');
     creds.clearToken();
     expect(creds.loadToken()).toBeNull();
+  });
+
+  it('round-trips the login username', () => {
+    expect(creds.loadUsername()).toBeNull();
+    creds.saveUsername('alice');
+    expect(backing[USERNAME_STORE_KEY]).toBe('alice');
+    expect(creds.loadUsername()).toBe('alice');
+    creds.clearUsername();
+    expect(creds.loadUsername()).toBeNull();
   });
 
   it('round-trips the last URL without clobbering other server settings', () => {

@@ -124,6 +124,7 @@ export function ConnectScreen(): React.JSX.Element {
   const [targetUrl, setTargetUrl] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [nickname, setNickname] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
@@ -174,6 +175,11 @@ export function ConnectScreen(): React.JSX.Element {
 
     if (activeTab === 'register' && password.length < 6) {
       setError(t('connect.passwordTooShort'));
+      return;
+    }
+
+    if (activeTab === 'register' && password !== confirmPassword) {
+      setError(t('connect.passwordMismatch'));
       return;
     }
 
@@ -338,6 +344,25 @@ export function ConnectScreen(): React.JSX.Element {
               }
             />
           </div>
+
+          {activeTab === 'register' && (
+            <div className={FORM.group}>
+              <label htmlFor="confirm-password" className={FORM.label}>
+                {t('connect.confirmPassword')}
+              </label>
+              <input
+                id="confirm-password"
+                name="confirm-password"
+                type="password"
+                className={FORM.input}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={isConnecting}
+                placeholder={t('connect.confirmPasswordPlaceholder')}
+                autoComplete="new-password"
+              />
+            </div>
+          )}
 
           {error && <div className={FORM.error}>{error}</div>}
 

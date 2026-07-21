@@ -29,9 +29,12 @@
     "usernamePlaceholder": "ユーザー名を入力してください",
     "password": "パスワード",
     "passwordPlaceholder": "パスワードを入力してください",
+    "confirmPassword": "パスワード（確認）",
+    "confirmPasswordPlaceholder": "パスワードを再入力してください",
     "usernameError": "ユーザー名を入力してください",
     "passwordError": "パスワードを入力してください",
     "passwordTooShort": "パスワードは6文字以上で入力してください",
+    "passwordMismatch": "パスワードが一致しません",
     "kickedByOtherClient": "あなたのアカウントは別のクライアントからログインされました。"
   },
   "lobby": {
@@ -481,6 +484,7 @@
         "invalidAiType": "無効または未サポート of AIタイプ",
         "usernameEmpty": "ユーザー名を入力してください",
         "passwordEmpty": "パスワードを入力してください",
+        "nicknameEmpty": "ニックネームを入力してください",
         "generic": "無効な引数"
       },
       "NotFound": {
@@ -505,6 +509,7 @@
       "Internal": {
         "cannotAddUser": "ユーザーを追加できません",
         "cannotAddAi": "部屋にAIを追加できません",
+        "cannotUpdateProfile": "プロフィールを更新できませんでした",
         "generic": "サーバー内部エラー"
       },
       "Unauthenticated": {
@@ -560,8 +565,36 @@
   },
   "settings": {
     "title": "システム設定",
-    "visualsTab": "ビジュアル",
+    "playerTab": "プレイヤー",
+    "profileTab": "プロフィール",
     "soundsTab": "サウンド",
+    "profile": {
+      "username": "ユーザー名",
+      "nickname": "ニックネーム",
+      "nicknamePlaceholder": "ニックネームを入力",
+      "save": "保存",
+      "saving": "保存中...",
+      "saved": "プロフィールを更新しました",
+      "nicknameEmpty": "ニックネームを入力してください",
+      "changePassword": "パスワードを変更",
+      "notSignedIn": "プロフィールを編集するにはサインインしてください。"
+    },
+    "password": {
+      "title": "パスワードを変更",
+      "current": "現在のパスワード",
+      "new": "新しいパスワード",
+      "confirm": "新しいパスワード（確認）",
+      "currentPlaceholder": "現在のパスワードを入力",
+      "newPlaceholder": "新しいパスワードを入力",
+      "confirmPlaceholder": "新しいパスワードを再入力",
+      "submit": "パスワードを更新",
+      "submitting": "更新中...",
+      "success": "パスワードを更新しました",
+      "cancel": "キャンセル",
+      "mismatch": "パスワードが一致しません",
+      "tooShort": "パスワードは6文字以上で入力してください",
+      "empty": "すべての項目を入力してください"
+    },
     "characterSelector": "キャラクター",
     "voicelines": "ボイス試聴",
     "stickers": "スタンププレビュー",

@@ -1357,9 +1357,69 @@ describe('RabiRiichiClient', () => {
       // Token persisted to the injected store, not the browser stub.
       expect(backing.rabiriichi_token).toBe('cli-token');
       expect(mockLocalStorage.rabiriichi_token).toBeUndefined();
+      // The login username is persisted for later password changes.
+      expect(backing.rabiriichi_username).toBe('CliPlayer');
 
       client.close();
       await registerPromise.catch(() => undefined);
+      vi.useRealTimers();
+    });
+
+    it('changePassword sends the hashes and stores the rotated token', async () => {
+      vi.useFakeTimers();
+      const { store, backing } = memoryStore();
+      backing.rabiriichi_username = 'alice';
+      const sha256 = vi
+        .fn()
+        .mockResolvedValueOnce('oldhash')
+        .mockResolvedValueOnce('newhash');
+      const created: MockWebSocket[] = [];
+      const socketFactory = ((url: string | URL) => {
+        const ws = new MockWebSocket(String(url));
+        created.push(ws);
+        return ws;
+      }) as unknown as WebSocketFactory;
+
+      const client = new RabiRiichiClient({
+        store,
+        crypto: { sha256 },
+        socketFactory,
+      });
+      client.restoreStoredUsername();
+      client.wsurl = 'ws://host:5150';
+
+      const changePromise = client.changePassword('oldpw', 'newpw');
+      await vi.advanceTimersByTimeAsync(15);
+      const ws = created[0]!;
+      respondToGetInfo(ws);
+      await vi.advanceTimersByTimeAsync(0);
+
+      const sentBytes = ws.send.mock.calls[1]![0];
+      const sentMsg = ClientMessageDto.decode(new Uint8Array(sentBytes));
+      const clientRequest = sentMsg.clientRequest;
+      expect(clientRequest?.req).toBe('changePassword');
+      const req =
+        clientRequest?.req === 'changePassword'
+          ? clientRequest.changePassword
+          : null;
+      expect(req?.username).toBe('alice');
+      expect(req?.oldPasswordHash).toBe('oldhash');
+      expect(req?.newPasswordHash).toBe('newhash');
+
+      sendServerMsg(ws, {
+        id: 1,
+        respondTo: sentMsg.id,
+        serverResp: {
+          userInfo: { id: 7, accessToken: 'rotated-token' },
+        },
+      });
+      await vi.advanceTimersByTimeAsync(0);
+      await changePromise;
+
+      expect(client.accessToken).toBe('rotated-token');
+      expect(backing.rabiriichi_token).toBe('rotated-token');
+
+      client.close();
       vi.useRealTimers();
     });
 

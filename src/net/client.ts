@@ -2,6 +2,7 @@ import {
   Logger,
   NetworkError,
   AuthError,
+  StateError,
   RabiEvent,
   waitTimeout,
 } from '../lib';
@@ -26,6 +27,8 @@ import {
   getReplay,
   loginUser,
   getInfo,
+  updateProfile,
+  changePassword,
 } from './requests';
 import { UserStatus, AiType } from '../proto';
 import type {
@@ -101,6 +104,8 @@ export class RabiRiichiClient {
 
   public wsurl: string | null = null;
   public accessToken: string | null = null;
+  /** Login username (distinct from the display nickname); persisted locally. */
+  public username: string | null = null;
   public self: PlayerModel | null = null;
   public room: RoomModel | null = null;
   private _ws: RabiSocket | null = null;
@@ -459,6 +464,9 @@ export class RabiRiichiClient {
     }
     if (this.accessToken) {
       this.credentials.saveToken(this.accessToken);
+    }
+    if (this.username) {
+      this.credentials.saveUsername(this.username);
     }
   }
 
@@ -1012,6 +1020,7 @@ export class RabiRiichiClient {
       gameState: null,
       aiType: AiType.AI_TYPE_NONE,
     };
+    this.username = username;
     this.accessToken = resp.accessToken ?? null;
     this.storeCredentials();
     await this.connectWS();
@@ -1035,6 +1044,7 @@ export class RabiRiichiClient {
       gameState: null,
       aiType: AiType.AI_TYPE_NONE,
     };
+    this.username = username;
     this.accessToken = resp.accessToken ?? null;
     this.storeCredentials();
     await this.connectWS();
@@ -1052,6 +1062,40 @@ export class RabiRiichiClient {
     const resp = await getUserInfo(client);
     this.logger.info(`Retrieved user information`, resp);
     this.updateUserInfo(resp);
+  }
+
+  public async updateProfile(nickname: string): Promise<void> {
+    this.logger.info('Updating profile');
+    const client = await this.getWSClient(true);
+    const resp = await updateProfile(client, nickname);
+    this.logger.info('Profile updated', resp);
+    this.updateUserInfo(resp);
+  }
+
+  /**
+   * Changes the password over the public socket (the user proves identity with
+   * the old password). The server rotates the access token; store the new one so
+   * the current session survives the token-version bump.
+   */
+  public async changePassword(
+    oldPasswordRaw: string,
+    newPasswordRaw: string,
+  ): Promise<void> {
+    const username = this.username;
+    if (!username) {
+      throw new StateError('Not signed in');
+    }
+    this.logger.info('Changing password');
+    const client = await this.getWSClient();
+    const salt = await this.fetchServerSalt();
+    const oldHash = await this.computePasswordHash(oldPasswordRaw, salt);
+    const newHash = await this.computePasswordHash(newPasswordRaw, salt);
+    const resp = await changePassword(client, username, oldHash, newHash);
+    this.logger.info('Password changed', resp);
+    if (resp.accessToken) {
+      this.accessToken = resp.accessToken;
+      this.storeCredentials();
+    }
   }
 
   public async createRoom(config?: IGameConfigMsg): Promise<void> {
@@ -1233,7 +1277,9 @@ export class RabiRiichiClient {
   public logout(): void {
     this.credentials.clearLastUrl();
     this.credentials.clearToken();
+    this.credentials.clearUsername();
     this.accessToken = null;
+    this.username = null;
     this.wsurl = null;
     this.close();
   }
@@ -1316,11 +1362,17 @@ export class RabiRiichiClient {
     }
     return { url, token };
   }
+
+  /** Restores the persisted login username so it survives reloads. */
+  public restoreStoredUsername(): void {
+    this.username = this.credentials.loadUsername();
+  }
 }
 
 export const rabiriichi = new RabiRiichiClient();
 
 export async function initRabiRiichi(): Promise<void> {
+  rabiriichi.restoreStoredUsername();
   const stored = rabiriichi.loadStoredCredentials();
   if (!stored) {
     return;
