@@ -9,6 +9,7 @@
  */
 import { Logger } from '../lib';
 import type { KeyValueStore } from '../platform/storage';
+import { DEFAULT_SERVERS } from '../config/servers';
 import {
   STORAGE_KEY_SERVER_SETTINGS,
   STORAGE_KEY_CLIENT_SETTINGS,
@@ -188,7 +189,7 @@ export class CredentialStore {
     }
   }
 
-  private loadServerSettings(): ServerSettings {
+  public loadServerSettings(): ServerSettings {
     const raw = this.store.getItem(STORAGE_KEY_SERVER_SETTINGS);
     if (!raw) return {};
     try {
@@ -196,6 +197,21 @@ export class CredentialStore {
     } catch {
       return {};
     }
+  }
+
+  public saveServerSettings(settings: ServerSettings): void {
+    this.store.setItem(STORAGE_KEY_SERVER_SETTINGS, JSON.stringify(settings));
+  }
+
+  public isKnownServer(url: string): boolean {
+    if (DEFAULT_SERVERS.some((s) => s.url === url)) {
+      return true;
+    }
+    const custom = this.loadServerSettings().customServers;
+    if (custom?.some((s) => s.url === url)) {
+      return true;
+    }
+    return false;
   }
 
   public loadLastUrl(): string | undefined {

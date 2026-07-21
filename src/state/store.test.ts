@@ -104,6 +104,7 @@ describe('RabiRiichi Store', () => {
       muteVoice: false,
       volumeAll: 1.0,
       isSettingsOpen: false,
+      autoConnectError: null,
     });
   });
 

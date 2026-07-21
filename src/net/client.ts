@@ -8,6 +8,7 @@ import {
 } from '../lib';
 import { RabiSocket } from '../transport/rabiSocket';
 import { WS_CONNECT_TIMEOUT } from '../transport/constants';
+import { DEFAULT_SERVERS } from '../config/servers';
 import {
   type ClientPlatform,
   type GameSoundPlayer,
@@ -57,6 +58,7 @@ import {
   INQUIRY_DEFAULT_INDEX,
   RESULT_ANIMATION_DURATION_MS,
   type ClientSettings,
+  type ServerSettings,
 } from '../domain/constants';
 import { VisualsSettings, SoundsSettings } from '../domain/settings';
 import { applyEvent, applyRoomState } from '../domain/reducer';
@@ -118,6 +120,7 @@ export class RabiRiichiClient {
   public disconnectReason: 'kicked' | null = null;
   private serverMessageListener: ((msg: IServerMessageDto) => void) | null =
     null;
+  public autoConnectError: string | null = null;
 
   public connectionStatus: ConnectionStatus = 'disconnected';
   public currentInquiry: ActiveInquiry | null = null;
@@ -472,7 +475,11 @@ export class RabiRiichiClient {
         this.credentials.saveCredentialsForServer(this.wsurl, {
           token: this.accessToken,
           username: this.username ?? oldCreds.username,
-          nickname: this.self?.nickname ?? (oldCreds.nickname !== '' ? oldCreds.nickname : (this.username ?? '')),
+          nickname:
+            this.self?.nickname ??
+            (oldCreds.nickname !== ''
+              ? oldCreds.nickname
+              : (this.username ?? '')),
         });
       }
     }
@@ -1377,12 +1384,84 @@ export class RabiRiichiClient {
   public getCredentialsForServer(url: string): ServerCredentials | null {
     return this.credentials.loadCredentialsForServer(url);
   }
+
+  public isKnownServer(url: string): boolean {
+    return this.credentials.isKnownServer(url);
+  }
+
+  public loadServerSettings(): ServerSettings {
+    return this.credentials.loadServerSettings();
+  }
+
+  public saveServerSettings(settings: ServerSettings): void {
+    this.credentials.saveServerSettings(settings);
+  }
 }
 
 export const rabiriichi = new RabiRiichiClient();
 
-export async function initRabiRiichi(): Promise<void> {
-  rabiriichi.restoreStoredUsername();
+async function handleParamAutoConnect(
+  serverParam: string,
+  joinRoomParam: string | null,
+): Promise<void> {
+  if (!rabiriichi.isKnownServer(serverParam)) {
+    rabiriichi.autoConnectError = 'connect.error.unknownServer';
+    rabiriichi.close();
+    return;
+  }
+
+  const creds = rabiriichi.getCredentialsForServer(serverParam);
+  const token = creds?.token;
+  if (token) {
+    const logger = new Logger('AutoLogin');
+    logger.info(
+      `Auto-connecting to parameter server: ${serverParam} with saved token`,
+    );
+    try {
+      await rabiriichi.connect(serverParam, token);
+      logger.info(`Auto-connection succeeded to ${serverParam}`);
+
+      if (joinRoomParam) {
+        const roomId = parseInt(joinRoomParam, 10);
+        if (!isNaN(roomId)) {
+          if (rabiriichi.room) {
+            if (rabiriichi.room.id === roomId) {
+              logger.info(`Already in target room ${roomId}. Sign in as normal.`);
+            } else {
+              logger.warn(
+                `Already in a different room ${rabiriichi.room.id}. Aborting join.`,
+              );
+              rabiriichi.autoConnectError = 'connect.error.alreadyInDifferentRoom';
+              rabiriichi.close();
+            }
+          } else {
+            logger.info(`Auto-joining room: ${roomId}`);
+            await rabiriichi.joinRoom(roomId);
+          }
+        }
+      }
+    } catch (err) {
+      logger.error(`Auto-connection failed to ${serverParam}`, err);
+      rabiriichi.autoConnectError = 'connect.error.autoConnectFailed';
+      rabiriichi.close();
+    }
+  } else {
+    const settings = rabiriichi.loadServerSettings();
+    settings.lastUrl = serverParam;
+    const matchingServer =
+      DEFAULT_SERVERS.find((s) => s.url === serverParam) ??
+      settings.customServers?.find((s) => s.url === serverParam);
+    if (matchingServer) {
+      settings.selectedId = matchingServer.id;
+    } else {
+      settings.selectedId = 'custom';
+    }
+    rabiriichi.saveServerSettings(settings);
+    rabiriichi.close();
+  }
+}
+
+async function handleStandardAutoReconnect(): Promise<void> {
   const stored = rabiriichi.loadStoredCredentials();
   if (!stored) {
     return;
@@ -1395,8 +1474,20 @@ export async function initRabiRiichi(): Promise<void> {
     logger.info(`Auto-reconnection succeeded! Connected to ${url}`);
   } catch (err) {
     logger.error(`Auto-reconnection failed for URL ${url}`, err);
-    // Silent fail on auto-connect, but ensure the UI is not left stuck in the
-    // "connecting" state: reset to disconnected so the connect form re-enables.
     rabiriichi.close();
+  }
+}
+
+export async function initRabiRiichi(params?: URLSearchParams): Promise<void> {
+  rabiriichi.restoreStoredUsername();
+  rabiriichi.autoConnectError = null;
+
+  const serverParam = params?.get('server');
+  const joinRoomParam = params?.get('joinRoom');
+
+  if (serverParam) {
+    await handleParamAutoConnect(serverParam, joinRoomParam);
+  } else {
+    await handleStandardAutoReconnect();
   }
 }

@@ -6,6 +6,8 @@ import { AiType } from '../proto';
 import { CHARACTERS } from '../domain/character';
 import { Button } from './Button';
 import { CopyGameIdButton } from './CopyGameIdButton';
+import { Tooltip } from './Tooltip';
+import { rabiriichi } from '../net/client';
 import { soundManager } from '../lib/sound';
 import { getFinalPlacementVoiceLineId } from '../domain/resultHelpers';
 
@@ -20,6 +22,22 @@ export function FinalResultPanel({
   const room = useRoom();
   const selfId = useSelf()?.id;
   const characterId = useCharacterId();
+  const [shareCopied, setShareCopied] = React.useState(false);
+
+  const handleShareReplay = async () => {
+    if (!room?.gameId) return;
+    const serverUrl = rabiriichi.wsurl;
+    if (!serverUrl) return;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?server=${encodeURIComponent(serverUrl)}&replay=${room.gameId}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy replay link', err);
+    }
+  };
+
   const activeCharacter = React.useMemo(() => {
     const found = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
     if (!found) {
@@ -110,6 +128,32 @@ export function FinalResultPanel({
                   {t('hud.gameId')}: {room.gameId}
                 </span>
                 <CopyGameIdButton gameId={room.gameId} />
+                <Tooltip
+                  content={shareCopied ? t('common.copied') : t('common.share')}
+                  position="top"
+                  forceVisible={shareCopied ? true : undefined}
+                >
+                  <button
+                    type="button"
+                    className="bg-transparent border-none text-[#ff7a99] cursor-pointer p-0 flex items-center hover:scale-105 active:scale-95 transition-all duration-150"
+                    onClick={() => void handleShareReplay()}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="w-3.5 h-3.5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+                      />
+                    </svg>
+                  </button>
+                </Tooltip>
               </div>
             )}
           </div>

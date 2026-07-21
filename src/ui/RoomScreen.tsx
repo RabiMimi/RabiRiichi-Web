@@ -20,6 +20,7 @@ import { StickerBubble } from './StickerBubble';
 import { ChatBubble } from './ChatBubble';
 import { Tooltip } from './Tooltip';
 import { Button } from './Button';
+import { IconButton } from './IconButton';
 import { SCREEN, FORM } from './styles';
 
 export function RoomScreen(): React.JSX.Element | null {
@@ -30,6 +31,21 @@ export function RoomScreen(): React.JSX.Element | null {
   const activeChatTexts = useActiveChatTexts();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    if (!room) return;
+    const serverUrl = rabiriichi.wsurl;
+    if (!serverUrl) return;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?server=${encodeURIComponent(serverUrl)}&joinRoom=${room.id}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy share link', err);
+    }
+  };
 
   if (!room || !currentUser) {
     return null;
@@ -148,7 +164,40 @@ export function RoomScreen(): React.JSX.Element | null {
   return (
     <div className={SCREEN.base}>
       <div className={`${SCREEN.card} max-w-[800px]`}>
-        <h2 className={SCREEN.title}>{t('room.title', { id: room.id })}</h2>
+        <div className="relative w-full mb-6 max-h-[600px]:mb-3">
+          <h2
+            className={`${SCREEN.title} pr-12`}
+            style={{ textAlign: 'center' }}
+          >
+            {t('room.title', { id: room.id })}
+          </h2>
+          <div className="absolute top-1/2 right-0 -translate-y-1/2">
+            <Tooltip
+              content={copied ? t('common.copied') : t('common.share')}
+              position="top"
+            >
+              <IconButton
+                onClick={() => void handleShare()}
+                disabled={isLoading}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+                  />
+                </svg>
+              </IconButton>
+            </Tooltip>
+          </div>
+        </div>
 
         {error && <div className={FORM.error}>{error}</div>}
 

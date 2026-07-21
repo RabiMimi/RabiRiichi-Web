@@ -40,7 +40,12 @@
     "loginAsButton": "{{nickname}} としてログイン",
     "useDifferentAccountButton": "別のアカウントを使用",
     "savedTokenExpiredError": "保存されたセッションの期限が切れました。再度ログインしてください。",
-    "savedAccountUsername": "ユーザー名: {{username}}"
+    "savedAccountUsername": "ユーザー名: {{username}}",
+    "error": {
+      "unknownServer": "サーバーアドレスが既知のサーバーリストにありません。",
+      "autoConnectFailed": "自動接続に失敗しました。ネットワークを確認するか、認証情報を入力してください。",
+      "alreadyInDifferentRoom": "すでに別の部屋に入室しています。"
+    }
   },
   "lobby": {
     "title": "ロビー",
@@ -256,7 +261,7 @@
     "limitPrefixed": "{{limit}} {{han}}飜 {{fu}}符",
     "limitPrefixedHanOnly": "{{limit}} {{han}}飜",
     "winnerBadge": "和了",
-    "winTile": "あがり牌",
+    "winTile": "あがり",
     "tenpai": "テンパイ",
     "tenpaiWaits": "待ち牌",
     "scoreChangesTitle": "点数移動",
@@ -552,7 +557,9 @@
     "tileInWall": "山牌",
     "noWallData": "この再生ログには配牌時の山データが含まれていません。",
     "wallSide": "{{side}}山",
-    "wanpai": "王牌 (ワンパイ)"
+    "wanpai": "王牌 (ワンパイ)",
+    "loading": "サーバーからリプレイを読み込んでいます...",
+    "failedToLoad": "リプレイの読み込みに失敗しました"
   },
   "sticker": {
     "title": "スタンプ",
@@ -747,5 +754,10 @@
         "bigTenpai": "高打点テンパイ・役満"
       }
     }
+  },
+  "common": {
+    "back": "戻る",
+    "share": "共有",
+    "copied": "リンクをクリップボードにコピーしました！"
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { useTranslation } from 'react-i18next';
@@ -101,6 +101,14 @@ function trySkipAction() {
   }
 }
 
+async function loadServerReplay(
+  server: string,
+  replayId: string,
+): Promise<unknown> {
+  rabiriichi.wsurl = server;
+  return rabiriichi.fetchReplay(replayId);
+}
+
 function App(): React.JSX.Element {
   const { t } = useTranslation();
   const connectionStatus = useConnectionStatus();
@@ -109,8 +117,15 @@ function App(): React.JSX.Element {
   const isCameraLocked = useIsCameraLocked();
   const isReplay = useIsReplay();
   const isSettingsOpen = useIsSettingsOpen();
+  const [loadingReplay, setLoadingReplay] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const serverParam = params.get('server');
+    const replayParam = params.get('replay');
+    return Boolean(serverParam && replayParam && replayParam !== '1');
+  });
+  const [replayError, setReplayError] = useState<string | null>(null);
   const controlsRef = useRef<OrbitControlsImpl>(null);
-  const lastMissedRef = useRef<number>(0);
+  const lastMissedRef = useRef(0);
 
   const handlePointerMissed = () => {
     // Clear selection
@@ -135,7 +150,25 @@ function App(): React.JSX.Element {
     let active = true;
     let stopReplayFn: (() => void) | null = null;
 
-    if (params.get('replay') === '1') {
+    const serverParam = params.get('server');
+    const replayParam = params.get('replay');
+
+    if (serverParam && replayParam && replayParam !== '1') {
+      loadServerReplay(serverParam, replayParam)
+        .then((replayData) => {
+          if (active) {
+            setLoadingReplay(false);
+            stopReplayFn = stopReplay;
+            void startReplay(replayData);
+          }
+        })
+        .catch((err: unknown) => {
+          if (active) {
+            setLoadingReplay(false);
+            setReplayError(err instanceof Error ? err.message : String(err));
+          }
+        });
+    } else if (params.get('replay') === '1') {
       import('./dev/fixtures/full_game.json')
         .then(({ default: replayData }) => {
           if (active) {
@@ -145,24 +178,50 @@ function App(): React.JSX.Element {
         })
         .catch(console.error);
     } else {
-      void initRabiRiichi();
+      void initRabiRiichi(params);
     }
 
     return () => {
       active = false;
-      // Note: intentionally NOT calling rabiriichi.close() here. `rabiriichi`
-      // is a module-level singleton meant to live for the whole app session,
-      // not per-mount. In dev, React.StrictMode mounts this effect, cleans it
-      // up, then re-mounts it once to surface effect bugs - closing the
-      // socket here would abort the in-flight reconnect handshake started by
-      // initRabiRiichi() and this cleanup only race with itself.
       if (stopReplayFn) {
         stopReplayFn();
       }
+      rabiriichi.close();
     };
   }, []);
 
   const renderUI = () => {
+    if (loadingReplay) {
+      return (
+        <div className="flex h-screen w-screen items-center justify-center bg-[#111] text-white select-none">
+          <div className="text-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-t-transparent border-[#ff7a99] mx-auto mb-4" />
+            <p>{t('replay.loading')}</p>
+          </div>
+        </div>
+      );
+    }
+    if (replayError) {
+      return (
+        <div className="flex h-screen w-screen items-center justify-center bg-[#111] text-white select-none">
+          <div className="text-center p-6 max-w-sm rounded-xl border border-[#333] bg-[#1a1a1a]">
+            <p className="text-[#ff7a99] font-bold mb-4">
+              {t('replay.failedToLoad')}
+            </p>
+            <p className="text-sm text-gray-400 mb-6">{replayError}</p>
+            <button
+              onClick={() => {
+                setReplayError(null);
+                window.location.search = '';
+              }}
+              className="px-4 py-2 rounded bg-[#ff7a99] hover:bg-[#ff7a99]/80 font-semibold cursor-pointer"
+            >
+              {t('common.back')}
+            </button>
+          </div>
+        </div>
+      );
+    }
     if (connectionStatus !== 'connected' || !currentUser) {
       return <ConnectScreen />;
     }

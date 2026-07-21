@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
-import { useConnectionStatus } from '../state/store';
+import { useConnectionStatus, useAutoConnectError } from '../state/store';
 import { ServerSelector } from './ServerSelector';
 import { CLIENT_VERSION } from '../transport/constants';
 import {
@@ -20,6 +20,7 @@ import { AuthForm } from './AuthForm';
 export function ConnectScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
   const connectionStatus = useConnectionStatus();
+  const autoConnectError = useAutoConnectError();
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [targetUrl, setTargetUrl] = useState('');
@@ -35,7 +36,21 @@ export function ConnectScreen(): React.JSX.Element {
       return '';
     }
   });
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(() => {
+    const err = rabiriichi.autoConnectError;
+    if (err) {
+      rabiriichi.autoConnectError = null;
+      return t(err);
+    }
+    return null;
+  });
+  const activeError =
+    localError ?? (autoConnectError ? t(autoConnectError) : null);
+
+  const setError = useCallback((val: string | null) => {
+    setLocalError(val);
+    rabiriichi.autoConnectError = null;
+  }, []);
   const [connectPhase, setConnectPhase] = useState<
     'idle' | 'connecting_public' | 'authenticating'
   >('idle');
@@ -51,7 +66,7 @@ export function ConnectScreen(): React.JSX.Element {
     () => new Set(),
   );
 
-  const handleTargetUrlChange = (url: string) => {
+  const handleTargetUrlChange = useCallback((url: string) => {
     setTargetUrl(url);
     setBypassedUrls((prev) => {
       if (prev.has(url)) {
@@ -61,7 +76,7 @@ export function ConnectScreen(): React.JSX.Element {
       }
       return prev;
     });
-  };
+  }, []);
 
   const savedCreds = useMemo(() => {
     return targetUrl ? rabiriichi.getCredentialsForServer(targetUrl) : null;
@@ -256,7 +271,7 @@ export function ConnectScreen(): React.JSX.Element {
               savedCreds={savedCreds}
               isConnecting={isConnecting}
               effectivePhase={effectivePhase}
-              error={error}
+              error={activeError}
               onUseDifferentAccount={handleUseDifferentAccount}
             />
           ) : (
@@ -272,7 +287,7 @@ export function ConnectScreen(): React.JSX.Element {
               setConfirmPassword={setConfirmPassword}
               nickname={nickname}
               setNickname={setNickname}
-              error={error}
+              error={activeError}
             />
           )}
         </form>

@@ -40,7 +40,12 @@
     "loginAsButton": "以 {{nickname}} 登录",
     "useDifferentAccountButton": "使用其他账号",
     "savedTokenExpiredError": "保存的登录会话已过期，请重新登录。",
-    "savedAccountUsername": "用户名: {{username}}"
+    "savedAccountUsername": "用户名: {{username}}",
+    "error": {
+      "unknownServer": "服务器地址不在已知服务器列表中。",
+      "autoConnectFailed": "自动连接失败。请检查网络或手动输入凭据。",
+      "alreadyInDifferentRoom": "您已在其他房间中。"
+    }
   },
   "lobby": {
     "title": "大厅",
@@ -552,7 +557,9 @@
     "tileInWall": "在牌山中",
     "noWallData": "此对局记录中无初始牌山数据。",
     "wallSide": "{{side}}家牌山",
-    "wanpai": "王牌"
+    "wanpai": "王牌",
+    "loading": "正在从服务器加载回放...",
+    "failedToLoad": "加载回放失败"
   },
   "sticker": {
     "title": "表情包",
@@ -747,5 +754,10 @@
         "bigTenpai": "高打点听牌・役满"
       }
     }
+  },
+  "common": {
+    "back": "返回",
+    "share": "分享",
+    "copied": "链接已复制到剪贴板！"
   }
 }
