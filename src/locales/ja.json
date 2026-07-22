@@ -72,7 +72,7 @@
     "defaultPlaceholder": "デフォルト: {{value}}秒",
     "initialPoints": "持ち点",
     "finishPoints": "返し点",
-    "upperPoints": "ぶっとび上限",
+    "upperPoints": "天辺上限",
     "riichiPoints": "立直棒点数",
     "honbaPoints": "本場棒点数",
     "ryuukyokuPoints": "ノーテン罰符",
@@ -327,7 +327,7 @@
     "agari": {
       "kuitan": "喰いタンあり",
       "pao": "パオあり",
-      "nagashiMangan": "流し満贯あり",
+      "nagashiMangan": "流し満貫あり",
       "firstWinner": "頭ハネ"
     },
     "scoring": {
@@ -493,7 +493,7 @@
     "server": {
       "InvalidArgument": {
         "invalidGameId": "無効なゲームID",
-        "invalidAiType": "無効または未サポート of AIタイプ",
+        "invalidAiType": "非対応または無効なAIタイプ",
         "usernameEmpty": "ユーザー名を入力してください",
         "passwordEmpty": "パスワードを入力してください",
         "nicknameEmpty": "ニックネームを入力してください",
@@ -557,7 +557,7 @@
     "tileDrawn": "ツモ牌",
     "tileInWall": "山牌",
     "noWallData": "この再生ログには配牌時の山データが含まれていません。",
-    "wallSide": "{{side}}山",
+    "wallSide": "{{side}}家の山",
     "wanpai": "王牌 (ワンパイ)",
     "loading": "サーバーからリプレイを読み込んでいます...",
     "failedToLoad": "リプレイの読み込みに失敗しました"
@@ -649,7 +649,7 @@
         "menzenTsumo": "門前清自摸和",
         "tanyao": "断幺九",
         "pinfu": "平和",
-        "iipeikou": "一杯口",
+        "iipeikou": "一盃口",
         "yakuhaiHaku": "役牌（白）",
         "yakuhaiHatsu": "役牌（發）",
         "yakuhaiChun": "役牌（中）",
@@ -674,7 +674,7 @@
         "shousangen": "小三元",
         "honitsu": "混一色",
         "junchan": "純全帯幺九",
-        "ryanpeikou": "二杯口",
+        "ryanpeikou": "二盃口",
         "chinitsu": "清一色",
         "tenhou": "天和",
         "chiihou": "地和",
