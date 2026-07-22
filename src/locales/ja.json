@@ -12,7 +12,7 @@
     "urlError": "サーバーアドレスは ws:// または wss:// で始まる必要があります",
     "nicknameError": "ニックネームを入力してください",
     "officialServer": "ミミサーバー",
-    "devServer": "ミミ開発サーバー ❤️",
+    "devServer": "ミミ開発❤️",
     "localServer": "ローカルサーバー (localhost:5150)",
     "customServer": "カスタムサーバーアドレス",
     "serverNamePlaceholder": "サーバー名を入力してください",
