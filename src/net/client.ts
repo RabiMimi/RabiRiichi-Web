@@ -1489,7 +1489,7 @@ export async function initRabiRiichi(params?: URLSearchParams): Promise<void> {
   const joinRoomParam = params?.get('joinRoom');
 
   if (serverParam) {
-    await handleParamAutoConnect(serverParam, joinRoomParam);
+    await handleParamAutoConnect(serverParam, joinRoomParam ?? null);
   } else {
     await handleStandardAutoReconnect();
   }
