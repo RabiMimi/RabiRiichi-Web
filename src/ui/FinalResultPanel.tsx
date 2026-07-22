@@ -1,6 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRoom, useCharacterId, useSelf, useIsReplay } from '../state/store';
+import {
+  useRoom,
+  useCharacterId,
+  useSelf,
+  useIsReplay,
+  useActiveStickers,
+  useActiveChatTexts,
+} from '../state/store';
 import { getPlayerDisplayName } from '../domain/model';
 import { AiType } from '../proto';
 import { CHARACTERS } from '../domain/character';
@@ -10,6 +17,8 @@ import { Tooltip } from './Tooltip';
 import { rabiriichi } from '../net/client';
 import { soundManager } from '../lib/sound';
 import { getFinalPlacementVoiceLineId } from '../domain/resultHelpers';
+import { StickerBubble } from './StickerBubble';
+import { ChatBubble } from './ChatBubble';
 
 interface FinalResultPanelProps {
   onReturnToRoom: () => void;
@@ -20,88 +29,104 @@ export function FinalResultPanel({
 }: FinalResultPanelProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const room = useRoom();
-  const selfId = useSelf()?.id;
   const characterId = useCharacterId();
+  const self = useSelf();
   const isReplay = useIsReplay();
+  const activeStickers = useActiveStickers();
+  const activeChatTexts = useActiveChatTexts();
   const [shareCopied, setShareCopied] = React.useState(false);
+
+  React.useEffect(() => {
+    // Play placement voice line when final result screen opens
+    if (isReplay || !self || !room) return;
+    const finalRank =
+      room.players
+        .slice()
+        .sort((a, b) => (b.gameState?.points ?? 0) - (a.gameState?.points ?? 0))
+        .findIndex((p) => p.id === self.id) + 1;
+    if (finalRank < 1 || finalRank > 4) return;
+    const voiceLineId = getFinalPlacementVoiceLineId(
+      finalRank,
+      room.players.length,
+    );
+    if (!voiceLineId) return;
+
+    const char = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
+    const voiceLine = char?.voiceLines.find((l) => l.id === voiceLineId);
+    if (voiceLine) {
+      soundManager.playVoice(voiceLine.audioUrl);
+    }
+  }, [characterId, isReplay, room, self]);
+
+  React.useEffect(() => {
+    // Flush deferred chat messages with a 10s display duration for the final rankings screen
+    rabiriichi.flushDeferredChats(10000);
+  }, []);
 
   const handleShareReplay = async () => {
     if (!room?.gameId) return;
-    const serverUrl = rabiriichi.wsurl;
-    if (!serverUrl) return;
-    const shareUrl = `${window.location.origin}${window.location.pathname}?server=${encodeURIComponent(serverUrl)}&replay=${room.gameId}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?gameId=${room.gameId}`;
+
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy replay link', err);
+      console.error('Failed to copy share link:', err);
     }
   };
 
-  const activeCharacter = React.useMemo(() => {
-    const found = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
-    if (!found) {
-      throw new Error(
-        `Character ${characterId} not found and no fallback available`,
-      );
-    }
-    return found;
-  }, [characterId]);
-
   const rankedPlayers = React.useMemo(() => {
     if (!room) return [];
-    const basePlayers = room.concludedPlayers ?? room.players;
-    const list = basePlayers.map((p) => {
-      const seat = p.seat ?? 0;
-      const points = room.endGamePoints?.[seat] ?? p.gameState?.points ?? 25000;
-      return { player: p, points };
-    });
-    return list.sort((a, b) => b.points - a.points);
+    return room.players
+      .map((player) => ({
+        player,
+        points: player.gameState?.points ?? 0,
+      }))
+      .sort((a, b) => b.points - a.points);
   }, [room]);
 
-  const playedReaction = React.useRef(false);
-  React.useEffect(() => {
-    if (playedReaction.current || selfId === undefined) return;
-    const rank =
-      rankedPlayers.findIndex((item) => item.player.id === selfId) + 1;
-    const voiceId = getFinalPlacementVoiceLineId(rank, rankedPlayers.length);
-    if (!voiceId) return;
-
-    const voiceLine = activeCharacter.voiceLines.find(
-      (line) => line.id === voiceId,
-    );
-    if (voiceLine) {
-      playedReaction.current = true;
-      soundManager.playVoice(voiceLine.audioUrl);
-    }
-  }, [activeCharacter, rankedPlayers, selfId]);
+  const activeCharacter =
+    CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0]!;
 
   const rankStyles = (rank: number) => {
     switch (rank) {
       case 1:
         return {
-          card: 'border-[#ffd700] bg-[#ffd700]/10',
-          number: 'text-[#ffd700]',
+          card: 'bg-gradient-to-r from-[#ffd700]/20 via-[#1a2942]/90 to-[#121c32]/95 border-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.3)]',
+          number:
+            'text-[#ffd700] drop-shadow-[0_2px_8px_rgba(255,215,0,0.5)] font-black',
           avatar: 'border-[#ffd700]',
         };
       case 2:
         return {
-          card: 'border-[#c0c0c0] bg-[#c0c0c0]/8',
-          number: 'text-[#c0c0c0]',
-          avatar: 'border-[#555]',
+          card: 'bg-gradient-to-r from-[#c0c0c0]/15 via-[#1a2942]/90 to-[#121c32]/95 border-[#c0c0c0] shadow-[0_0_12px_rgba(192,192,192,0.2)]',
+          number: 'text-[#c0c0c0] font-bold',
+          avatar: 'border-[#c0c0c0]',
         };
       case 3:
         return {
-          card: 'border-[#cd7f32] bg-[#cd7f32]/6',
-          number: 'text-[#cd7f32]',
-          avatar: 'border-[#555]',
+          card: 'bg-gradient-to-r from-[#cd7f32]/15 via-[#1a2942]/90 to-[#121c32]/95 border-[#cd7f32] shadow-[0_0_12px_rgba(205,127,50,0.2)]',
+          number: 'text-[#cd7f32] font-bold',
+          avatar: 'border-[#cd7f32]',
         };
       default:
         return {
-          card: 'border-[#3d3d3d] bg-[#2a2a2a]',
-          number: 'text-[#888]',
-          avatar: 'border-[#555]',
+          card: 'bg-[#121c32]/80 border-[#2a3a5e]',
+          number: 'text-[#888] font-semibold',
+          avatar: 'border-[#444]',
         };
     }
   };
@@ -118,7 +143,7 @@ export function FinalResultPanel({
             className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none opacity-95"
           />
         </div>
-        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 lg:p-4 lg:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 lg:gap-2.5 relative overflow-hidden box-border">
+        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 lg:p-4 lg:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 lg:gap-2.5 relative box-border">
           <div className="flex flex-col gap-1 items-center">
             <h2 className="relative z-[1] text-lg lg:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider lg:tracking-widest">
               {t('result.finalTitle', 'Game Concluded')}
@@ -160,7 +185,7 @@ export function FinalResultPanel({
           </div>
 
           <div
-            className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col gap-1.5 lg:gap-2.5 pr-1"
+            className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1.5 lg:gap-2.5 px-2 py-8"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
@@ -179,17 +204,30 @@ export function FinalResultPanel({
                 return (
                   <div
                     key={item.player.id}
-                    className={`flex items-center gap-1.5 lg:gap-4 rounded-lg px-2 py-1.5 lg:px-4 lg:py-3 border transition-all duration-200 ${styles.card}`}
+                    className={`flex items-center gap-1.5 lg:gap-4 rounded-lg px-2 py-1.5 lg:px-4 lg:py-3 border transition-all duration-200 relative ${styles.card}`}
                   >
                     <div
                       className={`text-base lg:text-3xl font-bold w-5 lg:w-8 text-center ${styles.number}`}
                     >
                       #{rank}
                     </div>
-                    <div
-                      className={`w-7 h-7 lg:w-12 lg:h-12 bg-[#444] rounded-full flex justify-center items-center text-xs lg:text-xl font-bold border-2 ${styles.avatar}`}
-                    >
-                      {initials}
+                    <div className="relative shrink-0 flex items-center justify-center">
+                      <div
+                        className={`w-7 h-7 lg:w-12 lg:h-12 bg-[#444] rounded-full flex justify-center items-center text-xs lg:text-xl font-bold border-2 ${styles.avatar}`}
+                      >
+                        {initials}
+                      </div>
+                      <StickerBubble
+                        sticker={activeStickers[item.player.id]}
+                        className="sticker-bubble-2d"
+                        placement={index === 0 ? 'bottom' : 'top'}
+                      />
+                      <ChatBubble
+                        text={activeChatTexts[item.player.id]}
+                        className="chat-bubble-2d"
+                        placement={index === 0 ? 'bottom' : 'top'}
+                        hasSticker={Boolean(activeStickers[item.player.id])}
+                      />
                     </div>
                     <div className="flex-1 flex justify-between items-center">
                       <span className="text-xs lg:text-xl font-medium">
@@ -205,8 +243,8 @@ export function FinalResultPanel({
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <Button onClick={onReturnToRoom} className="w-full">
+          <div className="flex justify-end gap-3 mt-1 lg:mt-2 pt-2 border-t border-[#ff7a99]/20">
+            <Button variant="primary" onClick={onReturnToRoom}>
               {isReplay
                 ? t('result.returnToReplay', 'Return to Replay')
                 : t('result.returnToRoom', 'Return to Room')}

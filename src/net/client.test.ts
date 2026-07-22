@@ -1470,4 +1470,91 @@ describe('RabiRiichiClient', () => {
       expect(client.loadStoredCredentials()).toBeNull();
     });
   });
+
+  describe('Delayed Chat Display', () => {
+    it('defers chat display during round results and flushes on next round or final result', async () => {
+      const client = new RabiRiichiClient();
+      client.room = {
+        id: 1,
+        config: null,
+        info: null,
+        players: [
+          {
+            id: 1,
+            nickname: 'Alice',
+            seat: 0,
+            aiType: AiType.AI_TYPE_NONE,
+            status: UserStatus.USER_STATUS_PLAYING,
+            gameState: null,
+          },
+          {
+            id: 2,
+            nickname: 'Bob',
+            seat: 1,
+            aiType: AiType.AI_TYPE_NONE,
+            status: UserStatus.USER_STATUS_PLAYING,
+            gameState: null,
+          },
+        ],
+        tileRegistry: createEmptyTileRegistry(),
+      };
+
+      const internalClient = client as unknown as {
+        handleChatMessage: (msg: {
+          senderId: number;
+          text?: string;
+          sticker?: string;
+        }) => void;
+      };
+
+      // 1. Normal mode: chats are displayed immediately
+      internalClient.handleChatMessage({
+        senderId: 1,
+        text: 'Hello!',
+        sticker: 'happy.png',
+      });
+      expect(client.activeChatTexts[1]).toBe('Hello!');
+      expect(client.activeStickers[1]).toBe('happy.png');
+
+      // 2. Enter round result screen: chats should be deferred
+      await client.replay.handleGameEvent(
+        {
+          agariEvent: {
+            agariInfos: [],
+          },
+        },
+        true,
+      );
+      expect(client.isShowingRoundResult).toBe(true);
+
+      // Processing stopGameEvent does not cancel isShowingRoundResult prematurely
+      await client.replay.handleGameEvent(
+        {
+          stopGameEvent: {},
+        },
+        true,
+      );
+      expect(client.isShowingRoundResult).toBe(true);
+      expect(client.isFinalResultScreen).toBe(true);
+
+      // Trigger chat during result screen
+      internalClient.handleChatMessage({
+        senderId: 2,
+        text: 'Nice game!',
+        sticker: 'gg.png',
+      });
+
+      // Active chat text/sticker for player 2 should not be set yet
+      expect(client.activeChatTexts[2]).toBeUndefined();
+      expect(client.activeStickers[2]).toBeUndefined();
+
+      // 3. Flush deferred chats when FinalResultPanel mounts
+      client.flushDeferredChats(10000);
+      expect(client.isShowingRoundResult).toBe(false);
+      expect(client.activeChatTexts[2]).toBe('Nice game!');
+      expect(client.activeStickers[2]).toBe('gg.png');
+
+      client.close();
+    });
+  });
 });

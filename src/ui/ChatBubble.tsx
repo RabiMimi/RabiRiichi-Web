@@ -133,8 +133,12 @@ export function ChatBubble({
           // stays pinned to the player regardless of how tall the bubble grows.
           'absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-[1000]'
     : placement === 'bottom'
-      ? 'absolute top-full left-0 mt-2 z-[105]'
-      : 'absolute bottom-full left-0 mb-2 z-[105]';
+      ? hasSticker
+        ? 'absolute top-full left-0 mt-[95px] z-[105]'
+        : 'absolute top-full left-0 mt-2 z-[105]'
+      : hasSticker
+        ? 'absolute bottom-full left-0 mb-[95px] z-[105]'
+        : 'absolute bottom-full left-0 mb-2 z-[105]';
 
   const baseBubbleClass =
     // max-h + overflow keeps a long message from growing off the top of the

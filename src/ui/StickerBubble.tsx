@@ -78,10 +78,13 @@ export function StickerBubble({
   const baseBubbleClass =
     'bg-[#121c32]/95 border-[1.5px] border-[#ff7a99]/80 rounded-xl p-1.5 shadow-[0_4px_15px_rgba(0,0,0,0.6)] flex items-center justify-center';
 
-  const tailClass =
-    placement === 'bottom'
+  const tailClass = is3D
+    ? placement === 'bottom'
       ? "before:content-[''] before:absolute before:-top-[10px] before:left-1/2 before:-translate-x-1/2 before:border-b-[10px] before:border-x-[10px] before:border-t-0 before:border-solid before:border-b-[#ff7a99]/80 before:border-x-transparent before:block before:w-0 before:z-[-1] after:content-[''] after:absolute after:-top-[8px] after:left-1/2 after:-translate-x-1/2 after:border-b-[8px] after:border-x-[8px] after:border-t-0 after:border-solid after:border-b-[#121c32]/95 after:border-x-transparent after:block after:w-0"
-      : "before:content-[''] before:absolute before:-bottom-[10px] before:left-1/2 before:-translate-x-1/2 before:border-t-[10px] before:border-x-[10px] before:border-b-0 before:border-solid before:border-t-[#ff7a99]/80 before:border-x-transparent before:block before:w-0 before:z-[-1] after:content-[''] after:absolute after:-bottom-[8px] after:left-1/2 after:-translate-x-1/2 after:border-t-[8px] after:border-x-[8px] after:border-b-0 after:border-solid after:border-t-[#121c32]/95 after:border-x-transparent after:block after:w-0";
+      : "before:content-[''] before:absolute before:-bottom-[10px] before:left-1/2 before:-translate-x-1/2 before:border-t-[10px] before:border-x-[10px] before:border-b-0 before:border-solid before:border-t-[#ff7a99]/80 before:border-x-transparent before:block before:w-0 before:z-[-1] after:content-[''] after:absolute after:-bottom-[8px] after:left-1/2 after:-translate-x-1/2 after:border-t-[8px] after:border-x-[8px] after:border-b-0 after:border-solid after:border-t-[#121c32]/95 after:border-x-transparent after:block after:w-0"
+    : placement === 'bottom'
+      ? "before:content-[''] before:absolute before:-top-[10px] before:left-6 before:-translate-x-1/2 before:border-b-[10px] before:border-x-[10px] before:border-t-0 before:border-solid before:border-b-[#ff7a99]/80 before:border-x-transparent before:block before:w-0 before:z-[-1] after:content-[''] after:absolute after:-top-[8px] after:left-6 after:-translate-x-1/2 after:border-b-[8px] after:border-x-[8px] after:border-t-0 after:border-solid after:border-b-[#121c32]/95 after:border-x-transparent after:block after:w-0"
+      : "before:content-[''] before:absolute before:-bottom-[10px] before:left-6 before:-translate-x-1/2 before:border-t-[10px] before:border-x-[10px] before:border-b-0 before:border-solid before:border-t-[#ff7a99]/80 before:border-x-transparent before:block before:w-0 before:z-[-1] after:content-[''] after:absolute after:-bottom-[8px] after:left-6 after:-translate-x-1/2 after:border-t-[8px] after:border-x-[8px] after:border-b-0 after:border-solid after:border-t-[#121c32]/95 after:border-x-transparent after:block after:w-0";
 
   const shouldUseTranslate = is3D && !isLocal;
   const openAnimName =

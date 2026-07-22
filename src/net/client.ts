@@ -134,6 +134,9 @@ export class RabiRiichiClient {
   public activeChatTexts: Record<number, string> = {};
   private chatTextTimers = new Map<number, ReturnType<typeof setTimeout>>();
   public chatHistory: ChatHistoryEntry[] = [];
+  private deferredChats: IPlayerChatMessage[] = [];
+  public isShowingRoundResult = false;
+  public isFinalResultScreen = false;
 
   public isRiichiSelectMode = false;
   public pendingActionOption: ActionOption | null = null;
@@ -324,7 +327,11 @@ export class RabiRiichiClient {
     this.platform.sound.setVolumeProvider(() => this.sounds);
   }
 
-  public showStickerLocally(senderId: number, sticker: string): void {
+  public showStickerLocally(
+    senderId: number,
+    sticker: string,
+    durationMs = 6000,
+  ): void {
     const prevTimer = this.stickerTimers.get(senderId);
     if (prevTimer) {
       clearTimeout(prevTimer);
@@ -342,12 +349,16 @@ export class RabiRiichiClient {
       this.activeStickers = next;
       this.stickerTimers.delete(senderId);
       this.onChange.emit();
-    }, 5000);
+    }, durationMs);
 
     this.stickerTimers.set(senderId, timer);
   }
 
-  public showChatTextLocally(senderId: number, text: string): void {
+  public showChatTextLocally(
+    senderId: number,
+    text: string,
+    durationMs = 6000,
+  ): void {
     const prevTimer = this.chatTextTimers.get(senderId);
     if (prevTimer) {
       clearTimeout(prevTimer);
@@ -368,9 +379,26 @@ export class RabiRiichiClient {
       this.activeChatTexts = next;
       this.chatTextTimers.delete(senderId);
       this.onChange.emit();
-    }, 6000);
+    }, durationMs);
 
     this.chatTextTimers.set(senderId, timer);
+  }
+
+  public flushDeferredChats(durationMs?: number): void {
+    this.isShowingRoundResult = false;
+    const effectiveDuration =
+      durationMs ?? (this.isFinalResultScreen ? 10000 : 6000);
+    const toFlush = [...this.deferredChats];
+    this.deferredChats = [];
+    for (const msg of toFlush) {
+      if (msg.senderId === null || msg.senderId === undefined) continue;
+      if (msg.sticker) {
+        this.showStickerLocally(msg.senderId, msg.sticker, effectiveDuration);
+      }
+      if (msg.text) {
+        this.showChatTextLocally(msg.senderId, msg.text, effectiveDuration);
+      }
+    }
   }
 
   private handleChatMessage(msg: IPlayerChatMessage): void {
@@ -411,11 +439,16 @@ export class RabiRiichiClient {
       this.chatHistory.shift();
     }
 
-    if (msg.sticker) {
-      this.showStickerLocally(msg.senderId, msg.sticker);
-    }
-    if (msg.text) {
-      this.showChatTextLocally(msg.senderId, msg.text);
+    if (this.isShowingRoundResult) {
+      this.deferredChats.push(msg);
+    } else {
+      const durationMs = this.isFinalResultScreen ? 10000 : 6000;
+      if (msg.sticker) {
+        this.showStickerLocally(msg.senderId, msg.sticker, durationMs);
+      }
+      if (msg.text) {
+        this.showChatTextLocally(msg.senderId, msg.text, durationMs);
+      }
     }
     this.onChange.emit();
   }
@@ -711,16 +744,24 @@ export class RabiRiichiClient {
     }
 
     if (gameEvent.agariEvent) {
+      this.isShowingRoundResult = true;
       this.startResultAnimation('agari');
       this.hasInMemoryResult = true;
     } else if (gameEvent.ryuukyokuEvent) {
+      this.isShowingRoundResult = true;
       this.startResultAnimation('ryuukyoku');
       this.hasInMemoryResult = true;
     } else if (gameEvent.beginGameEvent) {
       // A new hand cancels any lingering result animation from the prior hand.
       this.clearResultAnimation();
       this.hasInMemoryResult = false;
-    } else if (gameEvent.syncGameStateEvent || gameEvent.stopGameEvent) {
+      this.isShowingRoundResult = false;
+      this.isFinalResultScreen = false;
+      this.flushDeferredChats(6000);
+    } else if (gameEvent.stopGameEvent) {
+      this.isFinalResultScreen = true;
+      this.hasInMemoryResult = false;
+    } else if (gameEvent.syncGameStateEvent) {
       this.hasInMemoryResult = false;
     }
 
@@ -1155,6 +1196,9 @@ export class RabiRiichiClient {
   public returnToRoom(): void {
     this.beginExitGame();
     this.gameVoiceState = createGameVoiceState();
+    this.deferredChats = [];
+    this.isShowingRoundResult = false;
+    this.isFinalResultScreen = false;
     if (this.room) {
       this.room = {
         ...this.room,
