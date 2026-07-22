@@ -1515,7 +1515,7 @@ async function handleStandardAutoReconnect(): Promise<void> {
   }
   const { url, token } = stored;
   const logger = new Logger('AutoReconnect');
-  logger.info(`Auto-reconnecting to server: ${url}, token: ${token}`);
+  logger.info(`Auto-reconnecting to server: ${url}`);
   try {
     await rabiriichi.connect(url, token);
     logger.info(`Auto-reconnection succeeded! Connected to ${url}`);

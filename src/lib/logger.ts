@@ -57,13 +57,12 @@ class LogManager {
   }
 
   private writeToConsole(log: LogEntry) {
-    let str = `[${formatTime(log.time)}/${getLogLevelString(log.logLevel)}:${
+    const str = `[${formatTime(log.time)}/${getLogLevelString(log.logLevel)}:${
       log.source
     }] ${log.title}`;
     const consoleLog = getLogLevelConsole(log.logLevel);
     if (log.data !== undefined) {
-      str += `\n${JSON.stringify(log.data, null, 2)}`;
-      consoleLog(str);
+      consoleLog(str, log.data);
     } else {
       consoleLog(str);
     }

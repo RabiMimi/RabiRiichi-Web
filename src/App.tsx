@@ -183,10 +183,12 @@ function App(): React.JSX.Element {
 
     return () => {
       active = false;
+      // `rabiriichi` is a session-scoped singleton, not an App-mount resource.
+      // Closing it here aborts page-load reconnects because StrictMode runs this
+      // cleanup once before immediately mounting the effect again in development.
       if (stopReplayFn) {
         stopReplayFn();
       }
-      rabiriichi.close();
     };
   }, []);
 
