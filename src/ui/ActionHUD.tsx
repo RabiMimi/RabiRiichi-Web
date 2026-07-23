@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useCurrentInquiry,
@@ -39,6 +39,15 @@ export function ActionHUD(): React.JSX.Element | null {
   const isRiichiSelectMode = useIsRiichiSelectMode();
   const room = useRoom();
   const currentUser = useSelf();
+  const [selectedCall, setSelectedCall] = useState<ActionOption | null>(null);
+
+  // Reset sub-selection when inquiry changes
+  const prevInquiryRef = useRef(currentInquiry?.messageId);
+  useEffect(() => {
+    prevInquiryRef.current = currentInquiry?.messageId;
+    setSelectedCall(null);
+  }, [currentInquiry?.messageId]);
+
   const selfPlayer =
     room && currentUser
       ? room.players.find((p) => p.id === currentUser.id)
@@ -118,22 +127,79 @@ export function ActionHUD(): React.JSX.Element | null {
     }
   };
 
-  // Flatten options: map Pon/Chi/Kan options with multiple tile groups into distinct clickable options
+  // Step 2: tile-group selection for chii/pon/kan
+  if (selectedCall && 'tileGroups' in selectedCall) {
+    return (
+      <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-[50] pointer-events-auto">
+        <div className="flex flex-wrap justify-center gap-1 sm:gap-1.5 max-w-[95vw] bg-[#121c32]/88 px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-[12px] sm:rounded-[16px] border border-[#ff7a99]/35 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-md items-center">
+          {selectedCall.tileGroups.map((group) => (
+            <button
+              key={`${selectedCall.type}-${group.index}`}
+              className="bg-transparent border-none text-base sm:text-lg lg:text-xl font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 lg:px-3.5 lg:py-1.5 cursor-pointer rounded-lg transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 outline-none"
+              onClick={() => void submitAction(selectedCall, group.index)}
+              style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)' }}
+            >
+              <div className="flex flex-col items-center gap-[1px]">
+                <span
+                  className="text-[9px] sm:text-[11px] lg:text-xs"
+                  style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}
+                >
+                  {getActionLabel(selectedCall.type, selectedCall.label)}
+                </span>
+                <div className="flex gap-[1px] bg-[#141414]/60 px-0.5 py-[1px] rounded border border-[#444]">
+                  {group.tiles.map((tileMsg, idx) => {
+                    const tileStr = Tile.fromByte(tileMsg.tile).toString();
+                    const isHighlighted =
+                      (tileMsg.isCalled ?? false) ||
+                      (pendingTileId !== null && tileMsg.traceId === pendingTileId);
+                    return (
+                      <UiTile key={idx} tile={tileStr} size="action" isHighlighted={isHighlighted} />
+                    );
+                  })}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+        <button
+          className="bg-[#441111] border-[1.5px] border-[#772222] rounded-md text-[#ff9999] px-4 py-2 text-sm font-bold cursor-pointer hover:bg-[#662222] hover:text-white outline-none"
+          onClick={() => setSelectedCall(null)}
+        >
+          {t('hud.cancelRiichi')}
+        </button>
+      </div>
+    );
+  }
+
+  // Step 1: action type buttons (chii/pon/kan show only label, click to select)
   const flatOptions: FlattenedOption[] = [];
 
   displayButtons.forEach((btn) => {
     if (
       (btn.type === 'chii' || btn.type === 'pon' || btn.type === 'kan') &&
-      'tileGroups' in btn
+      'tileGroups' in btn &&
+      btn.tileGroups.length > 1
     ) {
-      btn.tileGroups.forEach((group) => {
-        flatOptions.push({
-          key: `${btn.type}-${btn.actionIndex}-${group.index}`,
-          label: getActionLabel(btn.type, btn.label),
-          type: btn.type,
-          tiles: group.tiles,
-          onClick: () => void submitAction(btn, group.index),
-        });
+      // Multiple tile groups: show as text-only button, clicking enters tile selection
+      flatOptions.push({
+        key: `${btn.type}-${btn.actionIndex}`,
+        label: getActionLabel(btn.type, btn.label),
+        type: btn.type,
+        onClick: () => setSelectedCall(btn),
+      });
+    } else if (
+      (btn.type === 'chii' || btn.type === 'pon' || btn.type === 'kan') &&
+      'tileGroups' in btn &&
+      btn.tileGroups.length === 1
+    ) {
+      // Single tile group: submit directly
+      const group = btn.tileGroups[0]!;
+      flatOptions.push({
+        key: `${btn.type}-${btn.actionIndex}-0`,
+        label: getActionLabel(btn.type, btn.label),
+        type: btn.type,
+        tiles: group.tiles,
+        onClick: () => void submitAction(btn, group.index),
       });
     } else {
       flatOptions.push({

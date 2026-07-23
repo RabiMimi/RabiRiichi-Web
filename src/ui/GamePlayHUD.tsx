@@ -656,14 +656,21 @@ function HUDTimer({
   isVisible,
 }: HUDTimerProps): React.JSX.Element | null {
   if (!isVisible) return null;
+  const seconds = Math.ceil(actionTimeout);
+  const digits = String(seconds).split('');
   return (
-    <div className="absolute bottom-[22vh] right-[12%] flex flex-col items-center gap-[2px] bg-[#141414]/85 border-2 border-[#ff3333] rounded-xl py-2 px-4 text-white shadow-[0_4px_15px_rgba(0,0,0,0.6)] pointer-events-none animate-[timer-pulse_1s_infinite_alternate] min-w-[90px] box-border">
-      <span className="text-[0.65rem] font-bold text-[#ff9999] tracking-[1px] text-center">
-        {timerLabel}
-      </span>
-      <span className="text-[2.8rem] font-bold font-['Courier_New',Courier,monospace] text-[#ff3333] [text-shadow:0_0_10px_rgba(255,51,51,0.5)] leading-none">
-        {Math.ceil(actionTimeout)}
-      </span>
+    <div className="absolute bottom-[22vh] right-[12%] flex flex-col items-center gap-[2px] text-white pointer-events-none">
+      <div className="flex items-center">
+        {digits.map((d, i) => (
+          <img
+            key={i}
+            src={`/assets/timer/${d}.png`}
+            alt={d}
+            className="h-20 w-auto"
+            draggable={false}
+          />
+        ))}
+      </div>
     </div>
   );
 }

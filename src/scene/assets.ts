@@ -4,6 +4,7 @@ import type { IMenLikeMsg } from '../proto';
 export const TILE_MODEL_PATH = '/assets/tile.glb';
 export const TABLE_DIFFUSE_PATH = '/assets/table_diffuse.webp';
 export const ROBOTO_FONT_PATH = '/assets/roboto.ttf';
+export const TABLE_CENTER_FONT_PATH = '/assets/Modified-DFPKanteiryu-XB.ttf';
 
 // Valid tile face strings
 export const VALID_TILE_STRINGS = [

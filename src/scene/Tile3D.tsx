@@ -1,6 +1,11 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useGLTF, useTexture, Html } from '@react-three/drei';
 import { TileSpotlightParticles } from './TileSpotlightParticles';
+import {
+  createToonMaterial,
+  createToonSideMaterial,
+  createToonBackMaterial,
+} from './tileToonMaterial';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TileTooltip } from '../ui/TileTooltip';
@@ -63,70 +68,13 @@ function createMappedMaterial(
 ): THREE.Material {
   const matName = mat.name;
   if (matName === 'Front.001') {
-    const customMat = new THREE.MeshStandardMaterial({
-      map: frontTexture,
-      roughness: 0.15,
-      metalness: 0.05,
-    });
-
-    const userData = {
-      uTime: { value: 0 },
-      isDora: { value: isDora ? 1.0 : 0.0 },
-    };
-    customMat.userData = userData;
-
-    customMat.onBeforeCompile = (shader) => {
-      shader.uniforms.uTime = userData.uTime;
-      shader.uniforms.uIsDora = userData.isDora;
-      shader.uniforms.uSheenWidth = { value: DORA_SHEEN_WIDTH };
-      shader.uniforms.uSheenSpeed = { value: DORA_SHEEN_SPEED };
-
-      shader.fragmentShader =
-        `
-        uniform float uTime;
-        uniform float uIsDora;
-        uniform float uSheenWidth;
-        uniform float uSheenSpeed;
-      ` + shader.fragmentShader;
-
-      shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <dithering_fragment>',
-        `
-        #include <dithering_fragment>
-        
-        if (uIsDora > 0.5) {
-          #ifdef USE_MAP
-            vec2 uv = vMapUv;
-          #else
-            vec2 uv = vec2(0.5);
-          #endif
-          
-          // Conan's glasses sliding sheen sweep (diagonal: x + y)
-          float progress = mod(uTime * uSheenSpeed, 2.5) - 0.7;
-          float d = abs(uv.x + uv.y - progress);
-          
-          // Specular white sheen band
-          float sheen = smoothstep(uSheenWidth, 0.0, d) * 0.75;
-          
-          gl_FragColor.rgb += vec3(sheen);
-        }
-        `,
-      );
-    };
-
-    return customMat;
-  } else if (matName === 'Back.001') {
-    return new THREE.MeshStandardMaterial({
-      map: backTexture,
-      roughness: 0.25,
-      metalness: 0.05,
-    });
-  } else if (matName === 'Side.001') {
-    return new THREE.MeshStandardMaterial({
-      color: '#f7f4eb', // Ivory/Bone white
-      roughness: 0.35,
-      metalness: 0.02,
-    });
+    return createToonMaterial(frontTexture);
+  }
+  if (matName === 'Back.001') {
+    return createToonBackMaterial(backTexture);
+  }
+  if (matName === 'Side.001') {
+    return createToonSideMaterial();
   }
   return mat;
 }

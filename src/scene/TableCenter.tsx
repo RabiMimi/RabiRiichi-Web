@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTexture, Text as DreiText } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
   useRoom,
@@ -8,7 +9,7 @@ import {
   useTimerActiveSeat,
 } from '../state/store';
 import { getScreenPosition, getSeatRotation } from './seat';
-import { getTableMidTexturePath, ROBOTO_FONT_PATH } from './assets';
+import { getTableMidTexturePath, TABLE_CENTER_FONT_PATH } from './assets';
 
 export function TableCenter(): React.JSX.Element | null {
   const room = useRoom();
@@ -21,33 +22,17 @@ export function TableCenter(): React.JSX.Element | null {
   const bgTexture = useTexture(getTableMidTexturePath('bg'));
   const activeTexture = useTexture(getTableMidTexturePath('box_color_white'));
   const riichiTexture = useTexture(getTableMidTexturePath('box_color'));
-  const windE = useTexture(getTableMidTexturePath('feng_E'));
-  const windS = useTexture(getTableMidTexturePath('feng_S'));
-  const windW = useTexture(getTableMidTexturePath('feng_W'));
-  const windN = useTexture(getTableMidTexturePath('feng_N'));
 
   // Configure textures
   useEffect(() => {
-    [
-      bgTexture,
-      activeTexture,
-      riichiTexture,
-      windE,
-      windS,
-      windW,
-      windN,
-    ].forEach((tex) => {
+    [bgTexture, activeTexture, riichiTexture].forEach((tex) => {
       tex.colorSpace = THREE.SRGBColorSpace;
-      // The wind glyphs are small NPOT (41x41) textures. Mipmapping averages
-      // the sparse dark pixels with the transparent surround, dropping alpha so
-      // the white plate behind shows through (the glyph "turns white"). Disable
-      // mipmaps and use linear filtering so the glyph keeps its color/alpha.
       tex.generateMipmaps = false;
       tex.minFilter = THREE.LinearFilter;
       tex.magFilter = THREE.LinearFilter;
       tex.needsUpdate = true;
     });
-  }, [bgTexture, activeTexture, riichiTexture, windE, windS, windW, windN]);
+  }, [bgTexture, activeTexture, riichiTexture]);
 
   if (!room?.info || !currentUser) {
     return null;
@@ -72,8 +57,10 @@ export function TableCenter(): React.JSX.Element | null {
   const activeRotation = getSeatRotation(activeScreenPos);
 
   // Round wind texture (East = 0, South = 1, West = 2, North = 3)
+  const windTexts = ['東', '南', '西', '北'];
   const roundWindIdx = round % 4;
-  const windTexture = [windE, windS, windW, windN][roundWindIdx] ?? windE;
+  // Round wind character (场风 = red)
+  const roundWindText = windTexts[roundWindIdx] ?? '東';
 
   const roundNum = dealer + 1;
 
@@ -91,58 +78,61 @@ export function TableCenter(): React.JSX.Element | null {
         />
       </mesh>
 
-      {/* Active player turn indicator (small white dot from box_color_white texture scaled to z=0.56) */}
+      {/* Active player turn indicator with blink */}
       <group rotation={[0, activeRotation, 0]}>
-        <mesh
-          position={[0, 0.002, 0]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          renderOrder={1}
-        >
-          <planeGeometry args={[1.16, 1.16]} />
-          <meshBasicMaterial
-            map={activeTexture}
-            transparent
-            depthWrite={false}
-          />
-        </mesh>
+        <BlinkIndicator texture={activeTexture} />
       </group>
 
-      {/* Round Wind Indicator (placed in left half of the white circle) */}
-      <mesh
-        position={[-0.08, 0.003, -0.02]}
+      {/* Round: 東1局 — wind in red, number+局 in gray */}
+      <DreiText
+        position={[-0.06, 0.001, -0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
+        fontSize={0.11}
+        color="#FF5454"
+        anchorX="right"
+        anchorY="middle"
+        font={TABLE_CENTER_FONT_PATH}
         renderOrder={2}
       >
-        <planeGeometry args={[0.15, 0.15]} />
-        <meshBasicMaterial map={windTexture} transparent depthWrite={false} />
-      </mesh>
-
-      {/* Round Number (placed in right half of the white circle, dark color for contrast) */}
+        {roundWindText}
+      </DreiText>
       <DreiText
-        position={[0.08, 0.004, -0.02]}
+        position={[-0.04, 0.004, -0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.16}
-        color="#1a1a1a"
-        anchorX="center"
+        fontSize={0.11}
+        color="#BFBFBF"
+        anchorX="left"
         anchorY="middle"
-        font={ROBOTO_FONT_PATH}
+        font={TABLE_CENTER_FONT_PATH}
         renderOrder={2}
       >
         {roundNum}
       </DreiText>
+      <DreiText
+        position={[0.1, 0.004, -0.08]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        fontSize={0.11}
+        color="#BFBFBF"
+        anchorX="center"
+        anchorY="middle"
+        font={TABLE_CENTER_FONT_PATH}
+        renderOrder={2}
+      >
+        局
+      </DreiText>
 
-      {/* Remaining tiles indicator (centered inside the white circle, dark color for contrast) */}
+      {/* Remaining: 佘XX */}
       <DreiText
         position={[0, 0.004, 0.12]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.09}
-        color="#1a1a1a"
+        color="#BFBFBF"
         anchorX="center"
         anchorY="middle"
-        font={ROBOTO_FONT_PATH}
+        font={TABLE_CENTER_FONT_PATH}
         renderOrder={2}
       >
-        {remainingTiles}
+        {`佘${remainingTiles}`}
       </DreiText>
 
       {/* Render score, seat wind, and Riichi sticks for each player */}
@@ -152,9 +142,7 @@ export function TableCenter(): React.JSX.Element | null {
         const rotY = getSeatRotation(screenPos);
 
         const seatWindIdx = (p.seat - dealer + playerCount) % playerCount;
-        const windTextures =
-          playerCount === 2 ? [windE, windS] : [windE, windS, windW, windN];
-        const seatWindTexture = windTextures[seatWindIdx] ?? windE;
+        const seatWindText = windTexts[seatWindIdx] ?? '東';
 
         const points =
           p.gameState?.points ??
@@ -197,7 +185,7 @@ export function TableCenter(): React.JSX.Element | null {
               color={displayColor}
               anchorX="center"
               anchorY="middle"
-              font={ROBOTO_FONT_PATH}
+              font={TABLE_CENTER_FONT_PATH}
               renderOrder={2}
               onPointerOver={(e) => {
                 e.stopPropagation();
@@ -211,19 +199,19 @@ export function TableCenter(): React.JSX.Element | null {
               {displayText}
             </DreiText>
 
-            {/* Seat Wind Icon (shifted to the bottom-left corner on the white corner, larger display) */}
-            <mesh
-              position={[-0.45, 0.003, 0.45]}
+            {/* Seat Wind Text — 庄家用红色 */}
+            <DreiText
+              position={[-0.45, 0.004, 0.45]}
               rotation={[-Math.PI / 2, 0, 0]}
+              fontSize={0.11}
+              color={p.seat === dealer ? '#FF5454' : '#BFBFBF'}
+              anchorX="center"
+              anchorY="middle"
+              font={TABLE_CENTER_FONT_PATH}
               renderOrder={2}
             >
-              <planeGeometry args={[0.13, 0.13]} />
-              <meshBasicMaterial
-                map={seatWindTexture}
-                transparent
-                depthWrite={false}
-              />
-            </mesh>
+              {seatWindText}
+            </DreiText>
 
             {/* Riichi Stick (placed flat in front of their discard river) */}
             {isRiichi && (
@@ -247,11 +235,35 @@ export function TableCenter(): React.JSX.Element | null {
   );
 }
 
+/** Active-turn indicator that blinks between 100% and 80% opacity in a 2s loop. */
+function BlinkIndicator({ texture }: { texture: THREE.Texture }): React.JSX.Element {
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+
+  useFrame(({ clock }) => {
+    if (!matRef.current) return;
+    const t = (clock.getElapsedTime() % 2) / 2;
+    // Sine wave oscillating between 0.8 and 1.0
+    matRef.current.opacity = 0.9 + 0.1 * Math.sin(t * Math.PI * 2);
+  });
+
+  return (
+    <mesh
+      position={[0, 0.002, 0]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      renderOrder={1}
+    >
+      <planeGeometry args={[1.16, 1.16]} />
+      <meshBasicMaterial
+        ref={matRef}
+        map={texture}
+        transparent
+        depthWrite={false}
+      />
+    </mesh>
+  );
+}
+
 // Pre-load textures
 useTexture.preload(getTableMidTexturePath('bg'));
 useTexture.preload(getTableMidTexturePath('box_color'));
 useTexture.preload(getTableMidTexturePath('box_color_white'));
-useTexture.preload(getTableMidTexturePath('feng_E'));
-useTexture.preload(getTableMidTexturePath('feng_S'));
-useTexture.preload(getTableMidTexturePath('feng_W'));
-useTexture.preload(getTableMidTexturePath('feng_N'));
