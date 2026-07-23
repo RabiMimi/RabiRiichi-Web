@@ -751,7 +751,11 @@ export function Tile3D({
         window.addEventListener('pointerup', handleGlobalUp);
       }}
     >
-      <primitive ref={tileRef} object={clone} scale={[0.18, 0.24, 0.14]} />
+      <group scale={[0.18, 0.24, 0.12]}>
+        {/* Outline — slightly scaled clone with outline material */}
+        <OutlineClone clone={clone} />
+        <primitive ref={tileRef} object={clone} />
+      </group>
       {isWinningTile && <TileSpotlightParticles />}
       {showTooltip && (
         <Html
@@ -764,6 +768,27 @@ export function Tile3D({
       )}
     </group>
   );
+}
+
+/** Renders a slightly scaled clone with outline material for toon outline. */
+function OutlineClone({ clone }: { clone: THREE.Group }): React.JSX.Element {
+  const outlineClone = useMemo(() => {
+    const oc = clone.clone();
+    oc.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.material = new THREE.MeshBasicMaterial({
+          color: '#111111',
+          side: THREE.BackSide,
+          depthTest: true,
+          transparent: true,
+          opacity: 0.73,
+        });
+      }
+    });
+    return oc;
+  }, [clone]);
+
+  return <primitive object={outlineClone} scale={[1.05, 1.05, 1.05]} />;
 }
 
 // Pre-load the GLTF to avoid pop-in
