@@ -42,13 +42,13 @@ const UNIFORM_DECL = `
 
 function injectCel(material: THREE.MeshPhongMaterial) {
   material.onBeforeCompile = (shader) => {
-    shader.uniforms.uDarkLight = { value: 0.55 };
+    shader.uniforms.uDarkLight = { value: 0.998 };
     shader.fragmentShader = UNIFORM_DECL + shader.fragmentShader;
     shader.vertexShader = shader.vertexShader.replace('#include <common>', VERTEX_NORMAL);
     shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', VERTEX_TRANSFORM);
     shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <output_fragment>',
-      '#include <output_fragment>\n' + CEL_OVERRIDE,
+      '#include <dithering_fragment>',
+      CEL_OVERRIDE + '\n#include <dithering_fragment>',
     );
   };
 }
@@ -68,7 +68,7 @@ export function createToonMaterial(frontTexture: THREE.Texture): THREE.MeshPhong
     shader.uniforms.uIsDora = uIsDora;
     shader.uniforms.uSheenWidth = { value: DORA_SHEEN_WIDTH };
     shader.uniforms.uSheenSpeed = { value: DORA_SHEEN_SPEED };
-    shader.uniforms.uDarkLight = { value: 0.55 };
+    shader.uniforms.uDarkLight = { value: 0.998 };
     mat.userData.uTime = uTime;
     mat.userData.isDora = uIsDora;
 
@@ -84,8 +84,8 @@ export function createToonMaterial(frontTexture: THREE.Texture): THREE.MeshPhong
     shader.vertexShader = shader.vertexShader.replace('#include <common>', VERTEX_NORMAL);
     shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', VERTEX_TRANSFORM);
     shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <output_fragment>',
-      '#include <output_fragment>\n' + CEL_OVERRIDE + '\n' + DORA_SHEEN,
+      '#include <dithering_fragment>',
+      CEL_OVERRIDE + '\n#include <dithering_fragment>\n' + DORA_SHEEN,
     );
   };
 
