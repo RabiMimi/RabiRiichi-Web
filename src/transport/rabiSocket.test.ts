@@ -15,6 +15,40 @@ describe('RabiSocket', () => {
     vi.unstubAllGlobals();
   });
 
+  function sendServerMsg(mockWS: MockWebSocket, msg: IServerMessageDto): void {
+    const bytes = ServerMessageDto.encode(msg).finish();
+    mockWS.triggerMessage(
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+    );
+  }
+
+  function findClientSend(
+    mockWS: MockWebSocket,
+    pred: (msg: ReturnType<typeof ClientMessageDto.decode>) => boolean,
+  ) {
+    for (const call of mockWS.send.mock.calls) {
+      const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+      if (pred(msg)) return msg;
+    }
+    return null;
+  }
+
+  /**
+   * Simulates the server's version-check push (sent on every connection, public
+   * and authenticated), which the client validates and replies to.
+   */
+  function sendServerVersionCheck(mockWS: MockWebSocket, id = 10): void {
+    sendServerMsg(mockWS, {
+      id,
+      serverMsg: {
+        versionCheckMsg: {
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
+        },
+      },
+    });
+  }
+
   it('should connect and resolve waitOpen', async () => {
     const socket = new RabiSocket('ws://localhost:1234');
     await socket.waitOpen;
@@ -87,67 +121,86 @@ describe('RabiSocket', () => {
     const mockWS = MockWebSocket.instances[0]!;
     expect(mockWS).toBeDefined();
 
-    // Should have sent sign-in message
-    expect(mockWS.send).toHaveBeenCalledTimes(1);
-    const signInBytes = mockWS.send.mock.calls[0]![0];
-    const signInMsg = ClientMessageDto.decode(new Uint8Array(signInBytes));
-    expect(signInMsg.clientRequest?.signIn?.accessToken).toBe('my-token');
-    const signInId = signInMsg.id;
+    // Authenticated path sends sign-in.
+    const signInMsg = findClientSend(mockWS, (m) =>
+      Boolean(m.clientRequest?.signIn),
+    );
+    expect(signInMsg?.clientRequest?.signIn?.accessToken).toBe('my-token');
 
-    // Simulate server sign-in response
-    const signInResp = ServerMessageDto.encode({
+    sendServerMsg(mockWS, {
       id: -1,
-      respondTo: signInId,
+      respondTo: signInMsg!.id,
       serverResp: {
         userInfo: { id: 123, userData: { nickname: 'TestUser' } },
       },
-    }).finish();
-    mockWS.triggerMessage(
-      signInResp.buffer.slice(
-        signInResp.byteOffset,
-        signInResp.byteOffset + signInResp.byteLength,
-      ),
-    );
-
-    // Wait for promise microtasks
+    });
     await vi.advanceTimersByTimeAsync(0);
     expect(onUserInfo).toHaveBeenCalledWith(
       expect.objectContaining({ id: 123, userData: { nickname: 'TestUser' } }),
     );
 
-    // Simulate server sending version check
-    const versionCheck = ServerMessageDto.encode({
+    // The server pushes its version check; the client validates and replies.
+    sendServerVersionCheck(mockWS);
+    await handshakePromise;
+
+    const replyMsg = findClientSend(mockWS, (m) =>
+      Boolean(m.clientMsg?.versionCheckMsg),
+    );
+    expect(replyMsg?.respondTo).toBe(10);
+
+    // Heartbeat should start.
+    await vi.advanceTimersByTimeAsync(2000);
+    const hbMsg = findClientSend(mockWS, (m) =>
+      Boolean(m.clientMsg?.heartBeatMsg),
+    );
+    expect(hbMsg?.clientMsg?.heartBeatMsg).toBeDefined();
+
+    vi.useRealTimers();
+  });
+
+  it('public (no-token) handshake validates the version check, no sign-in', async () => {
+    vi.useFakeTimers();
+    const socket = new RabiSocket('ws://localhost:1234'); // no token
+    const handshakePromise = socket.handShake(vi.fn());
+    await vi.advanceTimersByTimeAsync(15);
+
+    const mockWS = MockWebSocket.instances[0]!;
+    // Public path sends nothing until the server pushes its version check.
+    expect(mockWS.send).not.toHaveBeenCalled();
+
+    sendServerVersionCheck(mockWS);
+    await handshakePromise;
+
+    // Replies to the version check, but never signs in on the public path.
+    expect(
+      findClientSend(mockWS, (m) => Boolean(m.clientMsg?.versionCheckMsg)),
+    ).not.toBeNull();
+    expect(
+      findClientSend(mockWS, (m) => Boolean(m.clientRequest?.signIn)),
+    ).toBeNull();
+
+    vi.useRealTimers();
+  });
+
+  it('rejects an old/incompatible server (server too old) with a clear error', async () => {
+    vi.useFakeTimers();
+    const socket = new RabiSocket('ws://localhost:1234'); // no token
+    const handshakePromise = socket.handShake(vi.fn());
+    await vi.advanceTimersByTimeAsync(15);
+
+    const mockWS = MockWebSocket.instances[0]!;
+    sendServerMsg(mockWS, {
       id: 10,
       serverMsg: {
         versionCheckMsg: {
-          serverVersion: MIN_SERVER_VERSION,
+          serverVersion: '0.0.1', // too old
           minClientVersion: CLIENT_VERSION,
         },
       },
-    }).finish();
-    mockWS.triggerMessage(
-      versionCheck.buffer.slice(
-        versionCheck.byteOffset,
-        versionCheck.byteOffset + versionCheck.byteLength,
-      ),
-    );
+    });
 
-    // Wait for handshake to resolve
-    await handshakePromise;
-
-    // Should have sent version check reply
-    expect(mockWS.send).toHaveBeenCalledTimes(2);
-    const replyBytes = mockWS.send.mock.calls[1]![0];
-    const replyMsg = ClientMessageDto.decode(new Uint8Array(replyBytes));
-    expect(replyMsg.respondTo).toBe(10);
-    expect(replyMsg.clientMsg?.versionCheckMsg).toBeDefined();
-
-    // Heartbeat should start. Interval is 2000ms.
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(mockWS.send).toHaveBeenCalledTimes(3);
-    const hbBytes = mockWS.send.mock.calls[2]![0];
-    const hbMsg = ClientMessageDto.decode(new Uint8Array(hbBytes));
-    expect(hbMsg.clientMsg?.heartBeatMsg).toBeDefined();
+    await expect(handshakePromise).rejects.toThrow();
+    expect(socket.isConnected).toBe(false);
 
     vi.useRealTimers();
   });
@@ -160,9 +213,11 @@ describe('RabiSocket', () => {
     });
 
     await vi.advanceTimersByTimeAsync(15);
-    await handshakePromise; // No token, resolves immediately after open
-
     const mockWS = MockWebSocket.instances[0]!;
+    // Public (no-token) connections still get the server's version-check push.
+    sendServerVersionCheck(mockWS);
+    await handshakePromise;
+    mockWS.send.mockClear(); // Drop the version-check reply from the log
 
     // Send a normal message that will be tracked
     socket.send({ clientMsg: { roomUpdateMsg: { status: 2 } } }); // Status 2 = READY maybe? Just some msg
@@ -219,9 +274,10 @@ describe('RabiSocket', () => {
     const socket = new RabiSocket('ws://localhost:1234');
     const handshakePromise = socket.handShake(vi.fn());
     await vi.advanceTimersByTimeAsync(10);
+    const mockWS = MockWebSocket.instances[0]!;
+    sendServerVersionCheck(mockWS);
     await handshakePromise;
 
-    const mockWS = MockWebSocket.instances[0]!;
     mockWS.send.mockClear();
 
     const pingCallback = vi.fn();
@@ -266,9 +322,10 @@ describe('RabiSocket', () => {
     const socket = new RabiSocket('ws://localhost:1234');
     const handshakePromise = socket.handShake(vi.fn());
     await vi.advanceTimersByTimeAsync(10);
+    const mockWS = MockWebSocket.instances[0]!;
+    sendServerVersionCheck(mockWS);
     await handshakePromise;
 
-    const mockWS = MockWebSocket.instances[0]!;
     mockWS.send.mockClear();
 
     const pingCallback = vi.fn();

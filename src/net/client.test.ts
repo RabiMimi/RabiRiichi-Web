@@ -89,6 +89,72 @@ describe('RabiRiichiClient', () => {
     );
   }
 
+  /**
+   * Drives the server->client version handshake that every connection (public
+   * and authenticated) must pass before use.
+   */
+  function sendServerVersionCheck(ws: MockWebSocket, id = 10) {
+    sendServerMsg(ws, {
+      id,
+      serverMsg: {
+        versionCheckMsg: {
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
+        },
+      },
+    });
+  }
+
+  function findSend(
+    ws: MockWebSocket,
+    pred: (msg: ReturnType<typeof ClientMessageDto.decode>) => boolean,
+  ) {
+    for (const call of ws.send.mock.calls) {
+      const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+      if (pred(msg)) return msg;
+    }
+    return null;
+  }
+
+  const signedInSockets = new WeakSet<MockWebSocket>();
+  const versionCheckedSockets = new WeakSet<MockWebSocket>();
+
+  /**
+   * Fully drives a socket's handshake by responding to whatever it sent:
+   * a sign-in request (authenticated sockets) and/or the version check that
+   * every connection now performs. Idempotent and timing-robust: it flushes
+   * fake-timer microtasks a bounded number of times, answering each handshake
+   * step as it appears.
+   */
+  async function driveHandshake(ws: MockWebSocket, nickname = 'P') {
+    for (let i = 0; i < 12; i++) {
+      const signIn = findSend(ws, (m) => Boolean(m.clientRequest?.signIn));
+      if (signIn && !signedInSockets.has(ws)) {
+        signedInSockets.add(ws);
+        sendServerMsg(ws, {
+          id: -1,
+          respondTo: signIn.id,
+          serverResp: { userInfo: { id: 7, userData: { nickname } } },
+        });
+      }
+      if (!versionCheckedSockets.has(ws)) {
+        versionCheckedSockets.add(ws);
+        sendServerVersionCheck(ws);
+      }
+      await vi.advanceTimersByTimeAsync(0);
+    }
+  }
+
+  /**
+   * Drives the handshake, then responds to the getInfo the salt fetch sends.
+   */
+  async function flushGetInfo(ws: MockWebSocket) {
+    await driveHandshake(ws);
+    respondToGetInfo(ws);
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(0);
+  }
+
   function respondToGetInfo(ws: MockWebSocket) {
     const getInfoCall = ws.send.mock.calls.find((call) => {
       const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
@@ -280,23 +346,27 @@ describe('RabiRiichiClient', () => {
     const mockWS1 = MockWebSocket.instances[0]!;
     expect(mockWS1).toBeDefined();
 
-    // Since we don't have token, the handshake resolves immediately after open.
-    // So getWSClient should return the client, which starts the registerUser flow.
-    // Wait for the client to send getInfo to fetch the salt.
-    await vi.advanceTimersByTimeAsync(0);
-    respondToGetInfo(mockWS1);
-    await vi.advanceTimersByTimeAsync(0);
+    // Even the public (no-token) socket must pass the version handshake first.
+    sendServerVersionCheck(mockWS1);
+    // Let the handshake resolve so getWSClient returns and registerUser proceeds
+    // to fetchServerSalt, which sends getInfo. Flush the multi-await chain, then
+    // respond to whichever getInfo appears.
+    await flushGetInfo(mockWS1);
 
-    expect(mockWS1.send).toHaveBeenCalledTimes(2);
-    const registerBytes = mockWS1.send.mock.calls[1]![0];
+    const registerCall = mockWS1.send.mock.calls.find((call) => {
+      const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+      return Boolean(msg.clientRequest?.createUser);
+    });
+    const registerBytes = registerCall![0];
     const registerMsg = ClientMessageDto.decode(new Uint8Array(registerBytes));
     expect(registerMsg.clientRequest?.createUser?.userData?.nickname).toBe(
       'NewPlayer',
     );
 
-    // Respond to createUser
+    // Respond to createUser (id<=0 so it invokes immediately regardless of the
+    // version-check message's positive id having advanced the ordered stream).
     sendServerMsg(mockWS1, {
-      id: 1,
+      id: 0,
       respondTo: registerMsg.id,
       serverResp: {
         userInfo: {
@@ -1343,13 +1413,18 @@ describe('RabiRiichiClient', () => {
       await vi.advanceTimersByTimeAsync(15);
       expect(created.length).toBe(1);
       const ws = created[0]!;
-      respondToGetInfo(ws);
-      await vi.advanceTimersByTimeAsync(0);
+      // Public socket must pass the version handshake first.
+      sendServerVersionCheck(ws);
+      await flushGetInfo(ws);
 
       // The password hash used the injected crypto provider.
       expect(sha256).toHaveBeenCalled();
 
-      const registerBytes = ws.send.mock.calls[1]![0];
+      const registerCall = ws.send.mock.calls.find((call) => {
+        const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+        return Boolean(msg.clientRequest?.createUser);
+      });
+      const registerBytes = registerCall![0];
       const registerMsg = ClientMessageDto.decode(
         new Uint8Array(registerBytes),
       );
@@ -1358,7 +1433,7 @@ describe('RabiRiichiClient', () => {
       );
 
       sendServerMsg(ws, {
-        id: 1,
+        id: 0,
         respondTo: registerMsg.id,
         serverResp: {
           userInfo: {
@@ -1368,7 +1443,11 @@ describe('RabiRiichiClient', () => {
           },
         },
       });
+      // createUser succeeds → reconnect with the new token (second socket).
       await vi.advanceTimersByTimeAsync(15);
+      if (created[1]) {
+        await driveHandshake(created[1], 'CliPlayer');
+      }
 
       const storedCreds = JSON.parse(
         backing.rabiriichi_server_credentials ?? '{}',
@@ -1411,10 +1490,15 @@ describe('RabiRiichiClient', () => {
       const changePromise = client.changePassword('oldpw', 'newpw');
       await vi.advanceTimersByTimeAsync(15);
       const ws = created[0]!;
-      respondToGetInfo(ws);
-      await vi.advanceTimersByTimeAsync(0);
+      // Public socket must pass the version handshake first.
+      sendServerVersionCheck(ws);
+      await flushGetInfo(ws);
 
-      const sentBytes = ws.send.mock.calls[1]![0];
+      const changeCall = ws.send.mock.calls.find((call) => {
+        const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+        return msg.clientRequest?.req === 'changePassword';
+      });
+      const sentBytes = changeCall![0];
       const sentMsg = ClientMessageDto.decode(new Uint8Array(sentBytes));
       const clientRequest = sentMsg.clientRequest;
       expect(clientRequest?.req).toBe('changePassword');
@@ -1427,7 +1511,7 @@ describe('RabiRiichiClient', () => {
       expect(req?.newPasswordHash).toBe('newhash');
 
       sendServerMsg(ws, {
-        id: 1,
+        id: 0,
         respondTo: sentMsg.id,
         serverResp: {
           userInfo: { id: 7, accessToken: 'rotated-token' },

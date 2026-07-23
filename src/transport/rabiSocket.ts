@@ -9,7 +9,7 @@ import { Logger, RabiEvent, sleep, TimeoutError } from '../lib';
 import { MessageRecord } from './messageRecord';
 import { ClientMessageWrapper } from './messageWrapper';
 import { CLIENT_NAME, WS_HEARTBEAT_INTERVAL } from './constants';
-import { Version, isServerSupported } from './version';
+import { Version, isServerSupported, versionErrorReason } from './version';
 import i18n from '../lib/i18n';
 import {
   type RabiWebSocket,
@@ -219,15 +219,14 @@ export class RabiSocket {
   public async handShake(
     onUserInfoLoaded: (userInfo: IUserInfoResponse) => void,
   ): Promise<void> {
-    if (!this.accessToken) {
-      await this.waitOpen;
-      void this.heartBeatLoop();
-      return;
-    }
-
     await this.waitOpen;
 
     return new Promise<void>((resolve, reject) => {
+      // The server is the single source of truth for version compatibility: it
+      // pushes a versionCheckMsg on EVERY connection (public and authenticated)
+      // and closes the socket unless we reply with a supported version. We
+      // validate that push here so an incompatible/old server fails with a clear
+      // error. If the server never sends it, the WS connect timeout applies.
       const listener = (msg: IServerMessageDto) => {
         const versionCheck = msg.serverMsg?.versionCheckMsg;
         if (!versionCheck) {
@@ -236,31 +235,15 @@ export class RabiSocket {
         if (!isServerSupported(versionCheck)) {
           this.close();
           this.onMessage.unsubscribe(listener);
-          let reason = i18n.t('connect.versionErrorValidationFailed');
-          if (!versionCheck.serverVersion || !versionCheck.minClientVersion) {
-            reason = i18n.t('connect.versionErrorMissingFields');
-          } else {
-            const serverVersion = new Version(versionCheck.serverVersion);
-            const minClientVersion = new Version(versionCheck.minClientVersion);
-            if (!serverVersion.isAtLeast(Version.MIN_SERVER_VERSION)) {
-              reason = i18n.t('connect.versionErrorServerTooOld', {
-                serverVersion: versionCheck.serverVersion,
-                minServerVersion: Version.MIN_SERVER_VERSION.toJSON(),
-              });
-            } else if (!Version.CLIENT_VERSION.isAtLeast(minClientVersion)) {
-              reason = i18n.t('connect.versionErrorClientTooOld', {
-                clientVersion: Version.CLIENT_VERSION.toJSON(),
-                minClientVersion: versionCheck.minClientVersion,
-              });
-            }
-          }
           return reject(
             new Error(
-              `${i18n.t('connect.serverVersionUnsupported')}: ${reason}`,
+              `${i18n.t('connect.serverVersionUnsupported')}: ${versionErrorReason(
+                versionCheck,
+              )}`,
             ),
           );
         }
-        const reply: IClientMessageDto = {
+        this.send({
           clientMsg: {
             versionCheckMsg: {
               client: CLIENT_NAME,
@@ -269,8 +252,7 @@ export class RabiSocket {
             },
           },
           respondTo: msg.id ?? null,
-        };
-        this.send(reply);
+        });
         void this.heartBeatLoop();
         this.onMessage.unsubscribe(listener);
         resolve();
@@ -278,13 +260,20 @@ export class RabiSocket {
 
       this.onMessage.subscribe(listener);
 
+      // Public connections (e.g. replay viewing) only do the version handshake
+      // above; authenticated connections additionally sign in.
+      const accessToken = this.accessToken;
+      if (!accessToken) {
+        return;
+      }
+
       try {
         const signIn = this.send(
           new ClientMessageWrapper({
             id: this.msgs.nextHeartBeatId,
             clientRequest: {
               signIn: {
-                accessToken: this.accessToken ?? null,
+                accessToken,
               },
             },
           }),
