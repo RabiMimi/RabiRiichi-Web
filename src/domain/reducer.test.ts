@@ -376,6 +376,7 @@ function createInitializedRoom(): RoomModel {
           jun: 0,
           points: 25000,
           riichiTileId: 0,
+          isRiichiConfirmed: false,
           furiten: {},
           hand: {
             freeTiles: [],
@@ -397,6 +398,7 @@ function createInitializedRoom(): RoomModel {
           jun: 0,
           points: 25000,
           riichiTileId: 0,
+          isRiichiConfirmed: false,
           furiten: {},
           hand: {
             freeTiles: [],
@@ -1105,9 +1107,44 @@ describe('Reducer - Events', () => {
     const nextState = applyEvent(state, eventMsg);
 
     expect(nextState.players[0]?.gameState?.riichiTileId).toBe(50);
+    expect(nextState.players[0]?.gameState?.isRiichiConfirmed).toBe(true);
     // Declaring riichi deducts the 1000-point stick and adds it to the pot.
     expect(nextState.players[0]?.gameState?.points).toBe(24000);
     expect(nextState.info?.riichiStick).toBe(1);
+  });
+
+  it('does not confirm riichi when the declaration discard is ron', () => {
+    let state = createInitializedRoom();
+    const declarationTile = {
+      traceId: 50,
+      tile: 21,
+      discardInfo: { from: 0, reason: 1, time: 10 },
+    };
+
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 0,
+        discarded: declarationTile,
+        isRiichi: true,
+      },
+    });
+
+    // The river needs the ID immediately so the declaration tile is sideways,
+    // but the stick must wait for the server's set-riichi confirmation.
+    expect(state.players[0]?.gameState?.riichiTileId).toBe(50);
+    expect(state.players[0]?.gameState?.isRiichiConfirmed).toBe(false);
+
+    state = applyEvent(state, {
+      agariEvent: {
+        agariInfos: [{ playerId: 1, freeTiles: [] }],
+        incoming: declarationTile,
+        isTsumo: false,
+      },
+    });
+
+    expect(state.players[0]?.gameState?.isRiichiConfirmed).toBe(false);
+    expect(state.players[0]?.gameState?.points).toBe(25000);
+    expect(state.info?.riichiStick).toBe(0);
   });
 
   it('keeps the riichi sideways tile after the declaration tile is called', () => {
@@ -1740,6 +1777,7 @@ describe('Reducer - Events', () => {
     // The declaration tile is still rendered sideways.
     const p1 = state.players.find((p) => p.seat === 1);
     expect(p1?.gameState?.riichiTileId).toBe(50);
+    expect(p1?.gameState?.isRiichiConfirmed).toBe(true);
     expect(
       getRiichiSidewaysTraceId(
         p1?.gameState?.hand.discarded ?? [],

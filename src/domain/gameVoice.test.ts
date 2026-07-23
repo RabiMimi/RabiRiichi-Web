@@ -41,6 +41,7 @@ function room(
           jun: 0,
           points: 25000,
           riichiTileId: 0,
+          isRiichiConfirmed: false,
           furiten: {},
           hand: {
             freeTiles: [],
@@ -63,6 +64,7 @@ function room(
           jun: 0,
           points: 25000,
           riichiTileId: 0,
+          isRiichiConfirmed: false,
           furiten: {},
           hand: {
             freeTiles: [],

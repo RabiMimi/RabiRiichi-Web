@@ -29,6 +29,7 @@ function makePlayer(
       jun: 0,
       points: 25000,
       riichiTileId: 0,
+      isRiichiConfirmed: false,
       furiten: {},
       hand: {
         freeTiles: freeTiles.map((b) => ({ tile: b, traceId: b })),

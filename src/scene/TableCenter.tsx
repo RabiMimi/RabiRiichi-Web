@@ -162,7 +162,7 @@ export function TableCenter(): React.JSX.Element | null {
           25000;
 
         const isTimerActive = timerActiveSeat === p.seat && actionTimeout > 0;
-        const isRiichi = p.gameState ? p.gameState.riichiTileId > 0 : false;
+        const isRiichi = p.gameState?.isRiichiConfirmed ?? false;
 
         const selfPlayerObj = room.players.find((sp) => sp.seat === selfSeat);
         const selfPoints =

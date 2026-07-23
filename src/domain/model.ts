@@ -68,6 +68,7 @@ export interface PlayerGameState {
   jun: number;
   points: number;
   riichiTileId: number; // trace_id of the riichi tile, 0 if not riichi
+  isRiichiConfirmed: boolean; // true only after setRiichiEvent confirms the declaration
   furiten: Partial<Record<FuritenType, boolean>>;
   hand: PlayerHandState;
   agari: PlayerAgariState | null;

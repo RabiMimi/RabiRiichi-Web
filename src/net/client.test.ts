@@ -953,6 +953,7 @@ describe('RabiRiichiClient', () => {
             jun: 0,
             points: 25000,
             riichiTileId: 0,
+            isRiichiConfirmed: false,
             furiten: {},
             hand: {
               freeTiles: [],
