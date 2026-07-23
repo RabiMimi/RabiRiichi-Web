@@ -10,7 +10,7 @@ import {
 } from '../state/store';
 import { getPlayerDisplayName } from '../domain/model';
 import { AiType } from '../proto';
-import { CHARACTERS } from '../domain/character';
+import { getCharacterOrDefault } from '../domain/character';
 import { Button } from './Button';
 import { CopyGameIdButton } from './CopyGameIdButton';
 import { Tooltip } from './Tooltip';
@@ -30,7 +30,7 @@ export function FinalResultPanel({
   const { t } = useTranslation();
   const room = useRoom();
   const characterId = useCharacterId();
-  const self = useSelf();
+  const me = useSelf();
   const isReplay = useIsReplay();
   const activeStickers = useActiveStickers();
   const activeChatTexts = useActiveChatTexts();
@@ -38,12 +38,12 @@ export function FinalResultPanel({
 
   React.useEffect(() => {
     // Play placement voice line when final result screen opens
-    if (isReplay || !self || !room) return;
+    if (isReplay || !me || !room) return;
     const finalRank =
       room.players
         .slice()
         .sort((a, b) => (b.gameState?.points ?? 0) - (a.gameState?.points ?? 0))
-        .findIndex((p) => p.id === self.id) + 1;
+        .findIndex((p) => p.id === me.id) + 1;
     if (finalRank < 1 || finalRank > 4) return;
     const voiceLineId = getFinalPlacementVoiceLineId(
       finalRank,
@@ -51,12 +51,12 @@ export function FinalResultPanel({
     );
     if (!voiceLineId) return;
 
-    const char = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
-    const voiceLine = char?.voiceLines.find((l) => l.id === voiceLineId);
+    const char = getCharacterOrDefault(characterId);
+    const voiceLine = char.voiceLines.find((l) => l.id === voiceLineId);
     if (voiceLine) {
       soundManager.playVoice(voiceLine.audioUrl);
     }
-  }, [characterId, isReplay, room, self]);
+  }, [characterId, isReplay, room, me]);
 
   React.useEffect(() => {
     // Flush deferred chat messages with a 10s display duration for the final rankings screen
@@ -68,7 +68,7 @@ export function FinalResultPanel({
     const shareUrl = `${window.location.origin}${window.location.pathname}?gameId=${room.gameId}`;
 
     try {
-      if (navigator.clipboard && window.isSecureContext) {
+      if (window.isSecureContext) {
         await navigator.clipboard.writeText(shareUrl);
       } else {
         const textarea = document.createElement('textarea');
@@ -98,8 +98,7 @@ export function FinalResultPanel({
       .sort((a, b) => b.points - a.points);
   }, [room]);
 
-  const activeCharacter =
-    CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0]!;
+  const activeCharacter = getCharacterOrDefault(characterId);
 
   const rankStyles = (rank: number) => {
     switch (rank) {

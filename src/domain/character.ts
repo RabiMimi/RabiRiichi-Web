@@ -215,6 +215,25 @@ export const CHARACTERS: readonly CharacterConfig[] = [
 
 export const DEFAULT_CHARACTER_ID = 'mimi';
 
+/** The character used when a selected id can't be resolved. */
+export const DEFAULT_CHARACTER: CharacterConfig = (() => {
+  const fallback = CHARACTERS.find(
+    (character) => character.id === DEFAULT_CHARACTER_ID,
+  );
+  if (!fallback) {
+    throw new Error(`Default character "${DEFAULT_CHARACTER_ID}" not found`);
+  }
+  return fallback;
+})();
+
+/** Resolves a character by id, falling back to {@link DEFAULT_CHARACTER}. */
+export function getCharacterOrDefault(characterId: string): CharacterConfig {
+  return (
+    CHARACTERS.find((character) => character.id === characterId) ??
+    DEFAULT_CHARACTER
+  );
+}
+
 export function getCharacterVoiceUrl(
   characterId: string,
   voiceId: string,

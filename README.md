@@ -9,9 +9,9 @@ a 3D browser game on top of the open-source gRPC server implementation.
 
 ## Servers
 
-| Environment | Address                                                    |
-| ----------- | ---------------------------------------------------------- |
-| Production  | [RabiRiichi 兔兔立直 / ラビリーチ](https://riichi.rabimimi.com)         |
+| Environment | Address                                                               |
+| ----------- | --------------------------------------------------------------------- |
+| Production  | [RabiRiichi 兔兔立直 / ラビリーチ](https://riichi.rabimimi.com)       |
 | Development | [RabiRiichi-dev 兔兔开发 / ミミ開発](https://riichi-dev.rabimimi.com) |
 
 ## Tech Stack
