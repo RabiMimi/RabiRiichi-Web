@@ -25,6 +25,7 @@ export interface RabiRiichiState {
   ping: number;
   selectedTileTraceId: number | null;
   hoveredTileTraceId: number | null;
+  callHighlightTileIds: Set<number> | null;
   isCameraLocked: boolean;
   resultAnimation: 'agari' | 'ryuukyoku' | null;
   isReplay: boolean;
@@ -73,6 +74,7 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.ping !== rabiriichi.ping ||
     lastSnapshot.selectedTileTraceId !== rabiriichi.selectedTileTraceId ||
     lastSnapshot.hoveredTileTraceId !== rabiriichi.hoveredTileTraceId ||
+    lastSnapshot.callHighlightTileIds !== rabiriichi.callHighlightTileIds ||
     lastSnapshot.isCameraLocked !== rabiriichi.isCameraLocked ||
     lastSnapshot.resultAnimation !== rabiriichi.resultAnimation ||
     lastSnapshot.isReplay !== rabiriichi.isReplay ||
@@ -112,6 +114,7 @@ function getSnapshot(): RabiRiichiState {
       ping: rabiriichi.ping,
       selectedTileTraceId: rabiriichi.selectedTileTraceId,
       hoveredTileTraceId: rabiriichi.hoveredTileTraceId,
+      callHighlightTileIds: rabiriichi.callHighlightTileIds,
       isCameraLocked: rabiriichi.isCameraLocked,
       resultAnimation: rabiriichi.resultAnimation,
       isReplay: rabiriichi.isReplay,
@@ -269,6 +272,16 @@ export function useHoveredTileTraceId(): number | null {
     subscribe,
     getHoveredTileTraceId,
     getHoveredTileTraceId,
+  );
+}
+
+const getCallHighlightTileIds = () => rabiriichi.callHighlightTileIds;
+
+export function useCallHighlightTileIds(): Set<number> | null {
+  return useSyncExternalStore(
+    subscribe,
+    getCallHighlightTileIds,
+    getCallHighlightTileIds,
   );
 }
 

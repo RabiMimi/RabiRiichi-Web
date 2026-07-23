@@ -31,6 +31,7 @@ import {
   useRoom,
   useSelf,
   useClaimTargetTileId,
+  useCallHighlightTileIds,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import type { ActionOption, DiscardCandidate } from '../domain/inquiry';
@@ -64,6 +65,7 @@ function createMappedMaterial(
   mat: THREE.Material,
   frontTexture: THREE.Texture,
   backTexture: THREE.Texture,
+  sideTexture: THREE.Texture,
   isDora: boolean,
 ): THREE.Material {
   const matName = mat.name;
@@ -74,7 +76,7 @@ function createMappedMaterial(
     return createToonBackMaterial(backTexture);
   }
   if (matName === 'Side.001') {
-    return createToonSideMaterial();
+    return createToonSideMaterial(sideTexture);
   }
   return mat;
 }
@@ -219,6 +221,14 @@ export function Tile3D({
   );
   const isHighlighted = Boolean(activeComparisonTile && isMatchingComparison);
 
+  // When hovering a call button, dim hand tiles NOT in the call
+  const callHighlightIds = useCallHighlightTileIds();
+  const isCallDimmed =
+    callHighlightIds != null &&
+    displayState === 'hand' &&
+    traceId != null &&
+    !callHighlightIds.has(traceId);
+
   const currentUser = useSelf();
   const selfPlayer = useMemo(() => {
     if (!room || !currentUser) return null;
@@ -287,27 +297,31 @@ export function Tile3D({
   // Always load the back face texture
   const backTexture = useTexture('/assets/hand_tiles/back.jpg');
 
+  // Side texture
+  const sideTexture = useTexture('/assets/hand_tiles/slide.jpg');
+
   // Clone the textures and configure them.
-  // This avoids mutating the raw hook return value which violates strict react-hooks rules.
   const clonedTexture = useMemo(() => {
     const tex = texture.clone();
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.flipY = false;
-    tex.needsUpdate = true;
+    tex.rotation = Math.PI;
+    tex.center.set(0.5, 0.5);
+    tex.repeat.x = -1;
+    tex.wrapS = THREE.MirroredRepeatWrapping;
     return tex;
   }, [texture]);
 
   const clonedBackTexture = useMemo(() => {
     const tex = backTexture.clone();
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.flipY = false;
-    tex.needsUpdate = true;
     return tex;
   }, [backTexture]);
+
+  const clonedSideTexture = useMemo(() => {
+    const tex = sideTexture.clone();
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [sideTexture]);
 
   // Clone the scene graph and apply materials so this tile has its own material instances
   const clone = useMemo(() => {
@@ -322,6 +336,7 @@ export function Tile3D({
               mat,
               clonedTexture,
               clonedBackTexture,
+              clonedSideTexture,
               isDora,
             );
             if (mat.name === 'Front.001') frontMats.push(mapped);
@@ -332,6 +347,7 @@ export function Tile3D({
             childMat,
             clonedTexture,
             clonedBackTexture,
+            clonedSideTexture,
             isDora,
           );
           if (childMat.name === 'Front.001') frontMats.push(mapped);
@@ -345,7 +361,7 @@ export function Tile3D({
     });
     clonedScene.userData.frontMaterials = frontMats;
     return clonedScene;
-  }, [scene, clonedTexture, clonedBackTexture, isDora]);
+  }, [scene, clonedTexture, clonedBackTexture, clonedSideTexture, isDora]);
 
   // Determine rotation and Y-offset based on the display state
   const { rotation, yOffset } = useMemo(() => {
@@ -407,6 +423,7 @@ export function Tile3D({
   const prevSelected = useRef(false);
   const prevHasSelection = useRef(false);
   const prevDimmed = useRef(false);
+  const prevCallDimmed = useRef(false);
   const prevHighlighted = useRef(false);
   const prevIsDora = useRef(false);
   const prevIsFuritenDiscard = useRef(false);
@@ -520,7 +537,7 @@ export function Tile3D({
               THREE.Material | THREE.Material[];
             const mats = Array.isArray(childMat) ? childMat : [childMat];
             mats.forEach((mat) => {
-              if (mat instanceof THREE.MeshStandardMaterial) {
+              if (mat instanceof THREE.MeshPhongMaterial) {
                 mat.emissive.setHex(glowColor);
                 mat.emissiveIntensity = pulse;
               }
@@ -534,6 +551,7 @@ export function Tile3D({
         prevSelected.current !== isSelected ||
         prevHasSelection.current !== hasTileSelectionActive ||
         prevDimmed.current !== isDimmed ||
+        prevCallDimmed.current !== isCallDimmed ||
         prevHighlighted.current !== isHighlighted ||
         prevIsDora.current !== isDora ||
         prevIsFuritenDiscard.current !== isFuritenDiscard
@@ -543,6 +561,7 @@ export function Tile3D({
         prevSelected.current = isSelected;
         prevHasSelection.current = hasTileSelectionActive;
         prevDimmed.current = isDimmed;
+        prevCallDimmed.current = isCallDimmed;
         prevHighlighted.current = isHighlighted;
         prevIsDora.current = isDora;
         prevIsFuritenDiscard.current = isFuritenDiscard;
@@ -553,7 +572,7 @@ export function Tile3D({
           isPlayable,
           isSelected,
           isHovered,
-          isDimmed,
+          isDimmed || isCallDimmed,
           isHighlighted,
           isDora,
           isFuritenDiscard,
@@ -755,6 +774,7 @@ VALID_TILE_STRINGS.forEach((tileStr) => {
   useTexture.preload(getTileTexturePath(tileStr));
 });
 useTexture.preload('/assets/hand_tiles/back.jpg');
+useTexture.preload('/assets/hand_tiles/slide.jpg');
 useTexture.preload('/assets/hand_tiles/blank.jpg');
 useTexture.preload('/assets/hand_tiles/front.jpg');
 
@@ -906,7 +926,7 @@ function applyTileAppearance(
       const childMat = child.material as THREE.Material | THREE.Material[];
       const mats = Array.isArray(childMat) ? childMat : [childMat];
       mats.forEach((mat) => {
-        if (mat instanceof THREE.MeshStandardMaterial) {
+        if (mat instanceof THREE.MeshPhongMaterial) {
           // Dimming logic
           if (isDimmed) {
             mat.color.setHex(0x999999);

@@ -14,15 +14,13 @@ import { UiTile } from './UiTile';
 
 const logger = new Logger('ActionHUD');
 
-const HUD_BTN_COLORS: Record<string, string> = {
-  chii: 'text-[#66ccff]',
-  pon: 'text-[#ffaa44]',
-  kan: 'text-[#ff66cc]',
-  riichi: 'text-[#ff7a99]',
-  agari:
-    'text-[#ff3333] text-2xl sm:text-3xl animate-[hud-agari-pulse_1.5s_infinite]',
-  skip: 'text-[#cccccc]',
-  ryuukyoku: 'text-[#aaaaaa]',
+const ACTION_IMAGES: Partial<Record<InquiryOptionType, string>> = {
+  chii: '/assets/ui/吃.png',
+  pon: '/assets/ui/碰.png',
+  kan: '/assets/ui/杠.png',
+  riichi: '/assets/ui/立直.png',
+  agari: '/assets/ui/和.png',
+  skip: '/assets/ui/跳过.png',
 };
 
 interface FlattenedOption {
@@ -31,6 +29,8 @@ interface FlattenedOption {
   type: InquiryOptionType;
   tiles?: { traceId: number; tile: number; isCalled?: boolean }[];
   onClick: () => void;
+  onPointerEnter?: () => void;
+  onPointerLeave?: () => void;
 }
 
 export function ActionHUD(): React.JSX.Element | null {
@@ -41,7 +41,6 @@ export function ActionHUD(): React.JSX.Element | null {
   const currentUser = useSelf();
   const [selectedCall, setSelectedCall] = useState<ActionOption | null>(null);
 
-  // Reset sub-selection when inquiry changes
   const prevInquiryRef = useRef(currentInquiry?.messageId);
   useEffect(() => {
     prevInquiryRef.current = currentInquiry?.messageId;
@@ -73,27 +72,22 @@ export function ActionHUD(): React.JSX.Element | null {
 
   const { buttons } = currentInquiry.mapped;
 
-  // If selecting a tile to discard for Riichi
   if (isRiichiSelectMode) {
     return (
       <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-[50] pointer-events-auto">
-        <div
-          className="text-[#80deea] text-lg sm:text-xl font-bold mb-2 text-center bg-black/65 px-4 py-1.5 rounded-[15px]"
-          style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.9)' }}
-        >
+        <div className="text-[#80deea] text-lg sm:text-xl font-bold mb-2 text-center bg-black/65 px-4 py-1.5 rounded-[15px]"
+          style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.9)' }}>
           {t('hud.declareRiichi')}
         </div>
         <button
           className="bg-[#441111] border-[1.5px] border-[#772222] rounded-md text-[#ff9999] px-4 py-2 sm:px-6 sm:py-2.5 text-base sm:text-lg font-bold cursor-pointer transition-all duration-150 hover:bg-[#662222] hover:text-white outline-none"
-          onClick={() => setIsRiichiSelectMode(false)}
-        >
+          onClick={() => setIsRiichiSelectMode(false)}>
           {t('hud.cancelRiichi')}
         </button>
       </div>
     );
   }
 
-  // If no action buttons to display (excluding next-round buttons)
   const displayButtons = buttons.filter((b) => b.type !== 'next-round');
   if (displayButtons.length === 0) {
     return null;
@@ -101,49 +95,32 @@ export function ActionHUD(): React.JSX.Element | null {
 
   const getActionLabel = (type: InquiryOptionType, origLabel: string) => {
     switch (type) {
-      case 'skip':
-        return t('hud.action.skip');
-      case 'ryuukyoku':
-        return t('hud.action.ryuukyoku');
-      case 'chii':
-        return t('hud.action.chii');
-      case 'pon':
-        return t('hud.action.pon');
-      case 'kan':
-        return t('hud.action.kan');
-      case 'nukidora':
-        return t('hud.action.nukidora');
-      case 'riichi':
-        return t('hud.action.riichi');
-      case 'agari':
-        return origLabel === '自摸'
-          ? t('hud.action.tsumo')
-          : t('hud.action.ron');
+      case 'skip': return t('hud.action.skip');
+      case 'ryuukyoku': return t('hud.action.ryuukyoku');
+      case 'chii': return t('hud.action.chii');
+      case 'pon': return t('hud.action.pon');
+      case 'kan': return t('hud.action.kan');
+      case 'nukidora': return t('hud.action.nukidora');
+      case 'riichi': return t('hud.action.riichi');
+      case 'agari': return origLabel === '自摸' ? t('hud.action.tsumo') : t('hud.action.ron');
       case 'play-tile':
-      case 'next-round':
-        return origLabel;
-      default:
-        return origLabel;
+      case 'next-round': return origLabel;
+      default: return origLabel;
     }
   };
 
-  // Step 2: tile-group selection for chii/pon/kan
+  // Step 2: tile-group selection
   if (selectedCall && 'tileGroups' in selectedCall) {
     return (
       <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-[50] pointer-events-auto">
-        <div className="flex flex-wrap justify-center gap-1 sm:gap-1.5 max-w-[95vw] bg-[#121c32]/88 px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-[12px] sm:rounded-[16px] border border-[#ff7a99]/35 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-md items-center">
+        <div className="flex flex-wrap justify-center gap-20 max-w-[95vw] items-center">
           {selectedCall.tileGroups.map((group) => (
             <button
               key={`${selectedCall.type}-${group.index}`}
-              className="bg-transparent border-none text-base sm:text-lg lg:text-xl font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 lg:px-3.5 lg:py-1.5 cursor-pointer rounded-lg transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 outline-none"
-              onClick={() => void submitAction(selectedCall, group.index)}
-              style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)' }}
-            >
+              className="bg-transparent border-none outline-none cursor-pointer transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95"
+              onClick={() => void submitAction(selectedCall, group.index)}>
               <div className="flex flex-col items-center gap-[1px]">
-                <span
-                  className="text-[9px] sm:text-[11px] lg:text-xs"
-                  style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}
-                >
+                <span className="text-[9px] sm:text-[11px] lg:text-xs" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>
                   {getActionLabel(selectedCall.type, selectedCall.label)}
                 </span>
                 <div className="flex gap-[1px] bg-[#141414]/60 px-0.5 py-[1px] rounded border border-[#444]">
@@ -152,9 +129,7 @@ export function ActionHUD(): React.JSX.Element | null {
                     const isHighlighted =
                       (tileMsg.isCalled ?? false) ||
                       (pendingTileId !== null && tileMsg.traceId === pendingTileId);
-                    return (
-                      <UiTile key={idx} tile={tileStr} size="action" isHighlighted={isHighlighted} />
-                    );
+                    return <UiTile key={idx} tile={tileStr} size="action" isHighlighted={isHighlighted} />;
                   })}
                 </div>
               </div>
@@ -163,46 +138,65 @@ export function ActionHUD(): React.JSX.Element | null {
         </div>
         <button
           className="bg-[#441111] border-[1.5px] border-[#772222] rounded-md text-[#ff9999] px-4 py-2 text-sm font-bold cursor-pointer hover:bg-[#662222] hover:text-white outline-none"
-          onClick={() => setSelectedCall(null)}
-        >
-          {t('hud.cancelRiichi')}
+          onClick={() => setSelectedCall(null)}>
+          {t('hud.cancelCall')}
         </button>
       </div>
     );
   }
 
-  // Step 1: action type buttons (chii/pon/kan show only label, click to select)
-  const flatOptions: FlattenedOption[] = [];
+  // Step 1: build options, skip goes last with ml-auto
+  const mainOptions: FlattenedOption[] = [];
+  const skipOptions: FlattenedOption[] = [];
 
   displayButtons.forEach((btn) => {
+    if (btn.type === 'skip') {
+      skipOptions.push({
+        key: `skip-${btn.actionIndex}`,
+        label: getActionLabel(btn.type, btn.label),
+        type: btn.type,
+        onClick: () => void submitAction(btn),
+      });
+      return;
+    }
+
     if (
       (btn.type === 'chii' || btn.type === 'pon' || btn.type === 'kan') &&
       'tileGroups' in btn &&
       btn.tileGroups.length > 1
     ) {
-      // Multiple tile groups: show as text-only button, clicking enters tile selection
-      flatOptions.push({
+      const allTraceIds = new Set(btn.tileGroups.flatMap((g) => g.tiles.map((t) => t.traceId)));
+      mainOptions.push({
         key: `${btn.type}-${btn.actionIndex}`,
         label: getActionLabel(btn.type, btn.label),
         type: btn.type,
-        onClick: () => setSelectedCall(btn),
+        onClick: () => {
+          rabiriichi.setCallHighlight(null);
+          setSelectedCall(btn);
+        },
+        onPointerEnter: () => rabiriichi.setCallHighlight(allTraceIds),
+        onPointerLeave: () => rabiriichi.setCallHighlight(null),
       });
     } else if (
       (btn.type === 'chii' || btn.type === 'pon' || btn.type === 'kan') &&
       'tileGroups' in btn &&
       btn.tileGroups.length === 1
     ) {
-      // Single tile group: submit directly
       const group = btn.tileGroups[0]!;
-      flatOptions.push({
+      const singleIds = new Set(group.tiles.map((t) => t.traceId));
+      mainOptions.push({
         key: `${btn.type}-${btn.actionIndex}-0`,
         label: getActionLabel(btn.type, btn.label),
         type: btn.type,
-        tiles: group.tiles,
-        onClick: () => void submitAction(btn, group.index),
+        onClick: () => {
+          rabiriichi.setCallHighlight(null);
+          void submitAction(btn, group.index);
+        },
+        onPointerEnter: () => rabiriichi.setCallHighlight(singleIds),
+        onPointerLeave: () => rabiriichi.setCallHighlight(null),
       });
     } else {
-      flatOptions.push({
+      mainOptions.push({
         key: `${btn.type}-${btn.actionIndex}`,
         label: getActionLabel(btn.type, btn.label),
         type: btn.type,
@@ -217,41 +211,30 @@ export function ActionHUD(): React.JSX.Element | null {
     }
   });
 
+  const flatOptions = [...mainOptions, ...skipOptions];
+
   return (
     <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-[50] pointer-events-auto">
-      <div className="flex flex-wrap justify-center gap-1 sm:gap-1.5 max-w-[95vw] bg-[#121c32]/88 px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-[12px] sm:rounded-[16px] border border-[#ff7a99]/35 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-md items-center">
-        {flatOptions.map((opt) => (
+      <div className="flex flex-wrap justify-center gap-20 max-w-[95vw] items-center">
+        {flatOptions.map((opt, i) => (
           <button
             key={opt.key}
-            className={`bg-transparent border-none text-base sm:text-lg lg:text-xl font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 lg:px-3.5 lg:py-1.5 cursor-pointer rounded-lg transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 outline-none ${
-              HUD_BTN_COLORS[opt.type] ?? 'text-white'
+            className={`bg-transparent border-none outline-none cursor-pointer transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 ${
+              opt.type === 'skip' && i === flatOptions.length - 1 ? 'ml-auto' : ''
             }`}
             onClick={opt.onClick}
-            style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)' }}
-          >
-            {opt.tiles ? (
+            onPointerEnter={opt.onPointerEnter}
+            onPointerLeave={opt.onPointerLeave}>
+            {ACTION_IMAGES[opt.type] ? (
+              <img src={ACTION_IMAGES[opt.type]!} alt={opt.label} className="h-20 w-auto object-contain" draggable={false} />
+            ) : opt.tiles ? (
               <div className="flex flex-col items-center gap-[1px]">
-                <span
-                  className="text-[9px] sm:text-[11px] lg:text-xs"
-                  style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}
-                >
-                  {opt.label}
-                </span>
+                <span className="text-[9px] sm:text-[11px] lg:text-xs" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>{opt.label}</span>
                 <div className="flex gap-[1px] bg-[#141414]/60 px-0.5 py-[1px] rounded border border-[#444]">
                   {opt.tiles.map((tileMsg, idx) => {
                     const tileStr = Tile.fromByte(tileMsg.tile).toString();
-                    const isHighlighted =
-                      (tileMsg.isCalled ?? false) ||
-                      (pendingTileId !== null &&
-                        tileMsg.traceId === pendingTileId);
-                    return (
-                      <UiTile
-                        key={idx}
-                        tile={tileStr}
-                        size="action"
-                        isHighlighted={isHighlighted}
-                      />
-                    );
+                    const isHighlighted = (tileMsg.isCalled ?? false) || (pendingTileId !== null && tileMsg.traceId === pendingTileId);
+                    return <UiTile key={idx} tile={tileStr} size="action" isHighlighted={isHighlighted} />;
                   })}
                 </div>
               </div>

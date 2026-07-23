@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { IGameTileMsg } from '../proto';
 import { Tile3D } from './Tile3D';
 import { Tile } from '../domain/tile';
@@ -31,6 +31,20 @@ export function River3D({
     riichiTileId,
     tileRegistry,
   );
+
+  // Deterministic ±2° jitter per tile based on traceId
+  const jitterAngles = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const t of discarded) {
+      const id = t.traceId ?? 0;
+      if (!map.has(id)) {
+        const hash = ((id * 2654435761) >>> 0) % 1000 / 1000;
+        map.set(id, (hash - 0.5) * 4 * (Math.PI / 180));
+      }
+    }
+    return map;
+  }, [discarded]);
+
   const spacingZ = 0.25; // Tile height (0.24) + small gap
   const zStart = isLocal ? -1.48 : -1.6; // Shift slightly towards local player to expose riichi stick
 
@@ -86,16 +100,17 @@ export function River3D({
                       winningTileTraceId != null &&
                       tileMsg.traceId === winningTileTraceId;
 
+                    const angle = isRiichi ? 0 : (jitterAngles.get(tileMsg.traceId ?? 0) ?? 0);
                     return (
-                      <Tile3D
-                        key={getSafeKey(tileMsg.traceId, colIndex)}
-                        tile={tileStr}
-                        displayState={isRiichi ? 'sideways' : 'face'}
-                        position={[x, 0, z]}
-                        isWinningTile={isWinningTile}
-                        area="river"
-                        traceId={getSafeTraceId(tileMsg.traceId)}
-                      />
+                      <group key={getSafeKey(tileMsg.traceId, colIndex)} position={[x, 0, z]} rotation={[0, 0, angle]}>
+                        <Tile3D
+                          tile={tileStr}
+                          displayState={isRiichi ? 'sideways' : 'face'}
+                          isWinningTile={isWinningTile}
+                          area="river"
+                          traceId={getSafeTraceId(tileMsg.traceId)}
+                        />
+                      </group>
                     );
                   })}
                 </group>

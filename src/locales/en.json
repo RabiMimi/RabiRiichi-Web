@@ -205,6 +205,7 @@
     "timerWaiting": "Waiting for others...",
     "declareRiichi": "Select a tile to discard for Riichi",
     "cancelRiichi": "Cancel Riichi",
+    "cancelCall": "Back",
     "furiten": "Furiten",
     "tilesRemaining": " left",
     "han": " Han",

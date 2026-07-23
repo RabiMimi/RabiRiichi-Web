@@ -186,6 +186,7 @@ export class RabiRiichiClient {
 
   public selectedTileTraceId: number | null = null;
   public hoveredTileTraceId: number | null = null;
+  public callHighlightTileIds: Set<number> | null = null;
   public isCameraLocked = true;
   public hasInMemoryResult = false;
 
@@ -196,6 +197,11 @@ export class RabiRiichiClient {
 
   public hoverTile(traceId: number | null): void {
     this.hoveredTileTraceId = traceId;
+    this.onChange.emit();
+  }
+
+  public setCallHighlight(traceIds: Set<number> | null): void {
+    this.callHighlightTileIds = traceIds;
     this.onChange.emit();
   }
 
