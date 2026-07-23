@@ -38,12 +38,10 @@ describe('character voice config', () => {
           const silentIds = character.voiceLines
             .filter((line) => line.audioUrl.startsWith('data:audio/'))
             .map((line) => line.id);
-          expect(silentIds).toEqual(['shiisuuputa']);
+          expect(silentIds).toEqual([]);
 
           for (const line of character.voiceLines) {
-            if (line.id !== 'shiisuuputa') {
-              expect(line.audioUrl).toBe(`/assets/mimi/voices/${line.id}.mp3`);
-            }
+            expect(line.audioUrl).toBe(`/assets/mimi/voices/${line.id}.mp3`);
           }
         });
       }

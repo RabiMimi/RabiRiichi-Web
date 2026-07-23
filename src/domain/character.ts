@@ -36,13 +36,7 @@ export interface CharacterConfig {
   readonly cv?: string;
 }
 
-// A silent 1-second WAV data URL used only for script entries without a
-// recording. Keeping the entry lets the settings UI show the complete script.
-const SILENT_WAV_URL =
-  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
-
 const MIMI_VOICE_ROOT = '/assets/mimi/voices';
-const MISSING_MIMI_VOICE_IDS = new Set(['shiisuuputa']);
 
 /**
  * Every voice line id for Mimi, transcribed from the character voice script.
@@ -206,9 +200,7 @@ export const CHARACTERS: readonly CharacterConfig[] = [
     voiceLines: MIMI_VOICE_IDS.map(({ id, category }) => ({
       id,
       category,
-      audioUrl: MISSING_MIMI_VOICE_IDS.has(id)
-        ? SILENT_WAV_URL
-        : `${MIMI_VOICE_ROOT}/${id}.mp3`,
+      audioUrl: `${MIMI_VOICE_ROOT}/${id}.mp3`,
     })),
   },
 ];
