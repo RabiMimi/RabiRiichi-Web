@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { sendChatMessage } from '../net/messages';
-import { useRoom, useSelf, useChatHistory } from '../state/store';
-import { getPlayerDisplayName } from '../domain/model';
+import { useSelf, useChatHistory } from '../state/store';
 
 function ChatIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -20,7 +19,6 @@ function ChatIcon({ className = 'w-4 h-4' }: { className?: string }) {
 
 export function ChatInputBox(): React.JSX.Element | null {
   const { t } = useTranslation();
-  const room = useRoom();
   const currentUser = useSelf();
   const chatHistory = useChatHistory();
   const [text, setText] = useState('');
@@ -38,20 +36,15 @@ export function ChatInputBox(): React.JSX.Element | null {
   };
 
   return (
-    <div className="pointer-events-auto absolute bottom-3 left-3 z-[999] flex flex-col items-start gap-0 font-sans">
+    <div className="pointer-events-auto absolute bottom-3 left-3 md:bottom-5 md:left-5 z-[999] flex flex-col items-start gap-0 font-sans">
       {isOpen && (
-        <div className="w-[200px] sm:w-[270px] md:w-[310px] max-h-48 md:max-h-64 flex flex-col rounded-t-lg rounded-b-none border border-white/10 border-b-0 bg-[#121c32]/15 p-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)] backdrop-blur-sm text-[11px] text-white">
+        <div className="w-[200px] sm:w-[270px] md:w-[380px] lg:w-[420px] max-h-48 sm:max-h-56 md:max-h-80 lg:max-h-[380px] flex flex-col rounded-t-lg rounded-b-none border border-white/10 border-b-0 bg-[#121c32]/15 p-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)] backdrop-blur-sm text-[11px] md:text-[13px] text-white select-text">
           <div className="overflow-y-auto pr-1 flex-grow flex flex-col-reverse gap-1.5 scrollbar-thin">
             {chatHistory
               .slice()
               .reverse()
               .map((entry) => {
-                const player = room?.players.find(
-                  (p) => p.id === entry.senderId,
-                );
-                const displayName = player
-                  ? getPlayerDisplayName(player, t)
-                  : entry.senderName;
+                const displayName = entry.senderName;
                 const isMe = entry.senderId === currentUser?.id;
                 const nameColor = isMe ? 'text-[#ff7a99]' : 'text-[#80deea]';
 
@@ -74,7 +67,7 @@ export function ChatInputBox(): React.JSX.Element | null {
                           <img
                             src={srcPath}
                             alt="sticker"
-                            className="w-10 h-10 object-contain rounded inline-block align-middle ml-1"
+                            className="w-10 h-10 md:w-14 md:h-14 object-contain rounded inline-block align-middle ml-1"
                           />
                         );
                       })()}
@@ -92,21 +85,21 @@ export function ChatInputBox(): React.JSX.Element | null {
       {!isOpen ? (
         <button
           type="button"
-          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-[#121c32]/15 text-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.4)] backdrop-blur-sm transition-all hover:bg-[#80deea]/20 hover:text-[#80deea] outline-none"
+          className="flex h-7 w-7 md:h-9 md:w-9 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-[#121c32]/15 text-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.4)] backdrop-blur-sm transition-all hover:bg-[#80deea]/20 hover:text-[#80deea] outline-none"
           onClick={() => setIsOpen(true)}
           title={t('chat.open', 'Open chat')}
         >
-          <ChatIcon className="w-3.5 h-3.5" />
+          <ChatIcon className="w-3.5 h-3.5 md:w-4.5 md:h-4.5" />
         </button>
       ) : (
         <form
           onSubmit={handleSend}
-          className="flex items-center gap-1.5 rounded-b-lg rounded-t-none border border-white/10 bg-[#121c32]/15 p-1 pl-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.5)] backdrop-blur-sm w-[200px] sm:w-[270px] md:w-[310px]"
+          className="flex items-center gap-1.5 rounded-b-lg rounded-t-none border border-white/10 bg-[#121c32]/15 p-1 md:p-1.5 pl-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.5)] backdrop-blur-sm w-[200px] sm:w-[270px] md:w-[380px] lg:w-[420px]"
         >
-          <ChatIcon className="w-3.5 h-3.5 text-[#80deea]/80 shrink-0" />
+          <ChatIcon className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-[#80deea]/80 shrink-0" />
           <input
             type="text"
-            className="flex-grow min-w-0 bg-transparent text-[11px] text-white placeholder-white/40 outline-none"
+            className="flex-grow min-w-0 bg-transparent text-[11px] md:text-[13px] text-white placeholder-white/40 outline-none"
             placeholder={t('chat.placeholder', 'Send chat message...')}
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -115,13 +108,13 @@ export function ChatInputBox(): React.JSX.Element | null {
           <button
             type="submit"
             disabled={!text.trim()}
-            className="flex h-5 px-2 items-center justify-center rounded border-none bg-[#80deea] text-[11px] font-semibold text-[#121c32] cursor-pointer transition-all hover:bg-[#b2ebf2] disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex h-5 md:h-6 px-2 md:px-3 items-center justify-center rounded border-none bg-[#80deea] text-[11px] md:text-[12px] font-semibold text-[#121c32] cursor-pointer transition-all hover:bg-[#b2ebf2] disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {t('chat.send', 'Send')}
           </button>
           <button
             type="button"
-            className="flex h-5 w-5 items-center justify-center border-none bg-transparent text-[10px] text-white/40 hover:text-white cursor-pointer"
+            className="flex h-5 w-5 md:h-6 md:w-6 items-center justify-center border-none bg-transparent text-[10px] md:text-[12px] text-white/40 hover:text-white cursor-pointer"
             onClick={() => setIsOpen(false)}
             title={t('chat.close', 'Close chat')}
           >

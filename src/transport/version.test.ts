@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Version, isServerSupported } from './version';
+import { Version, isServerSupported, versionErrorReason } from './version';
 import type { IServerVersionCheckMsg } from '../proto';
 import { CLIENT_VERSION, MIN_SERVER_VERSION } from './constants';
 
@@ -66,6 +66,27 @@ describe('Version', () => {
         minClientVersion: '99.0.0',
       };
       expect(isServerSupported(msg)).toBe(false);
+    });
+  });
+
+  describe('versionErrorReason', () => {
+    it('returns a distinct non-empty reason per incompatibility mode', () => {
+      const missing = versionErrorReason({});
+      const serverTooOld = versionErrorReason({
+        serverVersion: '0.0.1',
+        minClientVersion: CLIENT_VERSION,
+      });
+      const clientTooOld = versionErrorReason({
+        serverVersion: MIN_SERVER_VERSION,
+        minClientVersion: '99.0.0',
+      });
+
+      for (const reason of [missing, serverTooOld, clientTooOld]) {
+        expect(typeof reason).toBe('string');
+        expect(reason.length).toBeGreaterThan(0);
+      }
+      // The three modes must not collapse to the same message.
+      expect(new Set([missing, serverTooOld, clientTooOld]).size).toBe(3);
     });
   });
 });

@@ -102,7 +102,7 @@ YAKUS.forEach((yaku, idx) => {
   YAKU_ORDER_MAP[yaku.name] = idx;
 });
 
-const DORA_ITEMS = ['Dora', 'Akadora', 'Uradora', 'NukiDora'];
+const DORA_ITEMS = ['Dora', 'Akadora', 'NukiDora', 'Uradora'];
 DORA_ITEMS.forEach((doraName, idx) => {
   YAKU_ORDER_MAP[doraName] = 1000 + idx;
 });

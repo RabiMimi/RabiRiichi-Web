@@ -8,9 +8,11 @@ export interface AudioPlayback {
   setVolume(vol: number): void;
 }
 
-class SoundManager {
+export class SoundManager {
   private bgmAudio: Howl | null = null;
   private activeVoices = new Set<AudioPlayback>();
+  private readonly activeVoiceChannels = new Map<string, AudioPlayback>();
+  private readonly voiceAudio = new Map<string, Howl>();
   private activeSEs = new Set<AudioPlayback>();
   private activeEffects = new Map<SoundEffect, AudioPlayback>();
   private volumeProvider: (() => SoundsSettings) | null = null;
@@ -145,20 +147,52 @@ class SoundManager {
     this.activeEffects.get(effect)?.stop();
   }
 
-  /** Plays a character voice line. Stops any currently playing voice lines. */
+  public preloadVoices(urls: readonly string[]): void {
+    for (const url of urls) {
+      if (!url.startsWith('data:') && !this.voiceAudio.has(url)) {
+        this.voiceAudio.set(
+          url,
+          new Howl({
+            src: [url],
+            volume: this.getEffectiveVolume('voice'),
+            preload: true,
+          }),
+        );
+      }
+    }
+  }
+
+  public getVoiceDurationMs(url: string | undefined, fallbackMs = 800): number {
+    if (!url || url.startsWith('data:')) return fallbackMs;
+    const durationSeconds = this.voiceAudio.get(url)?.duration() ?? 0;
+    return durationSeconds > 0 ? durationSeconds * 1000 : fallbackMs;
+  }
+
+  /** Plays a voice line, replacing all voices or only its named channel. */
   public playVoice(
     url: string,
     onEnded?: () => void,
     onError?: () => void,
+    channel?: string,
   ): AudioPlayback | null {
-    // Stop all active voice lines before playing a new one
-    this.stopAllVoices();
+    if (channel === undefined) {
+      this.stopAllVoices();
+    } else {
+      this.activeVoiceChannels.get(channel)?.stop();
+    }
 
     if (url.startsWith('data:audio/wav;base64')) {
       let timerId: ReturnType<typeof setTimeout> | null = null;
       const endedCallbacks = new Set<() => void>();
+      let finalized = false;
 
       const triggerEnd = () => {
+        if (finalized) return;
+        finalized = true;
+        this.activeVoices.delete(mockPlayback);
+        if (channel && this.activeVoiceChannels.get(channel) === mockPlayback) {
+          this.activeVoiceChannels.delete(channel);
+        }
         onEnded?.();
         for (const cb of endedCallbacks) {
           cb();
@@ -180,66 +214,56 @@ class SoundManager {
       };
 
       timerId = setTimeout(() => {
-        this.activeVoices.delete(mockPlayback);
         mockPlayback.stop();
       }, 1000);
 
       this.activeVoices.add(mockPlayback);
+      if (channel) this.activeVoiceChannels.set(channel, mockPlayback);
       return mockPlayback;
     }
 
     try {
-      const sound = new Howl({
-        src: [url],
-        volume: this.getEffectiveVolume('voice'),
-      });
+      let sound = this.voiceAudio.get(url);
+      if (!sound) {
+        sound = new Howl({ src: [url], preload: true });
+        this.voiceAudio.set(url, sound);
+      }
+      sound.volume(this.getEffectiveVolume('voice'));
 
       const endedCallbacks = new Set<() => void>();
-      const triggerEnd = () => {
-        onEnded?.();
-        for (const cb of endedCallbacks) {
-          cb();
+      let soundId: number | null = null;
+      let finalized = false;
+      const finalize = (failed = false) => {
+        if (finalized) return;
+        finalized = true;
+        this.activeVoices.delete(playback);
+        if (channel && this.activeVoiceChannels.get(channel) === playback) {
+          this.activeVoiceChannels.delete(channel);
         }
+        if (failed) onError?.();
+        onEnded?.();
+        for (const cb of endedCallbacks) cb();
       };
 
       const playback: AudioPlayback = {
         stop: () => {
-          sound.stop();
-          this.activeVoices.delete(playback);
-          triggerEnd();
+          if (finalized) return;
+          if (soundId !== null) sound.stop(soundId);
+          finalize();
         },
-        onEnded: (cb) => {
-          endedCallbacks.add(cb);
-        },
+        onEnded: (cb) => endedCallbacks.add(cb),
         setVolume: (vol) => {
-          sound.volume(vol);
+          if (soundId !== null) sound.volume(vol, soundId);
         },
       };
 
-      sound.on('end', () => {
-        this.activeVoices.delete(playback);
-        triggerEnd();
-      });
-
-      sound.on('stop', () => {
-        this.activeVoices.delete(playback);
-        triggerEnd();
-      });
-
-      sound.on('loaderror', () => {
-        this.activeVoices.delete(playback);
-        onError?.();
-        triggerEnd();
-      });
-
-      sound.on('playerror', () => {
-        this.activeVoices.delete(playback);
-        onError?.();
-        triggerEnd();
-      });
-
-      sound.play();
+      soundId = sound.play();
+      sound.once('end', () => finalize(), soundId);
+      sound.once('stop', () => finalize(), soundId);
+      sound.once('loaderror', () => finalize(true), soundId);
+      sound.once('playerror', () => finalize(true), soundId);
       this.activeVoices.add(playback);
+      if (channel) this.activeVoiceChannels.set(channel, playback);
       return playback;
     } catch (e) {
       console.error('Failed to create Howl for voice line:', e);
@@ -277,6 +301,7 @@ class SoundManager {
       playback.stop();
     }
     this.activeVoices.clear();
+    this.activeVoiceChannels.clear();
   }
 }
 

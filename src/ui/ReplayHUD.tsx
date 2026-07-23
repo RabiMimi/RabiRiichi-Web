@@ -90,7 +90,7 @@ export function ReplayHUD(): React.JSX.Element | null {
   const players = room.players;
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-[40]">
+    <div className="absolute inset-0 pointer-events-none z-[40] select-none">
       {/* Left HUD Panel */}
       <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-none z-50">
         <GameInfoPanel />

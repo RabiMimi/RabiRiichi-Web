@@ -11,7 +11,7 @@
  */
 export const MODAL = {
   overlay:
-    'pointer-events-auto fixed inset-0 z-[1000] flex items-center ' +
+    'select-text pointer-events-auto fixed inset-0 z-[1000] flex items-center ' +
     'justify-center bg-black/75 backdrop-blur-sm ' +
     // Small screens: pin to top and allow scrolling so tall modals fit.
     'max-md:items-start max-md:overflow-y-auto max-md:p-2.5',

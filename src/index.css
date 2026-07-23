@@ -63,13 +63,6 @@ body {
   overflow: hidden;
 }
 
-/* Global unselectable rule for game overlays / 3D scenes to prevent accidental touchscreen selections */
-.app {
-  user-select: none;
-  -webkit-user-select: none; /* Safari */
-  -webkit-touch-callout: none; /* Disable long-press context menu on Safari */
-}
-
 /* Explicitly restore text selection for form inputs so typing and copy/pasting still works */
 input,
 textarea,

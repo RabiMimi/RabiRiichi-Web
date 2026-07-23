@@ -87,11 +87,28 @@ export default tseslint.config(
       globals: globals.node,
     },
   },
+  // The CLI runs on Node (not the browser) and renders with Ink instead of
+  // React DOM. It needs Node globals and does not use react-refresh (which is
+  // a Vite HMR concern). Strictness otherwise matches the rest of the repo.
+  {
+    files: ['src/cli/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      'react-refresh/only-export-components': 'off',
+      // The CLI includes the DOM lib (so shared isomorphic code type-checks),
+      // which makes identifiers like `Text`/`self` "globals". The CLI is a Node
+      // program that never uses those DOM globals, so shadowing them with Ink's
+      // `Text` or a local `self` is intentional and safe.
+      '@typescript-eslint/no-shadow': 'off',
+    },
+  },
   // Tests and test helpers may use terse non-null assertions on fixtures and
   // reuse natural identifiers (e.g. `event`); these add noise without value
   // in test code. Production rules remain strict.
   {
-    files: ['**/*.test.ts', '**/mockWebSocket.ts'],
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/mockWebSocket.ts'],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-shadow': 'off',

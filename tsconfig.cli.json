@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.cli.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    // The CLI runs on Node, but it imports the shared browser-isomorphic core
+    // (platform/transport/domain), whose default implementations reference DOM
+    // ambient types (WebSocket, localStorage, crypto.subtle) behind runtime
+    // guards. Include DOM libs so that shared code type-checks; the CLI never
+    // uses those globals at runtime (it injects Node-backed platform impls).
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "types": ["node"],
+
+    /* Bundler mode: matches the app so extensionless/`.ts` imports of the
+       shared core resolve identically. Run via tsx; bundle via esbuild. */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+
+    /* Strictness: identical bar to the web app (see tsconfig.app.json). */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/cli", "src/cli/cli-env.d.ts"]
+}

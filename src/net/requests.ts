@@ -73,6 +73,46 @@ export function loginUser(
   );
 }
 
+export function updateProfile(
+  ws: RabiSocket,
+  nickname: string,
+): Promise<IUserInfoResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        updateProfile: {
+          userData: {
+            nickname,
+          },
+        },
+      },
+    },
+    (resp) => resp.userInfo,
+  );
+}
+
+export function changePassword(
+  ws: RabiSocket,
+  username: string,
+  oldPasswordHash: string,
+  newPasswordHash: string,
+): Promise<IUserInfoResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        changePassword: {
+          username,
+          oldPasswordHash,
+          newPasswordHash,
+        },
+      },
+    },
+    (resp) => resp.userInfo,
+  );
+}
+
 export function createRoom(
   ws: RabiSocket,
   config?: IGameConfigMsg,

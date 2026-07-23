@@ -318,7 +318,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
   const timerLabel = hasPlayTile ? t('hud.discard') : t('hud.chooseAction');
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-[40]">
+    <div className="absolute inset-0 pointer-events-none z-[40] select-none">
       {/* Top Right HUD (Settings + Connection Status) */}
       <div className="pointer-events-auto absolute top-5 right-5 z-[50] flex items-center gap-2">
         <ConnectionStatusIndicator />
@@ -684,7 +684,7 @@ function HUDExitConfirmModal({
   const { t } = useTranslation();
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 w-screen h-screen bg-black/70 flex justify-center items-center z-[1100] backdrop-blur-[3px] pointer-events-auto">
+    <div className="fixed inset-0 w-screen h-screen bg-black/70 flex justify-center items-center z-[1100] backdrop-blur-[3px] pointer-events-auto select-text">
       <div className="bg-[#2a2a2a] border-2 border-[#ff3333] rounded-xl p-6 w-[90%] max-w-[400px] shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-center box-border">
         <p className="text-base text-white mb-5 font-medium leading-[1.4]">
           {t('hud.confirmExit')}

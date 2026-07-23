@@ -29,10 +29,23 @@
     "usernamePlaceholder": "输入您的用户名",
     "password": "密码",
     "passwordPlaceholder": "输入您的密码",
+    "confirmPassword": "确认密码",
+    "confirmPasswordPlaceholder": "再次输入您的密码",
     "usernameError": "用户名不能为空",
     "passwordError": "密码不能为空",
     "passwordTooShort": "密码长度必须至少为 6 个字符",
-    "kickedByOtherClient": "您的账号已在其他客户端登录。"
+    "passwordMismatch": "两次输入的密码不一致",
+    "kickedByOtherClient": "您的账号已在其他客户端登录。",
+    "savedAccountCardTitle": "已保存的账号",
+    "loginAsButton": "以 {{nickname}} 登录",
+    "useDifferentAccountButton": "使用其他账号",
+    "savedTokenExpiredError": "保存的登录会话已过期，请重新登录。",
+    "savedAccountUsername": "用户名: {{username}}",
+    "error": {
+      "unknownServer": "服务器地址不在已知服务器列表中。",
+      "autoConnectFailed": "自动连接失败。请检查网络或手动输入凭据。",
+      "alreadyInDifferentRoom": "您已在其他房间中。"
+    }
   },
   "lobby": {
     "title": "大厅",
@@ -43,6 +56,7 @@
     "joinRoom": "加入房间",
     "joinRoomLabel": "加入已有房间",
     "logout": "登出",
+    "disconnect": "断开连接",
     "viewReplay": "观看回放",
     "roomSettings": "房间设置",
     "seed": "随机数种子",
@@ -256,6 +270,7 @@
     "waitingForNextRound": "等待下一局开始...",
     "finalTitle": "对局结束",
     "returnToRoom": "返回房间",
+    "returnToReplay": "返回录像",
     "showFinalResults": "查看最终成绩",
     "ryuukyoku": {
       "suufon_renda": "四风连打",
@@ -394,10 +409,10 @@
   },
   "ai": {
     "type": {
-      "AI_TYPE_NONE": "",
-      "AI_TYPE_DUMMY": "口水兔",
-      "AI_TYPE_RULE_BASED": "小和和",
-      "AI_TYPE_LLM": "LLM"
+      "0": "",
+      "1": "口水兔",
+      "2": "小和和",
+      "3": "LLM"
     },
     "llm": {
       "gemini": "Gemi狸",
@@ -481,6 +496,7 @@
         "invalidAiType": "无效或不支持的 AI 类型",
         "usernameEmpty": "用户名不能为空",
         "passwordEmpty": "密码不能为空",
+        "nicknameEmpty": "昵称不能为空",
         "generic": "参数错误"
       },
       "NotFound": {
@@ -505,6 +521,7 @@
       "Internal": {
         "cannotAddUser": "无法创建玩家",
         "cannotAddAi": "无法向房间添加 AI",
+        "cannotUpdateProfile": "无法更新个人资料",
         "generic": "服务器内部错误"
       },
       "Unauthenticated": {
@@ -541,7 +558,9 @@
     "tileInWall": "在牌山中",
     "noWallData": "此对局记录中无初始牌山数据。",
     "wallSide": "{{side}}家牌山",
-    "wanpai": "王牌"
+    "wanpai": "王牌",
+    "loading": "正在从服务器加载回放...",
+    "failedToLoad": "加载回放失败"
   },
   "sticker": {
     "title": "表情包",
@@ -560,8 +579,36 @@
   },
   "settings": {
     "title": "系统设置",
-    "visualsTab": "视觉",
+    "playerTab": "玩家",
+    "profileTab": "个人资料",
     "soundsTab": "声音",
+    "profile": {
+      "username": "用户名",
+      "nickname": "昵称",
+      "nicknamePlaceholder": "输入昵称",
+      "save": "保存",
+      "saving": "保存中...",
+      "saved": "资料已更新",
+      "nicknameEmpty": "昵称不能为空",
+      "changePassword": "修改密码",
+      "notSignedIn": "登录后即可编辑个人资料。"
+    },
+    "password": {
+      "title": "修改密码",
+      "current": "当前密码",
+      "new": "新密码",
+      "confirm": "确认新密码",
+      "currentPlaceholder": "输入当前密码",
+      "newPlaceholder": "输入新密码",
+      "confirmPlaceholder": "再次输入新密码",
+      "submit": "更新密码",
+      "submitting": "更新中...",
+      "success": "密码已更新",
+      "cancel": "取消",
+      "mismatch": "两次输入的密码不一致",
+      "tooShort": "密码至少需要 6 个字符",
+      "empty": "请填写所有字段"
+    },
     "characterSelector": "角色",
     "voicelines": "语音试听",
     "stickers": "表情预览",
@@ -708,5 +755,10 @@
         "bigTenpai": "高打点听牌・役满"
       }
     }
+  },
+  "common": {
+    "back": "返回",
+    "share": "分享",
+    "copied": "链接已复制到剪贴板！"
   }
 }

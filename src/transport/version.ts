@@ -1,5 +1,11 @@
-import type { IServerVersionCheckMsg } from '../proto';
+import i18n from '../lib/i18n';
 import { CLIENT_VERSION, MIN_SERVER_VERSION } from './constants';
+
+/** The version fields shared by GetInfoResponse and ServerVersionCheckMsg. */
+export interface VersionInfo {
+  serverVersion?: string | null;
+  minClientVersion?: string | null;
+}
 
 export class Version {
   public readonly data: number[];
@@ -38,7 +44,7 @@ export class Version {
   }
 }
 
-export function isServerSupported(msg: IServerVersionCheckMsg): boolean {
+export function isServerSupported(msg: VersionInfo): boolean {
   if (!msg.serverVersion || !msg.minClientVersion) {
     return false;
   }
@@ -48,4 +54,31 @@ export function isServerSupported(msg: IServerVersionCheckMsg): boolean {
     serverVersion.isAtLeast(Version.MIN_SERVER_VERSION) &&
     Version.CLIENT_VERSION.isAtLeast(minClientVersion)
   );
+}
+
+/**
+ * Localized explanation for why a server is unsupported. Assumes the caller has
+ * already determined the versions are incompatible (see {@link isServerSupported}).
+ */
+export function versionErrorReason(
+  info: VersionInfo | null | undefined,
+): string {
+  const serverVersionStr = info?.serverVersion;
+  const minClientVersionStr = info?.minClientVersion;
+  if (!serverVersionStr || !minClientVersionStr) {
+    return i18n.t('connect.versionErrorMissingFields');
+  }
+  if (!new Version(serverVersionStr).isAtLeast(Version.MIN_SERVER_VERSION)) {
+    return i18n.t('connect.versionErrorServerTooOld', {
+      serverVersion: serverVersionStr,
+      minServerVersion: Version.MIN_SERVER_VERSION.toJSON(),
+    });
+  }
+  if (!Version.CLIENT_VERSION.isAtLeast(new Version(minClientVersionStr))) {
+    return i18n.t('connect.versionErrorClientTooOld', {
+      clientVersion: Version.CLIENT_VERSION.toJSON(),
+      minClientVersion: minClientVersionStr,
+    });
+  }
+  return i18n.t('connect.versionErrorValidationFailed');
 }

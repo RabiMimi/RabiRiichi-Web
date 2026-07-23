@@ -5,6 +5,7 @@ import {
   getPlayerBySeat,
   getPlayerById,
   getPlayerDisplayName,
+  getAiTypeName,
   getWindKey,
   isTsumoTile,
   shouldRevealHand,
@@ -302,8 +303,8 @@ describe('deadWallRinshanCount', () => {
 describe('getPlayerDisplayName', () => {
   const mockTranslate = (key: string) => {
     const translations: Record<string, string> = {
-      'ai.type.AI_TYPE_DUMMY': 'Drooling Rabbit',
-      'ai.type.AI_TYPE_RULE_BASED': 'Nodocchi',
+      'ai.type.1': 'Drooling Rabbit',
+      'ai.type.2': 'Nodocchi',
       'ai.llm.gemini': 'Gemi狸',
       'ai.llm.openai': 'AI',
       'ai.llm.generic': 'LLM',
@@ -335,6 +336,16 @@ describe('getPlayerDisplayName', () => {
     expect(getPlayerDisplayName(unknownPlayer, mockTranslate)).toBe('LLM');
   });
 
+  it('resolves from a minimal identity (nickname + aiType)', () => {
+    // The chat layer resolves the processed name from just these two fields.
+    expect(
+      getPlayerDisplayName(
+        { nickname: '@llm:gemini', aiType: AiType.AI_TYPE_LLM },
+        mockTranslate,
+      ),
+    ).toBe('Gemi狸');
+  });
+
   it('returns custom display name verbatim for LLM AI', () => {
     const customPlayer: PlayerModel = {
       id: 1,
@@ -361,5 +372,26 @@ describe('getPlayerDisplayName', () => {
     expect(getPlayerDisplayName(dummyPlayer, mockTranslate)).toBe(
       'Drooling Rabbit',
     );
+  });
+});
+
+describe('getAiTypeName', () => {
+  const mockTranslate = (key: string) => {
+    const translations: Record<string, string> = {
+      'ai.type.1': 'Drooling Rabbit',
+      'ai.type.2': 'Nodocchi',
+      'ai.type.3': 'LLM',
+    };
+    return translations[key] ?? key;
+  };
+
+  it('keys AI type labels by the numeric enum value', () => {
+    expect(getAiTypeName(AiType.AI_TYPE_DUMMY, mockTranslate)).toBe(
+      'Drooling Rabbit',
+    );
+    expect(getAiTypeName(AiType.AI_TYPE_RULE_BASED, mockTranslate)).toBe(
+      'Nodocchi',
+    );
+    expect(getAiTypeName(AiType.AI_TYPE_LLM, mockTranslate)).toBe('LLM');
   });
 });

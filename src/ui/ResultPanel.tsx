@@ -1,4 +1,5 @@
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
   useRoom,
@@ -11,7 +12,6 @@ import {
   useIsReplayPaused,
   useReplayProgress,
   useCharacterId,
-  useSelf,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
@@ -30,10 +30,13 @@ import {
   getCurrentRoundIndex,
   getRoundStartIndices,
   jumpToRound,
-  stopReplay,
 } from '../replay/replayDriver';
 import { filterYakuListForDisplay } from '../domain/yakus';
-import { getYakuVoiceLineId, getLimitName } from '../domain/resultHelpers';
+import {
+  getYakuVoiceLineId,
+  getYakuhaiWindVoiceLineId,
+  getLimitName,
+} from '../domain/resultHelpers';
 import { WinnerDetailCard } from './WinnerDetailCard';
 import { ScoreTransferPanel } from './ScoreTransferPanel';
 
@@ -95,14 +98,12 @@ export function ResultPanel(): React.JSX.Element | null {
     return isReplay ? getRoundStartIndices() : [];
   }, [isReplay]);
 
-  const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(8);
+  const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(30);
   const [showFinalResults, setShowFinalResults] = React.useState(false);
 
   const handleReturnToRoom = React.useCallback(() => {
     setShowFinalResults(false);
-    if (isReplay) {
-      stopReplay();
-    } else {
+    if (!isReplay) {
       rabiriichi.returnToRoom();
     }
   }, [isReplay]);
@@ -150,6 +151,8 @@ export function ResultPanel(): React.JSX.Element | null {
 
   const scoringOption =
     room?.roundResult?.scoringOption ?? room?.config?.scoringOption;
+  const resultRound = room?.info?.round ?? 0;
+  const resultDealer = room?.roundResult?.dealer ?? room?.info?.dealer ?? 0;
 
   // Voice & Animation states
   const [animatingPlayerIndex, setAnimatingPlayerIndex] =
@@ -168,14 +171,20 @@ export function ResultPanel(): React.JSX.Element | null {
     false;
 
   const showPanel = React.useMemo(() => {
+    if (isReplay) {
+      return isWaitingForProceed && !resultAnimation;
+    }
     return (
       (playersWithResult.length > 0 || hasNextRound || isWaitingForProceed) &&
       !resultAnimation
     );
-  }, [playersWithResult, hasNextRound, isWaitingForProceed, resultAnimation]);
-
-  // Primitive id (not the `self` object) so a self refresh can't restart it.
-  const currentUserId = useSelf()?.id ?? null;
+  }, [
+    isReplay,
+    playersWithResult,
+    hasNextRound,
+    isWaitingForProceed,
+    resultAnimation,
+  ]);
 
   React.useEffect(() => {
     if (!showPanel) return;
@@ -227,15 +236,35 @@ export function ResultPanel(): React.JSX.Element | null {
           if (!isActive()) return;
 
           if (isActive()) {
-            setVisibleYakuCounts((prev) => ({
-              ...prev,
-              [pIdx]: yIdx + 1,
-            }));
+            flushSync(() => {
+              setVisibleYakuCounts((prev) => ({
+                ...prev,
+                [pIdx]: yIdx + 1,
+              }));
+            });
           }
 
           const yaku = yakuList[yIdx];
           if (!yaku) continue;
-          const voiceId = getYakuVoiceLineId(yaku.Src ?? '', yaku.Val ?? 0);
+          const yakuSource = yaku.Src ?? '';
+          const windVoiceId = getYakuhaiWindVoiceLineId(
+            yakuSource,
+            resultRound,
+            resultDealer,
+            player.seat,
+            resultPlayers.length,
+          );
+          const voiceId = getYakuVoiceLineId(
+            yakuSource,
+            yaku.Val ?? 0,
+            windVoiceId,
+          );
+          if (!voiceId) {
+            // Keep the original one-second reveal cadence for silent rows such
+            // as Dora 0, without starting an audio playback.
+            await soundManager.playVoicePromise(undefined);
+            continue;
+          }
           const voiceLine = activeCharacter.voiceLines.find(
             (v) => v.id === voiceId,
           );
@@ -243,11 +272,11 @@ export function ResultPanel(): React.JSX.Element | null {
           await soundManager.playVoicePromise(voiceLine?.audioUrl);
         }
 
-        // 1b. Play limit voice & show total
+        // 1b. Reveal the total and start its limit voice in the same frame.
         if (!isActive()) return;
+        let limitVoiceId: string | null = null;
         if (agari.scores?.result && !agari.isNagashi) {
           const result = agari.scores.result;
-          let limitVoiceId: string | null = null;
 
           if (result.finalYakuman && result.finalYakuman > 0) {
             const isAotenjou =
@@ -273,26 +302,27 @@ export function ResultPanel(): React.JSX.Element | null {
               limitVoiceId = limit;
             }
           }
-
-          if (limitVoiceId) {
-            const voiceLine = activeCharacter.voiceLines.find(
-              (v) => v.id === limitVoiceId,
-            );
-            await soundManager.playVoicePromise(voiceLine?.audioUrl);
-          } else {
-            await new Promise((r) => setTimeout(r, 800));
-          }
-        } else {
-          await new Promise((r) => setTimeout(r, 800));
         }
 
+        const limitVoiceLine = limitVoiceId
+          ? activeCharacter.voiceLines.find((v) => v.id === limitVoiceId)
+          : undefined;
+        const revealDelay = soundManager.getVoiceDurationMs(
+          limitVoiceLine?.audioUrl,
+        );
+        await new Promise((resolve) => setTimeout(resolve, revealDelay));
+
         if (!isActive()) return;
-        if (isActive()) {
+        flushSync(() => {
           setShowTotals((prev) => ({
             ...prev,
             [pIdx]: true,
           }));
-          soundManager.playEffect(SOUND_EFFECTS.result.hanReveal);
+        });
+        soundManager.playEffect(SOUND_EFFECTS.result.hanReveal);
+
+        if (limitVoiceLine) {
+          await soundManager.playVoicePromise(limitVoiceLine.audioUrl);
         }
 
         // Pause slightly before moving to the next winner
@@ -303,16 +333,6 @@ export function ResultPanel(): React.JSX.Element | null {
       if (!isActive()) return;
       if (isActive()) {
         setShowScoreChanges(true);
-      }
-
-      // Play final reaction voice
-      if (currentUserId != null) {
-        const isWinner = playersWithResult.some((p) => p.id === currentUserId);
-        const finalVoiceId = isWinner ? 'win' : 'lose';
-        const voiceLine = activeCharacter.voiceLines.find(
-          (v) => v.id === finalVoiceId,
-        );
-        await soundManager.playVoicePromise(voiceLine?.audioUrl);
       }
 
       if (!isActive()) return;
@@ -336,7 +356,9 @@ export function ResultPanel(): React.JSX.Element | null {
     playersWithResult,
     activeCharacter,
     scoringOption,
-    currentUserId,
+    resultRound,
+    resultDealer,
+    resultPlayers.length,
   ]);
 
   React.useEffect(() => {
@@ -372,6 +394,7 @@ export function ResultPanel(): React.JSX.Element | null {
         }
       } else {
         setShowFinalResults(true);
+        proceedReplay();
       }
       return;
     }
@@ -409,7 +432,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
     return () => {
       clearInterval(intervalId);
-      setLocalSecondsLeft(8);
+      setLocalSecondsLeft(30);
     };
   }, [isWaitingForProceed, isPaused, handleProceed]);
 

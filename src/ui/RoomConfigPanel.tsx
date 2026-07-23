@@ -44,6 +44,7 @@ import { PointsSettingsTab } from './PointsSettingsTab';
 import { YakuSettingsTab } from './YakuSettingsTab';
 import { AdvancedSettingsTab } from './AdvancedSettingsTab';
 import { Button } from './Button';
+import { TabButton } from './TabButton';
 
 interface SavedRoomConfig {
   playerCount?: number;
@@ -536,50 +537,30 @@ export function RoomConfigPanel({
           {t('lobby.roomSettings')}
         </h3>
         <div className="flex gap-1">
-          <button
-            type="button"
-            className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
-              activeTab === 'game'
-                ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
-                : 'text-[#888] hover:text-white hover:bg-[#333]'
-            }`}
+          <TabButton
+            active={activeTab === 'game'}
             onClick={() => setActiveTab('game')}
           >
             {t('lobby.gameSettings')}
-          </button>
-          <button
-            type="button"
-            className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
-              activeTab === 'points'
-                ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
-                : 'text-[#888] hover:text-white hover:bg-[#333]'
-            }`}
+          </TabButton>
+          <TabButton
+            active={activeTab === 'points'}
             onClick={() => setActiveTab('points')}
           >
             {t('lobby.pointsSettings')}
-          </button>
-          <button
-            type="button"
-            className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
-              activeTab === 'yaku'
-                ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
-                : 'text-[#888] hover:text-white hover:bg-[#333]'
-            }`}
+          </TabButton>
+          <TabButton
+            active={activeTab === 'yaku'}
             onClick={() => setActiveTab('yaku')}
           >
             {t('lobby.configureYakus')}
-          </button>
-          <button
-            type="button"
-            className={`bg-transparent border-none text-sm font-bold px-3 py-1.5 cursor-pointer rounded transition-all duration-200 ${
-              activeTab === 'advanced'
-                ? 'text-[#ff7a99] bg-white/[0.05] shadow-[inset_0_-2px_0_#ff7a99]'
-                : 'text-[#888] hover:text-white hover:bg-[#333]'
-            }`}
+          </TabButton>
+          <TabButton
+            active={activeTab === 'advanced'}
             onClick={() => setActiveTab('advanced')}
           >
             {t('lobby.advancedSettings')}
-          </button>
+          </TabButton>
         </div>
       </div>
 

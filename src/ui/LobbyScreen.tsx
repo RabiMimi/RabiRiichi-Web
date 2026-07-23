@@ -57,6 +57,10 @@ export function LobbyScreen(): React.JSX.Element {
     rabiriichi.logout();
   };
 
+  const handleDisconnect = () => {
+    rabiriichi.close();
+  };
+
   return (
     <div className={SCREEN.base}>
       <div className={`${SCREEN.card} max-w-[960px]`}>
@@ -144,6 +148,14 @@ export function LobbyScreen(): React.JSX.Element {
                 className="whitespace-nowrap"
               >
                 {t('lobby.viewReplay')}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleDisconnect}
+                disabled={isLoading}
+                className="whitespace-nowrap"
+              >
+                {t('lobby.disconnect')}
               </Button>
               <Button
                 variant="danger"

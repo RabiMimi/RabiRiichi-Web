@@ -12,7 +12,7 @@
     "urlError": "サーバーアドレスは ws:// または wss:// で始まる必要があります",
     "nicknameError": "ニックネームを入力してください",
     "officialServer": "ミミサーバー",
-    "devServer": "ミミ開発サーバー ❤️",
+    "devServer": "ミミ開発❤️",
     "localServer": "ローカルサーバー (localhost:5150)",
     "customServer": "カスタムサーバーアドレス",
     "serverNamePlaceholder": "サーバー名を入力してください",
@@ -29,10 +29,23 @@
     "usernamePlaceholder": "ユーザー名を入力してください",
     "password": "パスワード",
     "passwordPlaceholder": "パスワードを入力してください",
+    "confirmPassword": "パスワード（確認）",
+    "confirmPasswordPlaceholder": "パスワードを再入力してください",
     "usernameError": "ユーザー名を入力してください",
     "passwordError": "パスワードを入力してください",
     "passwordTooShort": "パスワードは6文字以上で入力してください",
-    "kickedByOtherClient": "あなたのアカウントは別のクライアントからログインされました。"
+    "passwordMismatch": "パスワードが一致しません",
+    "kickedByOtherClient": "あなたのアカウントは別のクライアントからログインされました。",
+    "savedAccountCardTitle": "保存されたアカウント",
+    "loginAsButton": "{{nickname}} としてログイン",
+    "useDifferentAccountButton": "別のアカウントを使用",
+    "savedTokenExpiredError": "保存されたセッションの期限が切れました。再度ログインしてください。",
+    "savedAccountUsername": "ユーザー名: {{username}}",
+    "error": {
+      "unknownServer": "サーバーアドレスが既知のサーバーリストにありません。",
+      "autoConnectFailed": "自動接続に失敗しました。ネットワークを確認するか、認証情報を入力してください。",
+      "alreadyInDifferentRoom": "すでに別の部屋に入室しています。"
+    }
   },
   "lobby": {
     "title": "ロビー",
@@ -43,6 +56,7 @@
     "joinRoom": "部屋に入る",
     "joinRoomLabel": "既存の部屋に入る",
     "logout": "ログアウト",
+    "disconnect": "切断",
     "viewReplay": "牌譜再生",
     "roomSettings": "部屋設定",
     "seed": "乱数シード",
@@ -58,7 +72,7 @@
     "defaultPlaceholder": "デフォルト: {{value}}秒",
     "initialPoints": "持ち点",
     "finishPoints": "返し点",
-    "upperPoints": "ぶっとび上限",
+    "upperPoints": "天辺上限",
     "riichiPoints": "立直棒点数",
     "honbaPoints": "本場棒点数",
     "ryuukyokuPoints": "ノーテン罰符",
@@ -247,7 +261,7 @@
     "limitPrefixed": "{{limit}} {{han}}飜 {{fu}}符",
     "limitPrefixedHanOnly": "{{limit}} {{han}}飜",
     "winnerBadge": "和了",
-    "winTile": "あがり牌",
+    "winTile": "あがり",
     "tenpai": "テンパイ",
     "tenpaiWaits": "待ち牌",
     "scoreChangesTitle": "点数移動",
@@ -256,6 +270,7 @@
     "waitingForNextRound": "次の局の開始を待っています...",
     "finalTitle": "対局終了",
     "returnToRoom": "部屋に戻る",
+    "returnToReplay": "リプレイに戻る",
     "showFinalResults": "結果発表",
     "ryuukyoku": {
       "suufon_renda": "四風連打",
@@ -312,7 +327,7 @@
     "agari": {
       "kuitan": "喰いタンあり",
       "pao": "パオあり",
-      "nagashiMangan": "流し満贯あり",
+      "nagashiMangan": "流し満貫あり",
       "firstWinner": "頭ハネ"
     },
     "scoring": {
@@ -346,7 +361,7 @@
     "Pinfu": "平和",
     "Riichi": "立直",
     "RinshanKaihou": "嶺上開花",
-    "ShiiaruRaotai": "十二落態",
+    "ShiiaruRaotai": "十二落抬",
     "Tanyao": "断幺九",
     "YakuhaiBakaze": "役牌: 場風",
     "YakuhaiChun": "役牌: 中",
@@ -394,10 +409,10 @@
   },
   "ai": {
     "type": {
-      "AI_TYPE_NONE": "",
-      "AI_TYPE_DUMMY": "よだれうさぎ",
-      "AI_TYPE_RULE_BASED": "のどっち",
-      "AI_TYPE_LLM": "LLM"
+      "0": "",
+      "1": "よだれうさぎ",
+      "2": "のどっち",
+      "3": "LLM"
     },
     "llm": {
       "gemini": "Gemiヌ",
@@ -478,9 +493,10 @@
     "server": {
       "InvalidArgument": {
         "invalidGameId": "無効なゲームID",
-        "invalidAiType": "無効または未サポート of AIタイプ",
+        "invalidAiType": "非対応または無効なAIタイプ",
         "usernameEmpty": "ユーザー名を入力してください",
         "passwordEmpty": "パスワードを入力してください",
+        "nicknameEmpty": "ニックネームを入力してください",
         "generic": "無効な引数"
       },
       "NotFound": {
@@ -505,6 +521,7 @@
       "Internal": {
         "cannotAddUser": "ユーザーを追加できません",
         "cannotAddAi": "部屋にAIを追加できません",
+        "cannotUpdateProfile": "プロフィールを更新できませんでした",
         "generic": "サーバー内部エラー"
       },
       "Unauthenticated": {
@@ -540,8 +557,10 @@
     "tileDrawn": "ツモ牌",
     "tileInWall": "山牌",
     "noWallData": "この再生ログには配牌時の山データが含まれていません。",
-    "wallSide": "{{side}}山",
-    "wanpai": "王牌 (ワンパイ)"
+    "wallSide": "{{side}}家の山",
+    "wanpai": "王牌 (ワンパイ)",
+    "loading": "サーバーからリプレイを読み込んでいます...",
+    "failedToLoad": "リプレイの読み込みに失敗しました"
   },
   "sticker": {
     "title": "スタンプ",
@@ -560,8 +579,36 @@
   },
   "settings": {
     "title": "システム設定",
-    "visualsTab": "ビジュアル",
+    "playerTab": "プレイヤー",
+    "profileTab": "プロフィール",
     "soundsTab": "サウンド",
+    "profile": {
+      "username": "ユーザー名",
+      "nickname": "ニックネーム",
+      "nicknamePlaceholder": "ニックネームを入力",
+      "save": "保存",
+      "saving": "保存中...",
+      "saved": "プロフィールを更新しました",
+      "nicknameEmpty": "ニックネームを入力してください",
+      "changePassword": "パスワードを変更",
+      "notSignedIn": "プロフィールを編集するにはサインインしてください。"
+    },
+    "password": {
+      "title": "パスワードを変更",
+      "current": "現在のパスワード",
+      "new": "新しいパスワード",
+      "confirm": "新しいパスワード（確認）",
+      "currentPlaceholder": "現在のパスワードを入力",
+      "newPlaceholder": "新しいパスワードを入力",
+      "confirmPlaceholder": "新しいパスワードを再入力",
+      "submit": "パスワードを更新",
+      "submitting": "更新中...",
+      "success": "パスワードを更新しました",
+      "cancel": "キャンセル",
+      "mismatch": "パスワードが一致しません",
+      "tooShort": "パスワードは6文字以上で入力してください",
+      "empty": "すべての項目を入力してください"
+    },
     "characterSelector": "キャラクター",
     "voicelines": "ボイス試聴",
     "stickers": "スタンププレビュー",
@@ -602,7 +649,7 @@
         "menzenTsumo": "門前清自摸和",
         "tanyao": "断幺九",
         "pinfu": "平和",
-        "iipeikou": "一杯口",
+        "iipeikou": "一盃口",
         "yakuhaiHaku": "役牌（白）",
         "yakuhaiHatsu": "役牌（發）",
         "yakuhaiChun": "役牌（中）",
@@ -627,7 +674,7 @@
         "shousangen": "小三元",
         "honitsu": "混一色",
         "junchan": "純全帯幺九",
-        "ryanpeikou": "二杯口",
+        "ryanpeikou": "二盃口",
         "chinitsu": "清一色",
         "tenhou": "天和",
         "chiihou": "地和",
@@ -708,5 +755,10 @@
         "bigTenpai": "高打点テンパイ・役満"
       }
     }
+  },
+  "common": {
+    "back": "戻る",
+    "share": "共有",
+    "copied": "リンクをクリップボードにコピーしました！"
   }
 }

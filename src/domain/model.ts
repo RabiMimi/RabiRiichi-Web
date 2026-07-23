@@ -68,6 +68,7 @@ export interface PlayerGameState {
   jun: number;
   points: number;
   riichiTileId: number; // trace_id of the riichi tile, 0 if not riichi
+  isRiichiConfirmed: boolean; // true only after setRiichiEvent confirms the declaration
   furiten: Partial<Record<FuritenType, boolean>>;
   hand: PlayerHandState;
   agari: PlayerAgariState | null;
@@ -232,8 +233,21 @@ export function getWindKey(round: number): string {
 
 const LLM_SENTINEL = '@llm:';
 
+/**
+ * Localized display name for an AI type, keyed by the numeric enum value
+ * (e.g. `ai.type.3`). Keying by the number keeps every call site free of
+ * enum-name lookups and guarantees the badge/tooltip and name logic use the
+ * exact same key.
+ */
+export function getAiTypeName(
+  aiType: AiType,
+  t: (key: string) => string,
+): string {
+  return t(`ai.type.${aiType}`);
+}
+
 export function getPlayerDisplayName(
-  player: PlayerModel,
+  player: Pick<PlayerModel, 'nickname' | 'aiType'>,
   t: (key: string) => string,
 ): string {
   if (
@@ -252,7 +266,7 @@ export function getPlayerDisplayName(
       const cleanNick = player.nickname.replace(/_/g, '').toUpperCase();
       const cleanType = typeName.replace(/_/g, '').toUpperCase();
       if (cleanNick === cleanType) {
-        return t(`ai.type.${enumKey}`);
+        return getAiTypeName(player.aiType, t);
       }
     }
   }

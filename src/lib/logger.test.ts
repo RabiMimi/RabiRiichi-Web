@@ -67,6 +67,21 @@ describe('Logger', () => {
     expect(errorSpy).toHaveBeenCalledTimes(2); // error + fatal
   });
 
+  it('should pass error details through to the console', () => {
+    const errorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const logger = new Logger('Test');
+    const error = new Error('Connection closed before open');
+
+    logger.error('Connection failed', error);
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Connection failed'),
+      error,
+    );
+  });
+
   it('should assert and log error if condition is false', () => {
     const errorSpy = vi
       .spyOn(console, 'error')

@@ -48,6 +48,7 @@ export interface RabiRiichiState {
   muteVoice: boolean;
   volumeAll: number;
   isSettingsOpen: boolean;
+  autoConnectError: string | null;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -94,7 +95,8 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.muteBGM !== rabiriichi.sounds.muteBGM ||
     lastSnapshot.muteVoice !== rabiriichi.sounds.muteVoice ||
     lastSnapshot.volumeAll !== rabiriichi.sounds.volumeAll ||
-    lastSnapshot.isSettingsOpen !== rabiriichi.isSettingsOpen
+    lastSnapshot.isSettingsOpen !== rabiriichi.isSettingsOpen ||
+    lastSnapshot.autoConnectError !== rabiriichi.autoConnectError
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -133,6 +135,7 @@ function getSnapshot(): RabiRiichiState {
       muteVoice: rabiriichi.sounds.muteVoice,
       volumeAll: rabiriichi.sounds.volumeAll,
       isSettingsOpen: rabiriichi.isSettingsOpen,
+      autoConnectError: rabiriichi.autoConnectError,
     };
   }
   return lastSnapshot;
@@ -140,6 +143,7 @@ function getSnapshot(): RabiRiichiState {
 
 const getConnectionStatus = () => rabiriichi.connectionStatus;
 const getSelf = () => rabiriichi.self;
+const getUsername = () => rabiriichi.username;
 const getRoom = () => rabiriichi.room;
 const getCurrentInquiry = () => rabiriichi.currentInquiry;
 const getIsRiichiSelectMode = () => rabiriichi.isRiichiSelectMode;
@@ -193,6 +197,10 @@ export function useConnectionStatus(): ConnectionStatus {
 
 export function useSelf(): PlayerModel | null {
   return useSyncExternalStore(subscribe, getSelf, getSelf);
+}
+
+export function useUsername(): string | null {
+  return useSyncExternalStore(subscribe, getUsername, getUsername);
 }
 
 export function useRoom(): RoomModel | null {
@@ -481,6 +489,14 @@ export function useIsSettingsOpen(): boolean {
     subscribe,
     () => rabiriichi.isSettingsOpen,
     () => rabiriichi.isSettingsOpen,
+  );
+}
+
+export function useAutoConnectError(): string | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.autoConnectError,
+    () => rabiriichi.autoConnectError,
   );
 }
 

@@ -33,6 +33,19 @@ describe('character voice config', () => {
         }
       });
 
+      if (character.id === 'mimi') {
+        it('uses recorded assets for every available Mimi line', () => {
+          const silentIds = character.voiceLines
+            .filter((line) => line.audioUrl.startsWith('data:audio/'))
+            .map((line) => line.id);
+          expect(silentIds).toEqual([]);
+
+          for (const line of character.voiceLines) {
+            expect(line.audioUrl).toBe(`/assets/mimi/voices/${line.id}.mp3`);
+          }
+        });
+      }
+
       for (const [locale, table] of Object.entries(LOCALES)) {
         it(`has a ${locale} label for every voice id`, () => {
           const voices = table.character?.[character.id]?.voices ?? {};

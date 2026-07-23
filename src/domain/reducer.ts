@@ -159,6 +159,7 @@ export function hydrateFromGameState(
       jun: handState?.jun ?? 0,
       points: sp.points ? Number(sp.points) : 0,
       riichiTileId: handState?.riichiTile?.traceId ?? 0,
+      isRiichiConfirmed: (handState?.riichiTile?.traceId ?? 0) > 0,
       furiten: {
         [FuritenType.FURITEN_TYPE_DISCARD]:
           handState?.isDiscardFuriten ?? false,
@@ -265,6 +266,7 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
         ? initialPoints
         : (p.gameState?.points ?? initialPoints),
       riichiTileId: 0,
+      isRiichiConfirmed: false,
       furiten: {
         [FuritenType.FURITEN_TYPE_DISCARD]: false,
         [FuritenType.FURITEN_TYPE_RIICHI]: false,
@@ -736,6 +738,7 @@ function handleSetRiichi(state: RoomModel, ev: ISetRiichiEventMsg): RoomModel {
       gameState: {
         ...p.gameState,
         riichiTileId: ev.riichiTile?.traceId ?? 0,
+        isRiichiConfirmed: true,
         points: p.gameState.points - riichiPoints,
       },
     };
@@ -1196,8 +1199,12 @@ function updateTileRegistry(state: RoomModel, eventMsg: IEventMsg): RoomModel {
 }
 
 function applyEventToState(state: RoomModel, eventMsg: IEventMsg): RoomModel {
-  // Warn on unhandled event variants to catch gaps early (F3)
-  if (import.meta.env.DEV) {
+  // Warn on unhandled event variants to catch gaps early (F3). Read `env`
+  // through a widened local so non-Vite hosts (e.g. the Node CLI, where
+  // `import.meta.env` is undefined) don't throw, while keeping the check clean
+  // under the web app's `vite/client` types.
+  const meta = import.meta as { env?: { DEV?: boolean } };
+  if (meta.env?.DEV) {
     const activeKeys = Object.keys(eventMsg).filter(
       (k) =>
         !k.startsWith('$') &&

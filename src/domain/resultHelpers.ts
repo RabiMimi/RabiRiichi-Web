@@ -1,7 +1,47 @@
 export const SILENT_WAV_URL =
   'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
 
-export function getYakuVoiceLineId(src: string, val: number): string | null {
+export type WindVoiceLineId = 'kazeTon' | 'kazeNan' | 'kazeSha' | 'kazePei';
+
+export function getFinalPlacementVoiceLineId(
+  rank: number,
+  playerCount: number,
+): 'win' | 'lose' | null {
+  if (rank === 1) return 'win';
+  if (playerCount > 1 && rank === playerCount) return 'lose';
+  return null;
+}
+
+const WIND_VOICE_IDS: readonly WindVoiceLineId[] = [
+  'kazeTon',
+  'kazeNan',
+  'kazeSha',
+  'kazePei',
+];
+
+export function getYakuhaiWindVoiceLineId(
+  src: string,
+  round: number,
+  dealer: number,
+  playerSeat: number | undefined,
+  playerCount: number,
+): WindVoiceLineId | undefined {
+  if (src === 'YakuhaiBakaze') {
+    return WIND_VOICE_IDS[((round % 4) + 4) % 4];
+  }
+  if (src === 'YakuhaiJikaze' && playerSeat !== undefined && playerCount > 0) {
+    const seatWind =
+      (((playerSeat - dealer) % playerCount) + playerCount) % playerCount;
+    return WIND_VOICE_IDS[seatWind];
+  }
+  return undefined;
+}
+
+export function getYakuVoiceLineId(
+  src: string,
+  val: number,
+  windVoiceId?: WindVoiceLineId,
+): string | null {
   switch (src) {
     case 'Riichi':
       return 'yakuRiichi';
@@ -24,9 +64,8 @@ export function getYakuVoiceLineId(src: string, val: number): string | null {
     case 'YakuhaiChun':
       return 'yakuhaiChun';
     case 'YakuhaiBakaze':
-      return 'kazeTon';
     case 'YakuhaiJikaze':
-      return 'kazeTon';
+      return windVoiceId ?? 'kazeTon';
     case 'RinshanKaihou':
       return 'rinshan';
     case 'Chankan':
@@ -99,12 +138,15 @@ export function getYakuVoiceLineId(src: string, val: number): string | null {
     case 'Akadora':
     case 'Uradora':
     case 'NukiDora':
+      if (val <= 0) {
+        return null;
+      }
       if (val >= 1 && val <= 12) {
         return `dora${val}`;
       } else if (val > 12) {
         return 'doraMany';
       }
-      return 'dora1';
+      return null;
     case 'NagashiMangan':
       return 'nagashiMangan';
     default:

@@ -2,12 +2,22 @@ import {
   Logger,
   NetworkError,
   AuthError,
+  StateError,
   RabiEvent,
   waitTimeout,
-  sha256,
 } from '../lib';
 import { RabiSocket } from '../transport/rabiSocket';
 import { WS_CONNECT_TIMEOUT } from '../transport/constants';
+import { DEFAULT_SERVERS } from '../config/servers';
+import {
+  type ClientPlatform,
+  type GameSoundPlayer,
+  type TranslateFn,
+  createClientPlatform,
+} from '../platform';
+import { getPublicWSUrl, getUserWSUrl } from './wsUrl';
+import { CredentialStore, type ServerCredentials } from './credentialStore';
+import { soundEffectForEvent } from './eventSound';
 import {
   createUser,
   getUserInfo,
@@ -18,6 +28,8 @@ import {
   getReplay,
   loginUser,
   getInfo,
+  updateProfile,
+  changePassword,
 } from './requests';
 import { UserStatus, AiType } from '../proto';
 import type {
@@ -32,16 +44,21 @@ import type {
   IServerMessageDto,
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
-import { applyRiichiBonusToWaits } from '../domain/model';
+import { applyRiichiBonusToWaits, getPlayerDisplayName } from '../domain/model';
+import { CHARACTERS, getCharacterVoiceUrl } from '../domain/character';
+import {
+  createGameVoiceState,
+  getGameVoiceSpeakerSeat,
+  reduceGameVoice,
+  type GameVoiceState,
+} from '../domain/gameVoice';
 import { MessagePump } from './messagePump';
 import {
   DEFAULT_ACTION_TIMEOUT,
   INQUIRY_DEFAULT_INDEX,
   RESULT_ANIMATION_DURATION_MS,
-  STORAGE_KEY_SERVER_SETTINGS,
-  STORAGE_KEY_CLIENT_SETTINGS,
-  type ServerSettings,
   type ClientSettings,
+  type ServerSettings,
 } from '../domain/constants';
 import { VisualsSettings, SoundsSettings } from '../domain/settings';
 import { applyEvent, applyRoomState } from '../domain/reducer';
@@ -61,51 +78,14 @@ import {
   updateRoom as sendUpdateRoom,
   respondInquiry as sendRespondInquiry,
 } from './messages';
-import { soundManager } from '../lib/sound';
 import { SOUND_EFFECTS } from '../lib/soundEffects';
-
-const TOKEN_STORE_KEY = 'rabiriichi_token';
-
-function getPublicWSUrl(baseUrl: string): string {
-  // Support relative URLs or ensure proper absolute URL
-  try {
-    return new URL('/ws/public', baseUrl).href;
-  } catch {
-    // If baseUrl is not absolute, try to construct it assuming ws:// or wss://
-    if (!baseUrl.startsWith('ws://') && !baseUrl.startsWith('wss://')) {
-      baseUrl = 'ws://' + baseUrl;
-    }
-    return new URL('/ws/public', baseUrl).href;
-  }
-}
-
-function getUserWSUrl(baseUrl: string): string {
-  try {
-    return new URL('/ws/connect', baseUrl).href;
-  } catch {
-    if (!baseUrl.startsWith('ws://') && !baseUrl.startsWith('wss://')) {
-      baseUrl = 'ws://' + baseUrl;
-    }
-    return new URL('/ws/connect', baseUrl).href;
-  }
-}
-
-// Parses persisted client settings from a raw localStorage string. Returns an
-// empty object for missing/corrupt data so callers can merge safely.
-function parseClientSettings(raw: string | null): ClientSettings {
-  if (!raw) return {};
-  const parsed: unknown = JSON.parse(raw);
-  if (typeof parsed !== 'object' || parsed === null) return {};
-  // ClientSettings has only optional fields, so any object satisfies it; unknown
-  // extra keys are harmless.
-  return parsed;
-}
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
 export interface ChatHistoryEntry {
   id: string;
   senderId: number;
+  /** Processed display name at send time (AI sentinels already resolved). */
   senderName: string;
   text?: string | null;
   sticker?: string | null;
@@ -121,9 +101,13 @@ export interface ActiveInquiry {
 export class RabiRiichiClient {
   private readonly logger = new Logger('RabiRiichiClient');
   private readonly messagePump = new MessagePump();
+  private readonly platform: ClientPlatform;
+  private readonly credentials: CredentialStore;
 
   public wsurl: string | null = null;
   public accessToken: string | null = null;
+  /** Login username (distinct from the display nickname); persisted locally. */
+  public username: string | null = null;
   public self: PlayerModel | null = null;
   public room: RoomModel | null = null;
   private _ws: RabiSocket | null = null;
@@ -136,6 +120,7 @@ export class RabiRiichiClient {
   public disconnectReason: 'kicked' | null = null;
   private serverMessageListener: ((msg: IServerMessageDto) => void) | null =
     null;
+  public autoConnectError: string | null = null;
 
   public connectionStatus: ConnectionStatus = 'disconnected';
   public currentInquiry: ActiveInquiry | null = null;
@@ -149,6 +134,9 @@ export class RabiRiichiClient {
   public activeChatTexts: Record<number, string> = {};
   private chatTextTimers = new Map<number, ReturnType<typeof setTimeout>>();
   public chatHistory: ChatHistoryEntry[] = [];
+  private deferredChats: IPlayerChatMessage[] = [];
+  public isShowingRoundResult = false;
+  public isFinalResultScreen = false;
 
   public isRiichiSelectMode = false;
   public pendingActionOption: ActionOption | null = null;
@@ -224,6 +212,7 @@ export class RabiRiichiClient {
   private isDealingHand = false;
   private hasPlayedActionSequenceSound = false;
   private hasExitedGame = false;
+  private gameVoiceState: GameVoiceState = createGameVoiceState();
 
   public updateClientSettings(patch: Partial<ClientSettings>): void {
     if (patch.animationSpeed !== undefined) {
@@ -231,30 +220,43 @@ export class RabiRiichiClient {
     }
     this.visuals.update(patch);
     this.sounds.update(patch);
-    soundManager.updateAllVolumes();
+    this.platform.sound.updateAllVolumes();
 
     this.onChange.emit();
 
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY_CLIENT_SETTINGS);
-        const settings = parseClientSettings(stored);
-        Object.assign(settings, patch);
-        localStorage.setItem(
-          STORAGE_KEY_CLIENT_SETTINGS,
-          JSON.stringify(settings),
-        );
-      } catch (err) {
-        this.logger.error(
-          'Failed to save client settings to localStorage:',
-          err,
-        );
-      }
-    }
+    this.credentials.mergeClientSettings(patch);
   }
 
   public setAnimationSpeed(speed: number): void {
     this.updateClientSettings({ animationSpeed: speed });
+  }
+
+  /**
+   * Swaps the sound player after construction. The web composition root uses
+   * this to install the `howler`-backed player onto the shared singleton
+   * (which defaults to no audio), keeping the audio engine out of the core.
+   * Re-registers the volume provider so the new player honors current settings.
+   */
+  public setSoundPlayer(sound: GameSoundPlayer): void {
+    this.platform.sound = sound;
+    sound.setVolumeProvider(() => this.sounds);
+    sound.updateAllVolumes();
+    sound.preloadVoices(
+      CHARACTERS.flatMap((character) =>
+        character.voiceLines
+          .map((line) => line.audioUrl)
+          .filter((url) => !url.startsWith('data:')),
+      ),
+    );
+  }
+
+  /**
+   * Installs a localizer after construction. Used to resolve AI display names
+   * (e.g. "@llm:gemini" → "Gemibo") when caching chat sender names. Defaults to
+   * the identity function so the core stays i18n-agnostic.
+   */
+  public setTranslate(translate: TranslateFn): void {
+    this.platform.translate = translate;
   }
 
   // Backdoor for replay and testing helpers (e.g. replay driver, test mocks)
@@ -297,32 +299,39 @@ export class RabiRiichiClient {
     },
   };
 
-  public constructor() {
+  /**
+   * @param platform Host capabilities (socket, storage, sound, crypto). Omit to
+   *   use the browser defaults (global WebSocket + localStorage + Web Crypto,
+   *   no audio); web callers wanting sound pass a real sound player. A CLI host
+   *   injects Node-backed implementations.
+   */
+  public constructor(platform?: Partial<ClientPlatform>) {
+    this.platform = createClientPlatform(platform);
+    this.credentials = new CredentialStore(this.platform.store);
+
     this.messagePump.subscribeRoomState(this.handleRoomState.bind(this));
     this.messagePump.subscribeGameEvent(this.handleGameEvent.bind(this));
     this.messagePump.subscribeInquiry(this.handleInquiry.bind(this));
     this.messagePump.subscribeChatMessage(this.handleChatMessage.bind(this));
 
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY_CLIENT_SETTINGS);
-        const settings = parseClientSettings(stored);
-        this.visuals = new VisualsSettings(settings);
-        this.sounds = new SoundsSettings(settings);
-        if (typeof settings.animationSpeed === 'number') {
-          this.animationSpeed = settings.animationSpeed;
-        }
-      } catch (err) {
-        this.logger.error(
-          'Failed to load client settings from localStorage:',
-          err,
-        );
+    try {
+      const settings = this.credentials.loadClientSettings();
+      this.visuals = new VisualsSettings(settings);
+      this.sounds = new SoundsSettings(settings);
+      if (typeof settings.animationSpeed === 'number') {
+        this.animationSpeed = settings.animationSpeed;
       }
+    } catch (err) {
+      this.logger.error('Failed to load client settings:', err);
     }
-    soundManager.setVolumeProvider(() => this.sounds);
+    this.platform.sound.setVolumeProvider(() => this.sounds);
   }
 
-  public showStickerLocally(senderId: number, sticker: string): void {
+  public showStickerLocally(
+    senderId: number,
+    sticker: string,
+    durationMs = 6000,
+  ): void {
     const prevTimer = this.stickerTimers.get(senderId);
     if (prevTimer) {
       clearTimeout(prevTimer);
@@ -340,12 +349,16 @@ export class RabiRiichiClient {
       this.activeStickers = next;
       this.stickerTimers.delete(senderId);
       this.onChange.emit();
-    }, 5000);
+    }, durationMs);
 
     this.stickerTimers.set(senderId, timer);
   }
 
-  public showChatTextLocally(senderId: number, text: string): void {
+  public showChatTextLocally(
+    senderId: number,
+    text: string,
+    durationMs = 6000,
+  ): void {
     const prevTimer = this.chatTextTimers.get(senderId);
     if (prevTimer) {
       clearTimeout(prevTimer);
@@ -366,9 +379,26 @@ export class RabiRiichiClient {
       this.activeChatTexts = next;
       this.chatTextTimers.delete(senderId);
       this.onChange.emit();
-    }, 6000);
+    }, durationMs);
 
     this.chatTextTimers.set(senderId, timer);
+  }
+
+  public flushDeferredChats(durationMs?: number): void {
+    this.isShowingRoundResult = false;
+    const effectiveDuration =
+      durationMs ?? (this.isFinalResultScreen ? 10000 : 6000);
+    const toFlush = [...this.deferredChats];
+    this.deferredChats = [];
+    for (const msg of toFlush) {
+      if (msg.senderId === null || msg.senderId === undefined) continue;
+      if (msg.sticker) {
+        this.showStickerLocally(msg.senderId, msg.sticker, effectiveDuration);
+      }
+      if (msg.text) {
+        this.showChatTextLocally(msg.senderId, msg.text, effectiveDuration);
+      }
+    }
   }
 
   private handleChatMessage(msg: IPlayerChatMessage): void {
@@ -376,7 +406,10 @@ export class RabiRiichiClient {
       return;
     }
     const player = this.room?.players.find((p) => p.id === msg.senderId);
-    const senderName = player ? player.nickname : `Player ${msg.senderId}`;
+    // Cache the processed name so a later room-state snapshot can't revert it.
+    const senderName = player
+      ? getPlayerDisplayName(player, this.platform.translate)
+      : `Player ${msg.senderId}`;
     const newEntry: ChatHistoryEntry = {
       id: `${Date.now()}-${Math.random()}`,
       senderId: msg.senderId,
@@ -406,11 +439,16 @@ export class RabiRiichiClient {
       this.chatHistory.shift();
     }
 
-    if (msg.sticker) {
-      this.showStickerLocally(msg.senderId, msg.sticker);
-    }
-    if (msg.text) {
-      this.showChatTextLocally(msg.senderId, msg.text);
+    if (this.isShowingRoundResult) {
+      this.deferredChats.push(msg);
+    } else {
+      const durationMs = this.isFinalResultScreen ? 10000 : 6000;
+      if (msg.sticker) {
+        this.showStickerLocally(msg.senderId, msg.sticker, durationMs);
+      }
+      if (msg.text) {
+        this.showChatTextLocally(msg.senderId, msg.text, durationMs);
+      }
     }
     this.onChange.emit();
   }
@@ -457,22 +495,26 @@ export class RabiRiichiClient {
   }
 
   private storeCredentials(): void {
-    if (typeof localStorage !== 'undefined') {
-      if (this.wsurl) {
-        try {
-          const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
-          const settings = stored ? (JSON.parse(stored) as ServerSettings) : {};
-          settings.lastUrl = this.wsurl;
-          localStorage.setItem(
-            STORAGE_KEY_SERVER_SETTINGS,
-            JSON.stringify(settings),
-          );
-        } catch {
-          // ignore
-        }
+    if (this.wsurl) {
+      this.credentials.saveLastUrl(this.wsurl);
+      if (this.accessToken) {
+        const oldCreds = this.credentials.loadCredentialsForServer(
+          this.wsurl,
+        ) ?? {
+          token: '',
+          username: '',
+          nickname: '',
+        };
+        this.credentials.saveCredentialsForServer(this.wsurl, {
+          token: this.accessToken,
+          username: this.username ?? oldCreds.username,
+          nickname:
+            this.self?.nickname ??
+            (oldCreds.nickname !== ''
+              ? oldCreds.nickname
+              : (this.username ?? '')),
+        });
       }
-      if (this.accessToken)
-        localStorage.setItem(TOKEN_STORE_KEY, this.accessToken);
     }
   }
 
@@ -493,8 +535,16 @@ export class RabiRiichiClient {
     }
     this.setConnectionStatus('connecting');
     const ws = this.accessToken
-      ? new RabiSocket(getUserWSUrl(this.wsurl), this.accessToken)
-      : new RabiSocket(getPublicWSUrl(this.wsurl));
+      ? new RabiSocket(
+          getUserWSUrl(this.wsurl),
+          this.accessToken,
+          this.platform.socketFactory,
+        )
+      : new RabiSocket(
+          getPublicWSUrl(this.wsurl),
+          undefined,
+          this.platform.socketFactory,
+        );
     this._ws = ws;
 
     try {
@@ -613,8 +663,9 @@ export class RabiRiichiClient {
     }
     if (!this.room?.info) {
       this.clearTimer();
-      soundManager.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
+      this.platform.sound.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
       this.hasPlayedActionSequenceSound = false;
+      this.gameVoiceState = createGameVoiceState();
     }
     this.logger.info(`Room state updated: ${this.room?.id}`);
     this.onChange.emit();
@@ -642,6 +693,7 @@ export class RabiRiichiClient {
       this.hasPlayedActionSequenceSound = false;
     }
     this.playDealSoundIfNeeded(gameEvent);
+    const roomBeforeEvent = this.room;
     this.room = applyEvent(this.room, gameEvent);
     this.logger.info(
       `Game event applied. Current player: ${this.room.info?.currentPlayer}`,
@@ -656,6 +708,7 @@ export class RabiRiichiClient {
     }
 
     this.playGameEventSound(gameEvent);
+    this.playGameEventVoice(gameEvent, roomBeforeEvent);
 
     const configTimeout =
       this.room.config?.gameplayActionTimeout ?? DEFAULT_ACTION_TIMEOUT;
@@ -691,16 +744,24 @@ export class RabiRiichiClient {
     }
 
     if (gameEvent.agariEvent) {
+      this.isShowingRoundResult = true;
       this.startResultAnimation('agari');
       this.hasInMemoryResult = true;
     } else if (gameEvent.ryuukyokuEvent) {
+      this.isShowingRoundResult = true;
       this.startResultAnimation('ryuukyoku');
       this.hasInMemoryResult = true;
     } else if (gameEvent.beginGameEvent) {
       // A new hand cancels any lingering result animation from the prior hand.
       this.clearResultAnimation();
       this.hasInMemoryResult = false;
-    } else if (gameEvent.syncGameStateEvent || gameEvent.stopGameEvent) {
+      this.isShowingRoundResult = false;
+      this.isFinalResultScreen = false;
+      this.flushDeferredChats(6000);
+    } else if (gameEvent.stopGameEvent) {
+      this.isFinalResultScreen = true;
+      this.hasInMemoryResult = false;
+    } else if (gameEvent.syncGameStateEvent) {
       this.hasInMemoryResult = false;
     }
 
@@ -721,14 +782,37 @@ export class RabiRiichiClient {
   }
 
   private playGameEventSound(gameEvent: IEventMsg): void {
-    if (gameEvent.discardTileEvent) {
-      soundManager.playEffect(SOUND_EFFECTS.tile.discard);
-    } else if (gameEvent.agariEvent) {
-      soundManager.playEffect(SOUND_EFFECTS.game.agari);
-    } else if (gameEvent.revealDoraEvent) {
-      soundManager.playEffect(SOUND_EFFECTS.game.doraReveal);
-    } else if (gameEvent.setRiichiEvent) {
-      soundManager.playEffect(SOUND_EFFECTS.game.riichi);
+    const effect = soundEffectForEvent(gameEvent);
+    if (effect) {
+      this.platform.sound.playEffect(effect);
+    }
+  }
+
+  private playGameEventVoice(
+    gameEvent: IEventMsg,
+    roomBeforeEvent: RoomModel,
+  ): void {
+    if (!this.room) return;
+    const decision = reduceGameVoice(this.gameVoiceState, {
+      event: gameEvent,
+      before: roomBeforeEvent,
+      after: this.room,
+      selfSeat: this.selfSeat,
+    });
+    this.gameVoiceState = decision.state;
+    if (!decision.voiceId) return;
+
+    const url = getCharacterVoiceUrl(
+      this.visuals.characterId,
+      decision.voiceId,
+    );
+    if (url) {
+      const speakerSeat =
+        decision.speakerSeat ??
+        getGameVoiceSpeakerSeat(gameEvent, this.selfSeat, decision.voiceId);
+      const channel =
+        speakerSeat === undefined ? 'game' : `game-player-${speakerSeat}`;
+      this.platform.sound.playVoice(url, channel);
     }
   }
 
@@ -736,7 +820,7 @@ export class RabiRiichiClient {
     if (!gameEvent.dealHandEvent || !this.isDealingHand) return;
 
     this.isDealingHand = false;
-    soundManager.playEffect(SOUND_EFFECTS.game.deal);
+    this.platform.sound.playEffect(SOUND_EFFECTS.game.deal);
   }
 
   private getEventDelay(eventMsg: IEventMsg): number {
@@ -813,10 +897,10 @@ export class RabiRiichiClient {
     );
     if (!this.hasPlayedActionSequenceSound) {
       if (hasCallAction) {
-        soundManager.playEffect(SOUND_EFFECTS.game.call);
+        this.platform.sound.playEffect(SOUND_EFFECTS.game.call);
         this.hasPlayedActionSequenceSound = true;
       } else if (isTurnInquiry) {
-        soundManager.playEffect(SOUND_EFFECTS.game.turn);
+        this.platform.sound.playEffect(SOUND_EFFECTS.game.turn);
         this.hasPlayedActionSequenceSound = true;
       }
     }
@@ -967,7 +1051,7 @@ export class RabiRiichiClient {
     passwordRaw: string,
     salt: string,
   ): Promise<string> {
-    return sha256(passwordRaw + '@' + salt);
+    return this.platform.crypto.sha256(passwordRaw + '@' + salt);
   }
 
   public async registerUser(
@@ -989,6 +1073,7 @@ export class RabiRiichiClient {
       gameState: null,
       aiType: AiType.AI_TYPE_NONE,
     };
+    this.username = username;
     this.accessToken = resp.accessToken ?? null;
     this.storeCredentials();
     await this.connectWS();
@@ -1012,6 +1097,7 @@ export class RabiRiichiClient {
       gameState: null,
       aiType: AiType.AI_TYPE_NONE,
     };
+    this.username = username;
     this.accessToken = resp.accessToken ?? null;
     this.storeCredentials();
     await this.connectWS();
@@ -1029,6 +1115,40 @@ export class RabiRiichiClient {
     const resp = await getUserInfo(client);
     this.logger.info(`Retrieved user information`, resp);
     this.updateUserInfo(resp);
+  }
+
+  public async updateProfile(nickname: string): Promise<void> {
+    this.logger.info('Updating profile');
+    const client = await this.getWSClient(true);
+    const resp = await updateProfile(client, nickname);
+    this.logger.info('Profile updated', resp);
+    this.updateUserInfo(resp);
+  }
+
+  /**
+   * Changes the password over the public socket (the user proves identity with
+   * the old password). The server rotates the access token; store the new one so
+   * the current session survives the token-version bump.
+   */
+  public async changePassword(
+    oldPasswordRaw: string,
+    newPasswordRaw: string,
+  ): Promise<void> {
+    const username = this.username;
+    if (!username) {
+      throw new StateError('Not signed in');
+    }
+    this.logger.info('Changing password');
+    const client = await this.getWSClient();
+    const salt = await this.fetchServerSalt();
+    const oldHash = await this.computePasswordHash(oldPasswordRaw, salt);
+    const newHash = await this.computePasswordHash(newPasswordRaw, salt);
+    const resp = await changePassword(client, username, oldHash, newHash);
+    this.logger.info('Password changed', resp);
+    if (resp.accessToken) {
+      this.accessToken = resp.accessToken;
+      this.storeCredentials();
+    }
   }
 
   public async createRoom(config?: IGameConfigMsg): Promise<void> {
@@ -1075,6 +1195,10 @@ export class RabiRiichiClient {
 
   public returnToRoom(): void {
     this.beginExitGame();
+    this.gameVoiceState = createGameVoiceState();
+    this.deferredChats = [];
+    this.isShowingRoundResult = false;
+    this.isFinalResultScreen = false;
     if (this.room) {
       this.room = {
         ...this.room,
@@ -1090,7 +1214,7 @@ export class RabiRiichiClient {
   public beginExitGame(): void {
     this.hasExitedGame = true;
     this.clearTimer();
-    soundManager.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
+    this.platform.sound.stopEffect(SOUND_EFFECTS.game.timeoutWarning);
     this.hasPlayedActionSequenceSound = false;
   }
 
@@ -1207,23 +1331,12 @@ export class RabiRiichiClient {
   }
 
   public logout(): void {
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
-        if (stored) {
-          const settings = JSON.parse(stored) as ServerSettings;
-          delete settings.lastUrl;
-          localStorage.setItem(
-            STORAGE_KEY_SERVER_SETTINGS,
-            JSON.stringify(settings),
-          );
-        }
-      } catch {
-        // ignore
-      }
-      localStorage.removeItem(TOKEN_STORE_KEY);
+    if (this.wsurl) {
+      this.credentials.clearCredentialsForServer(this.wsurl);
+      this.credentials.clearLastUrl();
     }
     this.accessToken = null;
+    this.username = null;
     this.wsurl = null;
     this.close();
   }
@@ -1236,7 +1349,7 @@ export class RabiRiichiClient {
     this.timerActiveSeat = seat;
     this.actionTimeout = seconds;
     if (interactive && seconds <= 5) {
-      soundManager.playEffect(SOUND_EFFECTS.game.timeoutWarning);
+      this.platform.sound.playEffect(SOUND_EFFECTS.game.timeoutWarning);
     }
     this.onChange.emit();
 
@@ -1255,7 +1368,7 @@ export class RabiRiichiClient {
         const prevSec = Math.ceil(this.actionTimeout + tick);
         const currSec = Math.ceil(this.actionTimeout);
         if (interactive && currSec <= 5 && prevSec !== currSec) {
-          soundManager.playEffect(SOUND_EFFECTS.game.timeoutWarning);
+          this.platform.sound.playEffect(SOUND_EFFECTS.game.timeoutWarning);
         }
         if (prevSec !== currSec) {
           this.onChange.emit();
@@ -1293,35 +1406,135 @@ export class RabiRiichiClient {
       this.logger.error('Failed to submit server default response:', err);
     }
   }
+
+  /**
+   * Returns the persisted last-server URL and access token, if both are present.
+   * Reads through the injected credential store, so it works on any host.
+   */
+  public loadStoredCredentials(): { url: string; token: string } | null {
+    const url = this.credentials.loadLastUrl();
+    const token = this.credentials.loadToken();
+    if (!url || !token) {
+      return null;
+    }
+    return { url, token };
+  }
+
+  /** Restores the persisted login username so it survives reloads. */
+  public restoreStoredUsername(): void {
+    this.username = this.credentials.loadUsername();
+  }
+
+  public getCredentialsForServer(url: string): ServerCredentials | null {
+    return this.credentials.loadCredentialsForServer(url);
+  }
+
+  public isKnownServer(url: string): boolean {
+    return this.credentials.isKnownServer(url);
+  }
+
+  public loadServerSettings(): ServerSettings {
+    return this.credentials.loadServerSettings();
+  }
+
+  public saveServerSettings(settings: ServerSettings): void {
+    this.credentials.saveServerSettings(settings);
+  }
 }
 
 export const rabiriichi = new RabiRiichiClient();
 
-export async function initRabiRiichi(): Promise<void> {
-  if (typeof localStorage === 'undefined') {
+async function handleParamAutoConnect(
+  serverParam: string,
+  joinRoomParam: string | null,
+): Promise<void> {
+  if (!rabiriichi.isKnownServer(serverParam)) {
+    rabiriichi.autoConnectError = 'connect.error.unknownServer';
+    rabiriichi.close();
     return;
   }
-  let url: string | undefined;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
-    const settings = stored ? (JSON.parse(stored) as ServerSettings) : {};
-    url = settings.lastUrl;
-  } catch {
-    // ignore
+
+  const creds = rabiriichi.getCredentialsForServer(serverParam);
+  const token = creds?.token;
+  if (token) {
+    const logger = new Logger('AutoLogin');
+    logger.info(
+      `Auto-connecting to parameter server: ${serverParam} with saved token`,
+    );
+    try {
+      await rabiriichi.connect(serverParam, token);
+      logger.info(`Auto-connection succeeded to ${serverParam}`);
+
+      if (joinRoomParam) {
+        const roomId = parseInt(joinRoomParam, 10);
+        if (!isNaN(roomId)) {
+          if (rabiriichi.room) {
+            if (rabiriichi.room.id === roomId) {
+              logger.info(
+                `Already in target room ${roomId}. Sign in as normal.`,
+              );
+            } else {
+              logger.warn(
+                `Already in a different room ${rabiriichi.room.id}. Aborting join.`,
+              );
+              rabiriichi.autoConnectError =
+                'connect.error.alreadyInDifferentRoom';
+              rabiriichi.close();
+            }
+          } else {
+            logger.info(`Auto-joining room: ${roomId}`);
+            await rabiriichi.joinRoom(roomId);
+          }
+        }
+      }
+    } catch (err) {
+      logger.error(`Auto-connection failed to ${serverParam}`, err);
+      rabiriichi.autoConnectError = 'connect.error.autoConnectFailed';
+      rabiriichi.close();
+    }
+  } else {
+    const settings = rabiriichi.loadServerSettings();
+    settings.lastUrl = serverParam;
+    const matchingServer =
+      DEFAULT_SERVERS.find((s) => s.url === serverParam) ??
+      settings.customServers?.find((s) => s.url === serverParam);
+    if (matchingServer) {
+      settings.selectedId = matchingServer.id;
+    } else {
+      settings.selectedId = 'custom';
+    }
+    rabiriichi.saveServerSettings(settings);
+    rabiriichi.close();
   }
-  const token = localStorage.getItem(TOKEN_STORE_KEY);
-  if (!url || !token) {
+}
+
+async function handleStandardAutoReconnect(): Promise<void> {
+  const stored = rabiriichi.loadStoredCredentials();
+  if (!stored) {
     return;
   }
+  const { url, token } = stored;
   const logger = new Logger('AutoReconnect');
-  logger.info(`Auto-reconnecting to server: ${url}, token: ${token}`);
+  logger.info(`Auto-reconnecting to server: ${url}`);
   try {
     await rabiriichi.connect(url, token);
     logger.info(`Auto-reconnection succeeded! Connected to ${url}`);
   } catch (err) {
     logger.error(`Auto-reconnection failed for URL ${url}`, err);
-    // Silent fail on auto-connect, but ensure the UI is not left stuck in the
-    // "connecting" state: reset to disconnected so the connect form re-enables.
     rabiriichi.close();
+  }
+}
+
+export async function initRabiRiichi(params?: URLSearchParams): Promise<void> {
+  rabiriichi.restoreStoredUsername();
+  rabiriichi.autoConnectError = null;
+
+  const serverParam = params?.get('server');
+  const joinRoomParam = params?.get('joinRoom');
+
+  if (serverParam) {
+    await handleParamAutoConnect(serverParam, joinRoomParam ?? null);
+  } else {
+    await handleStandardAutoReconnect();
   }
 }

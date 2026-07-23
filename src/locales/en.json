@@ -29,10 +29,23 @@
     "usernamePlaceholder": "Enter your username",
     "password": "Password",
     "passwordPlaceholder": "Enter your password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter your password",
     "usernameError": "Username cannot be empty",
     "passwordError": "Password cannot be empty",
     "passwordTooShort": "Password must be at least 6 characters",
-    "kickedByOtherClient": "Your account has been logged in from another client."
+    "passwordMismatch": "Passwords do not match",
+    "kickedByOtherClient": "Your account has been logged in from another client.",
+    "savedAccountCardTitle": "Saved Account",
+    "loginAsButton": "Log In as {{nickname}}",
+    "useDifferentAccountButton": "Use another account",
+    "savedTokenExpiredError": "Saved session has expired. Please log in again.",
+    "savedAccountUsername": "Username: {{username}}",
+    "error": {
+      "unknownServer": "The server address is not in your known server list.",
+      "autoConnectFailed": "Auto-connection failed. Please check your network or enter credentials.",
+      "alreadyInDifferentRoom": "You are already in a different room."
+    }
   },
   "lobby": {
     "title": "Lobby",
@@ -43,6 +56,7 @@
     "joinRoom": "Join Room",
     "joinRoomLabel": "Join Existing Room",
     "logout": "Logout",
+    "disconnect": "Disconnect",
     "viewReplay": "View Replay",
     "roomSettings": "Room Settings",
     "seed": "Seed",
@@ -256,6 +270,7 @@
     "waitingForNextRound": "Waiting for the next round...",
     "finalTitle": "Game Concluded",
     "returnToRoom": "Return to Room",
+    "returnToReplay": "Return to Replay",
     "showFinalResults": "Show Game Results",
     "ryuukyoku": {
       "suufon_renda": "Four Winds Discard Draw",
@@ -394,10 +409,10 @@
   },
   "ai": {
     "type": {
-      "AI_TYPE_NONE": "",
-      "AI_TYPE_DUMMY": "Drooling Rabbit",
-      "AI_TYPE_RULE_BASED": "Nodocchi",
-      "AI_TYPE_LLM": "LLM"
+      "0": "",
+      "1": "Drooling Rabbit",
+      "2": "Nodocchi",
+      "3": "LLM"
     },
     "llm": {
       "gemini": "Gemibo",
@@ -481,6 +496,7 @@
         "invalidAiType": "Invalid or unsupported AI type",
         "usernameEmpty": "Username cannot be empty",
         "passwordEmpty": "Password cannot be empty",
+        "nicknameEmpty": "Nickname cannot be empty",
         "generic": "Invalid argument"
       },
       "NotFound": {
@@ -505,6 +521,7 @@
       "Internal": {
         "cannotAddUser": "Cannot add user",
         "cannotAddAi": "Cannot add AI to room",
+        "cannotUpdateProfile": "Could not update profile",
         "generic": "Internal server error"
       },
       "Unauthenticated": {
@@ -541,7 +558,9 @@
     "tileInWall": "In Wall",
     "noWallData": "Initial wall data is not available in this replay log.",
     "wallSide": "{{side}} Wall",
-    "wanpai": "Dead Wall (Wanpai)"
+    "wanpai": "Dead Wall (Wanpai)",
+    "loading": "Loading replay from server...",
+    "failedToLoad": "Failed to load replay"
   },
   "sticker": {
     "title": "Stickers",
@@ -560,8 +579,36 @@
   },
   "settings": {
     "title": "System Settings",
-    "visualsTab": "Visuals",
+    "playerTab": "Player",
+    "profileTab": "Profile",
     "soundsTab": "Sounds",
+    "profile": {
+      "username": "Username",
+      "nickname": "Nickname",
+      "nicknamePlaceholder": "Enter a nickname",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Profile updated",
+      "nicknameEmpty": "Nickname cannot be empty",
+      "changePassword": "Change Password",
+      "notSignedIn": "Sign in to edit your profile."
+    },
+    "password": {
+      "title": "Change Password",
+      "current": "Current Password",
+      "new": "New Password",
+      "confirm": "Confirm New Password",
+      "currentPlaceholder": "Enter your current password",
+      "newPlaceholder": "Enter a new password",
+      "confirmPlaceholder": "Re-enter the new password",
+      "submit": "Update Password",
+      "submitting": "Updating...",
+      "success": "Password updated",
+      "cancel": "Cancel",
+      "mismatch": "Passwords do not match",
+      "tooShort": "Password must be at least 6 characters",
+      "empty": "Please fill in all fields"
+    },
     "characterSelector": "Character",
     "voicelines": "Voice Lines",
     "stickers": "Stickers Preview",
@@ -708,5 +755,10 @@
         "bigTenpai": "Big Hand / Yakuman Tenpai"
       }
     }
+  },
+  "common": {
+    "back": "Back",
+    "share": "Share",
+    "copied": "Link copied to clipboard!"
   }
 }

@@ -36,10 +36,7 @@ export interface CharacterConfig {
   readonly cv?: string;
 }
 
-// A silent 1-second WAV data URL used as a placeholder until real voice audio is
-// recorded. Every line points here for now so the UI is fully wired.
-const SILENT_WAV_URL =
-  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
+const MIMI_VOICE_ROOT = '/assets/mimi/voices';
 
 /**
  * Every voice line id for Mimi, transcribed from the character voice script.
@@ -203,9 +200,37 @@ export const CHARACTERS: readonly CharacterConfig[] = [
     voiceLines: MIMI_VOICE_IDS.map(({ id, category }) => ({
       id,
       category,
-      audioUrl: SILENT_WAV_URL,
+      audioUrl: `${MIMI_VOICE_ROOT}/${id}.mp3`,
     })),
   },
 ];
 
 export const DEFAULT_CHARACTER_ID = 'mimi';
+
+/** The character used when a selected id can't be resolved. */
+export const DEFAULT_CHARACTER: CharacterConfig = (() => {
+  const fallback = CHARACTERS.find(
+    (character) => character.id === DEFAULT_CHARACTER_ID,
+  );
+  if (!fallback) {
+    throw new Error(`Default character "${DEFAULT_CHARACTER_ID}" not found`);
+  }
+  return fallback;
+})();
+
+/** Resolves a character by id, falling back to {@link DEFAULT_CHARACTER}. */
+export function getCharacterOrDefault(characterId: string): CharacterConfig {
+  return (
+    CHARACTERS.find((character) => character.id === characterId) ??
+    DEFAULT_CHARACTER
+  );
+}
+
+export function getCharacterVoiceUrl(
+  characterId: string,
+  voiceId: string,
+): string | undefined {
+  return CHARACTERS.find(
+    (character) => character.id === characterId,
+  )?.voiceLines.find((line) => line.id === voiceId)?.audioUrl;
+}

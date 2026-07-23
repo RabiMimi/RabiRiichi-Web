@@ -1,129 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
-import { useConnectionStatus } from '../state/store';
+import { useConnectionStatus, useAutoConnectError } from '../state/store';
 import { ServerSelector } from './ServerSelector';
 import { CLIENT_VERSION } from '../transport/constants';
 import {
   STORAGE_KEY_SERVER_SETTINGS,
   type ServerSettings,
 } from '../domain/constants';
-import { Button } from './Button';
-import { SCREEN, FORM, MODAL } from './styles';
+import { SCREEN, FORM } from './styles';
 import { formatError } from '../lib/errors';
 
-interface LanguageSelectorProps {
-  language: string;
-  onChange: (lang: string) => void;
-}
-
-function LanguageSelector({
-  language,
-  onChange,
-}: LanguageSelectorProps): React.JSX.Element {
-  return (
-    <select
-      value={language}
-      onChange={(e) => onChange(e.target.value)}
-      className="px-2 py-1 rounded bg-[#1a1a1a] text-white border border-[#555] cursor-pointer text-sm outline-none focus:border-[#ff7a99]"
-    >
-      <option value="zhs">简体中文</option>
-      <option value="en">English</option>
-      <option value="ja">日本語</option>
-    </select>
-  );
-}
-
-interface TabSelectorProps {
-  activeTab: 'login' | 'register';
-  setActiveTab: (tab: 'login' | 'register') => void;
-  disabled: boolean;
-  setError: (err: string | null) => void;
-}
-
-function TabSelector({
-  activeTab,
-  setActiveTab,
-  disabled,
-  setError,
-}: TabSelectorProps): React.JSX.Element {
-  const { t } = useTranslation();
-  return (
-    <div className="flex border-b border-[#333] mb-4">
-      <button
-        type="button"
-        className={`flex-1 py-2 text-center font-semibold text-sm transition-colors border-b-2 outline-none cursor-pointer ${
-          activeTab === 'login'
-            ? 'text-[#ff7a99] border-[#ff7a99]'
-            : 'text-[#888] border-transparent hover:text-white'
-        }`}
-        onClick={() => {
-          setActiveTab('login');
-          setError(null);
-        }}
-        disabled={disabled}
-      >
-        {t('connect.loginTab')}
-      </button>
-      <button
-        type="button"
-        className={`flex-1 py-2 text-center font-semibold text-sm transition-colors border-b-2 outline-none cursor-pointer ${
-          activeTab === 'register'
-            ? 'text-[#ff7a99] border-[#ff7a99]'
-            : 'text-[#888] border-transparent hover:text-white'
-        }`}
-        onClick={() => {
-          setActiveTab('register');
-          setError(null);
-        }}
-        disabled={disabled}
-      >
-        {t('connect.registerTab')}
-      </button>
-    </div>
-  );
-}
-
-interface KickedModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-function KickedModal({
-  isOpen,
-  onClose,
-}: KickedModalProps): React.JSX.Element | null {
-  const { t } = useTranslation();
-  if (!isOpen) return null;
-
-  return (
-    <div className={MODAL.overlay}>
-      <div className={`${MODAL.card} ${MODAL.cardDefaultLook} max-w-[400px]`}>
-        <div className={MODAL.header}>
-          <h2 className={MODAL.title}>{t('connect.loginTab')}</h2>
-          <button type="button" className={MODAL.closeButton} onClick={onClose}>
-            &times;
-          </button>
-        </div>
-        <div className={`${MODAL.body} text-center py-4 text-[#eee]`}>
-          {t('connect.kickedByOtherClient')}
-        </div>
-        <div className={MODAL.footer}>
-          <Button onClick={onClose}>OK</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { LanguageSelector } from './LanguageSelector';
+import { TabSelector } from './TabSelector';
+import { KickedModal } from './KickedModal';
+import { SavedAccountCard } from './SavedAccountCard';
+import { AuthForm } from './AuthForm';
 
 export function ConnectScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
   const connectionStatus = useConnectionStatus();
+  const autoConnectError = useAutoConnectError();
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [targetUrl, setTargetUrl] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [nickname, setNickname] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_SERVER_SETTINGS);
@@ -133,7 +36,21 @@ export function ConnectScreen(): React.JSX.Element {
       return '';
     }
   });
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(() => {
+    const err = rabiriichi.autoConnectError;
+    if (err) {
+      rabiriichi.autoConnectError = null;
+      return t(err);
+    }
+    return null;
+  });
+  const activeError =
+    localError ?? (autoConnectError ? t(autoConnectError) : null);
+
+  const setError = useCallback((val: string | null) => {
+    setLocalError(val);
+    rabiriichi.autoConnectError = null;
+  }, []);
   const [connectPhase, setConnectPhase] = useState<
     'idle' | 'connecting_public' | 'authenticating'
   >('idle');
@@ -144,6 +61,40 @@ export function ConnectScreen(): React.JSX.Element {
     }
     return false;
   });
+
+  const [bypassedUrls, setBypassedUrls] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  const handleTargetUrlChange = useCallback((url: string) => {
+    setTargetUrl(url);
+    setBypassedUrls((prev) => {
+      if (prev.has(url)) {
+        const next = new Set(prev);
+        next.delete(url);
+        return next;
+      }
+      return prev;
+    });
+  }, []);
+
+  const savedCreds = useMemo(() => {
+    return targetUrl ? rabiriichi.getCredentialsForServer(targetUrl) : null;
+  }, [targetUrl]);
+
+  const showSavedCard = useMemo(() => {
+    return Boolean(savedCreds?.token && !bypassedUrls.has(targetUrl));
+  }, [savedCreds, bypassedUrls, targetUrl]);
+
+  const handleUseDifferentAccount = () => {
+    if (targetUrl) {
+      setBypassedUrls((prev) => {
+        const next = new Set(prev);
+        next.add(targetUrl);
+        return next;
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,6 +113,32 @@ export function ConnectScreen(): React.JSX.Element {
       return;
     }
 
+    if (showSavedCard) {
+      if (!savedCreds?.token) return;
+      try {
+        setConnectPhase('connecting_public');
+        await rabiriichi.connect(targetUrl, savedCreds.token);
+
+        if (rabiriichi.connectionStatus === 'disconnected') {
+          throw new Error('aborted');
+        }
+
+        setConnectPhase('idle');
+      } catch (err) {
+        if (err instanceof Error && err.message === 'aborted') {
+          return;
+        }
+        if (err instanceof Error && err.message.includes('Sign in failed')) {
+          setError(t('connect.savedTokenExpiredError'));
+        } else {
+          setError(formatError(err, t));
+        }
+        rabiriichi.close();
+        setConnectPhase('idle');
+      }
+      return;
+    }
+
     if (!username.trim()) {
       setError(t('connect.usernameError'));
       return;
@@ -174,6 +151,11 @@ export function ConnectScreen(): React.JSX.Element {
 
     if (activeTab === 'register' && password.length < 6) {
       setError(t('connect.passwordTooShort'));
+      return;
+    }
+
+    if (activeTab === 'register' && password !== confirmPassword) {
+      setError(t('connect.passwordMismatch'));
       return;
     }
 
@@ -264,12 +246,14 @@ export function ConnectScreen(): React.JSX.Element {
         <p className={SCREEN.subtitle}>{t('connect.subtitle')}</p>
 
         {/* Tab Selector */}
-        <TabSelector
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          disabled={isConnecting}
-          setError={setError}
-        />
+        {!showSavedCard && (
+          <TabSelector
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            disabled={isConnecting}
+            setError={setError}
+          />
+        )}
 
         <form onSubmit={onSubmit} className={FORM.form}>
           <div className={FORM.group}>
@@ -277,79 +261,35 @@ export function ConnectScreen(): React.JSX.Element {
               {t('connect.serverAddress')}
             </label>
             <ServerSelector
-              onTargetUrlChange={setTargetUrl}
+              onTargetUrlChange={handleTargetUrlChange}
               isConnecting={isConnecting}
             />
           </div>
 
-          <div className={FORM.group}>
-            <label htmlFor="username" className={FORM.label}>
-              {t('connect.username')}
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              className={FORM.input}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={isConnecting}
-              placeholder={t('connect.usernamePlaceholder')}
-              maxLength={30}
-              autoComplete="username"
+          {showSavedCard && savedCreds ? (
+            <SavedAccountCard
+              savedCreds={savedCreds}
+              isConnecting={isConnecting}
+              effectivePhase={effectivePhase}
+              error={activeError}
+              onUseDifferentAccount={handleUseDifferentAccount}
             />
-          </div>
-
-          {activeTab === 'register' && (
-            <div className={FORM.group}>
-              <label htmlFor="nickname" className={FORM.label}>
-                {t('connect.nickname')}
-              </label>
-              <input
-                id="nickname"
-                name="nickname"
-                type="text"
-                className={FORM.input}
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                disabled={isConnecting}
-                placeholder={t('connect.nicknamePlaceholder')}
-                maxLength={20}
-                autoComplete="nickname"
-              />
-            </div>
+          ) : (
+            <AuthForm
+              activeTab={activeTab}
+              isConnecting={isConnecting}
+              effectivePhase={effectivePhase}
+              username={username}
+              setUsername={setUsername}
+              password={password}
+              setPassword={setPassword}
+              confirmPassword={confirmPassword}
+              setConfirmPassword={setConfirmPassword}
+              nickname={nickname}
+              setNickname={setNickname}
+              error={activeError}
+            />
           )}
-
-          <div className={FORM.group}>
-            <label htmlFor="password" className={FORM.label}>
-              {t('connect.password')}
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              className={FORM.input}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isConnecting}
-              placeholder={t('connect.passwordPlaceholder')}
-              autoComplete={
-                activeTab === 'login' ? 'current-password' : 'new-password'
-              }
-            />
-          </div>
-
-          {error && <div className={FORM.error}>{error}</div>}
-
-          <Button type="submit" variant={isConnecting ? 'danger' : 'primary'}>
-            {effectivePhase === 'connecting_public'
-              ? t('connect.connectingPublic')
-              : effectivePhase === 'authenticating'
-                ? t('connect.authenticating')
-                : activeTab === 'login'
-                  ? t('connect.loginTab')
-                  : t('connect.registerTab')}
-          </Button>
         </form>
       </div>
 
