@@ -18,6 +18,7 @@ import {
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { CallPrompt } from './CallPrompt';
+import { HandDisplay } from './HandDisplay';
 import { Button } from './Button';
 import { useHoverOrTouchHold } from './useHoverOrTouchHold';
 import { rabiriichi } from '../net/client';
@@ -333,6 +334,9 @@ export function GamePlayHUD(): React.JSX.Element | null {
         onExitClick={onExitGame}
         onInfoClick={() => setIsInfoOpen(true)}
       />
+
+      {/* DOM Hand Display for local player */}
+      <HandDisplay />
 
       {/* Countdown Timer */}
       <HUDTimer

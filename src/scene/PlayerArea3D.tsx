@@ -171,16 +171,18 @@ export function PlayerArea3D({
       />
 
       {/* Hand (closed tiles + drawn tile) - pushed towards center */}
-      <group position={[-0.2, 0, -0.1]}>
-        <Hand3D
-          tiles={hand.freeTiles}
-          pendingTile={hand.pendingTile}
-          isLocal={isLocal}
-          isRevealed={isRevealed}
-          winningTileTraceId={winningTileTraceId}
-          shiftX={shiftX}
-        />
-      </group>
+      {!isLocal && (
+        <group position={[0, 0, -0.2]}>
+          <Hand3D
+            tiles={hand.freeTiles}
+            pendingTile={hand.pendingTile}
+            isLocal={isLocal}
+            isRevealed={isRevealed}
+            winningTileTraceId={winningTileTraceId}
+            shiftX={shiftX}
+          />
+        </group>
+      )}
 
       {/* Discard River */}
       <River3D
