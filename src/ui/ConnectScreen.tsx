@@ -229,68 +229,69 @@ export function ConnectScreen(): React.JSX.Element {
 
   return (
     <div className={SCREEN.base}>
-      <div className={`${SCREEN.card} relative`}>
-        <div className="absolute top-2 left-3 text-[0.8rem] text-[#666]">
-          v{CLIENT_VERSION}
+      <div className="w-full max-w-3xl mx-auto flex flex-col md:flex-row items-center md:items-stretch gap-8 md:gap-12 p-6 md:p-10">
+        {/* Left column: Logo + subtitle */}
+        <div className="flex flex-col items-center justify-center gap-4 md:w-1/2">
+          <img src="/assets/logo.png" alt="RabiRiichi" className="h-20 md:h-24 w-auto object-contain" />
+          <p className="text-center text-sm text-white/50">{t('connect.subtitle')}</p>
+          <div className="text-[0.75rem] text-[#555]">v{CLIENT_VERSION}</div>
         </div>
-        {/* Title row with language switcher */}
-        <div className="flex justify-between items-center mb-2">
-          <h1 className={SCREEN.title} style={{ margin: 0 }}>
-            RabiRiichi
-          </h1>
-          <LanguageSelector
-            language={i18n.language}
-            onChange={(lang) => void i18n.changeLanguage(lang)}
-          />
-        </div>
-        <p className={SCREEN.subtitle}>{t('connect.subtitle')}</p>
 
-        {/* Tab Selector */}
-        {!showSavedCard && (
-          <TabSelector
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            disabled={isConnecting}
-            setError={setError}
-          />
-        )}
-
-        <form onSubmit={onSubmit} className={FORM.form}>
-          <div className={FORM.group}>
-            <label htmlFor="server-select" className={FORM.label}>
-              {t('connect.serverAddress')}
-            </label>
-            <ServerSelector
-              onTargetUrlChange={handleTargetUrlChange}
-              isConnecting={isConnecting}
+        {/* Right column: Form */}
+        <div className="w-full md:w-1/2 flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <LanguageSelector
+              language={i18n.language}
+              onChange={(lang) => void i18n.changeLanguage(lang)}
             />
           </div>
 
-          {showSavedCard && savedCreds ? (
-            <SavedAccountCard
-              savedCreds={savedCreds}
-              isConnecting={isConnecting}
-              effectivePhase={effectivePhase}
-              error={activeError}
-              onUseDifferentAccount={handleUseDifferentAccount}
-            />
-          ) : (
-            <AuthForm
+          {!showSavedCard && (
+            <TabSelector
               activeTab={activeTab}
-              isConnecting={isConnecting}
-              effectivePhase={effectivePhase}
-              username={username}
-              setUsername={setUsername}
-              password={password}
-              setPassword={setPassword}
-              confirmPassword={confirmPassword}
-              setConfirmPassword={setConfirmPassword}
-              nickname={nickname}
-              setNickname={setNickname}
-              error={activeError}
+              setActiveTab={setActiveTab}
+              disabled={isConnecting}
+              setError={setError}
             />
           )}
-        </form>
+
+          <form onSubmit={onSubmit} className={FORM.form}>
+            <div className={FORM.group}>
+              <label htmlFor="server-select" className={FORM.label}>
+                {t('connect.serverAddress')}
+              </label>
+              <ServerSelector
+                onTargetUrlChange={handleTargetUrlChange}
+                isConnecting={isConnecting}
+              />
+            </div>
+
+            {showSavedCard && savedCreds ? (
+              <SavedAccountCard
+                savedCreds={savedCreds}
+                isConnecting={isConnecting}
+                effectivePhase={effectivePhase}
+                error={activeError}
+                onUseDifferentAccount={handleUseDifferentAccount}
+              />
+            ) : (
+              <AuthForm
+                activeTab={activeTab}
+                isConnecting={isConnecting}
+                effectivePhase={effectivePhase}
+                username={username}
+                setUsername={setUsername}
+                password={password}
+                setPassword={setPassword}
+                confirmPassword={confirmPassword}
+                setConfirmPassword={setConfirmPassword}
+                nickname={nickname}
+                setNickname={setNickname}
+                error={activeError}
+              />
+            )}
+          </form>
+        </div>
       </div>
 
       <KickedModal

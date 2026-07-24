@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { rabiriichi } from '../net/client';
+import { useAnimationSpeed } from '../state/store';
 import { ProfileTab } from './ProfileTab';
 import { PlayerTab } from './PlayerTab';
 import { SoundsTab } from './SoundsTab';
+import { GameSettingsTab } from './GameSettingsTab';
+import { GameModalTab } from './GameModalTab';
 import { TabButton } from './TabButton';
 import { MODAL } from './styles';
 
@@ -15,15 +19,14 @@ export function SettingsModal({
   onClose,
 }: SettingsModalProps): React.JSX.Element {
   const { t } = useTranslation();
+  const animationSpeed = useAnimationSpeed();
 
-  const [activeTab, setActiveTab] = useState<'player' | 'profile' | 'sounds'>(
-    'player',
-  );
+  const [activeTab, setActiveTab] = useState<'player' | 'game' | 'profile' | 'sounds'>('player');
 
   return createPortal(
     <div className={MODAL.overlay} onClick={onClose}>
       <div
-        className={`${MODAL.card} w-[95%] max-w-[900px] md:max-w-[1000px] lg:max-w-[1100px] xl:max-w-[1250px] max-h-[85vh] lg:max-h-[90vh] border border-[#ff7a99]/30 bg-[#121c32]/95`}
+        className={`${MODAL.card} min-h-96 w-[95%] max-w-[900px] md:max-w-[1000px] lg:max-w-[1100px] xl:max-w-[1250px] max-h-[85vh] lg:max-h-[90vh] border border-[#ff7a99]/30 bg-[#121c32]/95`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -33,6 +36,13 @@ export function SettingsModal({
               {t('settings.title', 'System Settings')}
             </h2>
             <div className="flex gap-1">
+              <TabButton
+                active={activeTab === 'game'}
+                onClick={() => setActiveTab('game')}
+                className="lg:px-4 lg:py-2 lg:text-base"
+              >
+                {t('settings.gameTab', 'Game')}
+              </TabButton>
               <TabButton
                 active={activeTab === 'player'}
                 onClick={() => setActiveTab('player')}
@@ -64,6 +74,7 @@ export function SettingsModal({
         {/* Content */}
         <div className="flex-grow flex flex-col overflow-hidden min-h-0">
           {activeTab === 'player' && <PlayerTab />}
+          {activeTab === 'game' && <GameModalTab />}
           {activeTab === 'profile' && <ProfileTab />}
           {activeTab === 'sounds' && <SoundsTab />}
         </div>

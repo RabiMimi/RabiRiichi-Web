@@ -88,7 +88,7 @@ export function TableCenter(): React.JSX.Element | null {
         position={[-0.06, 0.001, -0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.11}
-        color="#FF5454"
+        color="#02B6BF"
         anchorX="right"
         anchorY="middle"
         font={TABLE_CENTER_FONT_PATH}
@@ -97,10 +97,10 @@ export function TableCenter(): React.JSX.Element | null {
         {roundWindText}
       </DreiText>
       <DreiText
-        position={[-0.04, 0.004, -0.08]}
+        position={[-0.05, 0.004, -0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.11}
-        color="#BFBFBF"
+        color="#02B6BF"
         anchorX="left"
         anchorY="middle"
         font={TABLE_CENTER_FONT_PATH}
@@ -112,7 +112,7 @@ export function TableCenter(): React.JSX.Element | null {
         position={[0.1, 0.004, -0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.11}
-        color="#BFBFBF"
+        color="#02B6BF"
         anchorX="center"
         anchorY="middle"
         font={TABLE_CENTER_FONT_PATH}
@@ -126,13 +126,13 @@ export function TableCenter(): React.JSX.Element | null {
         position={[0, 0.004, 0.12]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.09}
-        color="#BFBFBF"
+        color="#02B6BF"
         anchorX="center"
         anchorY="middle"
         font={TABLE_CENTER_FONT_PATH}
         renderOrder={2}
       >
-        {`佘${remainingTiles}`}
+        {`余${remainingTiles}`}
       </DreiText>
 
       {/* Render score, seat wind, and Riichi sticks for each player */}
@@ -159,7 +159,7 @@ export function TableCenter(): React.JSX.Element | null {
           25000;
 
         let displayText = points.toString();
-        let displayColor = isTimerActive ? '#ff7a99' : '#ffffff';
+        let displayColor = '#ffffff';
 
         if (isHovered && p.seat !== selfSeat) {
           const diff = selfPoints - points;

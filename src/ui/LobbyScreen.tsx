@@ -63,7 +63,7 @@ export function LobbyScreen(): React.JSX.Element {
 
   return (
     <div className={SCREEN.base}>
-      <div className={`${SCREEN.card} max-w-[960px]`}>
+      <div className={`${SCREEN.card} max-w-[960px] w-full h-full rounded-none border-none bg-transparent backdrop-blur-none shadow-none p-8`}>
         {/* Header with Title and Language Switcher */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-baseline gap-2">

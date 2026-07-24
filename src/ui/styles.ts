@@ -74,11 +74,11 @@ export const FORM = {
     'text-sm font-semibold text-[#ccc] shrink-0 w-[110px] text-right whitespace-nowrap',
   // Input fields
   input:
-    'h-10 rounded-lg border border-[#555] bg-[#1a1a1a] px-3 py-2 text-base text-white ' +
+    'h-10 rounded-full border border-[#555] bg-[#1a1a1a] px-4 py-2 text-base text-white ' +
     'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50',
   // Inline inputs/selects (slightly smaller padding)
   inputInline:
-    'h-8 flex-1 min-w-0 rounded-lg border border-[#555] bg-[#1a1a1a] px-2.5 py-1.5 text-sm text-white ' +
+    'h-8 flex-1 min-w-0 rounded-full border border-[#555] bg-[#1a1a1a] px-3 py-1.5 text-sm text-white ' +
     'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50',
   // Inline wrapper error text
   fieldError: 'text-xs text-[#ff6666] pl-[118px] text-left mt-0.5',

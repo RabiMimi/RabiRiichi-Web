@@ -13,7 +13,7 @@ interface UiTileProps {
 }
 
 const SIZE_CLASSES: Record<UiTileSize, string> = {
-  result: 'w-8 h-auto',
+  result: 'w-16 h-auto',
   dora: 'w-8 h-auto',
   action: 'w-6 h-auto lg:w-8 h-auto',
   info: 'w-8 h-auto',

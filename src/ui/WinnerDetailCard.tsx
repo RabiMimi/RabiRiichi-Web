@@ -31,7 +31,8 @@ export function WinnerDetailCard({
   isCardStarted,
   room,
 }: WinnerDetailCardProps): React.JSX.Element | null {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const fontFamily = i18n.language === 'zhs' ? "'GameFontZH'" : "'GameFont'";
 
   const agari = player.gameState?.agari;
   if (!agari) return null;
@@ -110,11 +111,7 @@ export function WinnerDetailCard({
   const handTiles = player.gameState?.hand.freeTiles ?? [];
   const calledMelds = player.gameState?.hand.called ?? [];
 
-  const cardStyles = isNagashi
-    ? 'bg-[#1c304d]/85 border-[#00bcff]'
-    : 'bg-[#2b2b2b]/75 border-[#444]';
-
-  const badgeColor = isNagashi ? 'bg-[#00bcff]' : 'bg-[#ff3333]';
+  const cardStyles = '';
 
   const finalLimitClass = isNagashi
     ? 'bg-[#00bcff] text-[#1a1a1a]'
@@ -125,21 +122,13 @@ export function WinnerDetailCard({
   return (
     <div
       key={player.id}
-      className={`rounded-xl flex flex-col border p-2 lg:p-3 gap-1.5 lg:gap-2 transition-all duration-700 ease-out transform ${cardStyles} ${
+      className={`rounded-xl flex flex-col p-2 lg:p-3 gap-1.5 lg:gap-2 transition-all duration-700 ease-out transform ${cardStyles} ${
         isCardStarted
           ? 'opacity-100 translate-y-0 scale-100'
           : 'opacity-0 -translate-y-2 scale-98 pointer-events-none'
       }`}
     >
       <div className="flex items-center gap-1.5 lg:gap-3">
-        <span
-          className={`text-sm font-bold px-1.5 py-0.5 lg:px-3 lg:py-1 rounded-full text-white ${badgeColor}`}
-        >
-          {badgeText}
-        </span>
-        <span className="text-lg font-bold">
-          {getPlayerDisplayName(player, t)}
-        </span>
         {isTenpai ? (
           player.gameState?.awaitedTiles &&
           player.gameState.awaitedTiles.length > 0 && (
@@ -162,20 +151,7 @@ export function WinnerDetailCard({
                 ? 'opacity-100 translate-x-0'
                 : 'opacity-0 translate-x-4 pointer-events-none'
             }`}
-          >
-            {limitLabel && (
-              <span
-                className={`text-sm font-bold px-1.5 py-0.5 lg:px-3 lg:py-1 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.2)] ${finalLimitClass}`}
-              >
-                {limitLabel}
-              </span>
-            )}
-            {hanFuLabel && (
-              <span className={`font-bold text-lg ${finalHanFuColor}`}>
-                {hanFuLabel}
-              </span>
-            )}
-          </div>
+          />
         )}
       </div>
 
@@ -252,7 +228,7 @@ export function WinnerDetailCard({
 
       {/* List of Yaku */}
       {!isTenpai && (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-2xl" style={{ fontFamily }}>
           {/* Column 1 */}
           <div className="flex flex-col gap-1.5">
             {yakuList
@@ -286,7 +262,7 @@ export function WinnerDetailCard({
                         defaultValue: yaku.Src ?? '',
                       })}
                     </span>
-                    <span className="text-[#ffaa44] font-bold">
+                    <span className="text-[#ffaa44]">
                       {typeLabel}
                     </span>
                   </div>
@@ -326,11 +302,45 @@ export function WinnerDetailCard({
                       defaultValue: yaku.Src ?? '',
                     })}
                   </span>
-                  <span className="text-[#ffaa44] font-bold">{typeLabel}</span>
+                  <span className="text-[#ffaa44]">{typeLabel}</span>
                 </div>
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Han/Fu below yaku list */}
+      {agari.scores?.result && !agari.scores.result.finalYakuman && (
+        <div
+          className={`mt-2 flex items-baseline transition-all duration-700 ease-out transform ${
+            showTotal
+              ? 'opacity-100 translate-x-0'
+              : 'opacity-0 translate-x-4 pointer-events-none'
+          }`}
+        >
+          <span className={`text-6xl ${finalHanFuColor}`} style={{ fontFamily }}>
+            {agari.scores.result.han ?? 0}{t('result.hanUnit', '番')}
+          </span>
+          {agari.scores.result.fu ? (
+            <span className={`text-xl ${finalHanFuColor} ml-2`} style={{ fontFamily }}>
+              {agari.scores.result.fu}{t('result.fuUnit', '符')}
+            </span>
+          ) : null}
+          <div className="flex-1" />
+          <span className={`text-6xl ${finalHanFuColor}`} style={{ fontFamily }}>
+            {(agari.gainPoints ?? 0) - (agari.losePoints ?? 0)}{t('result.pointsUnit', '点')}
+          </span>
+          {limitLabel && (
+            <span
+              className={`text-6xl ml-10 transition-all duration-500 ease-out ${
+                showTotal ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+              }`}
+              style={{ fontFamily }}
+            >
+              {limitLabel}
+            </span>
+          )}
         </div>
       )}
     </div>
