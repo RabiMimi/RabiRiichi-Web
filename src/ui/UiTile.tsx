@@ -10,6 +10,7 @@ interface UiTileProps {
   isWinningTile?: boolean;
   isHighlighted?: boolean;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const SIZE_CLASSES: Record<UiTileSize, string> = {
@@ -28,6 +29,7 @@ export function UiTile({
   isWinningTile = false,
   isHighlighted = false,
   className = '',
+  style,
 }: UiTileProps): React.JSX.Element {
   const isBack = tile === 'back';
   const imgSrc = isBack
@@ -37,9 +39,9 @@ export function UiTile({
   const isCustom = size === 'custom';
   const isHand = size === 'hand';
   const defaultStyles = isCustom
-    ? 'object-cover bg-[#f7f4eb]'
+    ? 'object-contain bg-[#f7f4eb]'
     : isHand
-      ? 'rounded object-cover bg-[#f7f4eb] [filter:drop-shadow(0_0_1px_#000)_drop-shadow(0_0_1px_#000)_drop-shadow(0_0_1px_#000)]'
+      ? 'rounded object-cover bg-[#f7f4eb]'
       : 'rounded-sm shadow-[0_2px_4px_rgba(0,0,0,0.5)] object-cover bg-[#f7f4eb]';
 
   const borderStyle = isCustom || isHand
@@ -54,7 +56,9 @@ export function UiTile({
     <img
       src={imgSrc}
       alt={isBack ? 'Locked' : tile}
+      draggable={false}
       className={`${defaultStyles} ${borderStyle} ${SIZE_CLASSES[size]} ${className}`}
+      style={style}
     />
   );
 }
