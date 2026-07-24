@@ -9,6 +9,7 @@ import {
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
 import { UiTile } from './UiTile';
+import { SOUND_EFFECTS } from '../lib/soundEffects';
 import type { ActionOption } from '../domain/inquiry';
 
 /**
@@ -38,6 +39,7 @@ export function HandDisplay(): React.JSX.Element | null {
   }, [currentInquiry, isRiichiSelectMode]);
 
   // Drag-up-to-discard — hooks before any early return
+  const hoverAudioRef = useRef<HTMLAudioElement | null>(null);
   const [dragTraceId, setDragTraceId] = useState<number | null>(null);
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [dragOffsetY, setDragOffsetY] = useState(0);
@@ -166,6 +168,14 @@ export function HandDisplay(): React.JSX.Element | null {
 
   const handleTileHover = (traceId: number | null) => {
     rabiriichi.hoverTile(traceId);
+    if (traceId != null) {
+      if (!hoverAudioRef.current) {
+        hoverAudioRef.current = new Audio(SOUND_EFFECTS.tile.hover);
+        hoverAudioRef.current.volume = 0.5;
+      }
+      hoverAudioRef.current.currentTime = 0;
+      hoverAudioRef.current.play().catch(() => undefined);
+    }
   };
 
   return (
