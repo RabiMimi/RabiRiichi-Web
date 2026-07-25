@@ -13,9 +13,18 @@ const BASE_TILE_HEIGHT = 109;
 const BASE_BEVEL_HEIGHT = 21;
 
 /** The hand never grows past this, however wide the window is. */
-const MAX_HAND_WIDTH = 1100;
+const MAX_HAND_WIDTH = 820;
 /** ...nor past this fraction of the viewport, leaving room for the side HUD. */
-const HAND_VIEWPORT_RATIO = 0.75;
+const HAND_VIEWPORT_RATIO = 0.6;
+
+/**
+ * Share of viewport height the tile row may occupy.
+ *
+ * Width alone is not enough of a constraint: in landscape the window is wide but
+ * short, so a hand sized purely to fit horizontally still ends up towering over
+ * the table. Capping height keeps the board readable on a phone.
+ */
+const MAX_HAND_HEIGHT_RATIO = 0.14;
 
 /** Horizontal gap between adjacent free tiles (Tailwind `gap-0.5`). */
 const TILE_GAP = 2;
@@ -43,19 +52,34 @@ export interface HandLayout {
 }
 
 /**
- * Computes the hand row geometry for a viewport width and free-tile count.
+ * Computes the hand row geometry for a viewport and free-tile count.
  *
- * The pending tile always gets a reserved slot, so the row does not jump
+ * The tile size is whichever of three limits binds first: the artwork's own
+ * size, the horizontal budget, or the share of viewport height the row may
+ * occupy. The pending tile always gets a reserved slot, so the row does not jump
  * horizontally when a tile is drawn or discarded.
  */
 export function computeHandLayout(
   viewportWidth: number,
+  viewportHeight: number,
   freeTileCount: number,
 ): HandLayout {
-  const budget = Math.min(viewportWidth * HAND_VIEWPORT_RATIO, MAX_HAND_WIDTH);
-  const tileWidth = Math.min(
-    BASE_TILE_WIDTH,
-    Math.floor(budget / Math.max(freeTileCount, 1)),
+  const widthBudget = Math.min(
+    viewportWidth * HAND_VIEWPORT_RATIO,
+    MAX_HAND_WIDTH,
+  );
+  const widthPerTile = Math.floor(widthBudget / Math.max(freeTileCount, 1));
+
+  // The row is a tile face plus its bevel, so convert the height allowance back
+  // into a width using the artwork's aspect ratio.
+  const heightBudget = viewportHeight * MAX_HAND_HEIGHT_RATIO;
+  const widthFromHeight = Math.floor(
+    (heightBudget * BASE_TILE_WIDTH) / (BASE_TILE_HEIGHT + BASE_BEVEL_HEIGHT),
+  );
+
+  const tileWidth = Math.max(
+    1,
+    Math.min(BASE_TILE_WIDTH, widthPerTile, widthFromHeight),
   );
   const scale = tileWidth / BASE_TILE_WIDTH;
 

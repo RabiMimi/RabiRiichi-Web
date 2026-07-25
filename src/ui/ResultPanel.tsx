@@ -513,7 +513,7 @@ export function ResultPanel(): React.JSX.Element | null {
           />
         </div>
         <div className="flex-1 p-2 lg:p-4 flex flex-col gap-1.5 lg:gap-2.5 relative overflow-hidden">
-          <h2 className="relative z-[1] text-2xl lg:text-7xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-right m-0 mb-0.5 tracking-wider lg:tracking-widest">
+          <h2 className="relative z-[1] text-[clamp(1.25rem,5vh,3rem)] font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-right m-0 mb-0.5 tracking-wider lg:tracking-widest">
             {hasNagashiWinner
               ? t('yaku.NagashiMangan')
               : isDraw
@@ -573,7 +573,7 @@ export function ResultPanel(): React.JSX.Element | null {
             <Button
               onClick={handleProceed}
               disabled={!canProceed && !room.gameEnded}
-              className="absolute bottom-3 right-3 text-3xl px-8 py-4"
+              className="absolute bottom-3 right-3 text-[clamp(0.875rem,2.6vh,1.5rem)] px-[clamp(1rem,3vh,2rem)] py-[clamp(0.4rem,1.4vh,1rem)]"
             >
               {room.gameEnded
                 ? t('result.showFinalResults', 'Show Game Results')

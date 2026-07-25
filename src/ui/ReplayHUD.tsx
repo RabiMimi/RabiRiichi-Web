@@ -21,6 +21,7 @@ import {
   getRoundStartIndices,
 } from '../replay/replayDriver';
 import { GameInfoPanel, TenpaiWaitPanel } from './GamePlayHUD';
+import { HandDisplay } from './HandDisplay';
 import { FullscreenButton } from './FullscreenButton';
 import { GameInfoModal } from './GameInfoModal';
 import { InitialWallModal } from './InitialWallModal';
@@ -492,6 +493,14 @@ export function ReplayHUD(): React.JSX.Element | null {
           </div>
         </div>
       )}
+
+      {/*
+        The viewed seat's hand. PlayerArea3D hides the local player's 3D hand in
+        favour of this DOM one, so the replay HUD has to render it too — without
+        it the hand disappears entirely. A replay never issues an inquiry, so no
+        tile is legal and the hand is inert here (not clickable or draggable).
+      */}
+      <HandDisplay />
     </div>
   );
 }

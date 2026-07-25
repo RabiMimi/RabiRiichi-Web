@@ -9,6 +9,7 @@ import { getLimitName } from '../domain/resultHelpers';
 import { UiTile } from './UiTile';
 import { getGameFontStack } from './gameFont';
 import { getResultBadge } from './resultBadge';
+import { RESULT } from './styles';
 
 interface WinnerDetailCardProps {
   player: PlayerModel;
@@ -218,7 +219,7 @@ export function WinnerDetailCard({
       {/* List of Yaku */}
       {!isTenpai && (
         <div
-          className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-2xl"
+          className={`grid grid-cols-2 gap-x-3 gap-y-1.5 ${RESULT.yakuRow}`}
           style={{ fontFamily }}
         >
           {/* Column 1 */}
@@ -310,7 +311,7 @@ export function WinnerDetailCard({
           }`}
         >
           <span
-            className={`text-6xl ${finalHanFuColor}`}
+            className={`${RESULT.scoreFigure} ${finalHanFuColor} whitespace-nowrap`}
             style={{ fontFamily }}
           >
             {agari.scores.result.han ?? 0}
@@ -318,7 +319,7 @@ export function WinnerDetailCard({
           </span>
           {agari.scores.result.fu ? (
             <span
-              className={`text-xl ${finalHanFuColor} ml-2`}
+              className={`${RESULT.scoreFu} ${finalHanFuColor} ml-2 whitespace-nowrap`}
               style={{ fontFamily }}
             >
               {agari.scores.result.fu}
@@ -327,7 +328,7 @@ export function WinnerDetailCard({
           ) : null}
           <div className="flex-1" />
           <span
-            className={`text-6xl ${finalHanFuColor}`}
+            className={`${RESULT.scoreFigure} ${finalHanFuColor} whitespace-nowrap`}
             style={{ fontFamily }}
           >
             {agari.gainPoints - agari.losePoints}
@@ -335,7 +336,7 @@ export function WinnerDetailCard({
           </span>
           {limitLabel && (
             <span
-              className={`text-6xl ml-10 transition-all duration-500 ease-out ${
+              className={`${RESULT.limitLabel} ml-3 lg:ml-6 whitespace-nowrap transition-all duration-500 ease-out ${
                 showTotal ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
               }`}
               style={{ fontFamily }}

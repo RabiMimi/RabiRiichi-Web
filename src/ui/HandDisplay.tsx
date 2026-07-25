@@ -21,15 +21,19 @@ import { computeHandLayout, type HandLayout } from './handLayout';
 import { useDragToDiscard, type DragToDiscard } from './useDragToDiscard';
 import type { ActionOption } from '../domain/inquiry';
 
-/** Tracks the viewport width so the hand can shrink on narrow screens. */
-function useViewportWidth(): number {
-  const [width, setWidth] = useState(() => window.innerWidth);
+/** Tracks the viewport so the hand can shrink on small or short screens. */
+function useViewportSize(): { width: number; height: number } {
+  const [size, setSize] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
   useEffect(() => {
-    const onResize = () => setWidth(window.innerWidth);
+    const onResize = () =>
+      setSize({ width: window.innerWidth, height: window.innerHeight });
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
-  return width;
+  return size;
 }
 
 /** Plays the tile hover blip, reusing a single audio element. */
@@ -133,7 +137,7 @@ export function HandDisplay(): React.JSX.Element | null {
   const currentInquiry = useCurrentInquiry();
   const isRiichiSelectMode = useIsRiichiSelectMode();
   const callHighlightIds = useCallHighlightTileIds();
-  const viewportWidth = useViewportWidth();
+  const viewportSize = useViewportSize();
   const onHoverTile = useHoverSound();
   const doraIndicators = useDoraIndicators();
 
@@ -170,8 +174,13 @@ export function HandDisplay(): React.JSX.Element | null {
   }, [currentInquiry, isRiichiSelectMode]);
 
   const layout = useMemo(
-    () => computeHandLayout(viewportWidth, hand?.freeTiles.length ?? 0),
-    [viewportWidth, hand],
+    () =>
+      computeHandLayout(
+        viewportSize.width,
+        viewportSize.height,
+        hand?.freeTiles.length ?? 0,
+      ),
+    [viewportSize, hand],
   );
 
   const discard = useCallback(
