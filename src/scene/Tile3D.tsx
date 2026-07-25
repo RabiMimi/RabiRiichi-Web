@@ -781,13 +781,8 @@ const OUTLINE_MATERIAL = new THREE.MeshBasicMaterial({
   opacity: 0.73,
 });
 
-/**
- * How much larger than the tile the outline hull is drawn.
- *
- * At the original 1.05 the hull barely cleared the tile and the toon outline
- * read as absent at normal zoom.
- */
-const OUTLINE_SCALE = 1.12;
+/** How much larger than the tile the outline hull is drawn. */
+const OUTLINE_SCALE = 1.05;
 
 /**
  * Renders a slightly enlarged copy of the tile with a flat back-facing material
