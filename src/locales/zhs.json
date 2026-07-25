@@ -581,8 +581,11 @@
   "settings": {
     "title": "系统设置",
     "playerTab": "玩家",
+    "gameTab": "游戏",
     "profileTab": "个人资料",
     "soundsTab": "声音",
+    "animationSpeed": "动画速度",
+    "autoPlay": "托管",
     "profile": {
       "username": "用户名",
       "nickname": "昵称",

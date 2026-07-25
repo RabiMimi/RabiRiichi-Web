@@ -159,8 +159,6 @@ export function GameTable(): React.JSX.Element {
         <ResultAnimation3D />
       </Suspense>
 
-      {/* Grid helper disabled */}
-
       {/* Player seat anchors */}
       {renderPlayerElements()}
     </group>

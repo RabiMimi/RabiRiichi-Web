@@ -86,10 +86,10 @@ export function WinnerDetailCard({
 
   const finalHanFuColor = isNagashi ? 'text-[#00e5ff]' : 'text-[#ff7a99]';
 
-  // Reuse existing i18n keys for units instead of inventing new keys
-  const hanUnit = t('hud.han'); // '番' / ' Han' / '飜'
-  const fuUnit = t('result.fu', { count: 0 }).replace(/^0/, '').trim(); // extract unit from existing key
-  const pointsUnit = t('hud.points'); // '点' / 'pts' / '点'
+  // Reuse the existing unit-only i18n keys instead of inventing new ones.
+  const hanUnit = t('hud.han'); // ' Han' / '飜' / '番'
+  const fuUnit = t('yaku.fu'); // 'Fu' / '符' / '符'
+  const pointsUnit = t('hud.points'); // 'pts' / '点' / '点'
 
   return (
     <div

@@ -66,7 +66,6 @@ function createMappedMaterial(
   frontTexture: THREE.Texture,
   backTexture: THREE.Texture,
   sideTexture: THREE.Texture,
-  _isDora: boolean,
 ): THREE.Material {
   const matName = mat.name;
   if (matName === 'Front.001') {
@@ -337,7 +336,6 @@ export function Tile3D({
               clonedTexture,
               clonedBackTexture,
               clonedSideTexture,
-              isDora,
             );
             if (mat.name === 'Front.001') frontMats.push(mapped);
             return mapped;
@@ -348,7 +346,6 @@ export function Tile3D({
             clonedTexture,
             clonedBackTexture,
             clonedSideTexture,
-            isDora,
           );
           if (childMat.name === 'Front.001') frontMats.push(mapped);
           child.material = mapped;
@@ -361,7 +358,7 @@ export function Tile3D({
     });
     clonedScene.userData.frontMaterials = frontMats;
     return clonedScene;
-  }, [scene, clonedTexture, clonedBackTexture, clonedSideTexture, isDora]);
+  }, [scene, clonedTexture, clonedBackTexture, clonedSideTexture]);
 
   // Determine rotation and Y-offset based on the display state
   const { rotation, yOffset } = useMemo(() => {

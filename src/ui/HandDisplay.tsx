@@ -19,6 +19,13 @@ import { SOUND_EFFECTS } from '../lib/soundEffects';
 import type { ActionOption } from '../domain/inquiry';
 
 /**
+ * Pointer travel (px) tolerated before a press is treated as a drag rather than
+ * a tap. Touch input always jitters a few pixels, so without this dead zone a
+ * plain tap on a tile would be swallowed and never discard.
+ */
+const TAP_DEAD_ZONE_PX = 10;
+
+/**
  * DOM-rendered hand tile bar for the local player.
  */
 export function HandDisplay(): React.JSX.Element | null {
@@ -81,7 +88,9 @@ export function HandDisplay(): React.JSX.Element | null {
       if (dragTraceId == null) return;
       const dx = e.clientX - dragStartX.current;
       const dy = dragStartY.current - e.clientY;
-      didMoveRef.current = true;
+      if (Math.hypot(dx, dy) > TAP_DEAD_ZONE_PX) {
+        didMoveRef.current = true;
+      }
       setDragOffsetX(dx);
       setDragOffsetY(Math.max(0, dy));
       if (dy >= dragThresholdRef.current) {

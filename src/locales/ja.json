@@ -581,8 +581,11 @@
   "settings": {
     "title": "システム設定",
     "playerTab": "プレイヤー",
+    "gameTab": "ゲーム",
     "profileTab": "プロフィール",
     "soundsTab": "サウンド",
+    "animationSpeed": "アニメーション速度",
+    "autoPlay": "自動打牌",
     "profile": {
       "username": "ユーザー名",
       "nickname": "ニックネーム",

@@ -581,8 +581,11 @@
   "settings": {
     "title": "System Settings",
     "playerTab": "Player",
+    "gameTab": "Game",
     "profileTab": "Profile",
     "soundsTab": "Sounds",
+    "animationSpeed": "Animation Speed",
+    "autoPlay": "Auto Play",
     "profile": {
       "username": "Username",
       "nickname": "Nickname",

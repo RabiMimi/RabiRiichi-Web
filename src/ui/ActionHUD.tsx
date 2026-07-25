@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useCurrentInquiry,
@@ -42,13 +42,14 @@ export function ActionHUD(): React.JSX.Element | null {
   const currentUser = useSelf();
   const [selectedCall, setSelectedCall] = useState<ActionOption | null>(null);
 
+  // Reset the in-progress call selection whenever a new inquiry arrives. This is
+  // the render-time "reset state on prop change" pattern (avoids a setState in an
+  // effect, which would trigger an extra render pass).
   const prevInquiryRef = useRef(currentInquiry?.messageId);
-  useEffect(() => {
-    if (prevInquiryRef.current !== currentInquiry?.messageId) {
-      prevInquiryRef.current = currentInquiry?.messageId;
-      setSelectedCall(null);
-    }
-  }, [currentInquiry?.messageId, setSelectedCall]);
+  if (prevInquiryRef.current !== currentInquiry?.messageId) {
+    prevInquiryRef.current = currentInquiry?.messageId;
+    setSelectedCall(null);
+  }
 
   const selfPlayer =
     room && currentUser
@@ -266,7 +267,13 @@ export function ActionHUD(): React.JSX.Element | null {
               <img
                 src={ACTION_IMAGES[opt.type]}
                 alt={opt.label}
-                className="h-20 w-auto object-contain"
+                className={`h-20 w-auto object-contain ${
+                  // Keep drawing the eye to the win button, as the pre-redesign
+                  // text button did.
+                  opt.type === 'agari'
+                    ? 'animate-[hud-agari-pulse_1.5s_infinite]'
+                    : ''
+                }`}
                 draggable={false}
               />
             ) : (
