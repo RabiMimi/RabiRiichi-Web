@@ -26,6 +26,15 @@ const HAND_VIEWPORT_RATIO = 0.6;
  */
 const MAX_HAND_HEIGHT_RATIO = 0.14;
 
+/**
+ * Free tiles in the largest possible hand (13 before the draw).
+ *
+ * Tile size is derived from this rather than from how many tiles are actually
+ * held, so calling a meld — or discarding — never resizes the remaining tiles.
+ * A shorter hand simply occupies a shorter row.
+ */
+const MAX_FREE_TILES = 13;
+
 /** Horizontal gap between adjacent free tiles (Tailwind `gap-0.5`). */
 const TILE_GAP = 2;
 /** Extra gap separating the just-drawn tile from the sorted hand. */
@@ -54,10 +63,11 @@ export interface HandLayout {
 /**
  * Computes the hand row geometry for a viewport and free-tile count.
  *
- * The tile size is whichever of three limits binds first: the artwork's own
- * size, the horizontal budget, or the share of viewport height the row may
- * occupy. The pending tile always gets a reserved slot, so the row does not jump
- * horizontally when a tile is drawn or discarded.
+ * Tile size depends only on the viewport — whichever of three limits binds
+ * first: the artwork's own size, the horizontal budget for a full hand, or the
+ * share of viewport height the row may occupy. It deliberately does *not*
+ * depend on `freeTileCount`, which only affects where the row starts and where
+ * the drawn tile sits; otherwise tiles would resize on every call and discard.
  */
 export function computeHandLayout(
   viewportWidth: number,
@@ -68,7 +78,8 @@ export function computeHandLayout(
     viewportWidth * HAND_VIEWPORT_RATIO,
     MAX_HAND_WIDTH,
   );
-  const widthPerTile = Math.floor(widthBudget / Math.max(freeTileCount, 1));
+  // Budget for a *full* hand, not the current one — see MAX_FREE_TILES.
+  const widthPerTile = Math.floor(widthBudget / MAX_FREE_TILES);
 
   // The row is a tile face plus its bevel, so convert the height allowance back
   // into a width using the artwork's aspect ratio.

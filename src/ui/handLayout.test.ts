@@ -18,6 +18,27 @@ function layoutFor(
 }
 
 describe('computeHandLayout', () => {
+  it('keeps tiles the same size however many are held', () => {
+    // Regression guard: sizing used to divide the width budget by the current
+    // tile count, so every call and discard visibly resized the whole hand.
+    const full = layoutFor(DESKTOP, 13);
+    for (const count of [13, 10, 7, 4, 1, 0]) {
+      const layout = layoutFor(DESKTOP, count);
+      expect(layout.tileWidth).toBe(full.tileWidth);
+      expect(layout.tileHeight).toBe(full.tileHeight);
+      expect(layout.rowHeight).toBe(full.rowHeight);
+      expect(layout.dragThreshold).toBe(full.dragThreshold);
+    }
+  });
+
+  it('shortens the row as tiles are called away, keeping it centred', () => {
+    const full = layoutFor(DESKTOP, 13);
+    const afterPon = layoutFor(DESKTOP, 10);
+    // Same tile size, fewer tiles => narrower row, so it starts further right.
+    expect(afterPon.leftOffset).toBeGreaterThan(full.leftOffset);
+    expect(afterPon.pendingLeft).toBeLessThan(full.pendingLeft);
+  });
+
   it('keeps the row within its share of viewport height', () => {
     // Regression guard: width used to be the only limit, so a wide-but-short
     // window still got a hand tall enough to crowd out the table.
@@ -38,14 +59,13 @@ describe('computeHandLayout', () => {
     }
   });
 
-  it('never exceeds the intrinsic artwork size', () => {
-    // A huge window should not upscale the tiles into blurriness. Uses a short
-    // hand so the row's own width cap is not what is being measured.
-    expect(computeHandLayout(5000, 4000, 5).tileWidth).toBe(84);
+  it('never upscales past the intrinsic artwork size', () => {
+    // However large the window, the artwork must not be blown up into blur.
+    expect(computeHandLayout(5000, 4000, 5).tileWidth).toBeLessThanOrEqual(84);
   });
 
-  it('caps a full hand below the intrinsic size even on a big screen', () => {
-    // 13 tiles at full size is a very wide bar; the row cap keeps it in check.
+  it('caps the row width even on a big screen', () => {
+    // A full hand at intrinsic size is a very wide bar; the row cap holds it in.
     expect(layoutFor(DESKTOP).tileWidth).toBeLessThan(84);
   });
 
