@@ -22,6 +22,7 @@ import { Tile, checkDiscardResultsInFuriten } from '../domain/tile';
 import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
 import { UiTile } from './UiTile';
+import { HUD } from './styles';
 import {
   getWindKey,
   waitMeetsMinHan,
@@ -545,7 +546,7 @@ function HUDTimer({
             key={i}
             src={`/assets/timer/${d}.png`}
             alt={d}
-            className="h-20 w-auto"
+            className={HUD.timerDigit}
             draggable={false}
           />
         ))}

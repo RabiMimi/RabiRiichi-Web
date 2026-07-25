@@ -4,6 +4,7 @@ import { isTsumoTile } from '../domain/model';
 import { getScreenPosition } from '../scene/seat';
 import { getCallPromptSeatClass } from './callPromptPosition';
 import { findNewMeldCallType, type MeldCallType } from './callPromptEvents';
+import { getRyuukyokuArtwork } from './ryuukyokuArtwork';
 import type { IMenLikeMsg } from '../proto';
 
 type CallType =
@@ -19,17 +20,16 @@ const CALL_IMAGES: Record<CallType, string> = {
   ryuukyoku: '', // mapped per-reason below
 };
 
-/** Maps server ryuukyoku reason names to image paths. */
-const RYUUKYOKU_IMAGES: Record<string, string> = {
-  suufon_renda: '/assets/ui/四风连打.png',
-  kyuushu_kyuuhai: '/assets/ui/九种九牌.png',
-  suucha_riichi: '/assets/ui/四家立直.png',
-  triple_ron: '/assets/ui/三家和了.png',
-  suukan_sanra: '/assets/ui/四杠散了.png',
-};
-
 const DISPLAY_DURATION = 1500;
 const EXIT_DURATION = 350;
+
+/**
+ * A draw is a table-wide event with no owning player, so it flashes under a
+ * synthetic id (keeping it in the same "one flash per player" bookkeeping) and
+ * is rendered at the table centre rather than at a seat.
+ */
+const RYUUKYOKU_PLAYER_ID = -1;
+const RYUUKYOKU_SEAT = -1;
 
 interface FlashEntry {
   type: CallType;
@@ -45,7 +45,7 @@ export function CallPrompt(): React.JSX.Element | null {
   const currentUser = useSelf();
   const [flashes, setFlashes] = useState<FlashEntry[]>([]);
 
-  const prevCalledCounts = useRef<Map<number, readonly IMenLikeMsg[]>>(
+  const prevCalledMelds = useRef<Map<number, readonly IMenLikeMsg[]>>(
     new Map(),
   );
   const prevAgariPlayers = useRef<Set<number>>(new Set());
@@ -96,7 +96,7 @@ export function CallPrompt(): React.JSX.Element | null {
     if (!initialized.current) {
       for (const p of room.players) {
         if (!p.gameState || p.seat === undefined) continue;
-        prevCalledCounts.current.set(p.id, p.gameState.hand.called);
+        prevCalledMelds.current.set(p.id, p.gameState.hand.called);
         prevRiichiIds.current.set(p.id, p.gameState.riichiTileId ?? 0);
         if (p.gameState.agari?.incoming || p.gameState.agari?.isTsumo)
           prevAgariPlayers.current.add(p.id);
@@ -111,31 +111,18 @@ export function CallPrompt(): React.JSX.Element | null {
       if (!gs || p.seat === undefined) continue;
       const pid = p.id;
 
-      // Detect new melds (includes kakan which upgrades an existing pon to kan)
+      // Detect new melds. findNewMeldCallType covers both shapes a call can
+      // take: chii/pon/daiminkan/ankan append a meld, while kakan upgrades an
+      // existing pon in place and so leaves the meld count unchanged.
       const called = gs.hand.called;
-      const prevCalled = prevCalledCounts.current.get(pid);
-      if (prevCalled !== undefined && called.length !== prevCalled.length) {
-        // Meld count changed: chii / pon / daiminkan / ankan
-        // Only process newly appended melds (the ones beyond the previous length)
-        const startIdx = prevCalled.length;
-        for (const m of called.slice(startIdx)) {
-          if (m?.tiles?.length) {
-            trigger(
-              pid,
-              p.seat,
-              meldCallToCallType(findNewMeldCallType([], [m])),
-            );
-            break;
-          }
-        }
-      } else if (prevCalled !== undefined) {
-        // Meld count unchanged but a meld may have been upgraded (kakan)
+      const prevCalled = prevCalledMelds.current.get(pid);
+      if (prevCalled !== undefined) {
         const meldType = findNewMeldCallType(prevCalled, called);
         if (meldType) {
           trigger(pid, p.seat, meldCallToCallType(meldType));
         }
       }
-      prevCalledCounts.current.set(pid, called);
+      prevCalledMelds.current.set(pid, called);
 
       // Detect agari
       if (gs.agari && !prevAgariPlayers.current.has(pid)) {
@@ -163,10 +150,11 @@ export function CallPrompt(): React.JSX.Element | null {
     const reason = room.ryuukyokuReason;
     if (reason && reason !== prevRyuukyokuReason.current) {
       prevRyuukyokuReason.current = reason;
-      const imgSrc = RYUUKYOKU_IMAGES[reason];
+      const imgSrc = getRyuukyokuArtwork(reason);
       if (imgSrc) {
-        // Flash at dealer's seat for ryuukyoku events
-        trigger(-1, room.info?.dealer ?? 0, 'ryuukyoku', imgSrc);
+        // An abortive draw belongs to the table, not to a player, so it uses
+        // the synthetic id/seat below and renders centred (see RYUUKYOKU_SEAT).
+        trigger(RYUUKYOKU_PLAYER_ID, RYUUKYOKU_SEAT, 'ryuukyoku', imgSrc);
       }
     }
     if (!reason) prevRyuukyokuReason.current = null;
@@ -190,11 +178,17 @@ export function CallPrompt(): React.JSX.Element | null {
   return (
     <div className="absolute inset-0 pointer-events-none z-[55]">
       {flashes.map((f) => {
-        const screenPos =
-          selfSeat !== undefined
-            ? getScreenPosition(f.seat, selfSeat, playerCount)
-            : 0;
-        const pos = getCallPromptSeatClass(screenPos);
+        const isTableWide = f.seat === RYUUKYOKU_SEAT;
+        let pos: string;
+        if (isTableWide) {
+          pos = 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
+        } else {
+          const screenPos =
+            selfSeat !== undefined
+              ? getScreenPosition(f.seat, selfSeat, playerCount)
+              : 0;
+          pos = getCallPromptSeatClass(screenPos);
+        }
         const imgSrc = f.imgSrc ?? CALL_IMAGES[f.type];
         if (!imgSrc) return null;
         return (
@@ -213,7 +207,13 @@ export function CallPrompt(): React.JSX.Element | null {
               <img
                 src={imgSrc}
                 alt={f.type}
-                className="h-auto w-16 object-contain sm:w-24 lg:w-40"
+                className={
+                  isTableWide
+                    ? // A draw announcement carries the whole table, so it gets
+                      // more presence than a per-seat call flash.
+                      'h-auto w-40 object-contain sm:w-56 lg:w-80'
+                    : 'h-auto w-16 object-contain sm:w-24 lg:w-40'
+                }
                 draggable={false}
               />
             </div>

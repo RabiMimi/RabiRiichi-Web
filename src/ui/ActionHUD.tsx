@@ -11,6 +11,7 @@ import { Logger } from '../lib/logger';
 import { type ActionOption, type InquiryOptionType } from '../domain/inquiry';
 import { Tile } from '../domain/tile';
 import { UiTile } from './UiTile';
+import { HUD } from './styles';
 
 const logger = new Logger('ActionHUD');
 
@@ -132,7 +133,9 @@ export function ActionHUD(): React.JSX.Element | null {
   if (selectedCall && 'tileGroups' in selectedCall) {
     return (
       <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-[50] pointer-events-auto">
-        <div className="flex flex-wrap justify-center gap-20 max-w-[95vw] items-center">
+        <div
+          className={`flex flex-wrap justify-center ${HUD.actionRowGap} max-w-[95vw] items-center`}
+        >
           {selectedCall.tileGroups.map((group) => (
             <button
               key={`${selectedCall.type}-${group.index}`}
@@ -250,7 +253,9 @@ export function ActionHUD(): React.JSX.Element | null {
 
   return (
     <div className="absolute bottom-[22vh] left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-[50] pointer-events-auto">
-      <div className="flex flex-wrap justify-center gap-20 max-w-[95vw] items-center">
+      <div
+        className={`flex flex-wrap justify-center ${HUD.actionRowGap} max-w-[95vw] items-center`}
+      >
         {flatOptions.map((opt, i) => (
           <button
             key={opt.key}
@@ -267,7 +272,7 @@ export function ActionHUD(): React.JSX.Element | null {
               <img
                 src={ACTION_IMAGES[opt.type]}
                 alt={opt.label}
-                className={`h-20 w-auto object-contain ${
+                className={`${HUD.actionImage} ${
                   // Keep drawing the eye to the win button, as the pre-redesign
                   // text button did.
                   opt.type === 'agari'

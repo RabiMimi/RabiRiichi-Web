@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Html } from '@react-three/drei';
 import { useTranslation } from 'react-i18next';
 import { useResultAnimation, useRoom } from '../state/store';
+import { hasRyuukyokuArtwork } from '../ui/ryuukyokuArtwork';
 
 /** Full-table fallback for results that do not have a per-player call image. */
 export function ResultAnimation3D(): React.JSX.Element | null {
@@ -12,6 +13,10 @@ export function ResultAnimation3D(): React.JSX.Element | null {
   const text = useMemo(() => {
     // Ron and tsumo use the per-seat CallPrompt artwork.
     if (resultAnimation !== 'ryuukyoku' || !room) return null;
+
+    // Abortive draws that ship dedicated artwork are announced by CallPrompt.
+    // Rendering this text too would show the same reason twice, at once.
+    if (hasRyuukyokuArtwork(room.ryuukyokuReason)) return null;
 
     const reason = room.ryuukyokuReason ?? 'end_game_ryuukyoku';
     return t(`result.ryuukyoku.${reason}`, {

@@ -56,6 +56,26 @@ export const SCREEN = {
 } as const;
 
 /**
+ * Sizing for the image-based in-game HUD (call buttons, countdown digits).
+ *
+ * These scale off viewport *height*: the target is landscape play, where height
+ * is the scarce axis — a phone in landscape is only ~390px tall, so the desktop
+ * 80px artwork would eat a fifth of the screen. `clamp()` keeps the desktop size
+ * unchanged while shrinking gracefully on short viewports.
+ */
+export const HUD = {
+  /** Call / action artwork (chii, pon, kan, riichi, agari, skip…). */
+  actionImage: 'h-[clamp(2.5rem,9vh,5rem)] w-auto object-contain',
+  /** Countdown timer digits. */
+  timerDigit: 'h-[clamp(2.5rem,9vh,5rem)] w-auto',
+  /**
+   * Gap between action buttons. Wide on desktop (the artwork is airy), but it
+   * must not push buttons off a narrow landscape screen.
+   */
+  actionRowGap: 'gap-[clamp(0.75rem,4vw,5rem)]',
+} as const;
+
+/**
  * Shared form layout primitives (inputs, labels, layout groups).
  */
 export const FORM = {

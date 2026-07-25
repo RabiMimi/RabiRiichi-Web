@@ -767,19 +767,31 @@ export function Tile3D({
   );
 }
 
+/**
+ * Every tile's outline hull looks identical, and a full table carries 130+
+ * tiles. Allocating a material per tile (per mesh, in fact) only burned memory
+ * and GPU state changes — and nothing ever disposed them, so each remount
+ * leaked. One shared instance for the whole scene instead.
+ */
+const OUTLINE_MATERIAL = new THREE.MeshBasicMaterial({
+  color: '#111111',
+  side: THREE.BackSide,
+  depthTest: true,
+  transparent: true,
+  opacity: 0.73,
+});
+
 /** Renders a slightly scaled clone with outline material for toon outline. */
 function OutlineClone({ clone }: { clone: THREE.Group }): React.JSX.Element {
   const outlineClone = useMemo(() => {
+    // Object3D.clone() shares geometry by reference, so this only duplicates
+    // the (small) node graph, not the vertex data.
     const oc = clone.clone();
     oc.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.material = new THREE.MeshBasicMaterial({
-          color: '#111111',
-          side: THREE.BackSide,
-          depthTest: true,
-          transparent: true,
-          opacity: 0.73,
-        });
+        // Collapsing a material array to one material also collapses the
+        // per-group draw calls the hull would otherwise inherit.
+        child.material = OUTLINE_MATERIAL;
       }
     });
     return oc;
