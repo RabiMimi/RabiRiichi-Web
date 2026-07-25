@@ -208,6 +208,7 @@
     "cancelCall": "Back",
     "furiten": "Furiten",
     "tilesRemaining": " left",
+    "secondsRemaining": "{{count}}s remaining",
     "han": " Han",
     "points": "pts",
     "yakuman": "Yakuman",

@@ -1,4 +1,10 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+  useState,
+} from 'react';
 import { useGLTF, useTexture, Html } from '@react-three/drei';
 import { TileSpotlightParticles } from './TileSpotlightParticles';
 import {
@@ -20,6 +26,7 @@ import {
   getAndClearTilePose,
   type TileArea,
 } from './tileTransitionRegistry';
+import { registerTileOutline } from './tileOutlineRegistry';
 import {
   useCurrentInquiry,
   useIsRiichiSelectMode,
@@ -370,6 +377,7 @@ export function Tile3D({
 
   const groupRef = useRef<THREE.Group>(null);
   const tileRef = useRef<THREE.Object3D>(null);
+  const outlineRef = useTileOutline();
 
   // Target position and rotation (stored in refs to avoid recreating vectors on every render)
   const targetPos = useMemo(() => new THREE.Vector3(), []);
@@ -748,9 +756,8 @@ export function Tile3D({
         window.addEventListener('pointerup', handleGlobalUp);
       }}
     >
-      <group scale={[0.18, 0.24, 0.12]}>
-        {/* Outline — slightly scaled clone with outline material */}
-        <OutlineClone clone={clone} />
+      {/* The toon outline for this group is drawn by TileOutlineLayer. */}
+      <group scale={[0.18, 0.24, 0.12]} ref={outlineRef}>
         <primitive ref={tileRef} object={clone} />
       </group>
       {isWinningTile && <TileSpotlightParticles />}
@@ -768,36 +775,18 @@ export function Tile3D({
 }
 
 /**
- * Every tile's outline hull looks identical, and a full table carries 130+
- * tiles. Allocating a material per tile (per mesh, in fact) only burned memory
- * and GPU state changes — and nothing ever disposed them, so each remount
- * leaked. One shared instance for the whole scene instead.
+ * Opts a tile group into the shared outline layer.
+ *
+ * The hull is not rendered here: `TileOutlineLayer` draws every registered
+ * tile's outline in one instanced call. See tileOutlineRegistry for why.
  */
-const OUTLINE_MATERIAL = new THREE.MeshBasicMaterial({
-  color: '#111111',
-  side: THREE.BackSide,
-  depthTest: true,
-  transparent: true,
-  opacity: 0.73,
-});
+function useTileOutline(): (node: THREE.Object3D | null) => void {
+  const cleanupRef = useRef<(() => void) | null>(null);
 
-/** Renders a slightly scaled clone with outline material for toon outline. */
-function OutlineClone({ clone }: { clone: THREE.Group }): React.JSX.Element {
-  const outlineClone = useMemo(() => {
-    // Object3D.clone() shares geometry by reference, so this only duplicates
-    // the (small) node graph, not the vertex data.
-    const oc = clone.clone();
-    oc.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        // Collapsing a material array to one material also collapses the
-        // per-group draw calls the hull would otherwise inherit.
-        child.material = OUTLINE_MATERIAL;
-      }
-    });
-    return oc;
-  }, [clone]);
-
-  return <primitive object={outlineClone} scale={[1.05, 1.05, 1.05]} />;
+  return useCallback((node: THREE.Object3D | null) => {
+    cleanupRef.current?.();
+    cleanupRef.current = node ? registerTileOutline(node) : null;
+  }, []);
 }
 
 // Pre-load the GLTF to avoid pop-in

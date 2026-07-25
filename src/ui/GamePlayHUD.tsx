@@ -535,17 +535,28 @@ function HUDTimer({
   actionTimeout,
   isVisible,
 }: HUDTimerProps): React.JSX.Element | null {
+  const { t } = useTranslation();
   if (!isVisible) return null;
   const seconds = Math.ceil(actionTimeout);
   const digits = String(seconds).split('');
   return (
     <div className="absolute bottom-[22vh] right-[12%] flex flex-col items-center gap-[2px] text-white pointer-events-none">
-      <div className="flex items-center">
+      {/* The digits are one number, not five images: label the row and hide
+          the individual glyphs from assistive tech. */}
+      <div
+        className="flex items-center"
+        role="timer"
+        aria-label={t('hud.secondsRemaining', {
+          count: seconds,
+          defaultValue: '{{count}}s remaining',
+        })}
+      >
         {digits.map((d, i) => (
           <img
             key={i}
             src={`/assets/timer/${d}.png`}
-            alt={d}
+            alt=""
+            aria-hidden
             className={HUD.timerDigit}
             draggable={false}
           />

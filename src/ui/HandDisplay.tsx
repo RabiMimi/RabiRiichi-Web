@@ -11,9 +11,10 @@ import {
   useCurrentInquiry,
   useIsRiichiSelectMode,
   useCallHighlightTileIds,
+  useDoraIndicators,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
-import { Tile } from '../domain/tile';
+import { Tile, checkIsDora } from '../domain/tile';
 import { UiTile } from './UiTile';
 import { SOUND_EFFECTS } from '../lib/soundEffects';
 import { computeHandLayout, type HandLayout } from './handLayout';
@@ -53,6 +54,8 @@ interface HandTileProps {
   isHighlighted: boolean;
   isDimmed: boolean;
   isClickable: boolean;
+  /** Dora (or akadora) tiles get the same sweeping sheen as the 3D tiles. */
+  isDora: boolean;
   style?: React.CSSProperties;
   onClick: () => void;
   onHover: (isEntering: boolean) => void;
@@ -68,6 +71,7 @@ function HandTile({
   isHighlighted,
   isDimmed,
   isClickable,
+  isDora,
   style,
   onClick,
   onHover,
@@ -106,13 +110,15 @@ function HandTile({
           style={{ width: tileWidth, height: bevelHeight }}
           className="object-cover brightness-90 block"
         />
-        <UiTile
-          tile={face}
-          size="custom"
-          isHighlighted={isHighlighted}
-          className="bg-[#f7f4eb] block"
-          style={{ width: tileWidth, height: tileHeight }}
-        />
+        <div className={`relative ${isDora ? 'dora-sheen' : ''}`}>
+          <UiTile
+            tile={face}
+            size="custom"
+            isHighlighted={isHighlighted}
+            className="bg-[#f7f4eb] block"
+            style={{ width: tileWidth, height: tileHeight }}
+          />
+        </div>
       </div>
     </button>
   );
@@ -129,6 +135,20 @@ export function HandDisplay(): React.JSX.Element | null {
   const callHighlightIds = useCallHighlightTileIds();
   const viewportWidth = useViewportWidth();
   const onHoverTile = useHoverSound();
+  const doraIndicators = useDoraIndicators();
+
+  const isDoraTile = useCallback(
+    (tile: number | null | undefined): boolean => {
+      if (!tile) return false;
+      try {
+        return checkIsDora(Tile.fromByte(tile), doraIndicators);
+      } catch {
+        // A tile we cannot decode simply gets no sheen.
+        return false;
+      }
+    },
+    [doraIndicators],
+  );
 
   const hand = useMemo(() => {
     const selfPlayer =
@@ -209,6 +229,7 @@ export function HandDisplay(): React.JSX.Element | null {
                 isHighlighted={isPlayable}
                 isDimmed={isDimmed}
                 isClickable={isPlayable}
+                isDora={isDoraTile(tileMsg.tile)}
                 hoverLift="hover:-translate-y-5"
                 onClick={() => onTileClick(traceId)}
                 onHover={(entering) =>
@@ -229,6 +250,7 @@ export function HandDisplay(): React.JSX.Element | null {
             isHighlighted
             isDimmed={false}
             isClickable={isInteractive}
+            isDora={isDoraTile(pendingTile.tile)}
             hoverLift="hover:-translate-y-3"
             style={{
               position: 'absolute',

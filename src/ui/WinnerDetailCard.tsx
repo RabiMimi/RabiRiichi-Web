@@ -3,9 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
 import { ScoringType } from '../proto';
 import type { PlayerModel, RoomModel } from '../domain/model';
+import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
 import { getLimitName } from '../domain/resultHelpers';
 import { UiTile } from './UiTile';
+import { getGameFontStack } from './gameFont';
+import { getResultBadge } from './resultBadge';
 
 interface WinnerDetailCardProps {
   player: PlayerModel;
@@ -23,7 +26,7 @@ export function WinnerDetailCard({
   room,
 }: WinnerDetailCardProps): React.JSX.Element | null {
   const { t, i18n } = useTranslation();
-  const fontFamily = i18n.language === 'zhs' ? "'GameFontZH'" : "'GameFont'";
+  const fontFamily = getGameFontStack(i18n.language);
 
   const agari = player.gameState?.agari;
   if (!agari) return null;
@@ -91,6 +94,8 @@ export function WinnerDetailCard({
   const fuUnit = t('yaku.fu'); // 'Fu' / '符' / '符'
   const pointsUnit = t('hud.points'); // 'pts' / '点' / '点'
 
+  const badge = getResultBadge({ isTenpai, isNagashi, agari, t });
+
   return (
     <div
       key={player.id}
@@ -101,6 +106,18 @@ export function WinnerDetailCard({
       }`}
     >
       <div className="flex items-center gap-1.5 lg:gap-3">
+        <span
+          className="text-sm lg:text-base font-bold text-white truncate max-w-[40%]"
+          style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+        >
+          {getPlayerDisplayName(player, t)}
+        </span>
+        <span
+          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] lg:text-xs font-bold uppercase tracking-wide ${badge.className}`}
+        >
+          {badge.label}
+        </span>
+
         {isTenpai ? (
           player.gameState?.awaitedTiles &&
           player.gameState.awaitedTiles.length > 0 && (
@@ -313,8 +330,7 @@ export function WinnerDetailCard({
             className={`text-6xl ${finalHanFuColor}`}
             style={{ fontFamily }}
           >
-            {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- proto fields may be null at runtime */}
-            {(agari.gainPoints ?? 0) - (agari.losePoints ?? 0)}
+            {agari.gainPoints - agari.losePoints}
             {pointsUnit}
           </span>
           {limitLabel && (

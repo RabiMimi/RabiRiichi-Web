@@ -9,6 +9,7 @@ import { getScreenPosition } from './seat';
 import { PlayerArea3D } from './PlayerArea3D';
 import { TableCenter } from './TableCenter';
 import { ResultAnimation3D } from './ResultAnimation3D';
+import { TileOutlineLayer } from './TileOutlineLayer';
 
 function TouchHoverHandler(): null {
   const { camera, scene } = useThree();
@@ -161,6 +162,11 @@ export function GameTable(): React.JSX.Element {
 
       {/* Player seat anchors */}
       {renderPlayerElements()}
+
+      {/* Every tile's toon outline, batched into one instanced draw call. */}
+      <Suspense fallback={null}>
+        <TileOutlineLayer />
+      </Suspense>
     </group>
   );
 }

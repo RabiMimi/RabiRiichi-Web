@@ -6,6 +6,22 @@ import { useRoom, useSelf } from '../state/store';
 import { getScreenPosition, getSeatRotation } from './seat';
 import { getTableMidTexturePath, TABLE_CENTER_FONT_PATH } from './assets';
 
+/** Text colours for the info panel at the centre of the table. */
+const TABLE_CENTER_COLORS = {
+  /** Round / honba / remaining-tile labels. */
+  label: '#02B6BF',
+  /** A player's own score, at rest. */
+  score: '#ffffff',
+  /** Score difference in your favour, shown while hovering. */
+  scoreAhead: '#00ff66',
+  /** Score difference against you, shown while hovering. */
+  scoreBehind: '#ff3366',
+  /** Seat wind of the dealer. */
+  dealerWind: '#FF5454',
+  /** Seat wind of everyone else. */
+  seatWind: '#BFBFBF',
+} as const;
+
 export function TableCenter(): React.JSX.Element | null {
   const room = useRoom();
   const currentUser = useSelf();
@@ -81,7 +97,7 @@ export function TableCenter(): React.JSX.Element | null {
         position={[-0.06, 0.001, -0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.11}
-        color="#02B6BF"
+        color={TABLE_CENTER_COLORS.label}
         anchorX="right"
         anchorY="middle"
         font={TABLE_CENTER_FONT_PATH}
@@ -93,7 +109,7 @@ export function TableCenter(): React.JSX.Element | null {
         position={[-0.05, 0.004, -0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.11}
-        color="#02B6BF"
+        color={TABLE_CENTER_COLORS.label}
         anchorX="left"
         anchorY="middle"
         font={TABLE_CENTER_FONT_PATH}
@@ -105,7 +121,7 @@ export function TableCenter(): React.JSX.Element | null {
         position={[0.1, 0.004, -0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.11}
-        color="#02B6BF"
+        color={TABLE_CENTER_COLORS.label}
         anchorX="center"
         anchorY="middle"
         font={TABLE_CENTER_FONT_PATH}
@@ -119,7 +135,7 @@ export function TableCenter(): React.JSX.Element | null {
         position={[0, 0.004, 0.12]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.09}
-        color="#02B6BF"
+        color={TABLE_CENTER_COLORS.label}
         anchorX="center"
         anchorY="middle"
         font={TABLE_CENTER_FONT_PATH}
@@ -151,19 +167,19 @@ export function TableCenter(): React.JSX.Element | null {
           25000;
 
         let displayText = points.toString();
-        let displayColor = '#ffffff';
+        let displayColor: string = TABLE_CENTER_COLORS.score;
 
         if (isHovered && p.seat !== selfSeat) {
           const diff = selfPoints - points;
           if (diff > 0) {
             displayText = `+${diff}`;
-            displayColor = '#00ff66';
+            displayColor = TABLE_CENTER_COLORS.scoreAhead;
           } else if (diff < 0) {
             displayText = `${diff}`;
-            displayColor = '#ff3366';
+            displayColor = TABLE_CENTER_COLORS.scoreBehind;
           } else {
             displayText = '0';
-            displayColor = '#ffffff';
+            displayColor = TABLE_CENTER_COLORS.score;
           }
         }
 
@@ -196,7 +212,11 @@ export function TableCenter(): React.JSX.Element | null {
               position={[-0.45, 0.004, 0.45]}
               rotation={[-Math.PI / 2, 0, 0]}
               fontSize={0.11}
-              color={p.seat === dealer ? '#FF5454' : '#BFBFBF'}
+              color={
+                p.seat === dealer
+                  ? TABLE_CENTER_COLORS.dealerWind
+                  : TABLE_CENTER_COLORS.seatWind
+              }
               anchorX="center"
               anchorY="middle"
               font={TABLE_CENTER_FONT_PATH}

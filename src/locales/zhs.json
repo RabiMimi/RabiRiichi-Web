@@ -208,6 +208,7 @@
     "cancelCall": "返回",
     "furiten": "振听",
     "tilesRemaining": "张",
+    "secondsRemaining": "剩余 {{count}} 秒",
     "han": "番",
     "points": "点",
     "yakuman": "役满",

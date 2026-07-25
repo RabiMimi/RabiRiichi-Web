@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRoom, useSelf } from '../state/store';
 import { isTsumoTile } from '../domain/model';
 import { getScreenPosition } from '../scene/seat';
@@ -38,9 +39,21 @@ interface FlashEntry {
   exiting: boolean;
   /** Override image for ryuukyoku reasons. */
   imgSrc: string | undefined;
+  /** Draw reason, so the banner can be described for screen readers. */
+  reason: string | undefined;
+}
+
+/** i18n key describing a flash, used as the banner's alt text. */
+function flashLabelKey(flash: FlashEntry): string {
+  if (flash.type === 'ryuukyoku') {
+    return `result.ryuukyoku.${flash.reason ?? 'end_game_ryuukyoku'}`;
+  }
+  // `agari` is the domain name for a ron; the other types share their key name.
+  return `hud.action.${flash.type === 'agari' ? 'ron' : flash.type}`;
 }
 
 export function CallPrompt(): React.JSX.Element | null {
+  const { t } = useTranslation();
   const room = useRoom();
   const currentUser = useSelf();
   const [flashes, setFlashes] = useState<FlashEntry[]>([]);
@@ -61,13 +74,14 @@ export function CallPrompt(): React.JSX.Element | null {
     seat: number,
     type: CallType,
     imgSrc?: string,
+    reason?: string,
   ) {
     const old = timerRefs.current.get(playerId);
     if (old) clearTimeout(old);
 
     setFlashes((prev) => [
       ...prev.filter((f) => f.playerId !== playerId),
-      { type, seat, playerId, exiting: false, imgSrc },
+      { type, seat, playerId, exiting: false, imgSrc, reason },
     ]);
 
     const hideId = setTimeout(() => {
@@ -97,7 +111,7 @@ export function CallPrompt(): React.JSX.Element | null {
       for (const p of room.players) {
         if (!p.gameState || p.seat === undefined) continue;
         prevCalledMelds.current.set(p.id, p.gameState.hand.called);
-        prevRiichiIds.current.set(p.id, p.gameState.riichiTileId ?? 0);
+        prevRiichiIds.current.set(p.id, p.gameState.riichiTileId);
         if (p.gameState.agari?.incoming || p.gameState.agari?.isTsumo)
           prevAgariPlayers.current.add(p.id);
       }
@@ -140,7 +154,9 @@ export function CallPrompt(): React.JSX.Element | null {
       if (!gs.agari) prevAgariPlayers.current.delete(pid);
 
       // Detect riichi
-      const rid = gs.riichiTileId ?? 0;
+      const rid = gs.riichiTileId;
+      // `get` legitimately returns undefined for a player seen for the first
+      // time; treat that as "was not in riichi".
       if (rid !== 0 && (prevRiichiIds.current.get(pid) ?? 0) === 0)
         trigger(pid, p.seat, 'riichi');
       prevRiichiIds.current.set(pid, rid);
@@ -154,7 +170,13 @@ export function CallPrompt(): React.JSX.Element | null {
       if (imgSrc) {
         // An abortive draw belongs to the table, not to a player, so it uses
         // the synthetic id/seat below and renders centred (see RYUUKYOKU_SEAT).
-        trigger(RYUUKYOKU_PLAYER_ID, RYUUKYOKU_SEAT, 'ryuukyoku', imgSrc);
+        trigger(
+          RYUUKYOKU_PLAYER_ID,
+          RYUUKYOKU_SEAT,
+          'ryuukyoku',
+          imgSrc,
+          reason,
+        );
       }
     }
     if (!reason) prevRyuukyokuReason.current = null;
@@ -162,7 +184,7 @@ export function CallPrompt(): React.JSX.Element | null {
 
   useEffect(
     () => () => {
-      for (const t of timerRefs.current.values()) clearTimeout(t);
+      for (const timer of timerRefs.current.values()) clearTimeout(timer);
     },
     [],
   );
@@ -206,7 +228,7 @@ export function CallPrompt(): React.JSX.Element | null {
             >
               <img
                 src={imgSrc}
-                alt={f.type}
+                alt={t(flashLabelKey(f))}
                 className={
                   isTableWide
                     ? // A draw announcement carries the whole table, so it gets
