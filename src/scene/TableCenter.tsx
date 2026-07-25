@@ -2,20 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTexture, Text as DreiText } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import {
-  useRoom,
-  useSelf,
-  useActionTimeout,
-  useTimerActiveSeat,
-} from '../state/store';
+import { useRoom, useSelf } from '../state/store';
 import { getScreenPosition, getSeatRotation } from './seat';
 import { getTableMidTexturePath, TABLE_CENTER_FONT_PATH } from './assets';
 
 export function TableCenter(): React.JSX.Element | null {
   const room = useRoom();
   const currentUser = useSelf();
-  const actionTimeout = useActionTimeout();
-  const timerActiveSeat = useTimerActiveSeat();
   const [isHovered, setIsHovered] = useState(false);
 
   // Load textures
@@ -121,7 +114,7 @@ export function TableCenter(): React.JSX.Element | null {
         局
       </DreiText>
 
-      {/* Remaining: 佘XX */}
+      {/* Remaining: 余XX */}
       <DreiText
         position={[0, 0.004, 0.12]}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -149,7 +142,6 @@ export function TableCenter(): React.JSX.Element | null {
           room.config?.pointThreshold?.initialPoints ??
           25000;
 
-        const isTimerActive = timerActiveSeat === p.seat && actionTimeout > 0;
         const isRiichi = p.gameState?.isRiichiConfirmed ?? false;
 
         const selfPlayerObj = room.players.find((sp) => sp.seat === selfSeat);
@@ -236,7 +228,11 @@ export function TableCenter(): React.JSX.Element | null {
 }
 
 /** Active-turn indicator that blinks between 100% and 80% opacity in a 2s loop. */
-function BlinkIndicator({ texture }: { texture: THREE.Texture }): React.JSX.Element {
+function BlinkIndicator({
+  texture,
+}: {
+  texture: THREE.Texture;
+}): React.JSX.Element {
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
 
   useFrame(({ clock }) => {

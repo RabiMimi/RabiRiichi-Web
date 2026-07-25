@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRoom, useSelf } from '../state/store';
 import { isTsumoTile } from '../domain/model';
-import { TileSource } from '../proto';
 import { getScreenPosition } from '../scene/seat';
+import { getCallPromptSeatClass } from './callPromptPosition';
+import { findNewMeldCallType, type MeldCallType } from './callPromptEvents';
 import type { IMenLikeMsg } from '../proto';
 
-type CallType = 'chii' | 'pon' | 'kan' | 'agari' | 'tsumo' | 'riichi' | 'ryuukyoku';
+type CallType =
+  'chii' | 'pon' | 'kan' | 'agari' | 'tsumo' | 'riichi' | 'ryuukyoku';
 
 const CALL_IMAGES: Record<CallType, string> = {
   chii: '/assets/ui/吃.png',
@@ -35,7 +37,7 @@ interface FlashEntry {
   playerId: number;
   exiting: boolean;
   /** Override image for ryuukyoku reasons. */
-  imgSrc?: string;
+  imgSrc: string | undefined;
 }
 
 export function CallPrompt(): React.JSX.Element | null {
@@ -43,14 +45,23 @@ export function CallPrompt(): React.JSX.Element | null {
   const currentUser = useSelf();
   const [flashes, setFlashes] = useState<FlashEntry[]>([]);
 
-  const prevCalledCounts = useRef<Map<number, number>>(new Map());
+  const prevCalledCounts = useRef<Map<number, readonly IMenLikeMsg[]>>(
+    new Map(),
+  );
   const prevAgariPlayers = useRef<Set<number>>(new Set());
   const prevRiichiIds = useRef<Map<number, number>>(new Map());
   const prevRyuukyokuReason = useRef<string | null | undefined>(null);
   const initialized = useRef(false);
-  const timerRefs = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const timerRefs = useRef<Map<number, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
 
-  function trigger(playerId: number, seat: number, type: CallType, imgSrc?: string) {
+  function trigger(
+    playerId: number,
+    seat: number,
+    type: CallType,
+    imgSrc?: string,
+  ) {
     const old = timerRefs.current.get(playerId);
     if (old) clearTimeout(old);
 
@@ -61,7 +72,9 @@ export function CallPrompt(): React.JSX.Element | null {
 
     const hideId = setTimeout(() => {
       setFlashes((prev) =>
-        prev.map((f) => (f.playerId === playerId ? { ...f, exiting: true } : f)),
+        prev.map((f) =>
+          f.playerId === playerId ? { ...f, exiting: true } : f,
+        ),
       );
     }, DISPLAY_DURATION);
 
@@ -70,7 +83,10 @@ export function CallPrompt(): React.JSX.Element | null {
     }, DISPLAY_DURATION + EXIT_DURATION);
 
     timerRefs.current.set(playerId, hideId);
-    setTimeout(() => timerRefs.current.set(playerId, removeId), DISPLAY_DURATION);
+    setTimeout(
+      () => timerRefs.current.set(playerId, removeId),
+      DISPLAY_DURATION,
+    );
   }
 
   useEffect(() => {
@@ -80,7 +96,7 @@ export function CallPrompt(): React.JSX.Element | null {
     if (!initialized.current) {
       for (const p of room.players) {
         if (!p.gameState || p.seat === undefined) continue;
-        prevCalledCounts.current.set(p.id, p.gameState.hand.called.length);
+        prevCalledCounts.current.set(p.id, p.gameState.hand.called);
         prevRiichiIds.current.set(p.id, p.gameState.riichiTileId ?? 0);
         if (p.gameState.agari?.incoming || p.gameState.agari?.isTsumo)
           prevAgariPlayers.current.add(p.id);
@@ -95,24 +111,43 @@ export function CallPrompt(): React.JSX.Element | null {
       if (!gs || p.seat === undefined) continue;
       const pid = p.id;
 
-      // Detect new melds
+      // Detect new melds (includes kakan which upgrades an existing pon to kan)
       const called = gs.hand.called;
-      const prevCount = prevCalledCounts.current.get(pid) ?? 0;
-      if (called.length > prevCount && prevCount >= 0) {
-        for (const m of called.slice(prevCount)) {
+      const prevCalled = prevCalledCounts.current.get(pid);
+      if (prevCalled !== undefined && called.length !== prevCalled.length) {
+        // Meld count changed: chii / pon / daiminkan / ankan
+        // Only process newly appended melds (the ones beyond the previous length)
+        const startIdx = prevCalled.length;
+        for (const m of called.slice(startIdx)) {
           if (m?.tiles?.length) {
-            trigger(pid, p.seat, detectCallType(m));
+            trigger(
+              pid,
+              p.seat,
+              meldCallToCallType(findNewMeldCallType([], [m])),
+            );
             break;
           }
         }
+      } else if (prevCalled !== undefined) {
+        // Meld count unchanged but a meld may have been upgraded (kakan)
+        const meldType = findNewMeldCallType(prevCalled, called);
+        if (meldType) {
+          trigger(pid, p.seat, meldCallToCallType(meldType));
+        }
       }
-      prevCalledCounts.current.set(pid, called.length);
+      prevCalledCounts.current.set(pid, called);
 
       // Detect agari
       if (gs.agari && !prevAgariPlayers.current.has(pid)) {
         if (gs.agari.incoming || gs.agari.isTsumo) {
           prevAgariPlayers.current.add(pid);
-          trigger(pid, p.seat, gs.agari.isTsumo ?? isTsumoTile(gs.agari.incoming) ? 'tsumo' : 'agari');
+          trigger(
+            pid,
+            p.seat,
+            (gs.agari.isTsumo ?? isTsumoTile(gs.agari.incoming))
+              ? 'tsumo'
+              : 'agari',
+          );
         }
       }
       if (!gs.agari) prevAgariPlayers.current.delete(pid);
@@ -130,38 +165,57 @@ export function CallPrompt(): React.JSX.Element | null {
       prevRyuukyokuReason.current = reason;
       const imgSrc = RYUUKYOKU_IMAGES[reason];
       if (imgSrc) {
-        // Table-wide event — flash at table center (use playerId -1 for unique key)
+        // Flash at dealer's seat for ryuukyoku events
         trigger(-1, room.info?.dealer ?? 0, 'ryuukyoku', imgSrc);
       }
     }
     if (!reason) prevRyuukyokuReason.current = null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room]);
 
-  useEffect(() => () => { for (const t of timerRefs.current.values()) clearTimeout(t); }, []);
+  useEffect(
+    () => () => {
+      for (const t of timerRefs.current.values()) clearTimeout(t);
+    },
+    [],
+  );
 
   if (flashes.length === 0 || !room) return null;
 
-  const selfPlayer = currentUser ? room.players.find((p) => p.id === currentUser.id) : undefined;
+  const selfPlayer = currentUser
+    ? room.players.find((p) => p.id === currentUser.id)
+    : undefined;
   const selfSeat = selfPlayer?.seat;
   const playerCount = room.config?.playerCount ?? room.players.length;
 
   return (
     <div className="absolute inset-0 pointer-events-none z-[55]">
       {flashes.map((f) => {
-        const screenPos = selfSeat !== undefined
-          ? getScreenPosition(f.seat, selfSeat, playerCount)
-          : 0;
-        const pos = getSeatClass(screenPos);
+        const screenPos =
+          selfSeat !== undefined
+            ? getScreenPosition(f.seat, selfSeat, playerCount)
+            : 0;
+        const pos = getCallPromptSeatClass(screenPos);
         const imgSrc = f.imgSrc ?? CALL_IMAGES[f.type];
         if (!imgSrc) return null;
         return (
-          <div key={f.playerId} className={`absolute ${pos} flex flex-col items-center`}>
+          <div
+            key={f.playerId}
+            className={`absolute ${pos} flex flex-col items-center`}
+          >
             <div
-              className={f.exiting ? 'animate-call-prompt-exit' : 'animate-call-prompt-entrance'}
+              className={
+                f.exiting
+                  ? 'animate-call-prompt-exit'
+                  : 'animate-call-prompt-entrance'
+              }
               style={{ filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.8))' }}
             >
-              <img src={imgSrc} alt={f.type} className="h-auto w-16 object-contain sm:w-24 lg:w-40" draggable={false} />
+              <img
+                src={imgSrc}
+                alt={f.type}
+                className="h-auto w-16 object-contain sm:w-24 lg:w-40"
+                draggable={false}
+              />
             </div>
           </div>
         );
@@ -170,20 +224,7 @@ export function CallPrompt(): React.JSX.Element | null {
   );
 }
 
-function getSeatClass(screenPos: number): string {
-  switch (screenPos) {
-    case 0: return 'bottom-[20vh] left-1/2 -translate-x-1/2';
-    case 1: return 'top-[39%] left-[58%] -translate-x-1/2 -translate-y-1/2';
-    case 2: return 'top-[22vh] left-1/2 -translate-x-1/2';
-    case 3: return 'top-[39%] left-[42%] -translate-x-1/2 -translate-y-1/2';
-    default: return 'bottom-[20vh] left-1/2 -translate-x-1/2';
-  }
-}
-
-function detectCallType(meld: IMenLikeMsg): CallType {
-  const s = meld.tiles?.[0]?.source;
-  if (s === TileSource.TILE_SOURCE_PON) return 'pon';
-  if (s === TileSource.TILE_SOURCE_CHII) return 'chii';
-  if (s === TileSource.TILE_SOURCE_DAIMINKAN || s === TileSource.TILE_SOURCE_KAKAN || s === TileSource.TILE_SOURCE_ANKAN) return 'kan';
-  return (meld.tiles ?? []).length >= 4 ? 'kan' : 'pon';
+function meldCallToCallType(meldType: MeldCallType | null): CallType {
+  if (!meldType) return 'pon';
+  return meldType;
 }

@@ -44,9 +44,12 @@ export function UiTile({
       ? 'rounded object-cover bg-[#f7f4eb]'
       : 'rounded-sm shadow-[0_2px_4px_rgba(0,0,0,0.5)] object-cover bg-[#f7f4eb]';
 
-  const borderStyle = isCustom || isHand
-    ? (isWinningTile ? 'border-2 border-[#ff7a99]' : '')
-    : isWinningTile
+  const borderStyle =
+    isCustom || isHand
+      ? isWinningTile
+        ? 'border-2 border-[#ff7a99]'
+        : ''
+      : isWinningTile
         ? 'border-2 border-[#ff7a99]'
         : isHighlighted
           ? 'border-2 border-[#66ccff] shadow-[0_0_4px_rgba(102,204,255,0.8)]'

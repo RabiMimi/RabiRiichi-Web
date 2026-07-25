@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { rabiriichi } from '../net/client';
-import { useAnimationSpeed } from '../state/store';
 import { ProfileTab } from './ProfileTab';
 import { PlayerTab } from './PlayerTab';
 import { SoundsTab } from './SoundsTab';
-import { GameSettingsTab } from './GameSettingsTab';
 import { GameModalTab } from './GameModalTab';
 import { TabButton } from './TabButton';
 import { MODAL } from './styles';
@@ -19,9 +16,10 @@ export function SettingsModal({
   onClose,
 }: SettingsModalProps): React.JSX.Element {
   const { t } = useTranslation();
-  const animationSpeed = useAnimationSpeed();
 
-  const [activeTab, setActiveTab] = useState<'player' | 'game' | 'profile' | 'sounds'>('player');
+  const [activeTab, setActiveTab] = useState<
+    'player' | 'game' | 'profile' | 'sounds'
+  >('player');
 
   return createPortal(
     <div className={MODAL.overlay} onClick={onClose}>

@@ -3,18 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
 import { ScoringType } from '../proto';
 import type { PlayerModel, RoomModel } from '../domain/model';
-import { getPlayerDisplayName } from '../domain/model';
 import { filterYakuListForDisplay } from '../domain/yakus';
 import { getLimitName } from '../domain/resultHelpers';
 import { UiTile } from './UiTile';
-
-const LIMIT_BADGE_STYLES: Record<string, string> = {
-  'limit-mangan': 'bg-[#ff7a99]',
-  'limit-haneman': 'bg-[#8c7aff]',
-  'limit-baiman': 'bg-[#ffb830]',
-  'limit-sanbaiman': 'bg-[#ff6e30]',
-  'limit-yakuman': 'bg-[#ff3333]',
-};
 
 interface WinnerDetailCardProps {
   player: PlayerModel;
@@ -45,18 +36,10 @@ export function WinnerDetailCard({
   const isNagashi = agari.isNagashi ?? false;
   const isTenpai = agari.isTenpai ?? false;
 
-  let badgeText = t('result.winnerBadge');
-  if (isTenpai) {
-    badgeText = t('result.tenpai');
-  }
-
   let limitLabel: string | null = null;
-  let hanFuLabel = '';
-  let limitClass = '';
 
   if (isNagashi) {
     limitLabel = t('result.mangan');
-    limitClass = 'limit-mangan';
   } else if (isTenpai) {
     // nothing
   } else if (agari.scores?.result) {
@@ -67,10 +50,8 @@ export function WinnerDetailCard({
       : (result.han ?? 0);
 
     if (result.finalYakuman && result.finalYakuman > 0 && !isAotenjou) {
-      limitClass = 'limit-yakuman';
       if (result.kazoeYakuman && result.kazoeYakuman > 0) {
         limitLabel = t('result.yakuman');
-        hanFuLabel = t('result.han', { count: effectiveHan });
       } else {
         const yakumanCount = result.finalYakuman;
         if (yakumanCount > 1) {
@@ -91,16 +72,6 @@ export function WinnerDetailCard({
 
       if (limit) {
         limitLabel = t(`result.${limit}`);
-        limitClass = `limit-${limit}`;
-        hanFuLabel = t('result.fuAndHan', {
-          fu: result.fu,
-          han: effectiveHan,
-        });
-      } else {
-        hanFuLabel = t('result.fuAndHan', {
-          fu: result.fu,
-          han: effectiveHan,
-        });
       }
     }
   }
@@ -113,11 +84,12 @@ export function WinnerDetailCard({
 
   const cardStyles = '';
 
-  const finalLimitClass = isNagashi
-    ? 'bg-[#00bcff] text-[#1a1a1a]'
-    : `${LIMIT_BADGE_STYLES[limitClass] ?? 'bg-gray-500'} text-white`;
-
   const finalHanFuColor = isNagashi ? 'text-[#00e5ff]' : 'text-[#ff7a99]';
+
+  // Reuse existing i18n keys for units instead of inventing new keys
+  const hanUnit = t('hud.han'); // '番' / ' Han' / '飜'
+  const fuUnit = t('result.fu', { count: 0 }).replace(/^0/, '').trim(); // extract unit from existing key
+  const pointsUnit = t('hud.points'); // '点' / 'pts' / '点'
 
   return (
     <div
@@ -228,7 +200,10 @@ export function WinnerDetailCard({
 
       {/* List of Yaku */}
       {!isTenpai && (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-2xl" style={{ fontFamily }}>
+        <div
+          className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-2xl"
+          style={{ fontFamily }}
+        >
           {/* Column 1 */}
           <div className="flex flex-col gap-1.5">
             {yakuList
@@ -262,9 +237,7 @@ export function WinnerDetailCard({
                         defaultValue: yaku.Src ?? '',
                       })}
                     </span>
-                    <span className="text-[#ffaa44]">
-                      {typeLabel}
-                    </span>
+                    <span className="text-[#ffaa44]">{typeLabel}</span>
                   </div>
                 );
               })}
@@ -319,17 +292,30 @@ export function WinnerDetailCard({
               : 'opacity-0 translate-x-4 pointer-events-none'
           }`}
         >
-          <span className={`text-6xl ${finalHanFuColor}`} style={{ fontFamily }}>
-            {agari.scores.result.han ?? 0}{t('result.hanUnit', '番')}
+          <span
+            className={`text-6xl ${finalHanFuColor}`}
+            style={{ fontFamily }}
+          >
+            {agari.scores.result.han ?? 0}
+            {hanUnit}
           </span>
           {agari.scores.result.fu ? (
-            <span className={`text-xl ${finalHanFuColor} ml-2`} style={{ fontFamily }}>
-              {agari.scores.result.fu}{t('result.fuUnit', '符')}
+            <span
+              className={`text-xl ${finalHanFuColor} ml-2`}
+              style={{ fontFamily }}
+            >
+              {agari.scores.result.fu}
+              {fuUnit}
             </span>
           ) : null}
           <div className="flex-1" />
-          <span className={`text-6xl ${finalHanFuColor}`} style={{ fontFamily }}>
-            {(agari.gainPoints ?? 0) - (agari.losePoints ?? 0)}{t('result.pointsUnit', '点')}
+          <span
+            className={`text-6xl ${finalHanFuColor}`}
+            style={{ fontFamily }}
+          >
+            {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- proto fields may be null at runtime */}
+            {(agari.gainPoints ?? 0) - (agari.losePoints ?? 0)}
+            {pointsUnit}
           </span>
           {limitLabel && (
             <span

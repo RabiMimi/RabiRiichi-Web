@@ -66,7 +66,7 @@ function createMappedMaterial(
   frontTexture: THREE.Texture,
   backTexture: THREE.Texture,
   sideTexture: THREE.Texture,
-  isDora: boolean,
+  _isDora: boolean,
 ): THREE.Material {
   const matName = mat.name;
   if (matName === 'Front.001') {

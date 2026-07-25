@@ -232,8 +232,14 @@ export function ConnectScreen(): React.JSX.Element {
       <div className="w-full max-w-3xl mx-auto flex flex-col md:flex-row items-center md:items-stretch gap-8 md:gap-12 p-6 md:p-10">
         {/* Left column: Logo + subtitle */}
         <div className="flex flex-col items-center justify-center gap-4 md:w-1/2">
-          <img src="/assets/logo.png" alt="RabiRiichi" className="h-20 md:h-24 w-auto object-contain" />
-          <p className="text-center text-sm text-white/50">{t('connect.subtitle')}</p>
+          <img
+            src="/assets/logo.png"
+            alt="RabiRiichi"
+            className="h-20 md:h-24 w-auto object-contain"
+          />
+          <p className="text-center text-sm text-white/50">
+            {t('connect.subtitle')}
+          </p>
           <div className="text-[0.75rem] text-[#555]">v{CLIENT_VERSION}</div>
         </div>
 

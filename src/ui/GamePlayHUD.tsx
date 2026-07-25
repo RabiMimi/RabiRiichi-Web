@@ -3,18 +3,12 @@ import { useTranslation } from 'react-i18next';
 import {
   useRoom,
   useSelf,
-  useAnimationSpeed,
   useActionTimeout,
   useCurrentInquiry,
   useIsCameraLocked,
   useHoveredTileTraceId,
   useSelectedTileTraceId,
   useIsRiichiSelectMode,
-  useIsReplay,
-  useAutoAgari,
-  useNoCalls,
-  useAutoDiscard,
-  useAutoNuki,
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { CallPrompt } from './CallPrompt';
@@ -186,7 +180,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
   const { t } = useTranslation();
   const room = useRoom();
   const currentUser = useSelf();
-  const animationSpeed = useAnimationSpeed();
   const actionTimeout = useActionTimeout();
   const isCameraLocked = useIsCameraLocked();
 
@@ -315,9 +308,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
     return null;
   }
 
-  const hasPlayTile = currentInquiry?.mapped.playTile != null;
-  const timerLabel = hasPlayTile ? t('hud.discard') : t('hud.chooseAction');
-
   return (
     <div className="absolute inset-0 pointer-events-none z-[40] select-none">
       {/* Top Right HUD (Settings + Connection Status) */}
@@ -328,7 +318,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
       {/* Left HUD Panel */}
       <HUDLeftPanel
-        animationSpeed={animationSpeed}
         isCameraLocked={isCameraLocked}
         isExiting={isExiting}
         onExitClick={onExitGame}
@@ -340,7 +329,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
       {/* Countdown Timer */}
       <HUDTimer
-        timerLabel={timerLabel}
         actionTimeout={actionTimeout}
         isVisible={Boolean(currentInquiry && actionTimeout > 0)}
       />
@@ -423,7 +411,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
 /* Sub-components for HUD layout clean modularity */
 
 interface HUDLeftPanelProps {
-  animationSpeed: number;
   isCameraLocked: boolean;
   isExiting: boolean;
   onExitClick: () => void;
@@ -431,31 +418,12 @@ interface HUDLeftPanelProps {
 }
 
 function HUDLeftPanel({
-  animationSpeed,
   isCameraLocked,
   isExiting,
   onExitClick,
   onInfoClick,
 }: HUDLeftPanelProps): React.JSX.Element {
   const { t } = useTranslation();
-  const isReplay = useIsReplay();
-  const autoAgari = useAutoAgari();
-  const noCalls = useNoCalls();
-  const autoDiscard = useAutoDiscard();
-  const autoNuki = useAutoNuki();
-  const room = useRoom();
-
-  const hasNukiDora =
-    room?.config?.doraOption !== null &&
-    room?.config?.doraOption !== undefined &&
-    (room.config.doraOption & 128) !== 0;
-
-  const getToggleBtnClass = (isActive: boolean) =>
-    `flex-1 bg-[#141414]/85 border-[1.5px] rounded-[6px] py-1.5 text-sm font-bold cursor-pointer pointer-events-auto transition-all duration-200 text-center select-none hover:-translate-y-[1px] active:translate-y-[1px] ${
-      isActive
-        ? 'bg-[#ff7a99]/15 border-[#ff7a99] text-[#ff7a99] shadow-[0_0_10px_rgba(255,122,153,0.3),inset_0_0_4px_rgba(255,122,153,0.2)] [text-shadow:0_0_4px_rgba(255,122,153,0.4)]'
-        : 'border-[#444] text-[#888] shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:border-[#ff7a99] hover:text-[#ccc]'
-    }`;
 
   return (
     <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-none z-50">
@@ -558,13 +526,11 @@ function HUDLeftPanel({
 }
 
 interface HUDTimerProps {
-  timerLabel: string;
   actionTimeout: number;
   isVisible: boolean;
 }
 
 function HUDTimer({
-  timerLabel,
   actionTimeout,
   isVisible,
 }: HUDTimerProps): React.JSX.Element | null {

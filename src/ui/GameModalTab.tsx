@@ -20,10 +20,14 @@ export function GameModalTab(): React.JSX.Element {
             max="2"
             step="0.25"
             value={animationSpeed}
-            onChange={(e) => rabiriichi.setAnimationSpeed(Number(e.target.value))}
+            onChange={(e) =>
+              rabiriichi.setAnimationSpeed(Number(e.target.value))
+            }
             className="flex-1 h-2 rounded-full appearance-none bg-[#333] cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#ff7a99]"
           />
-          <span className="text-sm text-white/80 w-10 text-right">{animationSpeed}x</span>
+          <span className="text-sm text-white/80 w-10 text-right">
+            {animationSpeed}x
+          </span>
         </div>
       </div>
     </div>

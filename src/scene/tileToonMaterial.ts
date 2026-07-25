@@ -44,8 +44,14 @@ function injectCel(material: THREE.MeshPhongMaterial) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uDarkLight = { value: 0.998 };
     shader.fragmentShader = UNIFORM_DECL + shader.fragmentShader;
-    shader.vertexShader = shader.vertexShader.replace('#include <common>', VERTEX_NORMAL);
-    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', VERTEX_TRANSFORM);
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <common>',
+      VERTEX_NORMAL,
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      VERTEX_TRANSFORM,
+    );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <dithering_fragment>',
       CEL_OVERRIDE + '\n#include <dithering_fragment>',
@@ -54,7 +60,9 @@ function injectCel(material: THREE.MeshPhongMaterial) {
 }
 
 /** Tile face — Phong + texture + Dora sheen + 2-band cel. */
-export function createToonMaterial(frontTexture: THREE.Texture): THREE.MeshPhongMaterial {
+export function createToonMaterial(
+  frontTexture: THREE.Texture,
+): THREE.MeshPhongMaterial {
   const mat = new THREE.MeshPhongMaterial({
     map: frontTexture,
     specular: 0x000000,
@@ -72,7 +80,8 @@ export function createToonMaterial(frontTexture: THREE.Texture): THREE.MeshPhong
     mat.userData.uTime = uTime;
     mat.userData.isDora = uIsDora;
 
-    shader.fragmentShader = `
+    shader.fragmentShader =
+      `
       uniform float uTime;
       uniform float uIsDora;
       uniform float uSheenWidth;
@@ -81,8 +90,14 @@ export function createToonMaterial(frontTexture: THREE.Texture): THREE.MeshPhong
       varying vec3 vWorldNormal;
     ` + shader.fragmentShader;
 
-    shader.vertexShader = shader.vertexShader.replace('#include <common>', VERTEX_NORMAL);
-    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', VERTEX_TRANSFORM);
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <common>',
+      VERTEX_NORMAL,
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      VERTEX_TRANSFORM,
+    );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <dithering_fragment>',
       CEL_OVERRIDE + '\n#include <dithering_fragment>\n' + DORA_SHEEN,
@@ -93,7 +108,9 @@ export function createToonMaterial(frontTexture: THREE.Texture): THREE.MeshPhong
 }
 
 /** Tile side — Phong + texture/color + 2-band cel. */
-export function createToonSideMaterial(sideTexture?: THREE.Texture): THREE.MeshPhongMaterial {
+export function createToonSideMaterial(
+  sideTexture?: THREE.Texture,
+): THREE.MeshPhongMaterial {
   const mat = new THREE.MeshPhongMaterial({
     ...(sideTexture ? { map: sideTexture } : { color: '#f7f4eb' }),
     specular: 0x000000,
@@ -104,7 +121,9 @@ export function createToonSideMaterial(sideTexture?: THREE.Texture): THREE.MeshP
 }
 
 /** Tile back — Phong + texture + 2-band cel. */
-export function createToonBackMaterial(backTexture: THREE.Texture): THREE.MeshPhongMaterial {
+export function createToonBackMaterial(
+  backTexture: THREE.Texture,
+): THREE.MeshPhongMaterial {
   const mat = new THREE.MeshPhongMaterial({
     map: backTexture,
     specular: 0x000000,

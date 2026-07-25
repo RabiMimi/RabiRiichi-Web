@@ -38,7 +38,7 @@ export function River3D({
     for (const t of discarded) {
       const id = t.traceId ?? 0;
       if (!map.has(id)) {
-        const hash = ((id * 2654435761) >>> 0) % 1000 / 1000;
+        const hash = (((id * 2654435761) >>> 0) % 1000) / 1000;
         map.set(id, (hash - 0.5) * 4 * (Math.PI / 180));
       }
     }
@@ -100,9 +100,15 @@ export function River3D({
                       winningTileTraceId != null &&
                       tileMsg.traceId === winningTileTraceId;
 
-                    const angle = isRiichi ? 0 : (jitterAngles.get(tileMsg.traceId ?? 0) ?? 0);
+                    const angle = isRiichi
+                      ? 0
+                      : (jitterAngles.get(tileMsg.traceId ?? 0) ?? 0);
                     return (
-                      <group key={getSafeKey(tileMsg.traceId, colIndex)} position={[x, 0, z]} rotation={[0, 0, angle]}>
+                      <group
+                        key={getSafeKey(tileMsg.traceId, colIndex)}
+                        position={[x, 0, z]}
+                        rotation={[0, 0, angle]}
+                      >
                         <Tile3D
                           tile={tileStr}
                           displayState={isRiichi ? 'sideways' : 'face'}

@@ -1,4 +1,10 @@
-import React, { useMemo, useRef, useCallback, useEffect, useState } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import {
   useRoom,
   useSelf,
@@ -23,7 +29,10 @@ export function HandDisplay(): React.JSX.Element | null {
   const callHighlightIds = useCallHighlightTileIds();
 
   const selfPlayer = useMemo(
-    () => (room && currentUser ? room.players.find((p) => p.id === currentUser.id) : null),
+    () =>
+      room && currentUser
+        ? room.players.find((p) => p.id === currentUser.id)
+        : null,
     [room, currentUser],
   );
 
@@ -32,7 +41,8 @@ export function HandDisplay(): React.JSX.Element | null {
     const map = new Set<number>();
     if (!currentInquiry) return map;
     const legal = isRiichiSelectMode
-      ? currentInquiry.mapped.buttons.find((b) => b.type === 'riichi')?.legalTiles
+      ? currentInquiry.mapped.buttons.find((b) => b.type === 'riichi')
+          ?.legalTiles
       : currentInquiry.mapped.playTile?.legalTiles;
     legal?.forEach((id) => map.add(id));
     return map;
@@ -66,17 +76,20 @@ export function HandDisplay(): React.JSX.Element | null {
     [playableMap],
   );
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (dragTraceId == null) return;
-    const dx = e.clientX - dragStartX.current;
-    const dy = dragStartY.current - e.clientY;
-    didMoveRef.current = true;
-    setDragOffsetX(dx);
-    setDragOffsetY(Math.max(0, dy));
-    if (dy >= dragThresholdRef.current) {
-      didExceedRef.current = true;
-    }
-  }, [dragTraceId]);
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (dragTraceId == null) return;
+      const dx = e.clientX - dragStartX.current;
+      const dy = dragStartY.current - e.clientY;
+      didMoveRef.current = true;
+      setDragOffsetX(dx);
+      setDragOffsetY(Math.max(0, dy));
+      if (dy >= dragThresholdRef.current) {
+        didExceedRef.current = true;
+      }
+    },
+    [dragTraceId],
+  );
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent, traceId: number) => {
@@ -135,7 +148,8 @@ export function HandDisplay(): React.JSX.Element | null {
     const s = tw / 84;
     const gap = 2; // gap-0.5 = 2px
     const pendingGap = 12; // ml-3 ≈ 12px
-    const handWidth = freeTiles.length * tw + (freeTiles.length - 1) * gap + pendingGap + tw;
+    const handWidth =
+      freeTiles.length * tw + (freeTiles.length - 1) * gap + pendingGap + tw;
     const leftOffset = Math.round((vw - handWidth) / 2);
     return {
       freeTiles,
@@ -156,7 +170,15 @@ export function HandDisplay(): React.JSX.Element | null {
 
   if (!tileGeo) return null;
 
-  const { freeTiles, pendingTile, tileWidth, TILE_HEIGHT, BEVEL_HEIGHT, ROW_HEIGHT, leftOffset } = tileGeo;
+  const {
+    freeTiles,
+    pendingTile,
+    tileWidth,
+    TILE_HEIGHT,
+    BEVEL_HEIGHT,
+    ROW_HEIGHT,
+    leftOffset,
+  } = tileGeo;
 
   const isInteractive = playableMap.size > 0;
 
@@ -185,13 +207,23 @@ export function HandDisplay(): React.JSX.Element | null {
     >
       <div className="relative h-full">
         {/* Free tiles — at 20% from left */}
-        <div className="flex items-end gap-0.5 absolute" style={{ left: leftOffset }}>
+        <div
+          className="flex items-end gap-0.5 absolute"
+          style={{ left: leftOffset }}
+        >
           {freeTiles.map((tileMsg, idx) => {
-            const tileStr = tileMsg.tile ? Tile.fromByte(tileMsg.tile).toString() : 'back';
-            const isPlayable = tileMsg.traceId != null && playableMap.has(tileMsg.traceId);
+            const tileStr = tileMsg.tile
+              ? Tile.fromByte(tileMsg.tile).toString()
+              : 'back';
+            const isPlayable =
+              tileMsg.traceId != null && playableMap.has(tileMsg.traceId);
             const isDimmed =
-              (callHighlightIds != null && tileMsg.traceId != null && !callHighlightIds.has(tileMsg.traceId)) ||
-              (isRiichiSelectMode && tileMsg.traceId != null && !playableMap.has(tileMsg.traceId));
+              (callHighlightIds != null &&
+                tileMsg.traceId != null &&
+                !callHighlightIds.has(tileMsg.traceId)) ||
+              (isRiichiSelectMode &&
+                tileMsg.traceId != null &&
+                !playableMap.has(tileMsg.traceId));
 
             return (
               <button
@@ -203,25 +235,35 @@ export function HandDisplay(): React.JSX.Element | null {
                 style={{
                   width: tileWidth,
                   filter: 'drop-shadow(0 0 2px #000)',
-                  transform: dragTraceId === tileMsg.traceId ? `translate(${dragOffsetX}px, -${dragOffsetY}px)` : undefined,
-                  transition: dragTraceId === tileMsg.traceId ? 'none' : undefined,
+                  transform:
+                    dragTraceId === tileMsg.traceId
+                      ? `translate(${dragOffsetX}px, -${dragOffsetY}px)`
+                      : undefined,
+                  transition:
+                    dragTraceId === tileMsg.traceId ? 'none' : undefined,
                 }}
                 onClick={() => {
                   if (didDragRef.current) return;
                   if (tileMsg.traceId != null) handleTileClick(tileMsg.traceId);
                 }}
                 onPointerDown={(e) => {
-                  if (tileMsg.traceId != null) handlePointerDown(e, tileMsg.traceId);
+                  if (tileMsg.traceId != null)
+                    handlePointerDown(e, tileMsg.traceId);
                 }}
                 onPointerMove={handlePointerMove}
                 onPointerUp={(e) => {
-                  if (tileMsg.traceId != null) handlePointerUp(e, tileMsg.traceId);
+                  if (tileMsg.traceId != null)
+                    handlePointerUp(e, tileMsg.traceId);
                 }}
                 onDragStart={(e) => e.preventDefault()}
-                onMouseEnter={() => tileMsg.traceId != null && handleTileHover(tileMsg.traceId)}
+                onMouseEnter={() =>
+                  tileMsg.traceId != null && handleTileHover(tileMsg.traceId)
+                }
                 onMouseLeave={() => handleTileHover(null)}
               >
-                <div className={`overflow-hidden rounded-lg ${isDimmed ? 'brightness-50' : ''}`}>
+                <div
+                  className={`overflow-hidden rounded-lg ${isDimmed ? 'brightness-50' : ''}`}
+                >
                   <img
                     src="/assets/hand_tiles/bevel.jpg"
                     alt=""
@@ -237,7 +279,10 @@ export function HandDisplay(): React.JSX.Element | null {
                     style={{ width: tileWidth, height: TILE_HEIGHT }}
                   />
                 </div>
-                <div className="absolute left-0 right-0 h-1.25" style={{ bottom: -4 }} />
+                <div
+                  className="absolute left-0 right-0 h-1.25"
+                  style={{ bottom: -4 }}
+                />
               </button>
             );
           })}
@@ -254,22 +299,32 @@ export function HandDisplay(): React.JSX.Element | null {
               width: tileWidth,
               left: `${leftOffset + freeTiles.length * tileWidth + (freeTiles.length - 1) * 2 + 12}px`,
               filter: 'drop-shadow(0 0 2px #000)',
-              transform: dragTraceId === pendingTile.traceId ? `translate(${dragOffsetX}px, -${dragOffsetY}px)` : undefined,
-              transition: dragTraceId === pendingTile.traceId ? 'none' : undefined,
+              transform:
+                dragTraceId === pendingTile.traceId
+                  ? `translate(${dragOffsetX}px, -${dragOffsetY}px)`
+                  : undefined,
+              transition:
+                dragTraceId === pendingTile.traceId ? 'none' : undefined,
             }}
             onClick={() => {
               if (didDragRef.current) return;
-              if (pendingTile.traceId != null) handleTileClick(pendingTile.traceId);
+              if (pendingTile.traceId != null)
+                handleTileClick(pendingTile.traceId);
             }}
             onPointerDown={(e) => {
-              if (pendingTile.traceId != null) handlePointerDown(e, pendingTile.traceId);
+              if (pendingTile.traceId != null)
+                handlePointerDown(e, pendingTile.traceId);
             }}
             onPointerMove={handlePointerMove}
             onPointerUp={(e) => {
-              if (pendingTile.traceId != null) handlePointerUp(e, pendingTile.traceId);
+              if (pendingTile.traceId != null)
+                handlePointerUp(e, pendingTile.traceId);
             }}
             onDragStart={(e) => e.preventDefault()}
-            onMouseEnter={() => pendingTile.traceId != null && handleTileHover(pendingTile.traceId)}
+            onMouseEnter={() =>
+              pendingTile.traceId != null &&
+              handleTileHover(pendingTile.traceId)
+            }
             onMouseLeave={() => handleTileHover(null)}
           >
             <div className="overflow-hidden rounded-lg">
@@ -281,14 +336,21 @@ export function HandDisplay(): React.JSX.Element | null {
                 className="object-cover brightness-90 block"
               />
               <UiTile
-                tile={pendingTile.tile ? Tile.fromByte(pendingTile.tile).toString() : 'back'}
+                tile={
+                  pendingTile.tile
+                    ? Tile.fromByte(pendingTile.tile).toString()
+                    : 'back'
+                }
                 size="custom"
                 isHighlighted
                 className="bg-[#f7f4eb] block"
                 style={{ width: tileWidth, height: TILE_HEIGHT }}
               />
             </div>
-            <div className="absolute left-0 right-0 h-1.25" style={{ bottom: -4 }} />
+            <div
+              className="absolute left-0 right-0 h-1.25"
+              style={{ bottom: -4 }}
+            />
           </button>
         ) : (
           <div
