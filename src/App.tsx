@@ -152,6 +152,9 @@ function App(): React.JSX.Element {
 
     const serverParam = params.get('server');
     const replayParam = params.get('replay');
+    // Arena links opt in to the per-decision rationales it serves over REST;
+    // without this we would probe every plain game server over HTTP.
+    const reasoningParam = params.get('reasoning') === '1';
 
     if (serverParam && replayParam && replayParam !== '1') {
       loadServerReplay(serverParam, replayParam)
@@ -159,7 +162,7 @@ function App(): React.JSX.Element {
           if (active) {
             setLoadingReplay(false);
             stopReplayFn = stopReplay;
-            void startReplay(replayData);
+            void startReplay(replayData, 0, { reasoning: reasoningParam });
           }
         })
         .catch((err: unknown) => {
