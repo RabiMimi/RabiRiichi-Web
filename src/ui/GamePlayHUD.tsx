@@ -35,6 +35,7 @@ import { FullscreenButton } from './FullscreenButton';
 import { Tooltip } from './Tooltip';
 import { SettingsButton } from './SettingsButton';
 import { IconButton } from './IconButton';
+import { AutoPlayControls } from './AutoPlayControls';
 
 export function GameInfoPanel(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -522,6 +523,9 @@ function HUDLeftPanel({
           </IconButton>
         </Tooltip>
       </div>
+
+      {/* Auto-play controls stay visible during play and highlight when active. */}
+      <AutoPlayControls />
     </div>
   );
 }

@@ -105,7 +105,9 @@ function HandTile({
       {...drag}
     >
       <div
-        className={`overflow-hidden rounded-lg ${isDimmed ? 'brightness-50' : ''}`}
+        className={`relative overflow-hidden rounded-lg ${
+          isDora ? 'dora-sheen' : ''
+        } ${isDimmed ? 'brightness-50' : ''}`}
       >
         <img
           src="/assets/hand_tiles/bevel.jpg"
@@ -114,7 +116,7 @@ function HandTile({
           style={{ width: tileWidth, height: bevelHeight }}
           className="object-cover brightness-90 block"
         />
-        <div className={`relative ${isDora ? 'dora-sheen' : ''}`}>
+        <div>
           <UiTile
             tile={face}
             size="custom"

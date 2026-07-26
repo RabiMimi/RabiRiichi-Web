@@ -22,6 +22,7 @@ import {
 } from '../state/store';
 import { StickerBubble } from '../ui/StickerBubble';
 import { ChatBubble } from '../ui/ChatBubble';
+import { stickerPortalTarget } from '../ui/portal';
 
 interface PlayerIndicator3DProps {
   player: PlayerModel;
@@ -49,6 +50,7 @@ function PlayerIndicator3D({
     return (
       <Html
         position={[0, 0.3, 0.1]}
+        portal={stickerPortalTarget as React.RefObject<HTMLElement>}
         style={{
           pointerEvents: 'none',
           userSelect: 'none',
@@ -70,6 +72,7 @@ function PlayerIndicator3D({
   return (
     <Html
       position={[1.2, 0.15, -0.2]}
+      portal={stickerPortalTarget as React.RefObject<HTMLElement>}
       style={{
         pointerEvents: 'auto',
         userSelect: 'none',

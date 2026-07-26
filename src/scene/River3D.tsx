@@ -32,14 +32,23 @@ export function River3D({
     tileRegistry,
   );
 
-  // Deterministic ±2° jitter per tile based on traceId
-  const jitterAngles = useMemo(() => {
-    const map = new Map<number, number>();
+  // Stable per-tile imperfections keep the river from looking machine-aligned
+  // without making tiles jump when React rerenders.
+  const jitterTransforms = useMemo(() => {
+    const map = new Map<
+      number,
+      { rotationY: number; offsetX: number; offsetZ: number }
+    >();
     for (const t of discarded) {
       const id = t.traceId ?? 0;
       if (!map.has(id)) {
-        const hash = (((id * 2654435761) >>> 0) % 1000) / 1000;
-        map.set(id, (hash - 0.5) * 4 * (Math.PI / 180));
+        const hash = (salt: number): number =>
+          ((Math.imul(id ^ salt, 2654435761) >>> 0) % 1000) / 1000 - 0.5;
+        map.set(id, {
+          rotationY: hash(0) * 4 * (Math.PI / 180),
+          offsetX: hash(0x45d9f3b) * 0.006,
+          offsetZ: hash(0x119de1f3) * 0.006,
+        });
       }
     }
     return map;
@@ -100,14 +109,18 @@ export function River3D({
                       winningTileTraceId != null &&
                       tileMsg.traceId === winningTileTraceId;
 
-                    const angle = isRiichi
-                      ? 0
-                      : (jitterAngles.get(tileMsg.traceId ?? 0) ?? 0);
+                    const jitter = jitterTransforms.get(
+                      tileMsg.traceId ?? 0,
+                    ) ?? {
+                      rotationY: 0,
+                      offsetX: 0,
+                      offsetZ: 0,
+                    };
                     return (
                       <group
                         key={getSafeKey(tileMsg.traceId, colIndex)}
-                        position={[x, 0, z]}
-                        rotation={[0, 0, angle]}
+                        position={[x + jitter.offsetX, 0, z + jitter.offsetZ]}
+                        rotation={[0, isRiichi ? 0 : jitter.rotationY, 0]}
                       >
                         <Tile3D
                           tile={tileStr}
