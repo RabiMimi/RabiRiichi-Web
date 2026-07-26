@@ -1,5 +1,9 @@
 # RabiRiichi-Web
 
+<p align="center">
+  <img src="public/assets/logo.png" alt="RabiRiichi Logo" width="200" />
+</p>
+
 [![100hun](https://100hun.rabimimi.com/provider/codecov/github/RabiMimi/RabiRiichi-Web/main/badge.png?size=128)](https://github.com/KCFindstr/100hun)
 [![build-test](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/build-test.yml/badge.svg)](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/build-test.yml)
 [![codecov](https://codecov.io/gh/RabiMimi/RabiRiichi-Web/branch/main/graph/badge.svg)](https://codecov.io/gh/RabiMimi/RabiRiichi-Web)
