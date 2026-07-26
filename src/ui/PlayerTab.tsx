@@ -12,7 +12,7 @@ import {
   type VoiceLineConfig,
 } from '../domain/character';
 import { soundManager } from '../lib/sound';
-import { FORM } from './styles';
+import { Select } from './Select';
 
 const PlayIcon = (): React.JSX.Element => (
   <svg
@@ -114,8 +114,8 @@ export function PlayerTab(): React.JSX.Element {
         <div className="text-xs lg:text-sm font-extrabold uppercase tracking-wider text-white/50 text-left">
           {t('settings.characterSelector', 'Active Character')}
         </div>
-        <select
-          className={`${FORM.input} w-full text-sm lg:text-base py-1 px-2 h-8 lg:h-10`}
+        <Select
+          className="w-full text-sm lg:text-base py-1 px-4 h-8 lg:h-10"
           value={activeCharacterId}
           disabled={inGame}
           onChange={(e) =>
@@ -127,7 +127,7 @@ export function PlayerTab(): React.JSX.Element {
               {t(`character.${c.id}.name`)}
             </option>
           ))}
-        </select>
+        </Select>
 
         {inGame && (
           <div className="text-xs text-[#ff6666] italic text-left -mt-1">

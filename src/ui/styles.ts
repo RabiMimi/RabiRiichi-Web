@@ -122,6 +122,15 @@ export const FORM = {
   inputInline:
     'h-8 flex-1 min-w-0 rounded-full border border-[#555] bg-[#1a1a1a] px-3 py-1.5 text-sm text-white ' +
     'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50',
+  // Select fields (uses custom chevron to avoid native square/right-angle arrows)
+  select:
+    'h-10 rounded-full border border-[#555] bg-[#1a1a1a] pl-4 pr-9 py-2 text-base text-white ' +
+    'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50 ' +
+    'appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.7)%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E")] bg-[length:1rem_1rem] bg-[right_0.75rem_center] bg-no-repeat',
+  selectInline:
+    'h-8 flex-1 min-w-0 rounded-full border border-[#555] bg-[#1a1a1a] pl-3 pr-8 py-1.5 text-sm text-white ' +
+    'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50 ' +
+    'appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.7)%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E")] bg-[length:0.875rem_0.875rem] bg-[right_0.6rem_center] bg-no-repeat',
   // Inline wrapper error text
   fieldError: 'text-xs text-[#ff6666] pl-[118px] text-left mt-0.5',
   // Standard full-width error container

@@ -11,6 +11,8 @@ import {
   getTileSet,
 } from '../domain/tilesets';
 import { CustomTileSetModal } from './CustomTileSetModal';
+import { Input } from './Input';
+import { Select } from './Select';
 import { FORM } from './styles';
 
 interface GameSettingsTabProps {
@@ -68,33 +70,33 @@ export function GameSettingsTab({
         <label htmlFor="player-count" className={FORM.labelInline}>
           {t('lobby.players')}
         </label>
-        <select
+        <Select
           id="player-count"
+          selectSize="inline"
           value={playerCount}
           onChange={(e) => setPlayerCount(Number(e.target.value))}
           disabled={isLoading}
-          className={FORM.inputInline}
         >
           <option value={2}>{t('playersOpt.2')}</option>
           <option value={3}>{t('playersOpt.3')}</option>
           <option value={4}>{t('playersOpt.4')}</option>
-        </select>
+        </Select>
       </div>
 
       <div className={FORM.groupInline}>
         <label htmlFor="total-round" className={FORM.labelInline}>
           {t('lobby.rounds')}
         </label>
-        <select
+        <Select
           id="total-round"
+          selectSize="inline"
           value={totalRound}
           onChange={(e) => setTotalRound(Number(e.target.value))}
           disabled={isLoading}
-          className={FORM.inputInline}
         >
           <option value={1}>{t('roundsOpt.1')}</option>
           <option value={2}>{t('roundsOpt.2')}</option>
-        </select>
+        </Select>
       </div>
 
       <div className={FORM.groupInlineWrapper}>
@@ -102,8 +104,9 @@ export function GameSettingsTab({
           <label htmlFor="min-han" className={FORM.labelInline}>
             {t('lobby.minHan')}
           </label>
-          <input
+          <Input
             id="min-han"
+            inputSize="inline"
             type="text"
             value={minHanInput}
             onChange={(e) => {
@@ -113,7 +116,6 @@ export function GameSettingsTab({
             }}
             disabled={isLoading}
             placeholder="1"
-            className={FORM.inputInline}
           />
         </div>
         {minHanError && <span className={FORM.fieldError}>{minHanError}</span>}
@@ -124,8 +126,9 @@ export function GameSettingsTab({
           <label htmlFor="action-timeout" className={FORM.labelInline}>
             {t('lobby.actionTimeout')}
           </label>
-          <input
+          <Input
             id="action-timeout"
+            inputSize="inline"
             type="text"
             value={actionTimeoutInput}
             onChange={(e) => {
@@ -137,7 +140,6 @@ export function GameSettingsTab({
             placeholder={t('lobby.defaultPlaceholder', {
               value: DEFAULT_ACTION_TIMEOUT,
             })}
-            className={FORM.inputInline}
           />
         </div>
         {timeoutError && (
@@ -150,8 +152,9 @@ export function GameSettingsTab({
           <label htmlFor="next-round-ack-timeout" className={FORM.labelInline}>
             {t('lobby.nextRoundAckTimeout')}
           </label>
-          <input
+          <Input
             id="next-round-ack-timeout"
+            inputSize="inline"
             type="text"
             value={nextRoundAckTimeoutInput}
             onChange={(e) => {
@@ -163,7 +166,6 @@ export function GameSettingsTab({
             placeholder={t('lobby.defaultPlaceholder', {
               value: DEFAULT_NEXT_ROUND_ACK_TIMEOUT,
             })}
-            className={FORM.inputInline}
           />
         </div>
         {nextRoundAckTimeoutError && (
@@ -175,8 +177,9 @@ export function GameSettingsTab({
         <label htmlFor="tile-set" className={FORM.labelInline}>
           {t('lobby.tileSet')}
         </label>
-        <select
+        <Select
           id="tile-set"
+          selectSize="inline"
           value={tileSetPreset}
           onChange={(e) => {
             const val = e.target.value;
@@ -187,7 +190,6 @@ export function GameSettingsTab({
             }
           }}
           disabled={isLoading}
-          className={FORM.inputInline}
         >
           <option value="Regular">
             {t('tileSetOpt.labelWithCount', {
@@ -232,7 +234,7 @@ export function GameSettingsTab({
             </optgroup>
           )}
           <option value="__CUSTOMIZE__">{t('tileSetOpt.customize')}</option>
-        </select>
+        </Select>
 
         {showCustomizeModal && (
           <CustomTileSetModal

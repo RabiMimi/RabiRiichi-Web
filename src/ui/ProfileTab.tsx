@@ -4,6 +4,7 @@ import { rabiriichi } from '../net/client';
 import { formatError } from '../lib';
 import { useSelf, useUsername } from '../state/store';
 import { Button } from './Button';
+import { Input } from './Input';
 import { PasswordModal } from './PasswordModal';
 import { FORM } from './styles';
 
@@ -61,10 +62,10 @@ export function ProfileTab(): React.JSX.Element {
     <div className="mx-auto flex w-full max-w-[420px] flex-col gap-4 p-3 sm:p-4 lg:p-6">
       {username && (
         <div className={FORM.group}>
-          <label className={FORM.label}>{t('settings.profile.username')}</label>
-          <div className="h-10 rounded-lg border border-[#444] bg-[#141414]/60 px-3 py-2 text-base text-white/70">
-            {username}
-          </div>
+          <label htmlFor="profile-username" className={FORM.label}>
+            {t('settings.profile.username')}
+          </label>
+          <Input id="profile-username" value={username} readOnly disabled />
         </div>
       )}
 
@@ -72,9 +73,8 @@ export function ProfileTab(): React.JSX.Element {
         <label htmlFor="profile-nickname" className={FORM.label}>
           {t('settings.profile.nickname')}
         </label>
-        <input
+        <Input
           id="profile-nickname"
-          className={FORM.input}
           value={nickname}
           maxLength={16}
           placeholder={t('settings.profile.nicknamePlaceholder')}
