@@ -9,8 +9,6 @@ export interface ResultBadge {
 }
 
 export interface ResultBadgeInput {
-  isTenpai: boolean;
-  isNagashi: boolean;
   agari: PlayerAgariState;
   t: (key: string) => string;
 }
@@ -23,12 +21,10 @@ export interface ResultBadgeInput {
  * what it is on its own — a bare score delta does not distinguish a ron from a
  * tenpai payment.
  */
-export function getResultBadge({
-  isTenpai,
-  isNagashi,
-  agari,
-  t,
-}: ResultBadgeInput): ResultBadge {
+export function getResultBadge({ agari, t }: ResultBadgeInput): ResultBadge {
+  const isNagashi = agari.isNagashi ?? false;
+  const isTenpai = agari.isTenpai ?? false;
+
   if (isNagashi) {
     return {
       label: t('yaku.NagashiMangan'),

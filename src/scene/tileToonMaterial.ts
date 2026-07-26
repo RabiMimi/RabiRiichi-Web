@@ -1,5 +1,8 @@
 import * as THREE from 'three';
-import { DORA_SHEEN_WIDTH, DORA_SHEEN_SPEED } from './Tile3D';
+
+// Adjust these constants to change the Dora sliding sheen appearance.
+export const DORA_SHEEN_WIDTH = 0.2;
+export const DORA_SHEEN_SPEED = 2.0;
 
 // 2-band cel shading: N·L < 0 → dark, N·L >= 0 → bright
 const CEL_OVERRIDE = `

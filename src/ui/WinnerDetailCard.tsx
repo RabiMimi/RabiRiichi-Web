@@ -82,11 +82,16 @@ export function WinnerDetailCard({
 
   const rawYakuList = agari.scores?.items ?? [];
   const yakuList = filterYakuListForDisplay(rawYakuList, scoringOption);
+  const scoreResult = agari.scores?.result;
+  const shouldShowHanFu = Boolean(
+    scoreResult &&
+    ((scoreResult.finalYakuman ?? 0) <= 0 ||
+      (scoreResult.kazoeYakuman ?? 0) > 0 ||
+      isAotenjou),
+  );
 
   const handTiles = player.gameState?.hand.freeTiles ?? [];
   const calledMelds = player.gameState?.hand.called ?? [];
-
-  const cardStyles = '';
 
   const finalHanFuColor = isNagashi ? 'text-[#00e5ff]' : 'text-[#ff7a99]';
 
@@ -95,12 +100,12 @@ export function WinnerDetailCard({
   const fuUnit = t('yaku.fu'); // 'Fu' / '符' / '符'
   const pointsUnit = t('hud.points'); // 'pts' / '点' / '点'
 
-  const badge = getResultBadge({ isTenpai, isNagashi, agari, t });
+  const badge = getResultBadge({ agari, t });
 
   return (
     <div
       key={player.id}
-      className={`rounded-xl flex flex-col p-2 lg:p-3 gap-1.5 lg:gap-2 transition-all duration-700 ease-out transform ${cardStyles} ${
+      className={`rounded-xl flex flex-col p-2 lg:p-3 gap-1.5 lg:gap-2 transition-all duration-700 ease-out transform ${
         isCardStarted
           ? 'opacity-100 translate-y-0 scale-100'
           : 'opacity-0 -translate-y-2 scale-98 pointer-events-none'
@@ -119,7 +124,7 @@ export function WinnerDetailCard({
           {badge.label}
         </span>
 
-        {isTenpai ? (
+        {isTenpai &&
           player.gameState?.awaitedTiles &&
           player.gameState.awaitedTiles.length > 0 && (
             <div className="ml-auto flex items-center gap-1 lg:gap-2">
@@ -133,16 +138,7 @@ export function WinnerDetailCard({
                 })}
               </div>
             </div>
-          )
-        ) : (
-          <div
-            className={`ml-auto flex items-center gap-2 transition-all duration-700 ease-out transform ${
-              showTotal
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 translate-x-4 pointer-events-none'
-            }`}
-          />
-        )}
+          )}
       </div>
 
       {isNagashi ? (
@@ -302,7 +298,7 @@ export function WinnerDetailCard({
       )}
 
       {/* Han/Fu below yaku list */}
-      {agari.scores?.result && !agari.scores.result.finalYakuman && (
+      {scoreResult && (
         <div
           className={`mt-2 flex items-baseline transition-all duration-700 ease-out transform ${
             showTotal
@@ -310,22 +306,26 @@ export function WinnerDetailCard({
               : 'opacity-0 translate-x-4 pointer-events-none'
           }`}
         >
-          <span
-            className={`${RESULT.scoreFigure} ${finalHanFuColor} whitespace-nowrap`}
-            style={{ fontFamily }}
-          >
-            {agari.scores.result.han ?? 0}
-            {hanUnit}
-          </span>
-          {agari.scores.result.fu ? (
-            <span
-              className={`${RESULT.scoreFu} ${finalHanFuColor} ml-2 whitespace-nowrap`}
-              style={{ fontFamily }}
-            >
-              {agari.scores.result.fu}
-              {fuUnit}
-            </span>
-          ) : null}
+          {shouldShowHanFu && (
+            <>
+              <span
+                className={`${RESULT.scoreFigure} ${finalHanFuColor} whitespace-nowrap`}
+                style={{ fontFamily }}
+              >
+                {scoreResult.han ?? 0}
+                {hanUnit}
+              </span>
+              {scoreResult.fu ? (
+                <span
+                  className={`${RESULT.scoreFu} ${finalHanFuColor} ml-2 whitespace-nowrap`}
+                  style={{ fontFamily }}
+                >
+                  {scoreResult.fu}
+                  {fuUnit}
+                </span>
+              ) : null}
+            </>
+          )}
           <div className="flex-1" />
           <span
             className={`${RESULT.scoreFigure} ${finalHanFuColor} whitespace-nowrap`}

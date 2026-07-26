@@ -10,9 +10,7 @@ import {
 } from '../state/store';
 import { IconButton } from './IconButton';
 import { Tooltip } from './Tooltip';
-
-/** Bit flag in `config.doraOption` that enables nukidora (three-player rule). */
-const DORA_OPTION_NUKI = 128;
+import { DoraOption } from '../proto';
 
 interface AutoPlayControl {
   key: string;
@@ -69,7 +67,10 @@ export function AutoPlayControls(): React.JSX.Element {
   ];
 
   const doraOption = room?.config?.doraOption;
-  if (doraOption != null && (doraOption & DORA_OPTION_NUKI) !== 0) {
+  if (
+    doraOption != null &&
+    (doraOption & DoraOption.DORA_OPTION_NUKI_DORA) !== 0
+  ) {
     controls.push({
       key: 'autoNuki',
       isActive: Boolean(autoNuki),

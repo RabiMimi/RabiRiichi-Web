@@ -54,10 +54,6 @@ import { SOUND_EFFECTS } from '../lib/soundEffects';
 
 const logger = new Logger('Tile3D');
 
-// Adjust these constants to change the Dora sliding sheen appearance
-export const DORA_SHEEN_WIDTH = 0.2; // Width of the diagonal reflection sheen (increase for wider/softer look)
-export const DORA_SHEEN_SPEED = 2.0; // Speed of the sliding animation (increase for faster sliding)
-
 export type TileDisplayState =
   'hand' | 'opponent-hand' | 'face' | 'back' | 'sideways';
 
