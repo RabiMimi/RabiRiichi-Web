@@ -64,8 +64,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,webp,svg,glb,ttf,woff2}'],
         // Max file size for precaching (default is 2MB, our tiles models/assets can be larger)
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-        // Exclude large font files from precache; they are runtime-loaded as needed.
-        // These fonts should eventually be subsetted to reduce download size.
+        // Skip the large fonts during Workbox's size-limited glob scan. They
+        // are still precached through `includeAssets` above, which is not
+        // constrained by `maximumFileSizeToCacheInBytes`.
         globIgnores: [
           '**/AaShenYeShiTang-2.ttf',
           '**/Modified-DFPKanteiryu-XB.ttf',
