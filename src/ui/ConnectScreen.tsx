@@ -68,6 +68,10 @@ export function ConnectScreen(): React.JSX.Element {
 
   const handleTargetUrlChange = useCallback((url: string) => {
     setTargetUrl(url);
+    const credentials = rabiriichi.getCredentialsForServer(url);
+    if (credentials?.username) {
+      setUsername((current) => current || credentials.username);
+    }
     setBypassedUrls((prev) => {
       if (prev.has(url)) {
         const next = new Set(prev);
@@ -83,7 +87,11 @@ export function ConnectScreen(): React.JSX.Element {
   }, [targetUrl]);
 
   const showSavedCard = useMemo(() => {
-    return Boolean(savedCreds?.token && !bypassedUrls.has(targetUrl));
+    return Boolean(
+      savedCreds?.token &&
+      !bypassedUrls.has(targetUrl) &&
+      rabiriichi.autoConnectFailedUrl !== targetUrl,
+    );
   }, [savedCreds, bypassedUrls, targetUrl]);
 
   const handleUseDifferentAccount = () => {
@@ -132,6 +140,15 @@ export function ConnectScreen(): React.JSX.Element {
           setError(t('connect.savedTokenExpiredError'));
         } else {
           setError(formatError(err, t));
+        }
+        setActiveTab('login');
+        setBypassedUrls((prev) => {
+          const next = new Set(prev);
+          next.add(targetUrl);
+          return next;
+        });
+        if (savedCreds.username) {
+          setUsername(savedCreds.username);
         }
         rabiriichi.close();
         setConnectPhase('idle');

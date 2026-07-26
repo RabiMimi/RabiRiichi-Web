@@ -515,6 +515,28 @@ describe('RabiRiichiClient', () => {
     vi.useRealTimers();
   });
 
+  it('should expose a failed auto-reconnect to the login screen', async () => {
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+      lastUrl: 'ws://stored-url:5150',
+    });
+    mockLocalStorage.rabiriichi_token = 'expired-token';
+
+    const onChange = vi.fn();
+    rabiriichi.onChange.subscribe(onChange);
+    const connectSpy = vi
+      .spyOn(rabiriichi, 'connect')
+      .mockRejectedValue(new Error('Sign in failed'));
+
+    await initRabiRiichi();
+
+    expect(rabiriichi.autoConnectError).toBe('connect.error.autoConnectFailed');
+    expect(rabiriichi.autoConnectFailedUrl).toBe('ws://stored-url:5150');
+    expect(onChange).toHaveBeenCalled();
+
+    rabiriichi.onChange.unsubscribe(onChange);
+    connectSpy.mockRestore();
+  });
+
   it('should update room state and game state on socket messages', async () => {
     vi.useFakeTimers();
     mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
   useRoom,
@@ -19,9 +20,110 @@ import { soundManager } from '../lib/sound';
 import { getFinalPlacementVoiceLineId } from '../domain/resultHelpers';
 import { StickerBubble } from './StickerBubble';
 import { ChatBubble } from './ChatBubble';
+import { stickerPortalTarget } from './portal';
 
 interface FinalResultPanelProps {
   onReturnToRoom: () => void;
+}
+
+interface ResultPlayerAvatarProps {
+  initials: string;
+  avatarClass: string;
+  sticker: string | null | undefined;
+  text: string | null | undefined;
+  placement: 'top' | 'bottom';
+}
+
+function ResultPlayerAvatar({
+  initials,
+  avatarClass,
+  sticker,
+  text,
+  placement,
+}: ResultPlayerAvatarProps): React.JSX.Element {
+  const anchorRef = React.useRef<HTMLDivElement>(null);
+  const [anchorRect, setAnchorRect] = React.useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  const updateAnchorRect = React.useCallback(() => {
+    const anchor = anchorRef.current;
+    if (!anchor) return;
+    const next = anchor.getBoundingClientRect();
+    setAnchorRect((current) => {
+      if (
+        current?.left === next.left &&
+        current.top === next.top &&
+        current.width === next.width &&
+        current.height === next.height
+      ) {
+        return current;
+      }
+      return {
+        left: next.left,
+        top: next.top,
+        width: next.width,
+        height: next.height,
+      };
+    });
+  }, []);
+
+  React.useLayoutEffect(() => {
+    updateAnchorRect();
+    const anchor = anchorRef.current;
+    if (!anchor) return;
+    const observer = new ResizeObserver(updateAnchorRect);
+    observer.observe(anchor);
+    window.addEventListener('resize', updateAnchorRect);
+    window.addEventListener('scroll', updateAnchorRect, true);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateAnchorRect);
+      window.removeEventListener('scroll', updateAnchorRect, true);
+    };
+  }, [updateAnchorRect]);
+
+  const portalTarget = stickerPortalTarget.current;
+
+  return (
+    <div
+      ref={anchorRef}
+      className={`relative shrink-0 flex items-center justify-center w-7 h-7 lg:w-12 lg:h-12 bg-[#444] rounded-full text-xs lg:text-xl font-bold border-2 ${avatarClass}`}
+    >
+      {initials}
+      {portalTarget &&
+        anchorRect &&
+        createPortal(
+          <div
+            className="fixed pointer-events-none"
+            style={{
+              left: anchorRect.left,
+              top: anchorRect.top,
+              width: anchorRect.width,
+              height: anchorRect.height,
+            }}
+          >
+            <div className="relative h-full w-full">
+              <StickerBubble
+                sticker={sticker}
+                className="sticker-bubble-2d"
+                placement={placement}
+              />
+              <ChatBubble
+                text={text}
+                className="chat-bubble-2d"
+                placement={placement}
+                hasSticker={Boolean(sticker)}
+              />
+            </div>
+          </div>,
+          portalTarget,
+        )}
+    </div>
+  );
 }
 
 export function FinalResultPanel({
@@ -210,24 +312,13 @@ export function FinalResultPanel({
                     >
                       #{rank}
                     </div>
-                    <div className="relative shrink-0 flex items-center justify-center">
-                      <div
-                        className={`w-7 h-7 lg:w-12 lg:h-12 bg-[#444] rounded-full flex justify-center items-center text-xs lg:text-xl font-bold border-2 ${styles.avatar}`}
-                      >
-                        {initials}
-                      </div>
-                      <StickerBubble
-                        sticker={activeStickers[item.player.id]}
-                        className="sticker-bubble-2d"
-                        placement={index === 0 ? 'bottom' : 'top'}
-                      />
-                      <ChatBubble
-                        text={activeChatTexts[item.player.id]}
-                        className="chat-bubble-2d"
-                        placement={index === 0 ? 'bottom' : 'top'}
-                        hasSticker={Boolean(activeStickers[item.player.id])}
-                      />
-                    </div>
+                    <ResultPlayerAvatar
+                      initials={initials}
+                      avatarClass={styles.avatar}
+                      sticker={activeStickers[item.player.id]}
+                      text={activeChatTexts[item.player.id]}
+                      placement={index === 0 ? 'bottom' : 'top'}
+                    />
                     <div className="flex-1 flex justify-between items-center">
                       <span className="text-xs lg:text-xl font-medium">
                         {displayName}

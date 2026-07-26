@@ -363,7 +363,7 @@ function App(): React.JSX.Element {
       />
       <div
         ref={stickerPortalTarget as React.RefObject<HTMLDivElement>}
-        className="absolute inset-0 pointer-events-none z-[80]"
+        className="absolute inset-0 pointer-events-none z-[200]"
       />
     </div>
   );

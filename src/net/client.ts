@@ -121,6 +121,7 @@ export class RabiRiichiClient {
   private serverMessageListener: ((msg: IServerMessageDto) => void) | null =
     null;
   public autoConnectError: string | null = null;
+  public autoConnectFailedUrl: string | null = null;
 
   public connectionStatus: ConnectionStatus = 'disconnected';
   public currentInquiry: ActiveInquiry | null = null;
@@ -652,6 +653,8 @@ export class RabiRiichiClient {
       this.accessToken = userInfo.accessToken;
       this.storeCredentials();
     }
+    this.autoConnectError = null;
+    this.autoConnectFailedUrl = null;
     if (userInfo.room) {
       this.handleRoomState(userInfo.room);
     } else {
@@ -1450,12 +1453,18 @@ export class RabiRiichiClient {
 
 export const rabiriichi = new RabiRiichiClient();
 
+function reportAutoConnectFailure(url: string, error: string): void {
+  rabiriichi.autoConnectFailedUrl = url;
+  rabiriichi.autoConnectError = error;
+  rabiriichi.onChange.emit();
+}
+
 async function handleParamAutoConnect(
   serverParam: string,
   joinRoomParam: string | null,
 ): Promise<void> {
   if (!rabiriichi.isKnownServer(serverParam)) {
-    rabiriichi.autoConnectError = 'connect.error.unknownServer';
+    reportAutoConnectFailure(serverParam, 'connect.error.unknownServer');
     rabiriichi.close();
     return;
   }
@@ -1483,8 +1492,10 @@ async function handleParamAutoConnect(
               logger.warn(
                 `Already in a different room ${rabiriichi.room.id}. Aborting join.`,
               );
-              rabiriichi.autoConnectError =
-                'connect.error.alreadyInDifferentRoom';
+              reportAutoConnectFailure(
+                serverParam,
+                'connect.error.alreadyInDifferentRoom',
+              );
               rabiriichi.close();
             }
           } else {
@@ -1495,7 +1506,7 @@ async function handleParamAutoConnect(
       }
     } catch (err) {
       logger.error(`Auto-connection failed to ${serverParam}`, err);
-      rabiriichi.autoConnectError = 'connect.error.autoConnectFailed';
+      reportAutoConnectFailure(serverParam, 'connect.error.autoConnectFailed');
       rabiriichi.close();
     }
   } else {
@@ -1527,6 +1538,7 @@ async function handleStandardAutoReconnect(): Promise<void> {
     logger.info(`Auto-reconnection succeeded! Connected to ${url}`);
   } catch (err) {
     logger.error(`Auto-reconnection failed for URL ${url}`, err);
+    reportAutoConnectFailure(url, 'connect.error.autoConnectFailed');
     rabiriichi.close();
   }
 }
@@ -1534,6 +1546,7 @@ async function handleStandardAutoReconnect(): Promise<void> {
 export async function initRabiRiichi(params?: URLSearchParams): Promise<void> {
   rabiriichi.restoreStoredUsername();
   rabiriichi.autoConnectError = null;
+  rabiriichi.autoConnectFailedUrl = null;
 
   const serverParam = params?.get('server');
   const joinRoomParam = params?.get('joinRoom');
