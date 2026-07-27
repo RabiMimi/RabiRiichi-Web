@@ -11,14 +11,13 @@ import type { IMenLikeMsg } from '../proto';
 type CallType =
   'chii' | 'pon' | 'kan' | 'agari' | 'tsumo' | 'riichi' | 'ryuukyoku';
 
-const CALL_IMAGES: Record<CallType, string> = {
-  chii: '/assets/ui/吃.png',
-  pon: '/assets/ui/碰.png',
-  kan: '/assets/ui/杠.png',
-  agari: '/assets/ui/和.png',
-  tsumo: '/assets/ui/自摸.png',
-  riichi: '/assets/ui/立直.png',
-  ryuukyoku: '', // mapped per-reason below
+const CALL_ASSET_KEYS: Record<Exclude<CallType, 'ryuukyoku'>, string> = {
+  chii: 'assets.ui.chii',
+  pon: 'assets.ui.pon',
+  kan: 'assets.ui.kan',
+  agari: 'assets.ui.ron',
+  tsumo: 'assets.ui.tsumo',
+  riichi: 'assets.ui.riichi',
 };
 
 const DISPLAY_DURATION = 1500;
@@ -211,7 +210,9 @@ export function CallPrompt(): React.JSX.Element | null {
               : 0;
           pos = getCallPromptSeatClass(screenPos);
         }
-        const imgSrc = f.imgSrc ?? CALL_IMAGES[f.type];
+        const imgSrc =
+          f.imgSrc ??
+          (f.type !== 'ryuukyoku' ? t(CALL_ASSET_KEYS[f.type]) : '');
         if (!imgSrc) return null;
         return (
           <div

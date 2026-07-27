@@ -15,14 +15,13 @@ import { HUD } from './styles';
 
 const logger = new Logger('ActionHUD');
 
-const ACTION_IMAGES: Partial<Record<InquiryOptionType, string>> = {
-  chii: '/assets/ui/吃.png',
-  pon: '/assets/ui/碰.png',
-  kan: '/assets/ui/杠.png',
-  riichi: '/assets/ui/立直.png',
-  agari: '/assets/ui/和.png',
-  skip: '/assets/ui/跳过.png',
-  nukidora: '/assets/ui/拔北.png',
+const ACTION_ASSET_KEYS: Partial<Record<InquiryOptionType, string>> = {
+  chii: 'assets.ui.chii',
+  pon: 'assets.ui.pon',
+  kan: 'assets.ui.kan',
+  riichi: 'assets.ui.riichi',
+  agari: 'assets.ui.ron',
+  nukidora: 'assets.ui.nukidora',
 };
 
 interface FlattenedOption {
@@ -256,36 +255,40 @@ export function ActionHUD(): React.JSX.Element | null {
       <div
         className={`flex flex-wrap justify-center ${HUD.actionRowGap} max-w-[95vw] items-center`}
       >
-        {flatOptions.map((opt, i) => (
-          <button
-            key={opt.key}
-            className={`bg-transparent border-none outline-none cursor-pointer transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 ${
-              opt.type === 'skip' && i === flatOptions.length - 1
-                ? 'ml-auto'
-                : ''
-            }`}
-            onClick={opt.onClick}
-            onPointerEnter={opt.onPointerEnter}
-            onPointerLeave={opt.onPointerLeave}
-          >
-            {ACTION_IMAGES[opt.type] ? (
-              <img
-                src={ACTION_IMAGES[opt.type]}
-                alt={opt.label}
-                className={`${HUD.actionImage} ${
-                  // Keep drawing the eye to the win button, as the pre-redesign
-                  // text button did.
-                  opt.type === 'agari'
-                    ? 'animate-[hud-agari-pulse_1.5s_infinite]'
-                    : ''
-                }`}
-                draggable={false}
-              />
-            ) : (
-              opt.label
-            )}
-          </button>
-        ))}
+        {flatOptions.map((opt, i) => {
+          const assetKey = ACTION_ASSET_KEYS[opt.type];
+          const imgSrc = assetKey ? t(assetKey) : undefined;
+          return (
+            <button
+              key={opt.key}
+              className={`bg-transparent border-none outline-none cursor-pointer transition-all duration-150 ease-out hover:scale-110 hover:brightness-125 active:scale-95 ${
+                opt.type === 'skip' && i === flatOptions.length - 1
+                  ? 'ml-auto'
+                  : ''
+              }`}
+              onClick={opt.onClick}
+              onPointerEnter={opt.onPointerEnter}
+              onPointerLeave={opt.onPointerLeave}
+            >
+              {imgSrc ? (
+                <img
+                  src={imgSrc}
+                  alt={opt.label}
+                  className={`${HUD.actionImage} ${
+                    // Keep drawing the eye to the win button, as the pre-redesign
+                    // text button did.
+                    opt.type === 'agari'
+                      ? 'animate-[hud-agari-pulse_1.5s_infinite]'
+                      : ''
+                  }`}
+                  draggable={false}
+                />
+              ) : (
+                opt.label
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getRyuukyokuArtwork, hasRyuukyokuArtwork } from './ryuukyokuArtwork';
+import i18n from '../lib/i18n';
 
 /** Reason names emitted by RabiRiichi/Events/InGame/RyuukyokuEvent.cs. */
 const ABORTIVE_DRAWS = [
@@ -11,8 +12,13 @@ const ABORTIVE_DRAWS = [
 ] as const;
 
 describe('ryuukyokuArtwork', () => {
-  it.each(ABORTIVE_DRAWS)('has artwork for %s', (reason) => {
-    expect(getRyuukyokuArtwork(reason)).toMatch(/^\/assets\/ui\/.+\.png$/);
+  it.each(ABORTIVE_DRAWS)('has artwork for %s', async (reason) => {
+    await i18n.changeLanguage('zhs');
+    expect(getRyuukyokuArtwork(reason)).toBe(`/assets/ui/zhs/${reason}.png`);
+    await i18n.changeLanguage('en');
+    expect(getRyuukyokuArtwork(reason)).toBe(`/assets/ui/en/${reason}.png`);
+    await i18n.changeLanguage('ja');
+    expect(getRyuukyokuArtwork(reason)).toBe(`/assets/ui/ja/${reason}.png`);
     expect(hasRyuukyokuArtwork(reason)).toBe(true);
   });
 
