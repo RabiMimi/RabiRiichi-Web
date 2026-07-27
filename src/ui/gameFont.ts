@@ -15,7 +15,7 @@ const SYSTEM_FALLBACK =
 const FONT_STACKS: Record<string, string> = {
   zhs: `'GameFontZH', 'GameFont', ${SYSTEM_FALLBACK}`,
   ja: `'GameFont', 'GameFontZH', ${SYSTEM_FALLBACK}`,
-  en: `'GameFont', ${SYSTEM_FALLBACK}`,
+  en: `'GameFontZH', ${SYSTEM_FALLBACK}`,
 };
 
 /**

@@ -10,8 +10,8 @@ describe('getGameFontStack', () => {
     expect(getGameFontStack('ja')).toMatch(/^'GameFont'/);
   });
 
-  it('uses GameFont display face for English', () => {
-    expect(getGameFontStack('en')).toMatch(/^'GameFont'/);
+  it('uses GameFontZH display face for English', () => {
+    expect(getGameFontStack('en')).toMatch(/^'GameFontZH'/);
   });
 
   it('matches regional tags to their base language', () => {
