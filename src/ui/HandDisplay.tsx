@@ -216,7 +216,7 @@ export function HandDisplay(): React.JSX.Element | null {
 
   return (
     <div
-      className="absolute bottom-1 left-0 right-0 z-50 pointer-events-auto"
+      className="absolute bottom-4 left-0 right-0 z-50 pointer-events-auto"
       style={{ height: layout.rowHeight }}
     >
       <div className="relative h-full">

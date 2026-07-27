@@ -2,12 +2,10 @@
  * Display font stacks for the result screens.
  *
  * Two decorative faces are bundled (see the `@font-face` rules in index.html):
- *  - `GameFont`   — DFP勘亭流 (Kanteiryu), a Japanese kabuki/sumo display face.
+ *  - `GameFont`   — TamanegiKaishov7.ttf, used for Japanese/English display face.
  *  - `GameFontZH` — Aa沈夜食堂, a Chinese display face.
  *
- * Neither carries a Latin design worth using, so English falls back to the
- * system stack rather than borrowing CJK letterforms. Every stack still ends in
- * a generic family so text renders while the (multi-MB) fonts are loading.
+ * Every stack ends in a generic family so text renders while the (multi-MB) fonts are loading.
  */
 
 /** Generic tail shared by all stacks, used while the webfont loads. */
@@ -17,7 +15,7 @@ const SYSTEM_FALLBACK =
 const FONT_STACKS: Record<string, string> = {
   zhs: `'GameFontZH', 'GameFont', ${SYSTEM_FALLBACK}`,
   ja: `'GameFont', 'GameFontZH', ${SYSTEM_FALLBACK}`,
-  en: SYSTEM_FALLBACK,
+  en: `'GameFont', ${SYSTEM_FALLBACK}`,
 };
 
 /**

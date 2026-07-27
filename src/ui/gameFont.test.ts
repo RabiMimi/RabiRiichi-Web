@@ -10,11 +10,8 @@ describe('getGameFontStack', () => {
     expect(getGameFontStack('ja')).toMatch(/^'GameFont'/);
   });
 
-  it('does not render English with a CJK display face', () => {
-    // Regression guard: English used to fall through to the Kanteiryu face,
-    // which has no Latin design worth using.
-    const stack = getGameFontStack('en');
-    expect(stack).not.toContain('GameFont');
+  it('uses GameFont display face for English', () => {
+    expect(getGameFontStack('en')).toMatch(/^'GameFont'/);
   });
 
   it('matches regional tags to their base language', () => {
@@ -23,7 +20,8 @@ describe('getGameFontStack', () => {
   });
 
   it('falls back to the system stack for unknown or missing languages', () => {
-    const fallback = getGameFontStack('en');
+    const fallback =
+      "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
     expect(getGameFontStack('ko')).toBe(fallback);
     expect(getGameFontStack(undefined)).toBe(fallback);
     expect(getGameFontStack('')).toBe(fallback);

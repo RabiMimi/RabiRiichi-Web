@@ -92,33 +92,9 @@ export function TableCenter(): React.JSX.Element | null {
         <BlinkIndicator texture={activeTexture} />
       </group>
 
-      {/* Round: 東1局 — wind in red, number+局 in gray */}
+      {/* Round: 東1局 */}
       <DreiText
-        position={[-0.06, 0.001, -0.08]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.11}
-        color={TABLE_CENTER_COLORS.label}
-        anchorX="right"
-        anchorY="middle"
-        font={TABLE_CENTER_FONT_PATH}
-        renderOrder={2}
-      >
-        {roundWindText}
-      </DreiText>
-      <DreiText
-        position={[-0.05, 0.004, -0.08]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.11}
-        color={TABLE_CENTER_COLORS.label}
-        anchorX="left"
-        anchorY="middle"
-        font={TABLE_CENTER_FONT_PATH}
-        renderOrder={2}
-      >
-        {roundNum}
-      </DreiText>
-      <DreiText
-        position={[0.1, 0.004, -0.08]}
+        position={[0, 0.004, -0.08]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.11}
         color={TABLE_CENTER_COLORS.label}
@@ -127,12 +103,12 @@ export function TableCenter(): React.JSX.Element | null {
         font={TABLE_CENTER_FONT_PATH}
         renderOrder={2}
       >
-        局
+        {`${roundWindText}${roundNum}局`}
       </DreiText>
 
       {/* Remaining: 余XX */}
       <DreiText
-        position={[0, 0.004, 0.12]}
+        position={[0, 0.004, 0.11]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.09}
         color={TABLE_CENTER_COLORS.label}
@@ -209,9 +185,9 @@ export function TableCenter(): React.JSX.Element | null {
 
             {/* Seat Wind Text — 庄家用红色 */}
             <DreiText
-              position={[-0.45, 0.004, 0.45]}
+              position={[-0.46, 0.004, 0.47]}
               rotation={[-Math.PI / 2, 0, 0]}
-              fontSize={0.11}
+              fontSize={0.12}
               color={
                 p.seat === dealer
                   ? TABLE_CENTER_COLORS.dealerWind
