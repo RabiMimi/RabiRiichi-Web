@@ -210,7 +210,14 @@ export function HandDisplay(): React.JSX.Element | null {
   const isInteractive = playableIds.size > 0;
 
   const onTileClick = (traceId: number | null | undefined) => {
-    if (drag.shouldIgnoreClick() || !isInteractive || traceId == null) return;
+    if (
+      drag.shouldIgnoreClick() ||
+      !isInteractive ||
+      traceId == null ||
+      !playableIds.has(traceId)
+    ) {
+      return;
+    }
     discard(traceId);
   };
 
@@ -254,28 +261,37 @@ export function HandDisplay(): React.JSX.Element | null {
         </div>
 
         {/* The drawn tile keeps a reserved slot so the row never reflows. */}
-        {pendingTile ? (
-          <HandTile
-            tile={pendingTile.tile}
-            layout={layout}
-            isHighlighted
-            isDimmed={false}
-            isClickable={isInteractive}
-            isDora={isDoraTile(pendingTile.tile)}
-            hoverLift="hover:-translate-y-3"
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: layout.pendingLeft,
-            }}
-            onClick={() => onTileClick(pendingTile.traceId)}
-            onHover={(entering) =>
-              onHoverTile(entering ? (pendingTile.traceId ?? null) : null)
-            }
-            drag={drag.tileProps(pendingTile.traceId ?? null)}
-            dragStyle={drag.dragStyle(pendingTile.traceId ?? null)}
-          />
-        ) : (
+        {pendingTile ? (() => {
+          const pendingTraceId = pendingTile.traceId;
+          const isPlayable = pendingTraceId != null && playableIds.has(pendingTraceId);
+          const isDimmed =
+            pendingTraceId != null &&
+            ((callHighlightIds != null && !callHighlightIds.has(pendingTraceId)) ||
+              (isRiichiSelectMode && !playableIds.has(pendingTraceId)));
+
+          return (
+            <HandTile
+              tile={pendingTile.tile}
+              layout={layout}
+              isHighlighted={isPlayable}
+              isDimmed={isDimmed}
+              isClickable={isPlayable}
+              isDora={isDoraTile(pendingTile.tile)}
+              hoverLift="hover:-translate-y-3"
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: layout.pendingLeft,
+              }}
+              onClick={() => onTileClick(pendingTraceId)}
+              onHover={(entering) =>
+                onHoverTile(entering ? (pendingTraceId ?? null) : null)
+              }
+              drag={drag.tileProps(pendingTraceId ?? null)}
+              dragStyle={drag.dragStyle(pendingTraceId ?? null)}
+            />
+          );
+        })() : (
           <div
             className="invisible absolute bottom-0"
             style={{
