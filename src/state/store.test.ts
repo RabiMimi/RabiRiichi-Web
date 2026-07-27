@@ -81,6 +81,7 @@ describe('RabiRiichi Store', () => {
       ping: -1,
       selectedTileTraceId: null,
       hoveredTileTraceId: null,
+      callHighlightTileIds: null,
       isCameraLocked: true,
       resultAnimation: null,
       isReplay: false,

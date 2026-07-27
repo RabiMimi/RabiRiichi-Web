@@ -13,14 +13,44 @@
   }
 }
 
-@keyframes timer-pulse {
-  0% {
-    border-color: #ff3333;
-    box-shadow: 0 4px 15px rgba(255, 51, 51, 0.3);
+/*
+ * Dora sheen for the DOM-rendered local hand.
+ *
+ * The 3D tiles get this from the toon shader (see tileToonMaterial.ts), which
+ * sweeps an additive diagonal band across the full tile. The local hand is plain
+ * DOM, so it reproduces the same cue in CSS with a slightly shorter period to
+ * compensate for the smaller on-screen tile.
+ */
+@keyframes dora-sheen {
+  from {
+    transform: translate3d(-38%, -38%, 0);
   }
-  100% {
-    border-color: #ff9999;
-    box-shadow: 0 4px 20px rgba(255, 51, 51, 0.7);
+  to {
+    transform: translate3d(38%, 38%, 0);
+  }
+}
+
+.dora-sheen::after {
+  content: '';
+  position: absolute;
+  inset: -100%;
+  z-index: 1;
+  pointer-events: none;
+  background-image: linear-gradient(
+    135deg,
+    transparent 44%,
+    rgba(255, 255, 255, 0.75) 50%,
+    transparent 56%
+  );
+  /* The shader adds the sheen to the face colour; approximate that here. */
+  mix-blend-mode: plus-lighter;
+  animation: dora-sheen 0.9s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dora-sheen::after {
+    animation: none;
   }
 }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { IGameTileMsg } from '../proto';
 import { Tile3D } from './Tile3D';
 import { Tile } from '../domain/tile';
@@ -31,6 +31,29 @@ export function River3D({
     riichiTileId,
     tileRegistry,
   );
+
+  // Stable per-tile imperfections keep the river from looking machine-aligned
+  // without making tiles jump when React rerenders.
+  const jitterTransforms = useMemo(() => {
+    const map = new Map<
+      number,
+      { rotationY: number; offsetX: number; offsetZ: number }
+    >();
+    for (const t of discarded) {
+      const id = t.traceId ?? 0;
+      if (!map.has(id)) {
+        const hash = (salt: number): number =>
+          ((Math.imul(id ^ salt, 2654435761) >>> 0) % 1000) / 1000 - 0.5;
+        map.set(id, {
+          rotationY: hash(0) * 4 * (Math.PI / 180),
+          offsetX: hash(0x45d9f3b) * 0.006,
+          offsetZ: hash(0x119de1f3) * 0.006,
+        });
+      }
+    }
+    return map;
+  }, [discarded]);
+
   const spacingZ = 0.25; // Tile height (0.24) + small gap
   const zStart = isLocal ? -1.48 : -1.6; // Shift slightly towards local player to expose riichi stick
 
@@ -86,16 +109,27 @@ export function River3D({
                       winningTileTraceId != null &&
                       tileMsg.traceId === winningTileTraceId;
 
+                    const jitter = jitterTransforms.get(
+                      tileMsg.traceId ?? 0,
+                    ) ?? {
+                      rotationY: 0,
+                      offsetX: 0,
+                      offsetZ: 0,
+                    };
                     return (
-                      <Tile3D
+                      <group
                         key={getSafeKey(tileMsg.traceId, colIndex)}
-                        tile={tileStr}
-                        displayState={isRiichi ? 'sideways' : 'face'}
-                        position={[x, 0, z]}
-                        isWinningTile={isWinningTile}
-                        area="river"
-                        traceId={getSafeTraceId(tileMsg.traceId)}
-                      />
+                        position={[x + jitter.offsetX, 0, z + jitter.offsetZ]}
+                        rotation={[0, isRiichi ? 0 : jitter.rotationY, 0]}
+                      >
+                        <Tile3D
+                          tile={tileStr}
+                          displayState={isRiichi ? 'sideways' : 'face'}
+                          isWinningTile={isWinningTile}
+                          area="river"
+                          traceId={getSafeTraceId(tileMsg.traceId)}
+                        />
+                      </group>
                     );
                   })}
                 </group>

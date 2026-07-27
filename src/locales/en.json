@@ -205,8 +205,10 @@
     "timerWaiting": "Waiting for others...",
     "declareRiichi": "Select a tile to discard for Riichi",
     "cancelRiichi": "Cancel Riichi",
+    "cancelCall": "Back",
     "furiten": "Furiten",
     "tilesRemaining": " left",
+    "secondsRemaining": "{{count}}s remaining",
     "han": " Han",
     "points": "pts",
     "yakuman": "Yakuman",
@@ -214,13 +216,13 @@
     "minHanRequired": "Min Han Required",
     "tenpaiWaits": "Tenpai Waits",
     "tenpai": "Ten",
-    "autoAgari": "Auto Win",
+    "autoAgari": "Win",
     "autoAgariDesc": "Automatically declare Win (Ron/Tsumo) when available",
-    "noCalls": "No Calls",
+    "noCalls": "Call",
     "noCallsDesc": "Never claim discards from other players (Chii/Pon/Kan)",
-    "autoDiscard": "Auto Discard",
+    "autoDiscard": "Draw",
     "autoDiscardDesc": "Automatically discard drawn tile if no other actions are possible",
-    "autoNuki": "Auto Nuki",
+    "autoNuki": "Nuki",
     "autoNukiDesc": "Automatically declare Kita (Nukidora) if available",
     "action": {
       "chii": "Chii",
@@ -580,8 +582,11 @@
   "settings": {
     "title": "System Settings",
     "playerTab": "Player",
+    "gameTab": "Game",
     "profileTab": "Profile",
     "soundsTab": "Sounds",
+    "animationSpeed": "Animation Speed",
+    "autoPlay": "Auto Play",
     "profile": {
       "username": "Username",
       "nickname": "Nickname",
@@ -760,5 +765,25 @@
     "back": "Back",
     "share": "Share",
     "copied": "Link copied to clipboard!"
+  },
+  "assets": {
+    "ui": {
+      "chii": "/assets/ui/en/chii.png",
+      "pon": "/assets/ui/en/pon.png",
+      "kan": "/assets/ui/en/kan.png",
+      "ron": "/assets/ui/en/ron.png",
+      "tsumo": "/assets/ui/en/tsumo.png",
+      "riichi": "/assets/ui/en/riichi.png",
+      "skip": "/assets/ui/en/skip.png",
+      "nukidora": "/assets/ui/en/nukidora.png",
+      "suufon_renda": "/assets/ui/en/suufon_renda.png",
+      "kyuushu_kyuuhai": "/assets/ui/en/kyuushu_kyuuhai.png",
+      "suucha_riichi": "/assets/ui/en/suucha_riichi.png",
+      "triple_ron": "/assets/ui/en/triple_ron.png",
+      "suukan_sanra": "/assets/ui/en/suukan_sanra.png",
+      "yakuman_chance": "/assets/ui/en/yakuman_chance.png",
+      "yakuman_confirmed": "/assets/ui/en/yakuman_confirmed.png",
+      "yakuman_confirmed_gold": "/assets/ui/en/yakuman_confirmed_gold.png"
+    }
   }
 }

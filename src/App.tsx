@@ -29,7 +29,11 @@ import { Tooltip } from './ui/Tooltip';
 import { IconButton } from './ui/IconButton';
 import { SettingsButton } from './ui/SettingsButton';
 import { SettingsModal } from './ui/SettingsModal';
-import { tooltipPortalTarget, stickerPortalTarget } from './ui/portal';
+import {
+  playerOverlayPortalTarget,
+  stickerPortalTarget,
+  tooltipPortalTarget,
+} from './ui/portal';
 import { COMMIT_HASH } from './lib';
 import type { PlayerModel, RoomModel } from './domain/model';
 import type { ActionOption } from './domain/inquiry';
@@ -152,6 +156,9 @@ function App(): React.JSX.Element {
 
     const serverParam = params.get('server');
     const replayParam = params.get('replay');
+    // Arena links opt in to the per-decision rationales it serves over REST;
+    // without this we would probe every plain game server over HTTP.
+    const reasoningParam = params.get('reasoning') === '1';
 
     if (serverParam && replayParam && replayParam !== '1') {
       loadServerReplay(serverParam, replayParam)
@@ -159,7 +166,7 @@ function App(): React.JSX.Element {
           if (active) {
             setLoadingReplay(false);
             stopReplayFn = stopReplay;
-            void startReplay(replayData);
+            void startReplay(replayData, 0, { reasoning: reasoningParam });
           }
         })
         .catch((err: unknown) => {
@@ -359,8 +366,12 @@ function App(): React.JSX.Element {
         className="absolute inset-0 pointer-events-none z-[120]"
       />
       <div
+        ref={playerOverlayPortalTarget as React.RefObject<HTMLDivElement>}
+        className="absolute inset-0 pointer-events-none z-[110]"
+      />
+      <div
         ref={stickerPortalTarget as React.RefObject<HTMLDivElement>}
-        className="absolute inset-0 pointer-events-none z-[80]"
+        className="absolute inset-0 pointer-events-none z-[200]"
       />
     </div>
   );

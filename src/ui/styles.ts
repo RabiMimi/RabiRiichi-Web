@@ -56,6 +56,48 @@ export const SCREEN = {
 } as const;
 
 /**
+ * Sizing for the image-based in-game HUD (call buttons, countdown digits).
+ *
+ * These scale off viewport *height*: the target is landscape play, where height
+ * is the scarce axis — a phone in landscape is only ~390px tall, so the desktop
+ * 80px artwork would eat a fifth of the screen. `clamp()` keeps the desktop size
+ * unchanged while shrinking gracefully on short viewports.
+ */
+export const HUD = {
+  /** Call / action artwork (chii, pon, kan, riichi, agari, skip…). */
+  actionImage: 'h-[clamp(2.5rem,9vh,5rem)] w-auto object-contain',
+  /** Countdown timer digits. */
+  timerDigit: 'h-[clamp(2.5rem,9vh,5rem)] w-auto',
+  /**
+   * Gap between action buttons. Wide on desktop (the artwork is airy), but it
+   * must not push buttons off a narrow landscape screen.
+   */
+  actionRowGap: 'gap-[clamp(0.75rem,4vw,5rem)]',
+} as const;
+
+/**
+ * Sizing for the end-of-hand result card.
+ *
+ * Same viewport-height basis as {@link HUD}: the card stacks tiles, the yaku
+ * grid and the score line, so the vertical budget runs out first in landscape.
+ * The upper bounds are deliberately modest — a winning hand is 14 tiles plus
+ * melds on a single row, which overflows even a desktop window if the tiles are
+ * sized for a close-up.
+ */
+export const RESULT = {
+  /** Hand / meld / river tiles on the result card. */
+  tile: 'w-[clamp(1.375rem,3.6vh,2.25rem)] h-auto',
+  /** Yaku name + han count rows. */
+  yakuRow: 'text-[clamp(0.7rem,1.9vh,1rem)]',
+  /** The large han and points figures on the score line. */
+  scoreFigure: 'text-[clamp(1.25rem,4.2vh,2.5rem)]',
+  /** The fu figure, a secondary number beside the han. */
+  scoreFu: 'text-[clamp(0.7rem,1.9vh,1rem)]',
+  /** Limit name (mangan, haneman, yakuman…). */
+  limitLabel: 'text-[clamp(1rem,3.4vh,2rem)]',
+} as const;
+
+/**
  * Shared form layout primitives (inputs, labels, layout groups).
  */
 export const FORM = {
@@ -74,12 +116,21 @@ export const FORM = {
     'text-sm font-semibold text-[#ccc] shrink-0 w-[110px] text-right whitespace-nowrap',
   // Input fields
   input:
-    'h-10 rounded-lg border border-[#555] bg-[#1a1a1a] px-3 py-2 text-base text-white ' +
+    'h-10 rounded-full border border-[#555] bg-[#1a1a1a] px-4 py-2 text-base text-white ' +
     'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50',
   // Inline inputs/selects (slightly smaller padding)
   inputInline:
-    'h-8 flex-1 min-w-0 rounded-lg border border-[#555] bg-[#1a1a1a] px-2.5 py-1.5 text-sm text-white ' +
+    'h-8 flex-1 min-w-0 rounded-full border border-[#555] bg-[#1a1a1a] px-3 py-1.5 text-sm text-white ' +
     'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50',
+  // Select fields (uses custom chevron to avoid native square/right-angle arrows)
+  select:
+    'h-10 rounded-full border border-[#555] bg-[#1a1a1a] pl-4 pr-9 py-2 text-base text-white ' +
+    'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50 ' +
+    'appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.7)%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E")] bg-[length:1rem_1rem] bg-[right_0.75rem_center] bg-no-repeat',
+  selectInline:
+    'h-8 flex-1 min-w-0 rounded-full border border-[#555] bg-[#1a1a1a] pl-3 pr-8 py-1.5 text-sm text-white ' +
+    'outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50 ' +
+    'appearance-none bg-[url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.7)%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%2F%3E%3C%2Fsvg%3E")] bg-[length:0.875rem_0.875rem] bg-[right_0.6rem_center] bg-no-repeat',
   // Inline wrapper error text
   fieldError: 'text-xs text-[#ff6666] pl-[118px] text-left mt-0.5',
   // Standard full-width error container

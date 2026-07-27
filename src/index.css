@@ -7,6 +7,11 @@
  */
 @layer theme, base, app, utilities;
 
+html,
+body {
+  background: #000000;
+}
+
 /*
  * Tailwind v4, imported WITH Preflight (the base reset) to normalize cross-browser styles.
  */

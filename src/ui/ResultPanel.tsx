@@ -457,21 +457,18 @@ export function ResultPanel(): React.JSX.Element | null {
     if (doras.length === 0) return null;
 
     return (
-      <div className="relative z-[1] flex flex-col gap-1 lg:gap-2 bg-[#1e1e1e]/70 border border-[#333] rounded-xl p-2 lg:p-3 box-border">
-        <div className="flex flex-row items-center gap-1 lg:gap-2 flex-wrap">
-          <span className="text-sm text-[#80deea] font-bold uppercase tracking-wider whitespace-nowrap min-w-0">
+      <div className="relative z-[1] flex flex-col gap-1 lg:gap-2 p-2 lg:p-3">
+        <div className="flex flex-col items-start gap-1 lg:gap-2">
+          <span className="text-sm text-[#80deea] font-bold uppercase tracking-wider whitespace-nowrap">
             {t('result.dora')}
           </span>
-          <div className="flex flex-row items-center gap-1 lg:gap-2 flex-wrap">
-            {/* Dora Indicators */}
+          <div className="flex flex-row items-center gap-1 lg:gap-2">
             <div className="flex gap-0.5 lg:gap-1">
               {renderIndicatorTiles(doras, 'dora')}
             </div>
-
-            {/* Uradora Indicators */}
             {showUradoras && uradoras.length > 0 && (
               <>
-                <span className="text-[#666] text-sm font-bold select-none mx-0.5 lg:mx-1">
+                <span className="text-[#666] text-sm font-bold select-none">
                   /
                 </span>
                 <div className="flex gap-0.5 lg:gap-1">
@@ -507,16 +504,16 @@ export function ResultPanel(): React.JSX.Element | null {
 
   return (
     <div className="absolute inset-0 bg-[#0a0a0a]/85 flex justify-center items-center z-[120] text-white font-sans backdrop-blur-md overflow-x-hidden">
-      <div className="flex flex-row items-stretch gap-0 w-[95%] max-w-5xl max-h-[85vh] m-auto box-border z-[121] relative">
-        <div className="flex-none w-24 sm:w-48 lg:w-80 relative z-[2] -mr-6 sm:-mr-12 lg:-mr-20 pointer-events-none">
+      <div className="flex flex-row items-stretch gap-0 w-full h-full max-w-none max-h-none m-auto box-border z-[121] relative">
+        <div className="flex-none w-[30%] relative z-[2] pointer-events-none">
           <img
             src={activeCharacter.visualUrl}
             alt={`${activeCharacter.id}-avatar`}
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none opacity-95"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-[300%] object-contain object-bottom"
           />
         </div>
-        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 lg:p-4 lg:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 lg:gap-2.5 relative overflow-hidden box-border">
-          <h2 className="relative z-[1] text-2xl lg:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider lg:tracking-widest">
+        <div className="flex-1 p-2 lg:p-4 flex flex-col gap-1.5 lg:gap-2.5 relative overflow-hidden">
+          <h2 className="relative z-[1] text-[clamp(1.25rem,5vh,3rem)] font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-right m-0 mb-0.5 tracking-wider lg:tracking-widest">
             {hasNagashiWinner
               ? t('yaku.NagashiMangan')
               : isDraw
@@ -576,7 +573,7 @@ export function ResultPanel(): React.JSX.Element | null {
             <Button
               onClick={handleProceed}
               disabled={!canProceed && !room.gameEnded}
-              className="w-full min-w-[180px] lg:w-auto"
+              className="absolute bottom-3 right-3 text-[clamp(0.875rem,2.6vh,1.5rem)] px-[clamp(1rem,3vh,2rem)] py-[clamp(0.4rem,1.4vh,1rem)]"
             >
               {room.gameEnded
                 ? t('result.showFinalResults', 'Show Game Results')

@@ -114,3 +114,40 @@ describe('ReplayDriver - Seek & Result State Integration', () => {
     expect(rabiriichi.isWaitingForProceed).toBe(false);
   }, 20000);
 });
+
+describe('ReplayDriver - reasoning track opt-in', () => {
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    stopReplay();
+    globalThis.fetch = originalFetch;
+    rabiriichi.wsurl = null;
+  });
+
+  it('does not touch the network for an ordinary replay', () => {
+    const spy = vi.fn();
+    globalThis.fetch = spy;
+    rabiriichi.wsurl = 'ws://game.example.com';
+
+    // No options: a plain game server is WebSocket-only and serves no REST API.
+    startReplay(replayData, 1);
+    pauseReplay();
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('asks the server only when the replay opted in', () => {
+    const spy = vi.fn((_url: string) => Promise.reject(new Error('offline')));
+    globalThis.fetch = spy as unknown as typeof globalThis.fetch;
+    rabiriichi.wsurl = 'ws://arena.example.com';
+
+    startReplay(replayData, 1, { reasoning: true });
+    pauseReplay();
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0]?.[0]).toBe(
+      'http://arena.example.com/api/arena/matches/' +
+        'RABI-REPLAY-9999/reasoning-track',
+    );
+  });
+});

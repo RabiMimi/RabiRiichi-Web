@@ -22,6 +22,7 @@ import {
 } from '../state/store';
 import { StickerBubble } from '../ui/StickerBubble';
 import { ChatBubble } from '../ui/ChatBubble';
+import { playerOverlayPortalTarget } from '../ui/portal';
 
 interface PlayerIndicator3DProps {
   player: PlayerModel;
@@ -49,6 +50,7 @@ function PlayerIndicator3D({
     return (
       <Html
         position={[0, 0.3, 0.1]}
+        portal={playerOverlayPortalTarget as React.RefObject<HTMLElement>}
         style={{
           pointerEvents: 'none',
           userSelect: 'none',
@@ -70,6 +72,7 @@ function PlayerIndicator3D({
   return (
     <Html
       position={[1.2, 0.15, -0.2]}
+      portal={playerOverlayPortalTarget as React.RefObject<HTMLElement>}
       style={{
         pointerEvents: 'auto',
         userSelect: 'none',
@@ -171,16 +174,18 @@ export function PlayerArea3D({
       />
 
       {/* Hand (closed tiles + drawn tile) - pushed towards center */}
-      <group position={[0, 0, -0.2]}>
-        <Hand3D
-          tiles={hand.freeTiles}
-          pendingTile={hand.pendingTile}
-          isLocal={isLocal}
-          isRevealed={isRevealed}
-          winningTileTraceId={winningTileTraceId}
-          shiftX={shiftX}
-        />
-      </group>
+      {!isLocal && (
+        <group position={[0, 0, -0.2]}>
+          <Hand3D
+            tiles={hand.freeTiles}
+            pendingTile={hand.pendingTile}
+            isLocal={isLocal}
+            isRevealed={isRevealed}
+            winningTileTraceId={winningTileTraceId}
+            shiftX={shiftX}
+          />
+        </group>
+      )}
 
       {/* Discard River */}
       <River3D

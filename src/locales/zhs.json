@@ -205,8 +205,10 @@
     "timerWaiting": "等待他人...",
     "declareRiichi": "请选择立直要切的牌",
     "cancelRiichi": "取消立直",
+    "cancelCall": "返回",
     "furiten": "振听",
     "tilesRemaining": "张",
+    "secondsRemaining": "剩余 {{count}} 秒",
     "han": "番",
     "points": "点",
     "yakuman": "役满",
@@ -580,8 +582,11 @@
   "settings": {
     "title": "系统设置",
     "playerTab": "玩家",
+    "gameTab": "游戏",
     "profileTab": "个人资料",
     "soundsTab": "声音",
+    "animationSpeed": "动画速度",
+    "autoPlay": "托管",
     "profile": {
       "username": "用户名",
       "nickname": "昵称",
@@ -760,5 +765,25 @@
     "back": "返回",
     "share": "分享",
     "copied": "链接已复制到剪贴板！"
+  },
+  "assets": {
+    "ui": {
+      "chii": "/assets/ui/zhs/chii.png",
+      "pon": "/assets/ui/zhs/pon.png",
+      "kan": "/assets/ui/zhs/kan.png",
+      "ron": "/assets/ui/zhs/ron.png",
+      "tsumo": "/assets/ui/zhs/tsumo.png",
+      "riichi": "/assets/ui/zhs/riichi.png",
+      "skip": "/assets/ui/zhs/skip.png",
+      "nukidora": "/assets/ui/zhs/nukidora.png",
+      "suufon_renda": "/assets/ui/zhs/suufon_renda.png",
+      "kyuushu_kyuuhai": "/assets/ui/zhs/kyuushu_kyuuhai.png",
+      "suucha_riichi": "/assets/ui/zhs/suucha_riichi.png",
+      "triple_ron": "/assets/ui/zhs/triple_ron.png",
+      "suukan_sanra": "/assets/ui/zhs/suukan_sanra.png",
+      "yakuman_chance": "/assets/ui/zhs/yakuman_chance.png",
+      "yakuman_confirmed": "/assets/ui/zhs/yakuman_confirmed.png",
+      "yakuman_confirmed_gold": "/assets/ui/zhs/yakuman_confirmed_gold.png"
+    }
   }
 }

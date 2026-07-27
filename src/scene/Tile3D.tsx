@@ -1,6 +1,11 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useGLTF, useTexture, Html } from '@react-three/drei';
 import { TileSpotlightParticles } from './TileSpotlightParticles';
+import {
+  createToonMaterial,
+  createToonSideMaterial,
+  createToonBackMaterial,
+} from './tileToonMaterial';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TileTooltip } from '../ui/TileTooltip';
@@ -26,6 +31,7 @@ import {
   useRoom,
   useSelf,
   useClaimTargetTileId,
+  useCallHighlightTileIds,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import type { ActionOption, DiscardCandidate } from '../domain/inquiry';
@@ -48,10 +54,6 @@ import { SOUND_EFFECTS } from '../lib/soundEffects';
 
 const logger = new Logger('Tile3D');
 
-// Adjust these constants to change the Dora sliding sheen appearance
-export const DORA_SHEEN_WIDTH = 0.2; // Width of the diagonal reflection sheen (increase for wider/softer look)
-export const DORA_SHEEN_SPEED = 2.0; // Speed of the sliding animation (increase for faster sliding)
-
 export type TileDisplayState =
   'hand' | 'opponent-hand' | 'face' | 'back' | 'sideways';
 
@@ -59,74 +61,17 @@ function createMappedMaterial(
   mat: THREE.Material,
   frontTexture: THREE.Texture,
   backTexture: THREE.Texture,
-  isDora: boolean,
+  sideTexture: THREE.Texture,
 ): THREE.Material {
   const matName = mat.name;
   if (matName === 'Front.001') {
-    const customMat = new THREE.MeshStandardMaterial({
-      map: frontTexture,
-      roughness: 0.15,
-      metalness: 0.05,
-    });
-
-    const userData = {
-      uTime: { value: 0 },
-      isDora: { value: isDora ? 1.0 : 0.0 },
-    };
-    customMat.userData = userData;
-
-    customMat.onBeforeCompile = (shader) => {
-      shader.uniforms.uTime = userData.uTime;
-      shader.uniforms.uIsDora = userData.isDora;
-      shader.uniforms.uSheenWidth = { value: DORA_SHEEN_WIDTH };
-      shader.uniforms.uSheenSpeed = { value: DORA_SHEEN_SPEED };
-
-      shader.fragmentShader =
-        `
-        uniform float uTime;
-        uniform float uIsDora;
-        uniform float uSheenWidth;
-        uniform float uSheenSpeed;
-      ` + shader.fragmentShader;
-
-      shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <dithering_fragment>',
-        `
-        #include <dithering_fragment>
-        
-        if (uIsDora > 0.5) {
-          #ifdef USE_MAP
-            vec2 uv = vMapUv;
-          #else
-            vec2 uv = vec2(0.5);
-          #endif
-          
-          // Conan's glasses sliding sheen sweep (diagonal: x + y)
-          float progress = mod(uTime * uSheenSpeed, 2.5) - 0.7;
-          float d = abs(uv.x + uv.y - progress);
-          
-          // Specular white sheen band
-          float sheen = smoothstep(uSheenWidth, 0.0, d) * 0.75;
-          
-          gl_FragColor.rgb += vec3(sheen);
-        }
-        `,
-      );
-    };
-
-    return customMat;
-  } else if (matName === 'Back.001') {
-    return new THREE.MeshStandardMaterial({
-      map: backTexture,
-      roughness: 0.25,
-      metalness: 0.05,
-    });
-  } else if (matName === 'Side.001') {
-    return new THREE.MeshStandardMaterial({
-      color: '#f7f4eb', // Ivory/Bone white
-      roughness: 0.35,
-      metalness: 0.02,
-    });
+    return createToonMaterial(frontTexture);
+  }
+  if (matName === 'Back.001') {
+    return createToonBackMaterial(backTexture);
+  }
+  if (matName === 'Side.001') {
+    return createToonSideMaterial(sideTexture);
   }
   return mat;
 }
@@ -271,6 +216,14 @@ export function Tile3D({
   );
   const isHighlighted = Boolean(activeComparisonTile && isMatchingComparison);
 
+  // When hovering a call button, dim hand tiles NOT in the call
+  const callHighlightIds = useCallHighlightTileIds();
+  const isCallDimmed =
+    callHighlightIds != null &&
+    displayState === 'hand' &&
+    traceId != null &&
+    !callHighlightIds.has(traceId);
+
   const currentUser = useSelf();
   const selfPlayer = useMemo(() => {
     if (!room || !currentUser) return null;
@@ -339,27 +292,31 @@ export function Tile3D({
   // Always load the back face texture
   const backTexture = useTexture('/assets/hand_tiles/back.jpg');
 
+  // Side texture
+  const sideTexture = useTexture('/assets/hand_tiles/slide.jpg');
+
   // Clone the textures and configure them.
-  // This avoids mutating the raw hook return value which violates strict react-hooks rules.
   const clonedTexture = useMemo(() => {
     const tex = texture.clone();
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.flipY = false;
-    tex.needsUpdate = true;
+    tex.rotation = Math.PI;
+    tex.center.set(0.5, 0.5);
+    tex.repeat.x = -1;
+    tex.wrapS = THREE.MirroredRepeatWrapping;
     return tex;
   }, [texture]);
 
   const clonedBackTexture = useMemo(() => {
     const tex = backTexture.clone();
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.flipY = false;
-    tex.needsUpdate = true;
     return tex;
   }, [backTexture]);
+
+  const clonedSideTexture = useMemo(() => {
+    const tex = sideTexture.clone();
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [sideTexture]);
 
   // Clone the scene graph and apply materials so this tile has its own material instances
   const clone = useMemo(() => {
@@ -374,7 +331,7 @@ export function Tile3D({
               mat,
               clonedTexture,
               clonedBackTexture,
-              isDora,
+              clonedSideTexture,
             );
             if (mat.name === 'Front.001') frontMats.push(mapped);
             return mapped;
@@ -384,7 +341,7 @@ export function Tile3D({
             childMat,
             clonedTexture,
             clonedBackTexture,
-            isDora,
+            clonedSideTexture,
           );
           if (childMat.name === 'Front.001') frontMats.push(mapped);
           child.material = mapped;
@@ -397,7 +354,7 @@ export function Tile3D({
     });
     clonedScene.userData.frontMaterials = frontMats;
     return clonedScene;
-  }, [scene, clonedTexture, clonedBackTexture, isDora]);
+  }, [scene, clonedTexture, clonedBackTexture, clonedSideTexture]);
 
   // Determine rotation and Y-offset based on the display state
   const { rotation, yOffset } = useMemo(() => {
@@ -459,6 +416,7 @@ export function Tile3D({
   const prevSelected = useRef(false);
   const prevHasSelection = useRef(false);
   const prevDimmed = useRef(false);
+  const prevCallDimmed = useRef(false);
   const prevHighlighted = useRef(false);
   const prevIsDora = useRef(false);
   const prevIsFuritenDiscard = useRef(false);
@@ -572,7 +530,7 @@ export function Tile3D({
               THREE.Material | THREE.Material[];
             const mats = Array.isArray(childMat) ? childMat : [childMat];
             mats.forEach((mat) => {
-              if (mat instanceof THREE.MeshStandardMaterial) {
+              if (mat instanceof THREE.MeshPhongMaterial) {
                 mat.emissive.setHex(glowColor);
                 mat.emissiveIntensity = pulse;
               }
@@ -586,6 +544,7 @@ export function Tile3D({
         prevSelected.current !== isSelected ||
         prevHasSelection.current !== hasTileSelectionActive ||
         prevDimmed.current !== isDimmed ||
+        prevCallDimmed.current !== isCallDimmed ||
         prevHighlighted.current !== isHighlighted ||
         prevIsDora.current !== isDora ||
         prevIsFuritenDiscard.current !== isFuritenDiscard
@@ -595,6 +554,7 @@ export function Tile3D({
         prevSelected.current = isSelected;
         prevHasSelection.current = hasTileSelectionActive;
         prevDimmed.current = isDimmed;
+        prevCallDimmed.current = isCallDimmed;
         prevHighlighted.current = isHighlighted;
         prevIsDora.current = isDora;
         prevIsFuritenDiscard.current = isFuritenDiscard;
@@ -605,7 +565,7 @@ export function Tile3D({
           isPlayable,
           isSelected,
           isHovered,
-          isDimmed,
+          isDimmed || isCallDimmed,
           isHighlighted,
           isDora,
           isFuritenDiscard,
@@ -784,7 +744,11 @@ export function Tile3D({
         window.addEventListener('pointerup', handleGlobalUp);
       }}
     >
-      <primitive ref={tileRef} object={clone} scale={[0.18, 0.24, 0.14]} />
+      <group scale={[0.18, 0.24, 0.12]}>
+        {/* Outline — slightly scaled clone with outline material */}
+        <OutlineClone clone={clone} />
+        <primitive ref={tileRef} object={clone} />
+      </group>
       {isWinningTile && <TileSpotlightParticles />}
       {showTooltip && (
         <Html
@@ -799,6 +763,55 @@ export function Tile3D({
   );
 }
 
+/**
+ * Every tile's outline hull looks identical, and a full table carries 130+
+ * tiles. Allocating a material per tile (per mesh, in fact) only burned memory
+ * and GPU state changes — and nothing ever disposed them, so each remount
+ * leaked. One shared instance for the whole scene instead.
+ */
+const OUTLINE_MATERIAL = new THREE.MeshBasicMaterial({
+  color: '#111111',
+  side: THREE.BackSide,
+  depthTest: true,
+  transparent: true,
+  opacity: 0.73,
+});
+
+/** How much larger than the tile the outline hull is drawn. */
+const OUTLINE_SCALE = 1.05;
+
+/**
+ * Renders a slightly enlarged copy of the tile with a flat back-facing material
+ * — the inverted-hull toon outline.
+ *
+ * This costs one extra mesh per tile. Collapsing them into an `InstancedMesh`
+ * looks obvious (identical geometry, identical material, only the transform
+ * differs) but is not a drop-in: the tile GLB nests its mesh under a node scaled
+ * 100x and splits the tile into three primitives, so instancing has to replay
+ * the model's internal transforms rather than just the tile's world matrix. An
+ * attempt at that rendered nothing, so the per-tile clone stays for now.
+ */
+function OutlineClone({ clone }: { clone: THREE.Group }): React.JSX.Element {
+  const outlineClone = useMemo(() => {
+    // Object3D.clone() shares geometry by reference, so this duplicates only
+    // the (small) node graph, not the vertex data.
+    const oc = clone.clone();
+    oc.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.material = OUTLINE_MATERIAL;
+      }
+    });
+    return oc;
+  }, [clone]);
+
+  return (
+    <primitive
+      object={outlineClone}
+      scale={[OUTLINE_SCALE, OUTLINE_SCALE, OUTLINE_SCALE]}
+    />
+  );
+}
+
 // Pre-load the GLTF to avoid pop-in
 useGLTF.preload(TILE_MODEL_PATH);
 
@@ -807,6 +820,7 @@ VALID_TILE_STRINGS.forEach((tileStr) => {
   useTexture.preload(getTileTexturePath(tileStr));
 });
 useTexture.preload('/assets/hand_tiles/back.jpg');
+useTexture.preload('/assets/hand_tiles/slide.jpg');
 useTexture.preload('/assets/hand_tiles/blank.jpg');
 useTexture.preload('/assets/hand_tiles/front.jpg');
 
@@ -958,7 +972,7 @@ function applyTileAppearance(
       const childMat = child.material as THREE.Material | THREE.Material[];
       const mats = Array.isArray(childMat) ? childMat : [childMat];
       mats.forEach((mat) => {
-        if (mat instanceof THREE.MeshStandardMaterial) {
+        if (mat instanceof THREE.MeshPhongMaterial) {
           // Dimming logic
           if (isDimmed) {
             mat.color.setHex(0x999999);

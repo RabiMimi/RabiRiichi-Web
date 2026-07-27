@@ -136,6 +136,7 @@ export function GameTable(): React.JSX.Element {
 
   return (
     <group>
+      <color attach="background" args={['#000000']} />
       <TouchHoverHandler />
       {/* Lights */}
       <ambientLight intensity={0.5} />
@@ -157,12 +158,6 @@ export function GameTable(): React.JSX.Element {
       <Suspense fallback={null}>
         <ResultAnimation3D />
       </Suspense>
-
-      {/* Grid helper for development/alignment */}
-      <gridHelper
-        args={[6, 12, '#333333', '#222222']}
-        position={[0, -0.01, 0]}
-      />
 
       {/* Player seat anchors */}
       {renderPlayerElements()}

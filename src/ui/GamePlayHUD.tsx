@@ -3,21 +3,16 @@ import { useTranslation } from 'react-i18next';
 import {
   useRoom,
   useSelf,
-  useAnimationSpeed,
   useActionTimeout,
   useCurrentInquiry,
   useIsCameraLocked,
   useHoveredTileTraceId,
   useSelectedTileTraceId,
   useIsRiichiSelectMode,
-  useIsReplay,
-  useAutoAgari,
-  useNoCalls,
-  useAutoDiscard,
-  useAutoNuki,
 } from '../state/store';
 import { ActionHUD } from './ActionHUD';
 import { CallPrompt } from './CallPrompt';
+import { HandDisplay } from './HandDisplay';
 import { Button } from './Button';
 import { useHoverOrTouchHold } from './useHoverOrTouchHold';
 import { rabiriichi } from '../net/client';
@@ -27,6 +22,7 @@ import { Tile, checkDiscardResultsInFuriten } from '../domain/tile';
 import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
 import { UiTile } from './UiTile';
+import { HUD } from './styles';
 import {
   getWindKey,
   waitMeetsMinHan,
@@ -39,6 +35,7 @@ import { FullscreenButton } from './FullscreenButton';
 import { Tooltip } from './Tooltip';
 import { SettingsButton } from './SettingsButton';
 import { IconButton } from './IconButton';
+import { AutoPlayControls } from './AutoPlayControls';
 
 export function GameInfoPanel(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -185,7 +182,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
   const { t } = useTranslation();
   const room = useRoom();
   const currentUser = useSelf();
-  const animationSpeed = useAnimationSpeed();
   const actionTimeout = useActionTimeout();
   const isCameraLocked = useIsCameraLocked();
 
@@ -314,9 +310,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
     return null;
   }
 
-  const hasPlayTile = currentInquiry?.mapped.playTile != null;
-  const timerLabel = hasPlayTile ? t('hud.discard') : t('hud.chooseAction');
-
   return (
     <div className="absolute inset-0 pointer-events-none z-[40] select-none">
       {/* Top Right HUD (Settings + Connection Status) */}
@@ -327,16 +320,17 @@ export function GamePlayHUD(): React.JSX.Element | null {
 
       {/* Left HUD Panel */}
       <HUDLeftPanel
-        animationSpeed={animationSpeed}
         isCameraLocked={isCameraLocked}
         isExiting={isExiting}
         onExitClick={onExitGame}
         onInfoClick={() => setIsInfoOpen(true)}
       />
 
+      {/* DOM Hand Display for local player */}
+      <HandDisplay />
+
       {/* Countdown Timer */}
       <HUDTimer
-        timerLabel={timerLabel}
         actionTimeout={actionTimeout}
         isVisible={Boolean(currentInquiry && actionTimeout > 0)}
       />
@@ -419,7 +413,6 @@ export function GamePlayHUD(): React.JSX.Element | null {
 /* Sub-components for HUD layout clean modularity */
 
 interface HUDLeftPanelProps {
-  animationSpeed: number;
   isCameraLocked: boolean;
   isExiting: boolean;
   onExitClick: () => void;
@@ -427,31 +420,12 @@ interface HUDLeftPanelProps {
 }
 
 function HUDLeftPanel({
-  animationSpeed,
   isCameraLocked,
   isExiting,
   onExitClick,
   onInfoClick,
 }: HUDLeftPanelProps): React.JSX.Element {
   const { t } = useTranslation();
-  const isReplay = useIsReplay();
-  const autoAgari = useAutoAgari();
-  const noCalls = useNoCalls();
-  const autoDiscard = useAutoDiscard();
-  const autoNuki = useAutoNuki();
-  const room = useRoom();
-
-  const hasNukiDora =
-    room?.config?.doraOption !== null &&
-    room?.config?.doraOption !== undefined &&
-    (room.config.doraOption & 128) !== 0;
-
-  const getToggleBtnClass = (isActive: boolean) =>
-    `flex-1 bg-[#141414]/85 border-[1.5px] rounded-[6px] py-1.5 text-sm font-bold cursor-pointer pointer-events-auto transition-all duration-200 text-center select-none hover:-translate-y-[1px] active:translate-y-[1px] ${
-      isActive
-        ? 'bg-[#ff7a99]/15 border-[#ff7a99] text-[#ff7a99] shadow-[0_0_10px_rgba(255,122,153,0.3),inset_0_0_4px_rgba(255,122,153,0.2)] [text-shadow:0_0_4px_rgba(255,122,153,0.4)]'
-        : 'border-[#444] text-[#888] shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:border-[#ff7a99] hover:text-[#ccc]'
-    }`;
 
   return (
     <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-none z-50">
@@ -459,97 +433,6 @@ function HUDLeftPanel({
       <GameInfoPanel />
 
       {/* Settings Panel */}
-      <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-1.5 px-3 flex flex-row items-center gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-        <label htmlFor="speed-select" className="text-sm font-bold text-[#aaa]">
-          {t('hud.speed')}
-        </label>
-        <select
-          id="speed-select"
-          value={animationSpeed}
-          onChange={(e) => rabiriichi.setAnimationSpeed(Number(e.target.value))}
-          className="bg-[#222] text-white border border-[#555] rounded py-0.5 px-1.5 text-sm cursor-pointer outline-none"
-        >
-          <option value="0.25">x0.25</option>
-          <option value="0.5">x0.5</option>
-          <option value="1">x1.0</option>
-          <option value="2">x2.0</option>
-          <option value="4">x4.0</option>
-          <option value="8">x8.0</option>
-        </select>
-      </div>
-
-      {/* Auto-play Toggles Row */}
-      {!isReplay && (
-        <div className="flex flex-row gap-[6px] w-full">
-          <Tooltip
-            content={t(
-              'hud.autoAgariDesc',
-              'Automatically declare Win (Ron/Tsumo) when available',
-            )}
-            position="top"
-            style={{ flex: 1 }}
-          >
-            <button
-              type="button"
-              className={getToggleBtnClass(Boolean(autoAgari))}
-              onClick={() => rabiriichi.toggleAutoAgari()}
-            >
-              {t('hud.autoAgari', 'Win')}
-            </button>
-          </Tooltip>
-          <Tooltip
-            content={t(
-              'hud.noCallsDesc',
-              'Never claim discards from other players (Chii/Pon/Kan)',
-            )}
-            position="top"
-            style={{ flex: 1 }}
-          >
-            <button
-              type="button"
-              className={getToggleBtnClass(Boolean(noCalls))}
-              onClick={() => rabiriichi.toggleNoCalls()}
-            >
-              {t('hud.noCalls', 'No Calls')}
-            </button>
-          </Tooltip>
-          <Tooltip
-            content={t(
-              'hud.autoDiscardDesc',
-              'Automatically discard drawn tile if no other actions are possible',
-            )}
-            position="top"
-            style={{ flex: 1 }}
-          >
-            <button
-              type="button"
-              className={getToggleBtnClass(Boolean(autoDiscard))}
-              onClick={() => rabiriichi.toggleAutoDiscard()}
-            >
-              {t('hud.autoDiscard', 'Auto Discard')}
-            </button>
-          </Tooltip>
-          {hasNukiDora && (
-            <Tooltip
-              content={t(
-                'hud.autoNukiDesc',
-                'Automatically declare Kita (Nukidora) if available',
-              )}
-              position="top"
-              style={{ flex: 1 }}
-            >
-              <button
-                type="button"
-                className={getToggleBtnClass(Boolean(autoNuki))}
-                onClick={() => rabiriichi.toggleAutoNuki()}
-              >
-                {t('hud.autoNuki', 'Auto Nuki')}
-              </button>
-            </Tooltip>
-          )}
-        </div>
-      )}
-
       <div className="flex flex-row gap-2">
         <FullscreenButton />
 
@@ -640,30 +523,49 @@ function HUDLeftPanel({
           </IconButton>
         </Tooltip>
       </div>
+
+      {/* Auto-play controls stay visible during play and highlight when active. */}
+      <AutoPlayControls />
     </div>
   );
 }
 
 interface HUDTimerProps {
-  timerLabel: string;
   actionTimeout: number;
   isVisible: boolean;
 }
 
 function HUDTimer({
-  timerLabel,
   actionTimeout,
   isVisible,
 }: HUDTimerProps): React.JSX.Element | null {
+  const { t } = useTranslation();
   if (!isVisible) return null;
+  const seconds = Math.ceil(actionTimeout);
+  const digits = String(seconds).split('');
   return (
-    <div className="absolute bottom-[22vh] right-[12%] flex flex-col items-center gap-[2px] bg-[#141414]/85 border-2 border-[#ff3333] rounded-xl py-2 px-4 text-white shadow-[0_4px_15px_rgba(0,0,0,0.6)] pointer-events-none animate-[timer-pulse_1s_infinite_alternate] min-w-[90px] box-border">
-      <span className="text-[0.65rem] font-bold text-[#ff9999] tracking-[1px] text-center">
-        {timerLabel}
-      </span>
-      <span className="text-[2.8rem] font-bold font-['Courier_New',Courier,monospace] text-[#ff3333] [text-shadow:0_0_10px_rgba(255,51,51,0.5)] leading-none">
-        {Math.ceil(actionTimeout)}
-      </span>
+    <div className="absolute bottom-[22vh] right-[12%] flex flex-col items-center gap-[2px] text-white pointer-events-none">
+      {/* The digits are one number, not five images: label the row and hide
+          the individual glyphs from assistive tech. */}
+      <div
+        className="flex items-center"
+        role="timer"
+        aria-label={t('hud.secondsRemaining', {
+          count: seconds,
+          defaultValue: '{{count}}s remaining',
+        })}
+      >
+        {digits.map((d, i) => (
+          <img
+            key={i}
+            src={`/assets/timer/${d}.png`}
+            alt=""
+            aria-hidden
+            className={HUD.timerDigit}
+            draggable={false}
+          />
+        ))}
+      </div>
     </div>
   );
 }

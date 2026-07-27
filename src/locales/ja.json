@@ -205,8 +205,10 @@
     "timerWaiting": "他プレイヤーを待っています...",
     "declareRiichi": "立直宣言牌を選択してください",
     "cancelRiichi": "立直キャンセル",
+    "cancelCall": "戻る",
     "furiten": "振聴",
     "tilesRemaining": "枚",
+    "secondsRemaining": "残り{{count}}秒",
     "han": "飜",
     "points": "点",
     "yakuman": "役満",
@@ -580,8 +582,11 @@
   "settings": {
     "title": "システム設定",
     "playerTab": "プレイヤー",
+    "gameTab": "ゲーム",
     "profileTab": "プロフィール",
     "soundsTab": "サウンド",
+    "animationSpeed": "アニメーション速度",
+    "autoPlay": "自動打牌",
     "profile": {
       "username": "ユーザー名",
       "nickname": "ニックネーム",
@@ -760,5 +765,25 @@
     "back": "戻る",
     "share": "共有",
     "copied": "リンクをクリップボードにコピーしました！"
+  },
+  "assets": {
+    "ui": {
+      "chii": "/assets/ui/ja/chii.png",
+      "pon": "/assets/ui/ja/pon.png",
+      "kan": "/assets/ui/ja/kan.png",
+      "ron": "/assets/ui/ja/ron.png",
+      "tsumo": "/assets/ui/ja/tsumo.png",
+      "riichi": "/assets/ui/ja/riichi.png",
+      "skip": "/assets/ui/ja/skip.png",
+      "nukidora": "/assets/ui/ja/nukidora.png",
+      "suufon_renda": "/assets/ui/ja/suufon_renda.png",
+      "kyuushu_kyuuhai": "/assets/ui/ja/kyuushu_kyuuhai.png",
+      "suucha_riichi": "/assets/ui/ja/suucha_riichi.png",
+      "triple_ron": "/assets/ui/ja/triple_ron.png",
+      "suukan_sanra": "/assets/ui/ja/suukan_sanra.png",
+      "yakuman_chance": "/assets/ui/ja/yakuman_chance.png",
+      "yakuman_confirmed": "/assets/ui/ja/yakuman_confirmed.png",
+      "yakuman_confirmed_gold": "/assets/ui/ja/yakuman_confirmed_gold.png"
+    }
   }
 }
