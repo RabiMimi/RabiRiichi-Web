@@ -22,6 +22,7 @@ const ACTION_ASSET_KEYS: Partial<Record<InquiryOptionType, string>> = {
   riichi: 'assets.ui.riichi',
   agari: 'assets.ui.ron',
   nukidora: 'assets.ui.nukidora',
+  skip: 'assets.ui.skip',
 };
 
 interface FlattenedOption {
