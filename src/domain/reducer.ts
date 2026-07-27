@@ -152,6 +152,7 @@ export function hydrateFromGameState(
         fu: ti.fu ?? 0,
         yakuman: ti.yakuman ?? 0,
         points: ti.points ? Number(ti.points) : 0,
+        maxHan: ti.maxHan ?? 0,
       };
     });
 
@@ -427,12 +428,7 @@ function handleDiscardTile(
       rawWaits !== undefined && rawWaits !== null
         ? rawWaits.map((ti): MappedTenpaiInfo => {
             const winningTile = ti.winningTile ?? 0;
-            let han = ti.han ?? 0;
-            let yakuHan = ti.yakuHan ?? 0;
-            if (ev.isRiichi && (ti.yakuman ?? 0) === 0) {
-              han += 1;
-              yakuHan += 1;
-            }
+            const riichiBonus = ev.isRiichi && (ti.yakuman ?? 0) === 0 ? 1 : 0;
             return {
               winningTile,
               remainingCount: countRemainingWinningTile(
@@ -440,11 +436,12 @@ function handleDiscardTile(
                 visibleKinds,
                 tileSetCounts,
               ),
-              han,
-              yakuHan,
+              han: (ti.han ?? 0) + riichiBonus,
+              yakuHan: (ti.yakuHan ?? 0) + riichiBonus,
               fu: ti.fu ?? 0,
               yakuman: ti.yakuman ?? 0,
               points: ti.points ?? 0,
+              maxHan: (ti.maxHan ?? 0) + riichiBonus,
             };
           })
         : rawWaits === null
@@ -1117,11 +1114,13 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
           visibleKinds,
           tileSetCounts,
         ),
+        // A ryuukyoku reveal carries only the tiles, no scoring.
         han: 0,
         yakuHan: 0,
         fu: 0,
         yakuman: 0,
         points: 0,
+        maxHan: 0,
       }));
       awaitedTiles =
         existingWaits && existingWaits.length > 0 ? existingWaits : newWaits;

@@ -80,6 +80,8 @@ export type ActionOption =
       label: string; // "和" or "自摸"
       actionIndex: number;
       incomingTileId: number | null;
+      /** A self-draw win, so the UI announces tsumo rather than ron. */
+      isTsumo: boolean;
     }
   | {
       type: 'chii' | 'pon' | 'kan';
@@ -151,6 +153,7 @@ function mapDiscardCandidates(
         fu: ti.fu ?? 0,
         yakuman: ti.yakuman ?? 0,
         points: safeToNumber(ti.points),
+        maxHan: ti.maxHan ?? 0,
       };
     }),
   }));
@@ -194,13 +197,13 @@ export function mapInquiry(
         actionIndex: i,
       });
     } else if (action.agariAction) {
-      const type = action.agariAction.type;
-      const label = type === AgariType.AGARI_TYPE_TSUMO ? '自摸' : '和';
+      const isTsumo = action.agariAction.type === AgariType.AGARI_TYPE_TSUMO;
       buttons.push({
         type: 'agari',
-        label,
+        label: isTsumo ? '自摸' : '和',
         actionIndex: i,
         incomingTileId: action.agariAction.incoming?.traceId ?? null,
+        isTsumo,
       });
     } else if (action.chiiAction) {
       const groups = action.chiiAction.tileGroups ?? [];

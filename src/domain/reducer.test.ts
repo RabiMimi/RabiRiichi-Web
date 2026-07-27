@@ -1870,6 +1870,7 @@ describe('Reducer - Events', () => {
                     fu: 30,
                     yakuman: 0,
                     points: 1000,
+                    maxHan: 13,
                   },
                 ],
               },
@@ -1891,6 +1892,7 @@ describe('Reducer - Events', () => {
         fu: 30,
         yakuman: 0,
         points: 1000,
+        maxHan: 13,
       },
     ]);
   });
@@ -2090,6 +2092,7 @@ describe('Reducer - Events', () => {
         fu: 0,
         yakuman: 0,
         points: 0,
+        maxHan: 0,
       },
       {
         winningTile: 18,
@@ -2099,6 +2102,7 @@ describe('Reducer - Events', () => {
         fu: 0,
         yakuman: 0,
         points: 0,
+        maxHan: 0,
       },
     ]);
 

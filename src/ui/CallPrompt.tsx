@@ -1,17 +1,33 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRoom, useSelf } from '../state/store';
-import { isTsumoTile } from '../domain/model';
+import { isTsumoTile, yakumanOutlook } from '../domain/model';
+import type { YakumanOutlook } from '../domain/model';
+import { isKazoeYakumanEnabled, isYakumanEnabled } from '../domain/yakus';
 import { getScreenPosition } from '../scene/seat';
-import { getCallPromptSeatClass } from './callPromptPosition';
+import {
+  YAKUMAN_PROMPT_CLASS,
+  getCallPromptSeatClass,
+} from './callPromptPosition';
 import { findNewMeldCallType, type MeldCallType } from './callPromptEvents';
 import { getRyuukyokuArtwork } from './ryuukyokuArtwork';
+import { getYakumanArtwork } from './yakumanArtwork';
 import type { IMenLikeMsg } from '../proto';
 
 type CallType =
-  'chii' | 'pon' | 'kan' | 'agari' | 'tsumo' | 'riichi' | 'ryuukyoku';
+  | 'chii'
+  | 'pon'
+  | 'kan'
+  | 'agari'
+  | 'tsumo'
+  | 'riichi'
+  | 'ryuukyoku'
+  | 'yakuman';
 
-const CALL_ASSET_KEYS: Record<Exclude<CallType, 'ryuukyoku'>, string> = {
+const CALL_ASSET_KEYS: Record<
+  Exclude<CallType, 'ryuukyoku' | 'yakuman'>,
+  string
+> = {
   chii: 'assets.ui.chii',
   pon: 'assets.ui.pon',
   kan: 'assets.ui.kan',
@@ -24,12 +40,18 @@ const DISPLAY_DURATION = 1500;
 const EXIT_DURATION = 350;
 
 /**
- * A draw is a table-wide event with no owning player, so it flashes under a
- * synthetic id (keeping it in the same "one flash per player" bookkeeping) and
- * is rendered at the table centre rather than at a seat.
+ * Banners that belong to no particular seat. They flash under synthetic ids so
+ * they keep their own slot in the "one flash per player" bookkeeping, and are
+ * positioned by type rather than by seat.
  */
 const RYUUKYOKU_PLAYER_ID = -1;
-const RYUUKYOKU_SEAT = -1;
+const NO_SEAT = -1;
+
+/**
+ * A yakuman announcement is about the viewer's own hand rather than an action,
+ * so it gets its own slot and does not displace a call flash for the same seat.
+ */
+const YAKUMAN_PLAYER_ID = -2;
 
 interface FlashEntry {
   type: CallType;
@@ -40,6 +62,17 @@ interface FlashEntry {
   imgSrc: string | undefined;
   /** Draw reason, so the banner can be described for screen readers. */
   reason: string | undefined;
+  /** Gold overlay for the yakuman-confirmed reveal. */
+  glowSrc?: string | undefined;
+}
+
+/**
+ * i18n key for a call's artwork, or null for the banners that supply their own
+ * (ryuukyoku picks art per draw reason, yakuman per outlook).
+ */
+function callAssetKey(type: CallType): string | null {
+  if (type === 'ryuukyoku' || type === 'yakuman') return null;
+  return CALL_ASSET_KEYS[type];
 }
 
 /** i18n key describing a flash, used as the banner's alt text. */
@@ -47,6 +80,7 @@ function flashLabelKey(flash: FlashEntry): string {
   if (flash.type === 'ryuukyoku') {
     return `result.ryuukyoku.${flash.reason ?? 'end_game_ryuukyoku'}`;
   }
+  if (flash.type === 'yakuman') return 'hud.yakuman';
   // `agari` is the domain name for a ron; the other types share their key name.
   return `hud.action.${flash.type === 'agari' ? 'ron' : flash.type}`;
 }
@@ -63,6 +97,7 @@ export function CallPrompt(): React.JSX.Element | null {
   const prevAgariPlayers = useRef<Set<number>>(new Set());
   const prevRiichiIds = useRef<Map<number, number>>(new Map());
   const prevRyuukyokuReason = useRef<string | null | undefined>(null);
+  const prevYakumanOutlook = useRef<YakumanOutlook>(null);
   const initialized = useRef(false);
   const timerRefs = useRef<Map<number, ReturnType<typeof setTimeout>>>(
     new Map(),
@@ -74,13 +109,14 @@ export function CallPrompt(): React.JSX.Element | null {
     type: CallType,
     imgSrc?: string,
     reason?: string,
+    glowSrc?: string,
   ) {
     const old = timerRefs.current.get(playerId);
     if (old) clearTimeout(old);
 
     setFlashes((prev) => [
       ...prev.filter((f) => f.playerId !== playerId),
-      { type, seat, playerId, exiting: false, imgSrc, reason },
+      { type, seat, playerId, exiting: false, imgSrc, reason, glowSrc },
     ]);
 
     const hideId = setTimeout(() => {
@@ -105,6 +141,20 @@ export function CallPrompt(): React.JSX.Element | null {
   useEffect(() => {
     if (!room?.players) return;
 
+    /** The viewer's own yakuman prospects, or null if they have none. */
+    const currentYakumanOutlook = (): YakumanOutlook => {
+      const viewer = currentUser
+        ? room.players.find((p) => p.id === currentUser.id)
+        : undefined;
+      const waits = viewer?.gameState?.awaitedTiles;
+      if (!waits || waits.length === 0) return null;
+      return yakumanOutlook(waits, {
+        minHan: room.config?.minHan ?? 1,
+        yakumanEnabled: isYakumanEnabled(room.config?.scoringOption),
+        kazoeEnabled: isKazoeYakumanEnabled(room.config?.scoringOption),
+      });
+    };
+
     // On first observation, seed baselines so historical state doesn't replay
     if (!initialized.current) {
       for (const p of room.players) {
@@ -115,6 +165,7 @@ export function CallPrompt(): React.JSX.Element | null {
           prevAgariPlayers.current.add(p.id);
       }
       prevRyuukyokuReason.current = room.ryuukyokuReason;
+      prevYakumanOutlook.current = currentYakumanOutlook();
       initialized.current = true;
       return;
     }
@@ -161,25 +212,42 @@ export function CallPrompt(): React.JSX.Element | null {
       prevRiichiIds.current.set(pid, rid);
     }
 
+    // Announce the viewer's own yakuman prospects, but only as they improve --
+    // re-announcing when a hand gets worse would just be noise.
+    const outlook = currentYakumanOutlook();
+    const prevOutlook = prevYakumanOutlook.current;
+    const improved =
+      (outlook === 'chance' && prevOutlook === null) ||
+      (outlook === 'confirmed' && prevOutlook !== 'confirmed');
+    if (improved) {
+      const art = getYakumanArtwork(outlook);
+      if (art) {
+        // Rendered at a fixed position, so the seat is irrelevant here.
+        trigger(
+          YAKUMAN_PLAYER_ID,
+          NO_SEAT,
+          'yakuman',
+          art.src,
+          undefined,
+          art.glowSrc,
+        );
+      }
+    }
+    prevYakumanOutlook.current = outlook;
+
     // Detect ryuukyoku
     const reason = room.ryuukyokuReason;
     if (reason && reason !== prevRyuukyokuReason.current) {
       prevRyuukyokuReason.current = reason;
       const imgSrc = getRyuukyokuArtwork(reason);
       if (imgSrc) {
-        // An abortive draw belongs to the table, not to a player, so it uses
-        // the synthetic id/seat below and renders centred (see RYUUKYOKU_SEAT).
-        trigger(
-          RYUUKYOKU_PLAYER_ID,
-          RYUUKYOKU_SEAT,
-          'ryuukyoku',
-          imgSrc,
-          reason,
-        );
+        // An abortive draw belongs to the table, not a player: it renders
+        // centred, so no seat is involved.
+        trigger(RYUUKYOKU_PLAYER_ID, NO_SEAT, 'ryuukyoku', imgSrc, reason);
       }
     }
     if (!reason) prevRyuukyokuReason.current = null;
-  }, [room]);
+  }, [room, currentUser]);
 
   useEffect(
     () => () => {
@@ -199,10 +267,13 @@ export function CallPrompt(): React.JSX.Element | null {
   return (
     <div className="absolute inset-0 pointer-events-none z-[55]">
       {flashes.map((f) => {
-        const isTableWide = f.seat === RYUUKYOKU_SEAT;
+        const isTableWide = f.type === 'ryuukyoku';
+        const isYakuman = f.type === 'yakuman';
         let pos: string;
         if (isTableWide) {
           pos = 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
+        } else if (isYakuman) {
+          pos = YAKUMAN_PROMPT_CLASS;
         } else {
           const screenPos =
             selfSeat !== undefined
@@ -210,35 +281,53 @@ export function CallPrompt(): React.JSX.Element | null {
               : 0;
           pos = getCallPromptSeatClass(screenPos);
         }
-        const imgSrc =
-          f.imgSrc ??
-          (f.type !== 'ryuukyoku' ? t(CALL_ASSET_KEYS[f.type]) : '');
+        const assetKey = callAssetKey(f.type);
+        const imgSrc = f.imgSrc ?? (assetKey ? t(assetKey) : '');
         if (!imgSrc) return null;
+
+        const label = t(flashLabelKey(f));
+        // A draw or yakuman announcement carries more weight than a per-seat
+        // call, so it is drawn larger.
+        const imgSize =
+          isTableWide || isYakuman
+            ? 'h-auto w-40 object-contain sm:w-56 lg:w-80'
+            : 'h-auto w-16 object-contain sm:w-24 lg:w-40';
+
+        let enterClass = 'animate-call-prompt-entrance';
+        if (f.exiting) {
+          enterClass = 'animate-call-prompt-exit';
+        } else if (isYakuman) {
+          enterClass = 'animate-yakuman-slam';
+        }
+
         return (
           <div
             key={f.playerId}
             className={`absolute ${pos} flex flex-col items-center`}
           >
             <div
-              className={
-                f.exiting
-                  ? 'animate-call-prompt-exit'
-                  : 'animate-call-prompt-entrance'
-              }
+              className={enterClass}
               style={{ filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.8))' }}
             >
-              <img
-                src={imgSrc}
-                alt={t(flashLabelKey(f))}
-                className={
-                  isTableWide
-                    ? // A draw announcement carries the whole table, so it gets
-                      // more presence than a per-seat call flash.
-                      'h-auto w-40 object-contain sm:w-56 lg:w-80'
-                    : 'h-auto w-16 object-contain sm:w-24 lg:w-40'
-                }
-                draggable={false}
-              />
+              <div className="relative">
+                <img
+                  src={imgSrc}
+                  alt={label}
+                  className={imgSize}
+                  draggable={false}
+                />
+                {f.glowSrc && !f.exiting && (
+                  // The gold wordmark flares over the plain one; it repeats the
+                  // same image, so hide it from assistive tech.
+                  <img
+                    src={f.glowSrc}
+                    alt=""
+                    aria-hidden
+                    draggable={false}
+                    className={`absolute inset-0 ${imgSize} animate-yakuman-flare mix-blend-plus-lighter`}
+                  />
+                )}
+              </div>
             </div>
           </div>
         );

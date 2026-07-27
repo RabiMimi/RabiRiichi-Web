@@ -80,18 +80,42 @@ export function buildAllowedYakusPayload(
   return Array.from(selected);
 }
 
+/**
+ * Whether yakuman are capped. With the flag off the table is aotenjou, where a
+ * yakuman is merely 13 extra han and the limit names do not apply.
+ */
+export function isYakumanEnabled(
+  scoringOption: number | null | undefined,
+): boolean {
+  return scoringOption
+    ? Boolean(scoringOption & ScoringOption.SCORING_OPTION_YAKUMAN)
+    : true;
+}
+
+/**
+ * Whether 13+ han counts as a yakuman (累计役满). Mirrors the server, which
+ * requires both flags — see ScoreCalcResult.KazoeYakuman.
+ */
+export function isKazoeYakumanEnabled(
+  scoringOption: number | null | undefined,
+): boolean {
+  if (!scoringOption) return true;
+  const required =
+    ScoringOption.SCORING_OPTION_YAKUMAN |
+    ScoringOption.SCORING_OPTION_KAZOE_YAKUMAN;
+  return (scoringOption & required) === required;
+}
+
 export function filterYakuListForDisplay(
   rawYakuList: IScoringMsg[],
   scoringOption: number | null | undefined,
 ): IScoringMsg[] {
-  const isYakumanEnabled = scoringOption
-    ? Boolean(scoringOption & ScoringOption.SCORING_OPTION_YAKUMAN)
-    : true;
+  const yakumanEnabled = isYakumanEnabled(scoringOption);
   const hasYakuman = rawYakuList.some(
     (y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN,
   );
   const filtered =
-    isYakumanEnabled && hasYakuman
+    yakumanEnabled && hasYakuman
       ? rawYakuList.filter((y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN)
       : rawYakuList.filter((y) => y.Type !== ScoringType.SCORING_TYPE_FU);
   return sortYakuList(filtered);

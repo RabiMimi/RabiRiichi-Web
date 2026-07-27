@@ -15,6 +15,7 @@ const agari: ActionOption = {
   label: 'Ron',
   actionIndex: 1,
   incomingTileId: 5,
+  isTsumo: false,
 };
 const ponOne: ActionOption = {
   type: 'pon',

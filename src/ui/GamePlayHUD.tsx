@@ -26,6 +26,7 @@ import { HUD } from './styles';
 import {
   getWindKey,
   waitMeetsMinHan,
+  riichiBonusHan,
   displayHan,
   type MappedTenpaiInfo,
 } from '../domain/model';
@@ -253,6 +254,8 @@ export function GamePlayHUD(): React.JSX.Element | null {
   }, [activeDiscardCandidate, activeTraceId, room, selfPlayer]);
 
   const minHan = room?.config?.minHan ?? 1;
+  // 2 on the first jun: declaring riichi there is a double riichi.
+  const riichiBonus = riichiBonusHan(room?.players ?? []);
 
   const permanentAwaitedTiles = useMemo(() => {
     return selfPlayer?.gameState?.awaitedTiles ?? [];
@@ -347,7 +350,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
           <TenpaiWaitPanel
             awaitedTiles={activeDiscardCandidate.candidate.tenpaiInfos}
             minHan={minHan}
-            bonusYaku={activeDiscardCandidate.isRiichi ? 1 : 0}
+            bonusYaku={activeDiscardCandidate.isRiichi ? riichiBonus : 0}
             className={`absolute left-1/2 -translate-x-1/2 flex flex-col gap-1.5 ${
               hasActionButtons ? 'bottom-[30vh]' : 'bottom-[18vh]'
             }`}

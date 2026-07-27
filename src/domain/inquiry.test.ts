@@ -93,6 +93,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
     expect(mapped.buttons[3]).toEqual({
       type: 'agari',
       label: '和',
+      isTsumo: false,
       actionIndex: 4,
       incomingTileId: 200,
     });
@@ -104,6 +105,25 @@ describe('Inquiry Mapping & Response Encoding', () => {
       legalTiles: [100, 101, 102],
       candidates: [],
     });
+  });
+
+  it('flags a self-draw win so the UI can announce tsumo', () => {
+    // The button type alone cannot say ron from tsumo, and the artwork differs.
+    const mapped = mapInquiry(
+      {
+        actions: [
+          {
+            agariAction: {
+              type: AgariType.AGARI_TYPE_TSUMO,
+              incoming: { traceId: 300, tile: 19 },
+            },
+          },
+        ],
+      },
+      undefined,
+    );
+    const agari = mapped.buttons.find((b) => b.type === 'agari');
+    expect(agari).toMatchObject({ isTsumo: true, label: '自摸' });
   });
 
   it('should encode skip response correctly', () => {
@@ -361,6 +381,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
                     fu: 30,
                     yakuman: 0,
                     points: 1000,
+                    maxHan: 2,
                   },
                 ],
               },
@@ -381,6 +402,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
                     fu: 40,
                     yakuman: 0,
                     points: 2000,
+                    maxHan: 13,
                   },
                 ],
               },
@@ -411,6 +433,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
           fu: 30,
           yakuman: 0,
           points: 1000,
+          maxHan: 2,
         },
       ],
     });
@@ -431,6 +454,7 @@ describe('Inquiry Mapping & Response Encoding', () => {
             fu: 40,
             yakuman: 0,
             points: 2000,
+            maxHan: 13,
           },
         ],
       });

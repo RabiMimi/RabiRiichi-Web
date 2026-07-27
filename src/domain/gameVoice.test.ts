@@ -104,6 +104,7 @@ function wait(points: number, yakuman: number): MappedTenpaiInfo {
     fu: 0,
     yakuman,
     points,
+    maxHan: 0,
   };
 }
 

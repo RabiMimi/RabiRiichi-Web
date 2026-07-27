@@ -29,6 +29,8 @@ interface FlattenedOption {
   key: string;
   label: string;
   type: InquiryOptionType;
+  /** Overrides the type's default artwork, e.g. tsumo instead of ron. */
+  assetKey?: string;
   tiles?: { traceId: number; tile: number; isCalled?: boolean }[];
   onClick: () => void;
   onPointerEnter?: () => void;
@@ -238,6 +240,11 @@ export function ActionHUD(): React.JSX.Element | null {
         key: `${btn.type}-${btn.actionIndex}`,
         label: getActionLabel(btn.type, btn.label),
         type: btn.type,
+        // A win is offered as either ron or tsumo; the type alone cannot say
+        // which, so the artwork is chosen here.
+        ...(btn.type === 'agari' && btn.isTsumo
+          ? { assetKey: 'assets.ui.tsumo' }
+          : {}),
         onClick: () => {
           if (btn.type === 'riichi') {
             setIsRiichiSelectMode(true);
@@ -257,7 +264,7 @@ export function ActionHUD(): React.JSX.Element | null {
         className={`flex flex-wrap justify-center ${HUD.actionRowGap} max-w-[95vw] items-center`}
       >
         {flatOptions.map((opt, i) => {
-          const assetKey = ACTION_ASSET_KEYS[opt.type];
+          const assetKey = opt.assetKey ?? ACTION_ASSET_KEYS[opt.type];
           const imgSrc = assetKey ? t(assetKey) : undefined;
           return (
             <button

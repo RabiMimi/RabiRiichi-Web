@@ -1,3 +1,12 @@
+/**
+ * Where the yakuman banner sits: above the call row.
+ *
+ * It is always about the viewer's own hand, and the two are routinely on screen
+ * together — declaring riichi is often the very thing that confirms a counted
+ * yakuman — so it cannot share the seat position.
+ */
+export const YAKUMAN_PROMPT_CLASS = 'bottom-[34vh] left-1/2 -translate-x-1/2';
+
 export function getCallPromptSeatClass(screenPos: number): string {
   switch (screenPos) {
     case 0:

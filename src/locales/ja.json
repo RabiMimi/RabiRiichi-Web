@@ -66,7 +66,7 @@
     "advancedSettings": "詳細設定",
     "players": "人数",
     "rounds": "局数",
-    "minHan": "しばり(最低飜数)",
+    "minHan": "しばり(最低翻数)",
     "actionTimeout": "打牌制限時間",
     "nextRoundAckTimeout": "リザルト制限時間",
     "defaultPlaceholder": "デフォルト: {{value}}秒",
@@ -126,16 +126,16 @@
     "zihai": "字牌 (Honors)"
   },
   "yakuGroup": {
-    "1han": "1飜",
-    "2han": "2飜",
-    "3han": "3飜",
-    "6han": "6飜",
+    "1han": "1翻",
+    "2han": "2翻",
+    "3han": "3翻",
+    "6han": "6翻",
     "yakuman": "役満",
     "other": "その他"
   },
   "hanOpt": {
-    "1": "1飜",
-    "2": "2飜"
+    "1": "1翻",
+    "2": "2翻"
   },
   "room": {
     "title": "部屋 ID: {{id}}",
@@ -209,11 +209,11 @@
     "furiten": "振聴",
     "tilesRemaining": "枚",
     "secondsRemaining": "残り{{count}}秒",
-    "han": "飜",
+    "han": "翻",
     "points": "点",
     "yakuman": "役満",
     "yakuRequired": "役なし",
-    "minHanRequired": "飜数が足りません",
+    "minHanRequired": "翻数が足りません",
     "tenpaiWaits": "聴牌待ち",
     "tenpai": "聴牌",
     "autoAgari": "和",
@@ -248,7 +248,7 @@
     "confirm": "確認",
     "nextRound": "次の局へ",
     "points": "{{count}}点",
-    "han": "{{count}}飜",
+    "han": "{{count}}翻",
     "fu": "{{count}}符",
     "haneman": "跳満",
     "baiman": "倍満",
@@ -259,9 +259,9 @@
     "multipleYakuman_3": "トリプル役満",
     "multipleYakuman_4": "四倍役満",
     "multipleYakuman_5": "五倍役満",
-    "fuAndHan": "{{han}}飜 {{fu}}符",
-    "limitPrefixed": "{{limit}} {{han}}飜 {{fu}}符",
-    "limitPrefixedHanOnly": "{{limit}} {{han}}飜",
+    "fuAndHan": "{{han}}翻 {{fu}}符",
+    "limitPrefixed": "{{limit}} {{han}}翻 {{fu}}符",
+    "limitPrefixedHanOnly": "{{limit}} {{han}}翻",
     "winnerBadge": "和了",
     "winTile": "あがり",
     "tenpai": "テンパイ",
@@ -465,7 +465,7 @@
     "lobby": {
       "playerCount": "プレイヤー数は2〜4人でなければなりません。",
       "totalRound": "ゲーム数は1または2でなければなりません。",
-      "minHan": "しばり飜数は1〜13飜でなければなりません。",
+      "minHan": "しばり翻数は1〜13翻でなければなりません。",
       "timeout": "タイムアウト時間は5〜3600秒でなければなりません。",
       "nextRoundAckTimeout": "リザルトタイムアウト時間は5〜3600秒でなければなりません。",
       "tileSet": "選択された使用牌の枚数 ({{count}}) がプレイヤー数 ({{players}}) に対して足りません。最低 {{min}}枚必要です。",
@@ -624,12 +624,12 @@
     "inGameWarning": "対局中はキャラクターの変更ができません。",
     "voiceCategories": {
       "action": "基本動作",
-      "yaku1": "一飜役",
-      "yaku2": "二飜以上の役",
+      "yaku1": "一翻役",
+      "yaku2": "二翻以上の役",
       "yakuman": "役満",
       "koten": "古役",
       "dora": "ドラ",
-      "points": "飜数・点数コール",
+      "points": "翻数・点数コール",
       "special": "特殊シチュエーション"
     }
   },

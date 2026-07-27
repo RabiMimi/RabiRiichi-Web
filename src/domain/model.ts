@@ -62,6 +62,10 @@ export interface MappedTenpaiInfo {
   fu: number;
   yakuman: number;
   points: number;
+  // Total han (dora included, luck excluded) if the wait completes the best
+  // way, ron or tsumo; the fields above are the ron floor. A yakuman counts
+  // as 13, so maxHan >= 13 with yakuman 0 means one is reachable.
+  maxHan: number;
 }
 
 export interface PlayerGameState {
@@ -185,7 +189,28 @@ export function displayHan(info: MappedTenpaiInfo, bonusYaku = 0): number {
 }
 
 /**
- * Adds riichi's guaranteed +1 han to each wait. Used for the optimistic local
+ * Whether declaring riichi right now would be a double riichi (两立直), worth
+ * 2 han instead of 1. Mirrors the server's `Game.IsFirstJun`: nobody may have
+ * played past their first turn, and no call may have interrupted.
+ */
+export function isDoubleRiichiOpportunity(
+  players: readonly PlayerModel[],
+): boolean {
+  return players.every((p) => {
+    const gs = p.gameState;
+    if (!gs) return true;
+    // An empty meld list also implies menzen, which the server checks too.
+    return gs.jun <= 1 && gs.hand.called.length === 0;
+  });
+}
+
+/** Han riichi guarantees: 2 for a double riichi, otherwise 1. */
+export function riichiBonusHan(players: readonly PlayerModel[]): number {
+  return isDoubleRiichiOpportunity(players) ? 2 : 1;
+}
+
+/**
+ * Adds riichi's guaranteed han to each wait. Used for the optimistic local
  * tenpai display when declaring riichi: the server computes those candidates
  * before riichi is committed, so their han/yakuHan omit the riichi yaku.
  * A later sync (computed with riichi committed) already includes it and will
@@ -193,12 +218,78 @@ export function displayHan(info: MappedTenpaiInfo, bonusYaku = 0): number {
  */
 export function applyRiichiBonusToWaits(
   waits: MappedTenpaiInfo[],
+  bonusHan = 1,
 ): MappedTenpaiInfo[] {
   return waits.map((info) =>
     info.yakuman > 0
       ? info
-      : { ...info, han: info.han + 1, yakuHan: info.yakuHan + 1 },
+      : {
+          ...info,
+          han: info.han + bonusHan,
+          yakuHan: info.yakuHan + bonusHan,
+          maxHan: info.maxHan + bonusHan,
+        },
   );
+}
+
+/** Han the server reports per yakuman in `maxHan`. */
+const YAKUMAN_HAN = 13;
+
+export type YakumanOutlook = 'confirmed' | 'chance' | null;
+
+export interface YakumanOutlookOptions {
+  /** Minimum yaku han required to win (番缚). */
+  minHan: number;
+  /** Guaranteed extra yaku han, e.g. 1 while choosing a riichi discard. */
+  bonusYaku?: number;
+  /** False under aotenjou, where there is no yakuman to announce. */
+  yakumanEnabled?: boolean;
+  /** Whether 13+ han counts as a yakuman (累计役满). */
+  kazoeEnabled?: boolean;
+}
+
+/**
+ * Whether a set of waits guarantees a yakuman, could reach one depending on how
+ * it completes (e.g. shanpon on suuankou: ron is sanankou, tsumo is suuankou),
+ * or neither. Only waits winnable under 番缚 count.
+ *
+ * `bonusYaku` matters here: with kazoe enabled, riichi's guaranteed han can be
+ * what pushes a 12-han hand over the line into a counted yakuman.
+ */
+export function yakumanOutlook(
+  waits: readonly MappedTenpaiInfo[],
+  {
+    minHan,
+    bonusYaku = 0,
+    yakumanEnabled = true,
+    kazoeEnabled = true,
+  }: YakumanOutlookOptions,
+): YakumanOutlook {
+  // Under aotenjou a yakuman is just 13 extra han, so `maxHan` says nothing
+  // about one and there is no limit to announce.
+  if (!yakumanEnabled) return null;
+
+  const winnable = waits.filter((info) =>
+    waitMeetsMinHan(info, minHan, bonusYaku),
+  );
+  if (winnable.length === 0) return null;
+
+  const isKazoe = (han: number) =>
+    kazoeEnabled && han + bonusYaku >= YAKUMAN_HAN;
+
+  // Confirmed only when every wait guarantees one; a single cheap wait means
+  // the player can still finish without a yakuman. `han` is the ron floor.
+  if (winnable.every((info) => info.yakuman > 0 || isKazoe(info.han))) {
+    return 'confirmed';
+  }
+
+  // The server folds a yakuman into maxHan as 13, so this covers both a real
+  // yakuman on the tsumo path and a hand that merely counts up to one.
+  return winnable.some(
+    (info) => info.maxHan >= YAKUMAN_HAN || isKazoe(info.maxHan),
+  )
+    ? 'chance'
+    : null;
 }
 
 export function getPlayerBySeat(

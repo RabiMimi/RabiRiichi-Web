@@ -44,7 +44,11 @@ import type {
   IServerMessageDto,
 } from '../proto';
 import type { PlayerModel, RoomModel, MappedTenpaiInfo } from '../domain/model';
-import { applyRiichiBonusToWaits, getPlayerDisplayName } from '../domain/model';
+import {
+  applyRiichiBonusToWaits,
+  getPlayerDisplayName,
+  riichiBonusHan,
+} from '../domain/model';
 import { CHARACTERS, getCharacterVoiceUrl } from '../domain/character';
 import {
   createGameVoiceState,
@@ -1272,11 +1276,15 @@ export class RabiRiichiClient {
       const candidates = action.candidates ?? [];
       const match = candidates.find((c) => c.tileId === choice);
       if (match && match.tenpaiInfos.length > 0) {
-        // Riichi candidates are computed server-side before riichi is committed,
-        // so add its guaranteed +1 han for the optimistic pre-sync display.
+        // Riichi candidates are computed server-side before riichi is
+        // committed, so add its guaranteed han for the optimistic pre-sync
+        // display -- 2 when this would be a double riichi.
         const waits =
           action.type === 'riichi'
-            ? applyRiichiBonusToWaits(match.tenpaiInfos)
+            ? applyRiichiBonusToWaits(
+                match.tenpaiInfos,
+                riichiBonusHan(this.room?.players ?? []),
+              )
             : match.tenpaiInfos;
         this.setLocalPlayerAwaitedTiles(waits);
       } else {

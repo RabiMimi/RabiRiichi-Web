@@ -19,6 +19,7 @@ import { UiTile } from './UiTile';
 import { SOUND_EFFECTS } from '../lib/soundEffects';
 import { computeHandLayout, type HandLayout } from './handLayout';
 import { useDragToDiscard, type DragToDiscard } from './useDragToDiscard';
+import { isTileDimmed } from './handTileState';
 import type { ActionOption } from '../domain/inquiry';
 
 /** Tracks the viewport so the hand can shrink on small or short screens. */
@@ -209,6 +210,9 @@ export function HandDisplay(): React.JSX.Element | null {
   const { freeTiles, pendingTile } = hand;
   const isInteractive = playableIds.size > 0;
 
+  const dimmed = (traceId: number | null | undefined) =>
+    isTileDimmed({ traceId, callHighlightIds, playableIds });
+
   const onTileClick = (traceId: number | null | undefined) => {
     if (
       drag.shouldIgnoreClick() ||
@@ -234,10 +238,6 @@ export function HandDisplay(): React.JSX.Element | null {
           {freeTiles.map((tileMsg, idx) => {
             const { traceId } = tileMsg;
             const isPlayable = traceId != null && playableIds.has(traceId);
-            const isDimmed =
-              traceId != null &&
-              ((callHighlightIds != null && !callHighlightIds.has(traceId)) ||
-                (isRiichiSelectMode && !playableIds.has(traceId)));
 
             return (
               <HandTile
@@ -245,7 +245,7 @@ export function HandDisplay(): React.JSX.Element | null {
                 tile={tileMsg.tile}
                 layout={layout}
                 isHighlighted={isPlayable}
-                isDimmed={isDimmed}
+                isDimmed={dimmed(traceId)}
                 isClickable={isPlayable}
                 isDora={isDoraTile(tileMsg.tile)}
                 hoverLift="hover:-translate-y-5"
@@ -266,18 +266,13 @@ export function HandDisplay(): React.JSX.Element | null {
             const pendingTraceId = pendingTile.traceId;
             const isPlayable =
               pendingTraceId != null && playableIds.has(pendingTraceId);
-            const isDimmed =
-              pendingTraceId != null &&
-              ((callHighlightIds != null &&
-                !callHighlightIds.has(pendingTraceId)) ||
-                (isRiichiSelectMode && !playableIds.has(pendingTraceId)));
 
             return (
               <HandTile
                 tile={pendingTile.tile}
                 layout={layout}
                 isHighlighted={isPlayable}
-                isDimmed={isDimmed}
+                isDimmed={dimmed(pendingTraceId)}
                 isClickable={isPlayable}
                 isDora={isDoraTile(pendingTile.tile)}
                 hoverLift="hover:-translate-y-3"
