@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTexture, Text as DreiText } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { useTranslation } from 'react-i18next';
 import { useRoom, useSelf } from '../state/store';
 import { getScreenPosition, getSeatRotation } from './seat';
-import { getTableMidTexturePath, TABLE_CENTER_FONT_PATH } from './assets';
+import { getTableMidTexturePath, getTableCenterFontPath } from './assets';
 
 /** Text colours for the info panel at the centre of the table. */
 const TABLE_CENTER_COLORS = {
@@ -23,9 +24,11 @@ const TABLE_CENTER_COLORS = {
 } as const;
 
 export function TableCenter(): React.JSX.Element | null {
+  const { i18n } = useTranslation();
   const room = useRoom();
   const currentUser = useSelf();
   const [isHovered, setIsHovered] = useState(false);
+  const tableCenterFont = getTableCenterFontPath(i18n.language);
 
   // Load textures
   const bgTexture = useTexture(getTableMidTexturePath('bg'));
@@ -100,7 +103,7 @@ export function TableCenter(): React.JSX.Element | null {
         color={TABLE_CENTER_COLORS.label}
         anchorX="center"
         anchorY="middle"
-        font={TABLE_CENTER_FONT_PATH}
+        font={tableCenterFont}
         renderOrder={2}
       >
         {`${roundWindText}${roundNum}局`}
@@ -114,7 +117,7 @@ export function TableCenter(): React.JSX.Element | null {
         color={TABLE_CENTER_COLORS.label}
         anchorX="center"
         anchorY="middle"
-        font={TABLE_CENTER_FONT_PATH}
+        font={tableCenterFont}
         renderOrder={2}
       >
         {`余${remainingTiles}`}
@@ -169,7 +172,7 @@ export function TableCenter(): React.JSX.Element | null {
               color={displayColor}
               anchorX="center"
               anchorY="middle"
-              font={TABLE_CENTER_FONT_PATH}
+              font={tableCenterFont}
               renderOrder={2}
               onPointerOver={(e) => {
                 e.stopPropagation();
@@ -195,7 +198,7 @@ export function TableCenter(): React.JSX.Element | null {
               }
               anchorX="center"
               anchorY="middle"
-              font={TABLE_CENTER_FONT_PATH}
+              font={tableCenterFont}
               renderOrder={2}
             >
               {seatWindText}

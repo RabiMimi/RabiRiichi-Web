@@ -2,10 +2,14 @@
  * Display font stacks for the result screens.
  *
  * Two decorative faces are bundled (see the `@font-face` rules in index.html):
- *  - `GameFont`   — TamanegiKaishov7.ttf, used for Japanese/English display face.
+ *  - `GameFont`   — Yuji Syuku, a Japanese brush face (SIL OFL).
  *  - `GameFontZH` — Aa沈夜食堂, a Chinese display face.
  *
- * Every stack ends in a generic family so text renders while the (multi-MB) fonts are loading.
+ * Every stack ends in a generic family so text renders while the (multi-MB)
+ * fonts load. Ordering matters beyond taste: a glyph missing from the first
+ * face falls through to the next, but only if that face omits it entirely —
+ * a font that maps a codepoint to an empty glyph renders blank and defeats the
+ * fallback, which is why the subset in tools/subset-font.py must cover the UI.
  */
 
 /** Generic tail shared by all stacks, used while the webfont loads. */

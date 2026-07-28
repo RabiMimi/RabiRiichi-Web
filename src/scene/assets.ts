@@ -4,7 +4,21 @@ import type { IMenLikeMsg } from '../proto';
 export const TILE_MODEL_PATH = '/assets/tile.glb';
 export const TABLE_DIFFUSE_PATH = '/assets/table_diffuse.webp';
 export const ROBOTO_FONT_PATH = '/assets/roboto.ttf';
-export const TABLE_CENTER_FONT_PATH = '/assets/AaShenYeShiTang-2.ttf';
+
+/**
+ * Font for the 3D table centre, matching the language's display face.
+ *
+ * These are tiny per-language cuts holding only the glyphs TableCenter draws.
+ * Two things rule out reusing the CSS webfont: troika cannot read woff2, and it
+ * has no fallback, so whatever it loads must contain every glyph outright.
+ * Regenerate with `tools/subset-font.py table`.
+ */
+export function getTableCenterFontPath(language: string | undefined): string {
+  const base = language?.toLowerCase().split('-')[0];
+  return base === 'ja'
+    ? '/assets/YujiSyuku-TableCenter.ttf'
+    : '/assets/AaShenYeShiTang-TableCenter.ttf';
+}
 
 // Valid tile face strings
 export const VALID_TILE_STRINGS = [

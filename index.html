@@ -5,18 +5,27 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
+      /*
+        Yuji Syuku, a brush face by calligrapher Yuji Kataoka, under the SIL
+        Open Font License (see YujiSyuku-OFL.txt). Subset to JIS levels 1 and 2
+        plus the strings the UI draws; regenerate with tools/subset-font.py
+        after adding Japanese text.
+      */
       @font-face {
         font-family: 'GameFont';
-        src: url('/assets/TamanegiKaishov7.ttf') format('opentype');
+        src: url('/assets/YujiSyuku-Regular.subset.woff2') format('woff2');
         font-weight: normal;
         font-style: normal;
+        font-display: swap;
       }
 
+      /* Aa沈夜食堂, subset to the Chinese and English UI strings. */
       @font-face {
         font-family: 'GameFontZH';
-        src: url('/assets/AaShenYeShiTang-2.ttf') format('truetype');
+        src: url('/assets/AaShenYeShiTang.subset.woff2') format('woff2');
         font-weight: normal;
         font-style: normal;
+        font-display: swap;
       }
     </style>
     <title>RabiRiichi</title>

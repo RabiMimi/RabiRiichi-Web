@@ -66,10 +66,10 @@ export default defineConfig({
         ],
         // Max file size for precaching (default is 2MB, our tiles models/assets can be larger)
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-        // Skip the large fonts during Workbox's size-limited glob scan. They
-        // are still precached through `includeAssets` above, which is not
-        // constrained by `maximumFileSizeToCacheInBytes`.
-        globIgnores: ['**/AaShenYeShiTang-2.ttf', '**/TamanegiKaishov7.ttf'],
+        // The Japanese face is only needed by Japanese players, so keep it out
+        // of every install's precache; it is still fetched on demand. The
+        // Chinese subset and the tiny table-centre cuts ship eagerly.
+        globIgnores: ['**/YujiSyuku-Regular.subset.woff2'],
       },
     }),
   ],
