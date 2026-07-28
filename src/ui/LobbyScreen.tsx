@@ -8,6 +8,7 @@ import { RoomConfigPanel } from './RoomConfigPanel';
 import { ReplayModal } from './ReplayModal';
 import { Button } from './Button';
 import { SCREEN, FORM } from './styles';
+import { Select } from './Select';
 
 export function LobbyScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
@@ -84,15 +85,16 @@ export function LobbyScreen(): React.JSX.Element {
           </div>
 
           <div className="flex flex-col items-end gap-1">
-            <select
+            <Select
+              selectSize="compact"
+              className="cursor-pointer"
               value={i18n.language}
               onChange={(e) => void i18n.changeLanguage(e.target.value)}
-              className="px-2 py-1 rounded bg-[#1a1a1a] text-white border border-[#555] cursor-pointer text-[0.9rem]"
             >
               <option value="zhs">简体中文</option>
               <option value="en">English</option>
               <option value="ja">日本語</option>
-            </select>
+            </Select>
             {currentUser && (
               <span className="text-[0.8rem] text-white text-right">
                 {t('lobby.welcome', {

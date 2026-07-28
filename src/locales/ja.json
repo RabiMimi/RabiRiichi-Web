@@ -441,11 +441,12 @@
       "promptTemplate": {
         "label": "ペルソナ",
         "cuteJk": "かわいい",
-        "mesugaki": "メスガキ"
+        "mesugaki": "メスガキ",
+        "bunnyPet": "ペットうさぎ"
       },
       "baseUrl": "Base URL（任意）",
-      "lessOptions": "▲ 詳細設定を閉じる",
-      "advancedOptions": "▼ 詳細設定 (Base URL)",
+      "lessOptions": "詳細設定を閉じる",
+      "advancedOptions": "詳細設定 (Base URL)",
       "forgetTokens": "保存されたトークンを削除",
       "cancel": "キャンセル",
       "add": "AI を追加",

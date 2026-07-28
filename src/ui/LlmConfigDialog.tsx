@@ -9,7 +9,7 @@ import {
 } from '../lib/llmStorage';
 import { formatError } from '../lib/errors';
 import { Button } from './Button';
-import { Select } from './Select';
+import { ChevronDown, Select } from './Select';
 import { FORM, MODAL } from './styles';
 import { GEMINI_MODELS, DEFAULT_GEMINI_MODEL } from '../config/constants';
 
@@ -293,6 +293,9 @@ export function LlmConfigDialog({
                 <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_MESUGAKI}>
                   {t('ai.llmConfig.promptTemplate.mesugaki')}
                 </option>
+                <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_BUNNY_PET}>
+                  {t('ai.llmConfig.promptTemplate.bunnyPet')}
+                </option>
               </Select>
             </div>
           </div>
@@ -301,9 +304,15 @@ export function LlmConfigDialog({
           <div className="flex flex-col gap-1">
             <button
               type="button"
-              className="text-xs text-[#82aaf0] hover:underline bg-transparent border-none p-0 w-fit cursor-pointer text-left"
+              className="text-xs text-[#82aaf0] hover:underline bg-transparent border-none p-0 w-fit cursor-pointer text-left flex items-center gap-1"
               onClick={() => setShowAdvanced(!showAdvanced)}
+              aria-expanded={showAdvanced}
             >
+              <ChevronDown
+                className={`h-3 w-3 transition-transform duration-200 ${
+                  showAdvanced ? 'rotate-180' : ''
+                }`}
+              />
               {showAdvanced
                 ? t('ai.llmConfig.lessOptions')
                 : t('ai.llmConfig.advancedOptions')}

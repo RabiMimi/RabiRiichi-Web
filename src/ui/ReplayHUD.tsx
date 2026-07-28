@@ -29,6 +29,7 @@ import { Tooltip } from './Tooltip';
 import { SettingsButton } from './SettingsButton';
 import { IconButton } from './IconButton';
 import { useHoverOrTouchHold } from './useHoverOrTouchHold';
+import { ChevronDown, Select } from './Select';
 
 export function ReplayHUD(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -104,13 +105,14 @@ export function ReplayHUD(): React.JSX.Element | null {
           >
             {t('hud.speed')}
           </label>
-          <select
+          <Select
+            selectSize="compact"
+            className="cursor-pointer"
             id="speed-select"
             value={animationSpeed}
             onChange={(e) =>
               rabiriichi.setAnimationSpeed(Number(e.target.value))
             }
-            className="bg-[#222] text-white border border-[#555] rounded py-0.5 px-1.5 text-[0.9rem] cursor-pointer outline-none"
           >
             <option value="0.25">x0.25</option>
             <option value="0.5">x0.5</option>
@@ -118,7 +120,7 @@ export function ReplayHUD(): React.JSX.Element | null {
             <option value="2">x2.0</option>
             <option value="4">x4.0</option>
             <option value="8">x8.0</option>
-          </select>
+          </Select>
         </div>
 
         <div className="flex flex-row gap-2">
@@ -268,13 +270,12 @@ export function ReplayHUD(): React.JSX.Element | null {
           className="absolute top-[-26px] left-1/2 -translate-x-1/2 bg-[#141414]/90 border-2 border-[#ff7a99] border-b-0 rounded-t-lg py-[2px] px-5 text-[0.8rem] cursor-pointer z-[96] transition-all duration-200 select-none text-[#ff7a99]"
           onClick={() => setIsCollapsed((prev) => !prev)}
         >
-          <span
-            className={`inline-block transition-transform duration-300 ${
-              isCollapsed ? 'rotate-0' : 'rotate-180'
+          {/* Points up to pull the bar back out, down to tuck it away. */}
+          <ChevronDown
+            className={`h-3.5 w-3.5 transition-transform duration-300 ${
+              isCollapsed ? 'rotate-180' : 'rotate-0'
             }`}
-          >
-            ▲
-          </span>
+          />
         </div>
 
         <div className="w-full flex flex-col items-center gap-1 mb-1">

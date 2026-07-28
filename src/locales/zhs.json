@@ -441,11 +441,12 @@
       "promptTemplate": {
         "label": "角色",
         "cuteJk": "可爱",
-        "mesugaki": "雌小鬼"
+        "mesugaki": "雌小鬼",
+        "bunnyPet": "宠物兔娘"
       },
       "baseUrl": "Base URL（可选）",
-      "lessOptions": "▲ 折叠高级选项",
-      "advancedOptions": "▼ 高级选项 (Base URL)",
+      "lessOptions": "折叠高级选项",
+      "advancedOptions": "高级选项 (Base URL)",
       "forgetTokens": "清除保存的 Token",
       "cancel": "取消",
       "add": "添加 AI",

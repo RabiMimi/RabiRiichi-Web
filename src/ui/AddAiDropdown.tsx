@@ -5,6 +5,7 @@ import { AiType, type ILlmAiConfig } from '../proto';
 import { getAiTypeName } from '../domain/model';
 import { Button } from './Button';
 import { LlmConfigDialog } from './LlmConfigDialog';
+import { ChevronDown } from './Select';
 
 interface AddAiDropdownProps {
   disabled: boolean;
@@ -102,7 +103,8 @@ export function AddAiDropdown({
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={disabled}
       >
-        {t('room.addAi')} <span className="text-[0.6rem] opacity-70">▼</span>
+        {t('room.addAi')}
+        <ChevronDown className="h-3 w-3 opacity-70" />
       </Button>
       {isOpen &&
         position &&

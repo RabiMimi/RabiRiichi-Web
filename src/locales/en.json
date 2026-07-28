@@ -441,11 +441,12 @@
       "promptTemplate": {
         "label": "Persona",
         "cuteJk": "Cute",
-        "mesugaki": "Mesugaki"
+        "mesugaki": "Mesugaki",
+        "bunnyPet": "Bunny Pet"
       },
       "baseUrl": "Base URL (optional)",
-      "lessOptions": "▲ Less options",
-      "advancedOptions": "▼ Advanced options (Base URL)",
+      "lessOptions": "Less options",
+      "advancedOptions": "Advanced options (Base URL)",
       "forgetTokens": "Forget saved tokens",
       "cancel": "Cancel",
       "add": "Add AI",

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { PolicyCheckboxGroup } from './PolicyCheckboxGroup';
 import { Toggle } from './Toggle';
+import { Select } from './Select';
 import { scoringToggles } from './scoringToggles';
 import {
   RENCHAN_POLICIES,
@@ -166,17 +167,18 @@ export function AdvancedSettingsTab({
         <h4 className="m-0 mb-1 text-[0.8rem] text-[#ff7a99] font-bold">
           {t('advanced.pointsDeductionPolicy')}
         </h4>
-        <select
+        <Select
+          selectSize="compact"
+          className="w-full cursor-pointer"
           value={pointsDeductionPolicy}
           onChange={(e) => setPointsDeductionPolicy(Number(e.target.value))}
           disabled={isLoading}
-          className="w-full rounded border border-[#333] bg-[#111] px-2 py-1.5 text-[0.75rem] text-[#ccc] focus:outline-none focus:border-[#ff7a99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer h-7"
         >
           <option value={0}>{t('advanced.deduction.alwaysAllow')}</option>
           <option value={1}>{t('advanced.deduction.sufficientPoints')}</option>
           <option value={2}>{t('advanced.deduction.validPoints')}</option>
           <option value={3}>{t('advanced.deduction.alwaysBlock')}</option>
-        </select>
+        </Select>
       </div>
     </div>
   );
