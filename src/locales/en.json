@@ -767,6 +767,10 @@
     "share": "Share",
     "copied": "Link copied to clipboard!"
   },
+  "update": {
+    "available": "A new version is available",
+    "reload": "Reload"
+  },
   "assets": {
     "ui": {
       "chii": "/assets/ui/en/chii.png",

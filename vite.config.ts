@@ -80,8 +80,11 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'inline',
+      // The app asks before taking an update (see src/ui/UpdatePrompt.tsx), so
+      // it registers the worker itself via `virtual:pwa-register/react` rather
+      // than having a bare registration injected.
+      registerType: 'prompt',
+      injectRegister: null,
       manifest: {
         name: 'RabiRiichi',
         short_name: 'RabiRiichi',
@@ -130,18 +133,15 @@ export default defineConfig({
         ],
         // Max file size for precaching (default is 2MB, our tiles models/assets can be larger)
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
-        // Both of these must be set by hand. The plugin only derives them from
-        // `registerType: 'autoUpdate'` when `injectRegister` is 'auto'/unset,
-        // and ours is 'inline'.
-        //
-        // clientsClaim: without it the very first visit stays uncontrolled, so
-        // that session pays the full precache download and reads none of it.
-        // skipWaiting: without it a new worker parks in `waiting` until every
-        // tab for the origin closes — reloading does not release it — and since
-        // index.html is itself served from the old precache, a long-lived
-        // fullscreen install stays pinned to a stale build indefinitely.
+        // clientsClaim must be set by hand: the plugin only derives it from
+        // `registerType: 'autoUpdate'`. Without it the very first visit stays
+        // uncontrolled, so that session pays the whole precache download and
+        // reads none of it.
         clientsClaim: true,
-        skipWaiting: true,
+        // Deliberately NOT skipWaiting. A new worker activating under a running
+        // client swaps the precache mid-hand; instead the app offers the update
+        // between games and posts SKIP_WAITING when the player accepts.
+        skipWaiting: false,
         // The Japanese face is only needed by Japanese players, so keep it out
         // of every install's precache; it is still fetched on demand. The
         // Chinese subset and the tiny table-centre cuts ship eagerly.

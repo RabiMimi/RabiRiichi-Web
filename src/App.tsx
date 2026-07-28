@@ -31,6 +31,7 @@ import { IconButton } from './ui/IconButton';
 import { SettingsButton } from './ui/SettingsButton';
 import { SettingsModal } from './ui/SettingsModal';
 import { preloadTimerDigits } from './ui/timerDigits';
+import { UpdatePrompt } from './ui/UpdatePrompt';
 import {
   playerOverlayPortalTarget,
   stickerPortalTarget,
@@ -373,6 +374,7 @@ function App(): React.JSX.Element {
         ref={stickerPortalTarget as React.RefObject<HTMLDivElement>}
         className="absolute inset-0 pointer-events-none z-[200]"
       />
+      <UpdatePrompt isReplay={isReplay} isInGame={Boolean(room?.info)} />
     </div>
   );
 }

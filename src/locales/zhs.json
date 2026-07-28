@@ -767,6 +767,10 @@
     "share": "分享",
     "copied": "链接已复制到剪贴板！"
   },
+  "update": {
+    "available": "有新版本可用",
+    "reload": "重新加载"
+  },
   "assets": {
     "ui": {
       "chii": "/assets/ui/zhs/chii.png",

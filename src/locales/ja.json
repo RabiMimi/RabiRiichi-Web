@@ -767,6 +767,10 @@
     "share": "共有",
     "copied": "リンクをクリップボードにコピーしました！"
   },
+  "update": {
+    "available": "新しいバージョンがあります",
+    "reload": "再読み込み"
+  },
   "assets": {
     "ui": {
       "chii": "/assets/ui/ja/chii.png",
