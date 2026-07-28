@@ -2,7 +2,60 @@ import { execSync } from 'node:child_process';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import type { Plugin as VitePlugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import {
+  assertNoPrecacheConflicts,
+  extractPrecacheEntries,
+} from './src/build/precacheGuard';
+
+/**
+ * Refuses to ship a service worker whose precache list workbox would reject.
+ *
+ * Reads the emitted worker rather than hooking `manifestTransforms`, which runs
+ * before workbox appends `additionalManifestEntries` and so cannot see the
+ * entries that broke this last time.
+ */
+function precacheManifestGuard(): VitePlugin {
+  return {
+    name: 'rabiriichi:precache-manifest-guard',
+    apply: 'build',
+    enforce: 'post',
+    // `closeBundle` is a parallel hook and vite-plugin-pwa writes the worker
+    // from its own, so without sequential+post this reads whatever sw.js the
+    // previous build left behind — it passes and proves nothing.
+    closeBundle: {
+      sequential: true,
+      order: 'post',
+      handler() {
+        const swPath = resolve(__dirname, 'dist/sw.js');
+        let source: string;
+        try {
+          source = readFileSync(swPath, 'utf8');
+        } catch {
+          // Deliberately fatal. A guard that quietly skips when it cannot find
+          // its target is worse than none: it reports success forever.
+          throw new Error(
+            `Precache guard found no service worker at ${swPath}. If this ` +
+              `build should produce one, the guard is running too early.`,
+          );
+        }
+
+        const entries = extractPrecacheEntries(source);
+        if (entries.length === 0) {
+          throw new Error(
+            `Could not read a precache list out of ${swPath}. The guard ` +
+              `cannot vouch for this build; check whether the generated ` +
+              `worker's shape changed.`,
+          );
+        }
+        assertNoPrecacheConflicts(entries);
+      },
+    },
+  };
+}
 
 // Resolve the client's git commit hash at build time. Cloudflare Pages exposes
 // it as CF_PAGES_COMMIT_SHA; fall back to the local git checkout for dev builds.
@@ -102,5 +155,6 @@ export default defineConfig({
         dontCacheBustURLsMatching: /-[A-Za-z0-9_-]{8}\.[A-Za-z0-9]+$/,
       },
     }),
+    precacheManifestGuard(),
   ],
 });
