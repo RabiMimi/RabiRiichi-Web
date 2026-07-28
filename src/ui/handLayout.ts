@@ -55,6 +55,16 @@ const PENDING_TILE_GAP = 12;
 /** Upward drag needed to discard, as a multiple of the tile height. */
 const DRAG_THRESHOLD_RATIO = 1.5;
 
+/**
+ * How far a tile rises on hover, as a fraction of its height.
+ *
+ * Proportional rather than fixed, so the gesture reads the same once the tile
+ * itself scales with the viewport. The drawn tile rises less: it already sits
+ * apart from the sorted hand and does not need as much to stand out.
+ */
+const HOVER_LIFT_RATIO = 0.25;
+const PENDING_HOVER_LIFT_RATIO = 0.15;
+
 export interface HandLayout {
   /** Width of a single tile. */
   tileWidth: number;
@@ -64,6 +74,12 @@ export interface HandLayout {
   bevelHeight: number;
   /** Total row height (face + bevel). */
   rowHeight: number;
+  /** How far a free tile rises on hover. */
+  hoverLift: number;
+  /** How far the freshly drawn tile rises on hover. */
+  pendingHoverLift: number;
+  /** Horizontal gap between adjacent free tiles. */
+  tileGap: number;
   /** Upward drag distance (px) that commits a discard. */
   dragThreshold: number;
   /** Left offset of the first free tile, which centres the whole hand. */
@@ -115,8 +131,16 @@ export function computeHandLayout(
     tileHeight,
     bevelHeight,
     rowHeight: tileHeight + bevelHeight,
+    hoverLift: Math.round(tileHeight * HOVER_LIFT_RATIO),
+    pendingHoverLift: Math.round(tileHeight * PENDING_HOVER_LIFT_RATIO),
+    tileGap: TILE_GAP,
     dragThreshold: Math.round(tileHeight * DRAG_THRESHOLD_RATIO),
     leftOffset,
     pendingLeft: leftOffset + freeTilesWidth + PENDING_TILE_GAP,
   };
+}
+
+/** Left edge of the i-th free tile, for anything anchored to a specific slot. */
+export function getHandTileLeft(layout: HandLayout, index: number): number {
+  return layout.leftOffset + index * (layout.tileWidth + layout.tileGap);
 }

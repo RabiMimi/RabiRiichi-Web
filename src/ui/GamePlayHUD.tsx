@@ -51,10 +51,12 @@ export function GameInfoPanel(): React.JSX.Element | null {
   const roundNumber = dealer + 1;
 
   return (
-    <div
-      tabIndex={0}
-      className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-2 px-3 flex flex-col gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)] min-w-[180px] opacity-65 hover:opacity-100 focus-within:opacity-100 focus:outline-none transition-opacity duration-300"
-    >
+    // Always fully opaque. This is reference information the player reads at a
+    // glance, so making them hover it to see it clearly only got in the way --
+    // and every sibling panel in the same column is already undimmed. The tab
+    // stop went with the dimming: it existed solely so focus-within could
+    // reveal the panel, and the panel is not interactive.
+    <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-2 px-3 flex flex-col gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)] min-w-[180px]">
       <div className="flex justify-center items-center gap-4 border-b border-[#333] pb-[6px] text-sm font-bold">
         <span className="text-[#ccc] flex items-center">
           {windTranslated}

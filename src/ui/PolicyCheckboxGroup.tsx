@@ -1,3 +1,5 @@
+import { Toggle } from './Toggle';
+
 export interface PolicyOption {
   value: number;
   labelKey: string;
@@ -35,19 +37,15 @@ export function PolicyCheckboxGroup({
       </h4>
       <div className="flex flex-col gap-1">
         {options.map((p) => (
-          <label
+          <Toggle
             key={p.value}
-            className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150"
-          >
-            <input
-              type="checkbox"
-              checked={(value & p.value) !== 0}
-              onChange={() => toggleFlag(p.value)}
-              disabled={disabled}
-              className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
-            />
-            {t(p.labelKey)}
-          </label>
+            appearance="inline"
+            className="text-[0.72rem]"
+            checked={(value & p.value) !== 0}
+            onChange={() => toggleFlag(p.value)}
+            disabled={disabled}
+            label={t(p.labelKey)}
+          />
         ))}
       </div>
     </div>

@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { PolicyCheckboxGroup } from './PolicyCheckboxGroup';
+import { Toggle } from './Toggle';
+import { scoringToggles } from './scoringToggles';
 import {
   RENCHAN_POLICIES,
   END_GAME_POLICIES,
@@ -50,94 +52,17 @@ function ScoringOptionGroup({
         {t('advanced.scoringOption')}
       </h4>
       <div className="flex flex-col gap-1">
-        {/* 切上满贯 */}
-        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
-          <input
-            type="checkbox"
-            checked={(scoringOption & 1) !== 0}
-            onChange={() => setScoringOption(scoringOption ^ 1)}
-            disabled={isLoading}
-            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
+        {scoringToggles(scoringOption, isLoading).map((opt) => (
+          <Toggle
+            key={opt.key}
+            appearance="inline"
+            className="text-[0.72rem]"
+            checked={opt.checked}
+            disabled={opt.disabled}
+            label={t(opt.labelKey)}
+            onChange={() => setScoringOption(opt.next)}
           />
-          {t('advanced.scoring.kiriageMangan')}
-        </label>
-
-        {/* 青天井 (Virtual checkbox, checked when Yakuman bit 2 is 0) */}
-        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
-          <input
-            type="checkbox"
-            checked={(scoringOption & 2) === 0}
-            onChange={(e) => {
-              if (e.target.checked) {
-                // Enable Aotenjou: disables Yakuman and related
-                setScoringOption(scoringOption & ~2 & ~4 & ~8);
-              } else {
-                // Disable Aotenjou: forces Yakuman enabled
-                setScoringOption(scoringOption | 2);
-              }
-            }}
-            disabled={isLoading}
-            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
-          />
-          {t('advanced.scoring.aotenjou')}
-        </label>
-
-        {/* 役满 (Bit 2) */}
-        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
-          <input
-            type="checkbox"
-            checked={(scoringOption & 2) !== 0}
-            onChange={(e) => {
-              if (e.target.checked) {
-                setScoringOption(scoringOption | 2);
-              } else {
-                // Disable Yakuman: clears Multiple & Kazoe, auto-enables Aotenjou
-                setScoringOption(scoringOption & ~2 & ~4 & ~8);
-              }
-            }}
-            disabled={isLoading}
-            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
-          />
-          {t('advanced.scoring.yakuman')}
-        </label>
-
-        {/* 多倍役满 (Bit 4) */}
-        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
-          <input
-            type="checkbox"
-            checked={(scoringOption & 4) !== 0}
-            onChange={(e) => {
-              if (e.target.checked) {
-                // Enable Multiple: also forces Yakuman (2) enabled
-                setScoringOption(scoringOption | 4 | 2);
-              } else {
-                setScoringOption(scoringOption & ~4);
-              }
-            }}
-            disabled={isLoading || (scoringOption & 2) === 0}
-            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
-          />
-          {t('advanced.scoring.multipleYakuman')}
-        </label>
-
-        {/* 累计役满 (Bit 8) */}
-        <label className="flex items-center gap-1.5 text-[0.72rem] cursor-pointer leading-[1.2] text-[#ccc] hover:text-white transition-colors duration-150">
-          <input
-            type="checkbox"
-            checked={(scoringOption & 8) !== 0}
-            onChange={(e) => {
-              if (e.target.checked) {
-                // Enable Kazoe: also forces Yakuman (2) enabled
-                setScoringOption(scoringOption | 8 | 2);
-              } else {
-                setScoringOption(scoringOption & ~8);
-              }
-            }}
-            disabled={isLoading || (scoringOption & 2) === 0}
-            className="m-0 scale-[0.85] origin-left-center shrink-0 cursor-pointer"
-          />
-          {t('advanced.scoring.kazoeYakuman')}
-        </label>
+        ))}
       </div>
     </div>
   );

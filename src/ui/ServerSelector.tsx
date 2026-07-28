@@ -7,6 +7,7 @@ import {
   type SavedServer,
 } from '../domain/constants';
 import { Button } from './Button';
+import { Select } from './Select';
 import { FORM } from './styles';
 
 interface ServerSelectorProps {
@@ -129,14 +130,14 @@ export function ServerSelector({
 
   return (
     <>
-      <select
+      <Select
         id="server-select"
         value={serverSelection}
         onChange={(e) => {
           handleSelectionChange(e.target.value);
         }}
         disabled={isConnecting}
-        className={`${FORM.input} w-full mb-0`}
+        className="w-full mb-0"
       >
         {DEFAULT_SERVERS.map((server) => (
           <option key={server.id} value={server.id}>
@@ -149,7 +150,7 @@ export function ServerSelector({
           </option>
         ))}
         <option value="custom">{t('connect.customServer')}</option>
-      </select>
+      </Select>
 
       {/* Read-only URL for default servers */}
       {selectedDefaultServer && (

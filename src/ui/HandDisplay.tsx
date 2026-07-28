@@ -12,12 +12,19 @@ import {
   useIsRiichiSelectMode,
   useCallHighlightTileIds,
   useDoraIndicators,
+  useHoveredTileTraceId,
+  useSelectedTileTraceId,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile, checkIsDora } from '../domain/tile';
 import { UiTile } from './UiTile';
 import { SOUND_EFFECTS } from '../lib/soundEffects';
-import { computeHandLayout, type HandLayout } from './handLayout';
+import {
+  computeHandLayout,
+  getHandTileLeft,
+  type HandLayout,
+} from './handLayout';
+import { TileTooltip } from './TileTooltip';
 import { useDragToDiscard, type DragToDiscard } from './useDragToDiscard';
 import { isTileDimmed } from './handTileState';
 import type { ActionOption } from '../domain/inquiry';
@@ -66,8 +73,8 @@ interface HandTileProps {
   onHover: (isEntering: boolean) => void;
   drag: ReturnType<DragToDiscard['tileProps']>;
   dragStyle: React.CSSProperties;
-  /** Lift distance on hover; the drawn tile sits slightly lower. */
-  hoverLift: string;
+  /** Lift distance (px) on hover; the drawn tile rises less. */
+  hoverLift: number;
 }
 
 function HandTile({
@@ -84,47 +91,69 @@ function HandTile({
   dragStyle,
   hoverLift,
 }: HandTileProps): React.JSX.Element {
-  const { tileWidth, tileHeight, bevelHeight } = layout;
+  const { tileWidth, tileHeight, bevelHeight, rowHeight } = layout;
   const face = tile ? Tile.fromByte(tile).toString() : 'back';
+  const [isHovered, setIsHovered] = useState(false);
+
+  const setHover = (entering: boolean): void => {
+    setIsHovered(entering);
+    onHover(entering);
+  };
 
   return (
+    // The button is the hit area and must never move. Lifting it instead --
+    // which is what `hover:-translate-y-*` on this element used to do -- slides
+    // it out from under a cursor near the tile's lower edge, which fires
+    // mouseleave, drops the tile back, and immediately re-enters: a flicker
+    // loop. The box is therefore tall enough to hold both the resting and the
+    // raised tile, so the vacated strip along the bottom keeps the hover alive.
     <button
       type="button"
-      className={`relative bg-transparent border-none p-0 ${hoverLift} ${
+      className={`relative bg-transparent border-none p-0 flex items-end ${
         isClickable ? 'cursor-pointer' : 'cursor-default'
       }`}
       style={{
         width: tileWidth,
-        filter: 'drop-shadow(0 0 2px #000)',
+        height: rowHeight + hoverLift,
         ...style,
-        ...dragStyle,
       }}
       onClick={onClick}
       onDragStart={(e) => e.preventDefault()}
-      onMouseEnter={() => onHover(true)}
-      onMouseLeave={() => onHover(false)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       {...drag}
     >
       <div
-        className={`relative overflow-hidden rounded-lg ${
-          isDora ? 'dora-sheen' : ''
-        } ${isDimmed ? 'brightness-50' : ''}`}
+        className="relative w-full"
+        style={{
+          filter: 'drop-shadow(0 0 2px #000)',
+          transform: isHovered ? `translateY(-${hoverLift}px)` : undefined,
+          transition: 'transform 150ms ease-out',
+          // A drag positions the tile directly and must override the lift.
+          ...dragStyle,
+        }}
       >
-        <img
-          src="/assets/hand_tiles/bevel.jpg"
-          alt=""
-          draggable={false}
-          style={{ width: tileWidth, height: bevelHeight }}
-          className="object-cover brightness-90 block"
-        />
-        <div>
-          <UiTile
-            tile={face}
-            size="custom"
-            isHighlighted={isHighlighted}
-            className="bg-[#f7f4eb] block"
-            style={{ width: tileWidth, height: tileHeight }}
+        <div
+          className={`relative overflow-hidden rounded-lg ${
+            isDora ? 'dora-sheen' : ''
+          } ${isDimmed ? 'brightness-50' : ''}`}
+        >
+          <img
+            src="/assets/hand_tiles/bevel.jpg"
+            alt=""
+            draggable={false}
+            style={{ width: tileWidth, height: bevelHeight }}
+            className="object-cover brightness-90 block"
           />
+          <div>
+            <UiTile
+              tile={face}
+              size="custom"
+              isHighlighted={isHighlighted}
+              className="bg-[#f7f4eb] block"
+              style={{ width: tileWidth, height: tileHeight }}
+            />
+          </div>
         </div>
       </div>
     </button>
@@ -143,6 +172,8 @@ export function HandDisplay(): React.JSX.Element | null {
   const viewportSize = useViewportSize();
   const onHoverTile = useHoverSound();
   const doraIndicators = useDoraIndicators();
+  const hoveredTraceId = useHoveredTileTraceId();
+  const selectedTraceId = useSelectedTileTraceId();
 
   const isDoraTile = useCallback(
     (tile: number | null | undefined): boolean => {
@@ -210,6 +241,36 @@ export function HandDisplay(): React.JSX.Element | null {
   const { freeTiles, pendingTile } = hand;
   const isInteractive = playableIds.size > 0;
 
+  // Mirrors Tile3D: the hovered tile wins, falling back to the selected one,
+  // and a tile with no readable face has no identity to describe.
+  const describedTraceId = hoveredTraceId ?? selectedTraceId;
+  /** Where to anchor the tooltip: the described tile's centre, or null. */
+  const tooltipAnchor = ((): { left: number; bottom: number } | null => {
+    if (describedTraceId == null || describedTraceId <= 0) return null;
+    // Hovering raises the tile, so raise its anchor to match; a tile shown
+    // because it is merely selected has not moved.
+    const lift = describedTraceId === hoveredTraceId ? layout.hoverLift : 0;
+    const centre = layout.rowHeight / 2;
+
+    const idx = freeTiles.findIndex((t) => t.traceId === describedTraceId);
+    if (idx >= 0) {
+      if (!freeTiles[idx]?.tile) return null;
+      return {
+        left: getHandTileLeft(layout, idx) + layout.tileWidth / 2,
+        bottom: centre + lift,
+      };
+    }
+    if (pendingTile?.traceId === describedTraceId && pendingTile.tile) {
+      const pendingLift =
+        describedTraceId === hoveredTraceId ? layout.pendingHoverLift : 0;
+      return {
+        left: layout.pendingLeft + layout.tileWidth / 2,
+        bottom: centre + pendingLift,
+      };
+    }
+    return null;
+  })();
+
   const dimmed = (traceId: number | null | undefined) =>
     isTileDimmed({ traceId, callHighlightIds, playableIds });
 
@@ -231,8 +292,23 @@ export function HandDisplay(): React.JSX.Element | null {
       style={{ height: layout.rowHeight }}
     >
       <div className="relative h-full">
+        {/*
+          One tooltip for the whole hand, anchored to the hovered tile's centre
+          the way drei's <Html center> anchors the 3D one, so both read
+          identically. Keeping it out of the tile buttons means it is not
+          clipped by their stacking contexts and does not bob with the lift.
+        */}
+        {tooltipAnchor && (
+          <div
+            className="absolute z-[60] pointer-events-none"
+            style={{ left: tooltipAnchor.left, bottom: tooltipAnchor.bottom }}
+          >
+            <TileTooltip />
+          </div>
+        )}
+
         <div
-          className="flex items-end gap-0.5 absolute"
+          className="flex items-end gap-0.5 absolute bottom-0"
           style={{ left: layout.leftOffset }}
         >
           {freeTiles.map((tileMsg, idx) => {
@@ -248,7 +324,7 @@ export function HandDisplay(): React.JSX.Element | null {
                 isDimmed={dimmed(traceId)}
                 isClickable={isPlayable}
                 isDora={isDoraTile(tileMsg.tile)}
-                hoverLift="hover:-translate-y-5"
+                hoverLift={layout.hoverLift}
                 onClick={() => onTileClick(traceId)}
                 onHover={(entering) =>
                   onHoverTile(entering ? (traceId ?? null) : null)
@@ -275,7 +351,7 @@ export function HandDisplay(): React.JSX.Element | null {
                 isDimmed={dimmed(pendingTraceId)}
                 isClickable={isPlayable}
                 isDora={isDoraTile(pendingTile.tile)}
-                hoverLift="hover:-translate-y-3"
+                hoverLift={layout.pendingHoverLift}
                 style={{
                   position: 'absolute',
                   bottom: 0,

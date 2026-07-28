@@ -9,6 +9,7 @@ import {
 } from '../lib/llmStorage';
 import { formatError } from '../lib/errors';
 import { Button } from './Button';
+import { Select } from './Select';
 import { FORM, MODAL } from './styles';
 import { GEMINI_MODELS, DEFAULT_GEMINI_MODEL } from '../config/constants';
 
@@ -175,8 +176,7 @@ export function LlmConfigDialog({
             {/* Provider */}
             <div className={FORM.group}>
               <label className={FORM.label}>{t('ai.llmConfig.provider')}</label>
-              <select
-                className={FORM.input}
+              <Select
                 value={provider}
                 onChange={(e) => handleProviderChange(Number(e.target.value))}
                 disabled={isSubmitting}
@@ -187,15 +187,14 @@ export function LlmConfigDialog({
                 <option value={LlmProvider.LLM_PROVIDER_OPENAI}>
                   {t('ai.provider.openai')}
                 </option>
-              </select>
+              </Select>
             </div>
 
             {/* Model */}
             <div className={FORM.group}>
               <label className={FORM.label}>{t('ai.llmConfig.model')}</label>
               {provider === LlmProvider.LLM_PROVIDER_GEMINI ? (
-                <select
-                  className={FORM.input}
+                <Select
                   value={modelName}
                   onChange={(e) => setModelName(e.target.value)}
                   disabled={isSubmitting}
@@ -205,7 +204,7 @@ export function LlmConfigDialog({
                       {m}
                     </option>
                   ))}
-                </select>
+                </Select>
               ) : (
                 <input
                   type="text"
@@ -267,8 +266,7 @@ export function LlmConfigDialog({
             {/* Language */}
             <div className={FORM.group}>
               <label className={FORM.label}>{t('ai.llmConfig.language')}</label>
-              <select
-                className={FORM.input}
+              <Select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
                 disabled={isSubmitting}
@@ -276,7 +274,7 @@ export function LlmConfigDialog({
                 <option value="zhs">{t('ai.llmConfig.langZhs')}</option>
                 <option value="en">{t('ai.llmConfig.langEn')}</option>
                 <option value="ja">{t('ai.llmConfig.langJa')}</option>
-              </select>
+              </Select>
             </div>
 
             {/* Prompt template (Persona) */}
@@ -284,8 +282,7 @@ export function LlmConfigDialog({
               <label className={FORM.label}>
                 {t('ai.llmConfig.promptTemplate.label')}
               </label>
-              <select
-                className={FORM.input}
+              <Select
                 value={promptTemplate}
                 onChange={(e) => setPromptTemplate(Number(e.target.value))}
                 disabled={isSubmitting}
@@ -296,7 +293,7 @@ export function LlmConfigDialog({
                 <option value={LlmPromptTemplate.LLM_PROMPT_TEMPLATE_MESUGAKI}>
                   {t('ai.llmConfig.promptTemplate.mesugaki')}
                 </option>
-              </select>
+              </Select>
             </div>
           </div>
 
