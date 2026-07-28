@@ -152,6 +152,23 @@ export const TILE_LAYOUT = {
 } as const;
 
 /**
+ * X offset of the i-th free hand tile, centred on the seat.
+ *
+ * Shared so the rendered hand and the pose bridge that stands in for the local
+ * one cannot drift apart.
+ */
+export function getHandTileX(index: number, tileCount: number): number {
+  return (index - (tileCount - 1) / 2) * TILE_LAYOUT.handSpacing;
+}
+
+/** X offset of the freshly drawn tile, held apart from the sorted hand. */
+export function getPendingTileX(tileCount: number): number {
+  return (
+    ((tileCount - 1) / 2 + 1) * TILE_LAYOUT.handSpacing + TILE_LAYOUT.pendingGap
+  );
+}
+
+/**
  * Calculates the left-most coordinate boundary of a player's called meld groups.
  */
 export function getMeldsLeftEdge(called: IMenLikeMsg[], seat: number): number {

@@ -9,6 +9,7 @@ import {
   shouldRevealHand,
 } from '../domain/model';
 import { Hand3D } from './Hand3D';
+import { LocalHandPose } from './LocalHandPose';
 import { River3D } from './River3D';
 import { Melds3D } from './Melds3D';
 import { NukiDora3D } from './NukiDora3D';
@@ -174,8 +175,16 @@ export function PlayerArea3D({
       />
 
       {/* Hand (closed tiles + drawn tile) - pushed towards center */}
-      {!isLocal && (
-        <group position={[0, 0, -0.2]}>
+      <group position={[0, 0, -0.2]}>
+        {isLocal ? (
+          // The local hand is drawn in DOM by HandDisplay; this only publishes
+          // where its tiles stand, so discards still fly into the river.
+          <LocalHandPose
+            tiles={hand.freeTiles}
+            pendingTile={hand.pendingTile}
+            shiftX={shiftX}
+          />
+        ) : (
           <Hand3D
             tiles={hand.freeTiles}
             pendingTile={hand.pendingTile}
@@ -184,8 +193,8 @@ export function PlayerArea3D({
             winningTileTraceId={winningTileTraceId}
             shiftX={shiftX}
           />
-        </group>
-      )}
+        )}
+      </group>
 
       {/* Discard River */}
       <River3D

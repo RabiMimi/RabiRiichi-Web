@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { GameTable } from './scene/GameTable';
 import { initRabiRiichi, rabiriichi } from './net/client';
 import { preloadAllTileImages } from './scene/assets';
+import { getDefaultCameraPose } from './scene/cameraPose';
 import {
   useConnectionStatus,
   useSelf,
@@ -49,19 +50,16 @@ function CameraController({
   const isCameraLocked = useIsCameraLocked();
 
   useEffect(() => {
-    const aspect = size.width / size.height;
-    const k = Math.max(1.0, 1.77 / aspect);
-    const yCam = 3.0 * k;
-    const zCam = 2.42 + 0.98 * k;
-    const zTarget = 2.42 - 1.83 * k;
-    const defaultPos: [number, number, number] = [0, yCam, zCam];
+    // Shared with the DOM hand, which sizes its tiles by projecting the 3D tile
+    // through this same pose. Keep the maths in one place or the two drift.
+    const { position, target } = getDefaultCameraPose(size.width / size.height);
 
     if (isCameraLocked) {
-      camera.position.set(...defaultPos);
-      camera.lookAt(0, 0, zTarget);
+      camera.position.set(...position);
+      camera.lookAt(...target);
       camera.updateProjectionMatrix();
       if (controlsRef.current) {
-        controlsRef.current.target.set(0, 0, zTarget);
+        controlsRef.current.target.set(...target);
         controlsRef.current.update();
       }
     }

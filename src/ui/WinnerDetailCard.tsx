@@ -127,11 +127,13 @@ export function WinnerDetailCard({
         {isTenpai &&
           player.gameState?.awaitedTiles &&
           player.gameState.awaitedTiles.length > 0 && (
-            <div className="ml-auto flex items-center gap-1 lg:gap-2">
-              <span className="text-sm text-[#aaa] font-bold">
+            <div className="ml-auto flex items-center gap-1 lg:gap-2 min-w-0">
+              <span className="text-sm text-[#aaa] font-bold shrink-0">
                 {t('result.tenpaiWaits', 'Waits')}:
               </span>
-              <div className="flex gap-1.5">
+              {/* Kokushi waits on all 13 tiles, and this row shares its line
+                  with the player name, so it has to be allowed to wrap. */}
+              <div className="flex flex-wrap justify-end gap-1.5">
                 {player.gameState.awaitedTiles.map((ti, idx) => {
                   const tileStr = Tile.fromByte(ti.winningTile).toString();
                   return <UiTile key={idx} tile={tileStr} size="result" />;

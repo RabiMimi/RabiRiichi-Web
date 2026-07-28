@@ -1,37 +1,49 @@
 /**
  * Geometry for the DOM-rendered local hand.
  *
- * Kept free of React so the sizing rules stay unit-testable: the hand has to
- * shrink to fit narrow (landscape phone) viewports without the tiles drifting
- * out of the centred row.
+ * Kept free of React so the sizing rules stay unit-testable.
+ *
+ * Tiles are sized by projecting the real 3D tile through the table camera, so a
+ * DOM hand tile covers the same pixels a rendered one would. Sizing it in CSS
+ * units instead is what made the hand drift: the 3D tile scales with the
+ * viewport, while `rem`/px bounds do not, so browser zoom slid the two apart —
+ * the hand measured 21% larger than a 3D tile at 200% zoom and 34% smaller at
+ * 62%.
  */
 
-/** Intrinsic pixel size of the tile artwork, at scale 1. */
-const BASE_TILE_WIDTH = 84;
-const BASE_TILE_HEIGHT = 109;
-/** Height of the bevel strip rendered above each tile face. */
-const BASE_BEVEL_HEIGHT = 21;
-
-/** The hand never grows past this, however wide the window is. */
-const MAX_HAND_WIDTH = 820;
-/** ...nor past this fraction of the viewport, leaving room for the side HUD. */
-const HAND_VIEWPORT_RATIO = 0.6;
+import {
+  LOCAL_HAND_WORLD_POS,
+  TILE_WORLD_SIZE,
+  getPixelsPerWorldUnit,
+} from '../scene/cameraPose';
 
 /**
- * Share of viewport height the tile row may occupy.
+ * Bevel strip above each face, as a fraction of tile width.
  *
- * Width alone is not enough of a constraint: in landscape the window is wide but
- * short, so a hand sized purely to fit horizontally still ends up towering over
- * the table. Capping height keeps the board readable on a phone.
+ * The true aspect of `bevel.jpg` (700x193); the face artwork (700x933) is
+ * likewise drawn at its own aspect, which happens to be the 3D tile's
+ * 0.24/0.18 exactly. Both were previously derived from an assumed 84px-wide
+ * source and came out slightly squashed.
  */
-const MAX_HAND_HEIGHT_RATIO = 0.14;
+const BEVEL_WIDTH_RATIO = 193 / 700;
+
+/** Widest the artwork can be drawn before it is genuinely upscaled. */
+const ARTWORK_WIDTH = 700;
+
+/**
+ * Guard rail: the row may never exceed this fraction of viewport width.
+ *
+ * The projected size stays near half the viewport at every realistic landscape
+ * aspect, so this only bites on extreme windows.
+ */
+const HAND_VIEWPORT_RATIO = 0.6;
 
 /**
  * Free tiles in the largest possible hand (13 before the draw).
  *
- * Tile size is derived from this rather than from how many tiles are actually
- * held, so calling a meld — or discarding — never resizes the remaining tiles.
- * A shorter hand simply occupies a shorter row.
+ * The guard rail is measured against a full hand rather than the current one,
+ * so calling a meld — or discarding — never resizes the remaining tiles. A
+ * shorter hand simply occupies a shorter row.
  */
 const MAX_FREE_TILES = 13;
 
@@ -63,39 +75,35 @@ export interface HandLayout {
 /**
  * Computes the hand row geometry for a viewport and free-tile count.
  *
- * Tile size depends only on the viewport — whichever of three limits binds
- * first: the artwork's own size, the horizontal budget for a full hand, or the
- * share of viewport height the row may occupy. It deliberately does *not*
- * depend on `freeTileCount`, which only affects where the row starts and where
- * the drawn tile sits; otherwise tiles would resize on every call and discard.
+ * Tile size depends only on the viewport: it is the on-screen size of a 3D tile
+ * standing in the local hand row. It deliberately does *not* depend on
+ * `freeTileCount`, which only affects where the row starts and where the drawn
+ * tile sits; otherwise tiles would resize on every call and discard.
  */
 export function computeHandLayout(
   viewportWidth: number,
   viewportHeight: number,
   freeTileCount: number,
 ): HandLayout {
-  const widthBudget = Math.min(
-    viewportWidth * HAND_VIEWPORT_RATIO,
-    MAX_HAND_WIDTH,
+  const pxPerWorldUnit = getPixelsPerWorldUnit(
+    viewportWidth,
+    viewportHeight,
+    LOCAL_HAND_WORLD_POS,
   );
-  // Budget for a *full* hand, not the current one — see MAX_FREE_TILES.
-  const widthPerTile = Math.floor(widthBudget / MAX_FREE_TILES);
+  const projectedWidth = TILE_WORLD_SIZE.width * pxPerWorldUnit;
 
-  // The row is a tile face plus its bevel, so convert the height allowance back
-  // into a width using the artwork's aspect ratio.
-  const heightBudget = viewportHeight * MAX_HAND_HEIGHT_RATIO;
-  const widthFromHeight = Math.floor(
-    (heightBudget * BASE_TILE_WIDTH) / (BASE_TILE_HEIGHT + BASE_BEVEL_HEIGHT),
-  );
+  // Guard rail only — measured against a full hand, so it cannot resize the
+  // tiles mid-round. The projected size stays well inside it in practice.
+  const widthBudget = (viewportWidth * HAND_VIEWPORT_RATIO) / MAX_FREE_TILES;
 
   const tileWidth = Math.max(
     1,
-    Math.min(BASE_TILE_WIDTH, widthPerTile, widthFromHeight),
+    Math.round(Math.min(projectedWidth, widthBudget, ARTWORK_WIDTH)),
   );
-  const scale = tileWidth / BASE_TILE_WIDTH;
-
-  const tileHeight = Math.round(BASE_TILE_HEIGHT * scale);
-  const bevelHeight = Math.round(BASE_BEVEL_HEIGHT * scale);
+  const tileHeight = Math.round(
+    (tileWidth * TILE_WORLD_SIZE.height) / TILE_WORLD_SIZE.width,
+  );
+  const bevelHeight = Math.round(tileWidth * BEVEL_WIDTH_RATIO);
 
   const freeTilesWidth =
     freeTileCount * tileWidth + Math.max(freeTileCount - 1, 0) * TILE_GAP;
@@ -107,7 +115,7 @@ export function computeHandLayout(
     tileHeight,
     bevelHeight,
     rowHeight: tileHeight + bevelHeight,
-    dragThreshold: Math.round(BASE_TILE_HEIGHT * scale * DRAG_THRESHOLD_RATIO),
+    dragThreshold: Math.round(tileHeight * DRAG_THRESHOLD_RATIO),
     leftOffset,
     pendingLeft: leftOffset + freeTilesWidth + PENDING_TILE_GAP,
   };

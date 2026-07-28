@@ -80,13 +80,19 @@ export const HUD = {
  *
  * Same viewport-height basis as {@link HUD}: the card stacks tiles, the yaku
  * grid and the score line, so the vertical budget runs out first in landscape.
- * The upper bounds are deliberately modest — a winning hand is 14 tiles plus
- * melds on a single row, which overflows even a desktop window if the tiles are
- * sized for a close-up.
  */
 export const RESULT = {
-  /** Hand / meld / river tiles on the result card. */
-  tile: 'w-[clamp(1.375rem,3.6vh,2.25rem)] h-auto',
+  /**
+   * Hand / meld / river tiles on the result card.
+   *
+   * The widest thing this has to survive is a 14-tile hand split into four
+   * melds, which needs roughly `19 x tileWidth` of line once separators and
+   * gaps are counted, against the ~68% of viewport width the card leaves. That
+   * breaks even around 60px at 1080p and 45px at 768p, so the cap sits below
+   * both. The old 36px ceiling was reached on any screen taller than 1000px,
+   * which is what made the tiles look shrunken on a desktop.
+   */
+  tile: 'w-[clamp(1.5rem,5vh,3.25rem)] h-auto',
   /** Yaku name + han count rows. */
   yakuRow: 'text-[clamp(0.7rem,1.9vh,1rem)]',
   /** The large han and points figures on the score line. */

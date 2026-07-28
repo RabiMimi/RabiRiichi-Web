@@ -6,6 +6,8 @@ import {
   getHandShiftX,
   preloadAllTileImages,
   _resetPreloadCache,
+  getHandTileX,
+  getPendingTileX,
   TILE_LAYOUT,
 } from './assets';
 import { Tile } from '../domain/tile';
@@ -77,6 +79,41 @@ const RENDER_WIDTH = {
   daiminkan: W_S + 3 * W_N + 3 * GAP,
   kakan: W_S + 2 * W_N + 2 * GAP, // added tile stacks on top, no extra width
 } as const;
+
+describe('hand tile slots', () => {
+  it('centres the free tiles on the seat', () => {
+    // Odd count puts the middle tile dead centre; even count straddles it.
+    expect(getHandTileX(6, 13)).toBeCloseTo(0, 10);
+    const even = [getHandTileX(0, 2), getHandTileX(1, 2)];
+    expect(even[0]).toBeCloseTo(-even[1]!, 10);
+  });
+
+  it('spaces neighbouring tiles by one tile width plus its gap', () => {
+    for (const count of [1, 2, 7, 13, 14]) {
+      for (let i = 1; i < count; i++) {
+        expect(getHandTileX(i, count) - getHandTileX(i - 1, count)).toBeCloseTo(
+          TILE_LAYOUT.handSpacing,
+          10,
+        );
+      }
+    }
+  });
+
+  it('holds the drawn tile clear of the sorted hand', () => {
+    for (const count of [1, 7, 13]) {
+      const gap = getPendingTileX(count) - getHandTileX(count - 1, count);
+      expect(gap).toBeGreaterThan(TILE_LAYOUT.handSpacing);
+      expect(gap).toBeCloseTo(
+        TILE_LAYOUT.handSpacing + TILE_LAYOUT.pendingGap,
+        10,
+      );
+    }
+  });
+
+  it('still places a drawn tile when the hand is empty', () => {
+    expect(Number.isFinite(getPendingTileX(0))).toBe(true);
+  });
+});
 
 describe('getMeldsLeftEdge meld widths (RabiMimi/RabiRiichi#77)', () => {
   it('returns the start anchor when there are no melds', () => {

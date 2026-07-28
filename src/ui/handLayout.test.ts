@@ -1,4 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import {
+  LOCAL_HAND_WORLD_POS,
+  TILE_WORLD_SIZE,
+  getPixelsPerWorldUnit,
+} from '../scene/cameraPose';
 import { computeHandLayout } from './handLayout';
 
 const DESKTOP = { width: 1920, height: 1080 };
@@ -60,13 +65,10 @@ describe('computeHandLayout', () => {
   });
 
   it('never upscales past the intrinsic artwork size', () => {
-    // However large the window, the artwork must not be blown up into blur.
-    expect(computeHandLayout(5000, 4000, 5).tileWidth).toBeLessThanOrEqual(84);
-  });
-
-  it('caps the row width even on a big screen', () => {
-    // A full hand at intrinsic size is a very wide bar; the row cap holds it in.
-    expect(layoutFor(DESKTOP).tileWidth).toBeLessThan(84);
+    // The faces are 700x933 sources, so this only bites on absurd viewports.
+    expect(computeHandLayout(20000, 16000, 5).tileWidth).toBeLessThanOrEqual(
+      700,
+    );
   });
 
   it('shrinks further on a landscape phone than on a desktop', () => {
@@ -78,8 +80,48 @@ describe('computeHandLayout', () => {
   it('keeps the artwork aspect ratio at every size', () => {
     for (const viewport of ALL_VIEWPORTS) {
       const layout = layoutFor(viewport);
-      expect(layout.tileHeight).toBe(Math.round((109 * layout.tileWidth) / 84));
+      // 700x933 faces, i.e. the 3D tile's 0.24/0.18 to within a rounding step.
+      expect(layout.tileHeight).toBe(
+        Math.round((933 * layout.tileWidth) / 700),
+      );
       expect(layout.rowHeight).toBe(layout.tileHeight + layout.bevelHeight);
+      // 700x193 bevel strip.
+      expect(layout.bevelHeight).toBe(
+        Math.round((193 * layout.tileWidth) / 700),
+      );
+    }
+  });
+
+  it('draws a tile the size the 3D tile would be on screen', () => {
+    // The whole point of the projection: a DOM hand tile must cover the same
+    // pixels a rendered one does, or the hand looks pasted on.
+    for (const viewport of ALL_VIEWPORTS) {
+      const expected =
+        TILE_WORLD_SIZE.width *
+        getPixelsPerWorldUnit(
+          viewport.width,
+          viewport.height,
+          LOCAL_HAND_WORLD_POS,
+        );
+      expect(layoutFor(viewport).tileWidth).toBe(Math.round(expected));
+    }
+  });
+
+  it('holds its size against the 3D tile as the browser is zoomed', () => {
+    // Browser zoom rescales the CSS viewport, so a tile sized in px or rem
+    // slides relative to the 3D table. Sizing it in projected world units must
+    // not: the ratio has to stay pinned across a 4x zoom range.
+    const ratios = [0.5, 0.8, 1, 1.5, 2].map((zoom) => {
+      const width = Math.round(1600 / zoom);
+      const height = Math.round(900 / zoom);
+      const tile3d =
+        TILE_WORLD_SIZE.width *
+        getPixelsPerWorldUnit(width, height, LOCAL_HAND_WORLD_POS);
+      return computeHandLayout(width, height, FULL_HAND).tileWidth / tile3d;
+    });
+    for (const ratio of ratios) {
+      expect(ratio).toBeGreaterThan(0.98);
+      expect(ratio).toBeLessThan(1.02);
     }
   });
 

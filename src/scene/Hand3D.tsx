@@ -2,7 +2,12 @@ import React from 'react';
 import type { IGameTileMsg } from '../proto';
 import { Tile3D } from './Tile3D';
 import { Tile } from '../domain/tile';
-import { getSafeKey, getSafeTraceId } from './assets';
+import {
+  getHandTileX,
+  getPendingTileX,
+  getSafeKey,
+  getSafeTraceId,
+} from './assets';
 
 interface Hand3DProps {
   tiles: IGameTileMsg[];
@@ -21,7 +26,6 @@ export function Hand3D({
   winningTileTraceId = null,
   shiftX = 0,
 }: Hand3DProps): React.JSX.Element {
-  const spacing = 0.19; // Tile width (0.18) + small gap
   const k = tiles.length;
 
   const showTiles = isLocal || isRevealed;
@@ -35,8 +39,7 @@ export function Hand3D({
     <group position={[shiftX, 0, 0]}>
       {/* Free tiles in hand */}
       {tiles.map((tileMsg, idx) => {
-        // Center the hand at X = 0
-        const x = (idx - (k - 1) / 2) * spacing;
+        const x = getHandTileX(idx, k);
 
         // Only decode tile value if it is revealed or local player's hand.
         const tileStr =
@@ -66,7 +69,7 @@ export function Hand3D({
       {/* Newly drawn tile (pending tile) placed on the right with a larger gap */}
       {pendingTile &&
         (() => {
-          const x = ((k - 1) / 2 + 1) * spacing + 0.08;
+          const x = getPendingTileX(k);
           const tileStr =
             showTiles && pendingTile.tile
               ? Tile.fromByte(pendingTile.tile).toString()
