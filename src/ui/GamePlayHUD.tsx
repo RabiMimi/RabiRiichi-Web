@@ -22,6 +22,7 @@ import { Tile, checkDiscardResultsInFuriten } from '../domain/tile';
 import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
 import { ConnectionStatusIndicator } from './ConnectionStatus';
 import { UiTile } from './UiTile';
+import { getTimerDigitPath } from './timerDigits';
 import { HUD } from './styles';
 import {
   getWindKey,
@@ -561,7 +562,7 @@ function HUDTimer({
         {digits.map((d, i) => (
           <img
             key={i}
-            src={`/assets/timer/${d}.png`}
+            src={getTimerDigitPath(d)}
             alt=""
             aria-hidden
             className={HUD.timerDigit}

@@ -29,6 +29,7 @@ import { Tooltip } from './ui/Tooltip';
 import { IconButton } from './ui/IconButton';
 import { SettingsButton } from './ui/SettingsButton';
 import { SettingsModal } from './ui/SettingsModal';
+import { preloadTimerDigits } from './ui/timerDigits';
 import {
   playerOverlayPortalTarget,
   stickerPortalTarget,
@@ -150,6 +151,7 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     void preloadAllTileImages();
+    void preloadTimerDigits();
     const params = new URLSearchParams(window.location.search);
     let active = true;
     let stopReplayFn: (() => void) | null = null;
