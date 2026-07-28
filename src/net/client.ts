@@ -67,6 +67,12 @@ import {
 import { VisualsSettings, SoundsSettings } from '../domain/settings';
 import { applyEvent, applyRoomState } from '../domain/reducer';
 import {
+  displayedSecondChanged,
+  monotonicNow,
+  remainingSeconds,
+  shouldSoundUrgency,
+} from '../domain/countdown';
+import {
   type MappedInquiry,
   mapInquiry,
   type ActionOption,
@@ -1370,10 +1376,17 @@ export class RabiRiichiClient {
     }
     this.onChange.emit();
 
-    const tick = 0.1; // 100ms in seconds
+    // Count down to a fixed deadline rather than by subtracting a step per
+    // tick. Timers fire late under load and are clamped to a second or more in
+    // a background tab, so an accumulating counter reads high — showing time
+    // the server has already taken back. See src/domain/countdown.ts.
+    const deadline = monotonicNow() + seconds * 1000;
     this.actionTimerId = setInterval(() => {
-      this.actionTimeout = Math.round((this.actionTimeout - tick) * 10) / 10;
-      if (this.actionTimeout <= 0) {
+      const previous = this.actionTimeout;
+      const remaining = remainingSeconds(deadline, monotonicNow());
+      this.actionTimeout = remaining;
+
+      if (remaining <= 0) {
         this.clearTimer();
         if (interactive) {
           this.logger.info(
@@ -1381,17 +1394,16 @@ export class RabiRiichiClient {
           );
           void this.submitServerDefault();
         }
-      } else {
-        const prevSec = Math.ceil(this.actionTimeout + tick);
-        const currSec = Math.ceil(this.actionTimeout);
-        if (interactive && currSec <= 5 && prevSec !== currSec) {
-          this.platform.sound.playEffect(SOUND_EFFECTS.game.timeoutWarning);
-        }
-        if (prevSec !== currSec) {
-          this.onChange.emit();
-        }
+        return;
       }
-    }, tick * 1000);
+
+      if (interactive && shouldSoundUrgency(previous, remaining)) {
+        this.platform.sound.playEffect(SOUND_EFFECTS.game.timeoutWarning);
+      }
+      if (displayedSecondChanged(previous, remaining)) {
+        this.onChange.emit();
+      }
+    }, 100);
   }
 
   private clearTimer(): void {
