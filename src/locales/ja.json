@@ -419,11 +419,13 @@
     "llm": {
       "gemini": "Gemiヌ",
       "openai": "OpenAI",
+      "grok": "Grok",
       "generic": "LLM"
     },
     "provider": {
       "openai": "OpenAI",
-      "gemini": "Gemini"
+      "gemini": "Gemini",
+      "grok": "Grok"
     },
     "llmConfig": {
       "title": "LLM AI を追加",
@@ -442,7 +444,7 @@
         "label": "ペルソナ",
         "cuteJk": "かわいい",
         "mesugaki": "メスガキ",
-        "bunnyPet": "ペットうさぎ"
+        "bunnyPet": "うさぎ"
       },
       "baseUrl": "Base URL（任意）",
       "lessOptions": "詳細設定を閉じる",

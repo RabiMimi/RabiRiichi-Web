@@ -419,11 +419,13 @@
     "llm": {
       "gemini": "Gemibo",
       "openai": "OpenAI",
+      "grok": "Grok",
       "generic": "LLM"
     },
     "provider": {
       "openai": "OpenAI",
-      "gemini": "Gemini"
+      "gemini": "Gemini",
+      "grok": "Grok"
     },
     "llmConfig": {
       "title": "Add LLM AI",
@@ -442,7 +444,7 @@
         "label": "Persona",
         "cuteJk": "Cute",
         "mesugaki": "Mesugaki",
-        "bunnyPet": "Bunny Pet"
+        "bunnyPet": "Bunny"
       },
       "baseUrl": "Base URL (optional)",
       "lessOptions": "Less options",

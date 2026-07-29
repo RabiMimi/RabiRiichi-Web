@@ -419,11 +419,13 @@
     "llm": {
       "gemini": "Gemi狸",
       "openai": "OpenAI",
+      "grok": "Grok",
       "generic": "LLM"
     },
     "provider": {
       "openai": "OpenAI",
-      "gemini": "Gemini"
+      "gemini": "Gemini",
+      "grok": "Grok"
     },
     "llmConfig": {
       "title": "添加 LLM AI",
@@ -442,7 +444,7 @@
         "label": "角色",
         "cuteJk": "可爱",
         "mesugaki": "雌小鬼",
-        "bunnyPet": "宠物兔娘"
+        "bunnyPet": "兔兔"
       },
       "baseUrl": "Base URL（可选）",
       "lessOptions": "折叠高级选项",

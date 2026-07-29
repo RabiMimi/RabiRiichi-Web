@@ -11,7 +11,11 @@ import { formatError } from '../lib/errors';
 import { Button } from './Button';
 import { ChevronDown, Select } from './Select';
 import { FORM, MODAL } from './styles';
-import { GEMINI_MODELS, DEFAULT_GEMINI_MODEL } from '../config/constants';
+import {
+  GEMINI_MODELS,
+  DEFAULT_GEMINI_MODEL,
+  DEFAULT_GROK_MODEL,
+} from '../config/constants';
 
 interface LlmConfigDialogProps {
   onClose: () => void;
@@ -21,6 +25,7 @@ interface LlmConfigDialogProps {
 const DEFAULT_MODELS: Record<LlmProvider, string> = {
   [LlmProvider.LLM_PROVIDER_GEMINI]: DEFAULT_GEMINI_MODEL,
   [LlmProvider.LLM_PROVIDER_OPENAI]: 'gpt-4o-mini',
+  [LlmProvider.LLM_PROVIDER_GROK]: DEFAULT_GROK_MODEL,
   [LlmProvider.LLM_PROVIDER_UNSPECIFIED]: '',
 };
 
@@ -186,6 +191,9 @@ export function LlmConfigDialog({
                 </option>
                 <option value={LlmProvider.LLM_PROVIDER_OPENAI}>
                   {t('ai.provider.openai')}
+                </option>
+                <option value={LlmProvider.LLM_PROVIDER_GROK}>
+                  {t('ai.provider.grok')}
                 </option>
               </Select>
             </div>
