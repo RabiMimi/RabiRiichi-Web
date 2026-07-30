@@ -20,6 +20,7 @@ import {
   getAndClearTilePose,
   type TileArea,
 } from './tileTransitionRegistry';
+import { registerTileOutline } from './tileOutlineRegistry';
 import {
   useCurrentInquiry,
   useIsRiichiSelectMode,
@@ -366,6 +367,12 @@ export function Tile3D({
 
   const groupRef = useRef<THREE.Group>(null);
   const tileRef = useRef<THREE.Object3D>(null);
+
+  useEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+    return registerTileOutline(group);
+  }, []);
 
   // Target position and rotation (stored in refs to avoid recreating vectors on every render)
   const targetPos = useMemo(() => new THREE.Vector3(), []);
@@ -745,8 +752,6 @@ export function Tile3D({
       }}
     >
       <group scale={[0.18, 0.24, 0.12]}>
-        {/* Outline — slightly scaled clone with outline material */}
-        <OutlineClone clone={clone} />
         <primitive ref={tileRef} object={clone} />
       </group>
       {isWinningTile && <TileSpotlightParticles />}
@@ -760,55 +765,6 @@ export function Tile3D({
         </Html>
       )}
     </group>
-  );
-}
-
-/**
- * Every tile's outline hull looks identical, and a full table carries 130+
- * tiles. Allocating a material per tile (per mesh, in fact) only burned memory
- * and GPU state changes — and nothing ever disposed them, so each remount
- * leaked. One shared instance for the whole scene instead.
- */
-const OUTLINE_MATERIAL = new THREE.MeshBasicMaterial({
-  color: '#111111',
-  side: THREE.BackSide,
-  depthTest: true,
-  transparent: true,
-  opacity: 0.73,
-});
-
-/** How much larger than the tile the outline hull is drawn. */
-const OUTLINE_SCALE = 1.05;
-
-/**
- * Renders a slightly enlarged copy of the tile with a flat back-facing material
- * — the inverted-hull toon outline.
- *
- * This costs one extra mesh per tile. Collapsing them into an `InstancedMesh`
- * looks obvious (identical geometry, identical material, only the transform
- * differs) but is not a drop-in: the tile GLB nests its mesh under a node scaled
- * 100x and splits the tile into three primitives, so instancing has to replay
- * the model's internal transforms rather than just the tile's world matrix. An
- * attempt at that rendered nothing, so the per-tile clone stays for now.
- */
-function OutlineClone({ clone }: { clone: THREE.Group }): React.JSX.Element {
-  const outlineClone = useMemo(() => {
-    // Object3D.clone() shares geometry by reference, so this duplicates only
-    // the (small) node graph, not the vertex data.
-    const oc = clone.clone();
-    oc.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        child.material = OUTLINE_MATERIAL;
-      }
-    });
-    return oc;
-  }, [clone]);
-
-  return (
-    <primitive
-      object={outlineClone}
-      scale={[OUTLINE_SCALE, OUTLINE_SCALE, OUTLINE_SCALE]}
-    />
   );
 }
 

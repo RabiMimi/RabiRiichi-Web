@@ -262,6 +262,7 @@ function App(): React.JSX.Element {
       <OrientationGuard />
       <Canvas
         camera={{ position: [0, 3.0, 3.4], fov: 50 }}
+        gl={{ stencil: true }}
         style={{ zIndex: 1 }}
         onPointerMissed={handlePointerMissed}
       >

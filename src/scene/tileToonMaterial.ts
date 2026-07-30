@@ -43,7 +43,17 @@ const UNIFORM_DECL = `
   varying vec3 vWorldNormal;
 `;
 
+function configureTileStencil(material: THREE.Material): void {
+  material.stencilWrite = true;
+  material.stencilRef = 1;
+  material.stencilFunc = THREE.AlwaysStencilFunc;
+  material.stencilFail = THREE.KeepStencilOp;
+  material.stencilZFail = THREE.KeepStencilOp;
+  material.stencilZPass = THREE.ReplaceStencilOp;
+}
+
 function injectCel(material: THREE.MeshPhongMaterial) {
+  configureTileStencil(material);
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uDarkLight = { value: 0.998 };
     shader.fragmentShader = UNIFORM_DECL + shader.fragmentShader;
@@ -71,6 +81,7 @@ export function createToonMaterial(
     specular: 0x000000,
     shininess: 0,
   });
+  configureTileStencil(mat);
 
   mat.onBeforeCompile = (shader) => {
     const uTime = { value: 0 };
