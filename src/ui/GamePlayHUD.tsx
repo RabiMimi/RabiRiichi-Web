@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
   useRoom,
@@ -591,7 +592,7 @@ function HUDExitConfirmModal({
 }: HUDExitConfirmModalProps): React.JSX.Element | null {
   const { t } = useTranslation();
   if (!isOpen) return null;
-  return (
+  return createPortal(
     <div className="fixed inset-0 w-screen h-screen bg-black/70 flex justify-center items-center z-[1100] backdrop-blur-[3px] pointer-events-auto select-text">
       <div className="bg-[#2a2a2a] border-2 border-[#ff3333] rounded-xl p-6 w-[90%] max-w-[400px] shadow-[0_10px_30px_rgba(0,0,0,0.6)] text-center box-border">
         <p className="text-base text-white mb-5 font-medium leading-[1.4]">
@@ -618,6 +619,7 @@ function HUDExitConfirmModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

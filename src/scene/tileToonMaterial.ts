@@ -4,15 +4,6 @@ import * as THREE from 'three';
 export const DORA_SHEEN_WIDTH = 0.2;
 export const DORA_SHEEN_SPEED = 2.0;
 
-// 2-band cel shading: N·L < 0 → dark, N·L >= 0 → bright
-const CEL_OVERRIDE = `
-  vec3 lightDir = normalize(vec3(0.5, 1.0, 0.8));
-  float NdotL = dot(vWorldNormal, lightDir);
-  if (NdotL < 0.0) {
-    gl_FragColor.rgb *= uDarkLight;
-  }
-`;
-
 const DORA_SHEEN = `
   if (uIsDora > 0.5) {
     #ifdef USE_MAP
@@ -27,22 +18,6 @@ const DORA_SHEEN = `
   }
 `;
 
-const VERTEX_NORMAL = `
-  #include <common>
-  varying vec3 vWorldNormal;
-`;
-
-const VERTEX_TRANSFORM = `
-  #include <begin_vertex>
-  vec4 wn = modelMatrix * vec4(normal, 0.0);
-  vWorldNormal = normalize(wn.xyz);
-`;
-
-const UNIFORM_DECL = `
-  uniform float uDarkLight;
-  varying vec3 vWorldNormal;
-`;
-
 function configureTileStencil(material: THREE.Material): void {
   material.stencilWrite = true;
   material.stencilRef = 1;
@@ -52,27 +27,7 @@ function configureTileStencil(material: THREE.Material): void {
   material.stencilZPass = THREE.ReplaceStencilOp;
 }
 
-function injectCel(material: THREE.MeshPhongMaterial) {
-  configureTileStencil(material);
-  material.onBeforeCompile = (shader) => {
-    shader.uniforms.uDarkLight = { value: 0.998 };
-    shader.fragmentShader = UNIFORM_DECL + shader.fragmentShader;
-    shader.vertexShader = shader.vertexShader.replace(
-      '#include <common>',
-      VERTEX_NORMAL,
-    );
-    shader.vertexShader = shader.vertexShader.replace(
-      '#include <begin_vertex>',
-      VERTEX_TRANSFORM,
-    );
-    shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <dithering_fragment>',
-      CEL_OVERRIDE + '\n#include <dithering_fragment>',
-    );
-  };
-}
-
-/** Tile face — Phong + texture + Dora sheen + 2-band cel. */
+/** Lit tile face with the Dora sheen layered over the source artwork. */
 export function createToonMaterial(
   frontTexture: THREE.Texture,
 ): THREE.MeshPhongMaterial {
@@ -90,7 +45,6 @@ export function createToonMaterial(
     shader.uniforms.uIsDora = uIsDora;
     shader.uniforms.uSheenWidth = { value: DORA_SHEEN_WIDTH };
     shader.uniforms.uSheenSpeed = { value: DORA_SHEEN_SPEED };
-    shader.uniforms.uDarkLight = { value: 0.998 };
     mat.userData.uTime = uTime;
     mat.userData.isDora = uIsDora;
 
@@ -100,28 +54,18 @@ export function createToonMaterial(
       uniform float uIsDora;
       uniform float uSheenWidth;
       uniform float uSheenSpeed;
-      uniform float uDarkLight;
-      varying vec3 vWorldNormal;
     ` + shader.fragmentShader;
 
-    shader.vertexShader = shader.vertexShader.replace(
-      '#include <common>',
-      VERTEX_NORMAL,
-    );
-    shader.vertexShader = shader.vertexShader.replace(
-      '#include <begin_vertex>',
-      VERTEX_TRANSFORM,
-    );
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <dithering_fragment>',
-      CEL_OVERRIDE + '\n#include <dithering_fragment>\n' + DORA_SHEEN,
+      '#include <dithering_fragment>\n' + DORA_SHEEN,
     );
   };
 
   return mat;
 }
 
-/** Tile side — Phong + texture/color + 2-band cel. */
+/** Lit tile side: its shading preserves the tile's beveled silhouette. */
 export function createToonSideMaterial(
   sideTexture?: THREE.Texture,
 ): THREE.MeshPhongMaterial {
@@ -130,11 +74,11 @@ export function createToonSideMaterial(
     specular: 0x000000,
     shininess: 0,
   });
-  injectCel(mat);
+  configureTileStencil(mat);
   return mat;
 }
 
-/** Tile back — Phong + texture + 2-band cel. */
+/** Lit tile back, so face-down tiles retain their shape and depth. */
 export function createToonBackMaterial(
   backTexture: THREE.Texture,
 ): THREE.MeshPhongMaterial {
@@ -143,6 +87,6 @@ export function createToonBackMaterial(
     specular: 0x000000,
     shininess: 0,
   });
-  injectCel(mat);
+  configureTileStencil(mat);
   return mat;
 }

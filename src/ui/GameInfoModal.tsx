@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
 import { YAKUS } from '../domain/yakus';
@@ -127,7 +128,7 @@ export function GameInfoModal({
       return tileA.compareTo(tileB);
     });
 
-  return (
+  return createPortal(
     <div className={MODAL.overlay} onClick={onClose}>
       <div
         className={`${MODAL.card} ${MODAL.cardDefaultLook}`}
@@ -587,6 +588,7 @@ export function GameInfoModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

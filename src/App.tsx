@@ -263,6 +263,7 @@ function App(): React.JSX.Element {
       <Canvas
         camera={{ position: [0, 3.0, 3.4], fov: 50 }}
         gl={{ stencil: true }}
+        flat
         style={{ zIndex: 1 }}
         onPointerMissed={handlePointerMissed}
       >
@@ -369,7 +370,7 @@ function App(): React.JSX.Element {
       />
       <div
         ref={playerOverlayPortalTarget as React.RefObject<HTMLDivElement>}
-        className="absolute inset-0 pointer-events-none z-[110]"
+        className="absolute inset-0 pointer-events-none z-[90]"
       />
       <div
         ref={stickerPortalTarget as React.RefObject<HTMLDivElement>}

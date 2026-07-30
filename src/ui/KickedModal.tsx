@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { MODAL } from './styles';
@@ -15,7 +16,7 @@ export function KickedModal({
   const { t } = useTranslation();
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className={MODAL.overlay}>
       <div className={`${MODAL.card} ${MODAL.cardDefaultLook} max-w-[400px]`}>
         <div className={MODAL.header}>
@@ -31,6 +32,7 @@ export function KickedModal({
           <Button onClick={onClose}>OK</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

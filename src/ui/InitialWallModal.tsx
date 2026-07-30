@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
 import type { RoomModel } from '../domain/model';
@@ -180,7 +181,7 @@ export function InitialWallModal({
     );
   };
 
-  return (
+  return createPortal(
     <div className={MODAL.overlay} onClick={onClose}>
       <div
         className={`${MODAL.card} w-[95%] max-w-[920px] border border-[#82aaf0]/40 bg-[#0f172a]/95`}
@@ -243,6 +244,7 @@ export function InitialWallModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

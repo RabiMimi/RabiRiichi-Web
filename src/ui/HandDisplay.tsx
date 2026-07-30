@@ -91,7 +91,8 @@ function HandTile({
   dragStyle,
   hoverLift,
 }: HandTileProps): React.JSX.Element {
-  const { tileWidth, tileHeight, bevelHeight, rowHeight } = layout;
+  const { tileWidth, tileHeight, bevelHeight, rowHeight, cornerRadius } =
+    layout;
   const face = tile ? Tile.fromByte(tile).toString() : 'back';
   const [isHovered, setIsHovered] = useState(false);
 
@@ -134,9 +135,10 @@ function HandTile({
         }}
       >
         <div
-          className={`relative overflow-hidden rounded-lg ${
+          className={`relative overflow-hidden ${
             isDora ? 'dora-sheen' : ''
           } ${isDimmed ? 'brightness-50' : ''}`}
+          style={{ borderRadius: cornerRadius }}
         >
           <img
             src="/assets/hand_tiles/bevel.jpg"

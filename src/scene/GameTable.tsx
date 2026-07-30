@@ -140,15 +140,15 @@ export function GameTable(): React.JSX.Element {
       <color attach="background" args={['#000000']} />
       <TouchHoverHandler />
       {/* Lights */}
-      <ambientLight intensity={0.5} />
+      <ambientLight intensity={1.5} />
       <directionalLight
         position={[5, 8, 5]}
-        intensity={1.2}
+        intensity={1.5}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
-      <pointLight position={[-5, 5, -5]} intensity={0.3} />
+      <pointLight position={[-5, 5, -5]} intensity={0.5} />
 
       {/* 3D Table and Center Indicator */}
       <Suspense fallback={null}>

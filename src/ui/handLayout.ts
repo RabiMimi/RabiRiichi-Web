@@ -64,6 +64,8 @@ const DRAG_THRESHOLD_RATIO = 1.5;
  */
 const HOVER_LIFT_RATIO = 0.25;
 const PENDING_HOVER_LIFT_RATIO = 0.15;
+/** Corner radius as a fraction of tile width, matching the scaled artwork. */
+const CORNER_RADIUS_RATIO = 0.095;
 
 export interface HandLayout {
   /** Width of a single tile. */
@@ -74,6 +76,8 @@ export interface HandLayout {
   bevelHeight: number;
   /** Total row height (face + bevel). */
   rowHeight: number;
+  /** Radius of the tile frame's rounded corners. */
+  cornerRadius: number;
   /** How far a free tile rises on hover. */
   hoverLift: number;
   /** How far the freshly drawn tile rises on hover. */
@@ -131,6 +135,7 @@ export function computeHandLayout(
     tileHeight,
     bevelHeight,
     rowHeight: tileHeight + bevelHeight,
+    cornerRadius: tileWidth * CORNER_RADIUS_RATIO,
     hoverLift: Math.round(tileHeight * HOVER_LIFT_RATIO),
     pendingHoverLift: Math.round(tileHeight * PENDING_HOVER_LIFT_RATIO),
     tileGap: TILE_GAP,

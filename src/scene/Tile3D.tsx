@@ -929,14 +929,12 @@ function applyTileAppearance(
       const mats = Array.isArray(childMat) ? childMat : [childMat];
       mats.forEach((mat) => {
         if (mat instanceof THREE.MeshPhongMaterial) {
+          const isExcluded =
+            isDimmed ||
+            (displayState === 'hand' && hasTileSelectionActive && !isPlayable);
+
           // Dimming logic
-          if (isDimmed) {
-            mat.color.setHex(0x999999);
-          } else if (
-            displayState === 'hand' &&
-            hasTileSelectionActive &&
-            !isPlayable
-          ) {
+          if (isExcluded) {
             mat.color.setHex(0x999999);
           } else if (isFuritenDiscard) {
             mat.color.setHex(0xffcccc); // Slightly red tint for furiten discard

@@ -77,6 +77,15 @@ describe('computeHandLayout', () => {
     );
   });
 
+  it('scales the corner radius with the tile width', () => {
+    const desktop = layoutFor(DESKTOP);
+    const phone = layoutFor(LANDSCAPE_PHONE);
+    expect(phone.cornerRadius).toBeLessThan(desktop.cornerRadius);
+    expect(phone.cornerRadius / phone.tileWidth).toBeCloseTo(
+      desktop.cornerRadius / desktop.tileWidth,
+    );
+  });
+
   it('keeps the artwork aspect ratio at every size', () => {
     for (const viewport of ALL_VIEWPORTS) {
       const layout = layoutFor(viewport);
