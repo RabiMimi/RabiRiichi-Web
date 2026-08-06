@@ -2,7 +2,7 @@ import { type IScoringMsg, ScoringType, ScoringOption } from '../proto';
 
 export interface YakuInfo {
   name: string;
-  group: '1han' | '2han' | '3han' | '6han' | 'yakuman' | 'other';
+  group: '1han' | '2han' | '3han' | '6han' | 'yakuman' | 'koten' | 'other';
 }
 
 export const YAKUS: YakuInfo[] = [
@@ -60,6 +60,35 @@ export const YAKUS: YakuInfo[] = [
   { name: 'Suukantsu', group: 'yakuman' },
   { name: 'ChuurenPoutou', group: 'yakuman' },
   { name: 'JunseiChuurenPoutou', group: 'yakuman' },
+
+  // Koyaku (Koten)
+  { name: 'TsubameGaeshi', group: 'koten' },
+  { name: 'Kanburi', group: 'koten' },
+  { name: 'Ryanankan', group: 'koten' },
+  { name: 'Chaopaikou', group: 'koten' },
+  { name: 'Chinpaikou', group: 'koten' },
+  { name: 'Shousanfon', group: 'koten' },
+  { name: 'Sanrenkou', group: 'koten' },
+  { name: 'Sanfonkou', group: 'koten' },
+  { name: 'Sanankan', group: 'koten' },
+  { name: 'Uumensai', group: 'koten' },
+  { name: 'IsshokuSandoujun', group: 'koten' },
+  { name: 'Chinpeikou', group: 'koten' },
+  { name: 'Suurenkou', group: 'koten' },
+  { name: 'IsshokuYondoujun', group: 'koten' },
+  { name: 'Renhou', group: 'koten' },
+  { name: 'Daisharin', group: 'koten' },
+  { name: 'Daichikurin', group: 'koten' },
+  { name: 'Daisuurin', group: 'koten' },
+  { name: 'Shiisanputa', group: 'koten' },
+  { name: 'Shiisuuputa', group: 'koten' },
+  { name: 'Paarenchan', group: 'koten' },
+  { name: 'Benikujaku', group: 'koten' },
+  { name: 'Heiiisou', group: 'koten' },
+  { name: 'Daichiishin', group: 'koten' },
+  { name: 'IshiNoUeNiMoSannen', group: 'koten' },
+  { name: 'Katengecchi', group: 'koten' },
+  { name: 'ShiiaruRaotai', group: 'koten' },
 
   // Other
   { name: 'HelloWorld', group: 'other' },

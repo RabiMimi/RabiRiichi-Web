@@ -147,6 +147,8 @@ export function getYakuVoiceLineId(
         return 'doraMany';
       }
       return null;
+    case 'ShiiaruRaotai':
+      return 'shiiaruraotai';
     case 'NagashiMangan':
       return 'nagashiMangan';
     default:

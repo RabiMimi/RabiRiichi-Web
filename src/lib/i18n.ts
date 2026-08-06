@@ -7,7 +7,7 @@ import ja from '../locales/ja.json';
 const LOCAL_STORAGE_KEY = 'i18n_lang';
 
 const getInitialLanguage = (): string => {
-  if (typeof localStorage !== 'undefined') {
+  if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
       return saved;
@@ -40,7 +40,7 @@ void i18n.use(initReactI18next).init({
 });
 
 i18n.on('languageChanged', (lng) => {
-  if (typeof localStorage !== 'undefined') {
+  if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
     localStorage.setItem(LOCAL_STORAGE_KEY, lng);
   }
 });
