@@ -21,6 +21,7 @@ import {
   getRoundStartIndices,
 } from '../replay/replayDriver';
 import { DEFAULT_MIN_HAN } from '../domain/constants';
+import { getKyokuNumber } from '../domain/model';
 import { GameInfoPanel, TenpaiWaitPanel } from './GamePlayHUD';
 import { HandDisplay } from './HandDisplay';
 import { FullscreenButton } from './FullscreenButton';
@@ -82,7 +83,7 @@ export function ReplayHUD(): React.JSX.Element | null {
     const windText = t(`hud.${windKey}`);
     return t('hud.roundInfoTemplate', {
       wind: windText,
-      round: dealer + 1,
+      round: getKyokuNumber(dealer),
       honba: honba,
     });
   };

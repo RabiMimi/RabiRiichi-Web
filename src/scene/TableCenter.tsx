@@ -4,6 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useTranslation } from 'react-i18next';
 import { useRoom, useSelf } from '../state/store';
+import { getKyokuNumber } from '../domain/model';
 import { getScreenPosition, getSeatRotation } from './seat';
 import { getTableMidTexturePath, getTableCenterFontPath } from './assets';
 import { DEFAULT_INITIAL_POINTS } from '../domain/constants';
@@ -75,7 +76,7 @@ export function TableCenter(): React.JSX.Element | null {
   // Round wind character (场风 = red)
   const roundWindText = windTexts[roundWindIdx] ?? '東';
 
-  const roundNum = dealer + 1;
+  const roundNum = getKyokuNumber(dealer);
 
   return (
     // Slightly elevated above table top (y=0) to prevent z-fighting

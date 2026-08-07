@@ -343,6 +343,14 @@ export function prevPlayerSeat(seat: number, playerCount: number): number {
   return (seat + playerCount - 1) % playerCount;
 }
 
+/**
+ * Kyoku number within the round wind, 1-based. The server tracks this as the
+ * dealer seat: `round` only advances when the dealer wraps back to 0.
+ */
+export function getKyokuNumber(dealer: number): number {
+  return dealer + 1;
+}
+
 export function getWindKey(round: number): string {
   const winds = ['east', 'south', 'west', 'north'];
   const index = ((round % 4) + 4) % 4;

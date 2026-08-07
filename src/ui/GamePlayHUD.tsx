@@ -28,6 +28,7 @@ import { UiTile } from './UiTile';
 import { getTimerDigitPath } from './timerDigits';
 import { HUD } from './styles';
 import {
+  getKyokuNumber,
   getWindKey,
   waitMeetsMinHan,
   riichiBonusHan,
@@ -52,7 +53,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
 
   const windKey = getWindKey(round);
   const windTranslated = t(`hud.${windKey}`);
-  const roundNumber = dealer + 1;
+  const roundNumber = getKyokuNumber(dealer);
 
   return (
     // Always fully opaque. This is reference information the player reads at a

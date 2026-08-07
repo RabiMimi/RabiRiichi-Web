@@ -108,6 +108,21 @@ describe('tableView', () => {
     expect(roundSummary(room, t)).toContain('70');
   });
 
+  it('numbers the kyoku from the dealer, not the round wind', () => {
+    // `round` is the round wind; `dealer` is the kyoku within it.
+    const at = (round: number, dealer: number): string => {
+      const room = makeRoom([makePlayer(1, 0, []), makePlayer(2, 1, [])]);
+      const info = room.info;
+      if (info) {
+        info.round = round;
+        info.dealer = dealer;
+      }
+      return roundSummary(room, t);
+    };
+    expect(at(0, 2)).toContain('East 3');
+    expect(at(1, 0)).toContain('South 1');
+  });
+
   it('renders honba when present', () => {
     const room = makeRoom([makePlayer(1, 0, []), makePlayer(2, 1, [])]);
     room.info!.honba = 2;

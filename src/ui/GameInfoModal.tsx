@@ -8,7 +8,7 @@ import {
   defaultAllowedYakus,
   isYakumanEnabled,
 } from '../domain/yakus';
-import { getWindKey, type RoomModel } from '../domain/model';
+import { getKyokuNumber, getWindKey, type RoomModel } from '../domain/model';
 import { UserStatus } from '../proto';
 import { CopyGameIdButton } from './CopyGameIdButton';
 import { Button } from './Button';
@@ -205,7 +205,7 @@ export function GameInfoModal({
                       <span className="text-white font-bold font-mono">
                         {t(`hud.${getWindKey(info.round)}`)}
                         {t('hud.windSpace')}
-                        {info.dealer + 1}
+                        {getKyokuNumber(info.dealer)}
                         {t('hud.roundSuffix')}
                       </span>
                     </div>

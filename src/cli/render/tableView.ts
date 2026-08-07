@@ -7,7 +7,11 @@
  * and color application.
  */
 import type { RoomModel, PlayerModel } from '../../domain/model';
-import { getPlayerDisplayName, getWindKey } from '../../domain/model';
+import {
+  getKyokuNumber,
+  getPlayerDisplayName,
+  getWindKey,
+} from '../../domain/model';
 import type { IGameTileMsg } from '../../proto';
 import { AiType, UserStatus } from '../../proto';
 import { deriveTileInfo } from '../../domain/tileInfo';
@@ -130,7 +134,7 @@ export function roundSummary(
   const info = room.info;
   if (!info) return '';
   const wind = t(`hud.${getWindKey(info.round)}`);
-  const kyoku = (info.round % 4) + 1;
+  const kyoku = getKyokuNumber(info.dealer);
   const parts = [`${wind} ${kyoku}`];
   if (info.honba > 0) parts.push(`${info.honba} honba`);
   parts.push(t('hud.remainingTiles', { count: info.remainingTiles }));
