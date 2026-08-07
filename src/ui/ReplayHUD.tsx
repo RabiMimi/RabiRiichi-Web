@@ -20,6 +20,7 @@ import {
   jumpToRound,
   getRoundStartIndices,
 } from '../replay/replayDriver';
+import { DEFAULT_MIN_HAN } from '../domain/constants';
 import { GameInfoPanel, TenpaiWaitPanel } from './GamePlayHUD';
 import { HandDisplay } from './HandDisplay';
 import { FullscreenButton } from './FullscreenButton';
@@ -62,7 +63,8 @@ export function ReplayHUD(): React.JSX.Element | null {
     return Object.values(selfPlayer.gameState.furiten).some(Boolean);
   }, [selfPlayer]);
 
-  const minHan = room?.config?.minHan ?? 1;
+  const minHan = room?.config?.minHan ?? DEFAULT_MIN_HAN;
+  const scoringOption = room?.config?.scoringOption ?? null;
 
   const currentRoundIdx = getCurrentRoundIndex();
   const roundStartIndices = getRoundStartIndices();
@@ -470,6 +472,7 @@ export function ReplayHUD(): React.JSX.Element | null {
         <TenpaiWaitPanel
           awaitedTiles={permanentAwaitedTiles}
           minHan={minHan}
+          scoringOption={scoringOption}
           className="absolute left-1/2 -translate-x-1/2 flex flex-col gap-1.5 bottom-[18vh]"
           isFuriten={isFuriten}
         />

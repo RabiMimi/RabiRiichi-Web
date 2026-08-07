@@ -8,6 +8,7 @@ import type {
 } from '../proto/index.js';
 import { AiType, DoraOption } from '../proto/index.js';
 import type { TileRegistry } from './tileRegistry.js';
+import { isYakuAllowed } from './yakus.js';
 
 // Dead-wall layout constants, mirroring the server (Wall.cs). The dead wall is
 // laid out at the end of the flattened initialWall as: NUM_DORA dora/ura stacks
@@ -128,7 +129,8 @@ export interface RoomModel {
 export interface RoundResultSnapshot {
   players: PlayerModel[];
   dealer: number;
-  scoringOption: number;
+  /** null when the config has not arrived; 0 is a real value (aotenjou). */
+  scoringOption: number | null;
 }
 
 // Helper functions for seat math and player lookups
@@ -172,6 +174,9 @@ export function shouldRevealHand(
  * any `bonusYaku` such as +1 for declaring riichi) meets `minHan`.
  */
 /** Yakuman worth of the wait for display; `info.yakuman` alone is the 番缚 check. */
+/** Han the server reports per yakuman in `maxHan`, and under aotenjou. */
+export const YAKUMAN_HAN = 13;
+
 export function totalYakuman(info: MappedTenpaiInfo): number {
   return info.yakuman + info.bonusYakuman;
 }
@@ -191,7 +196,15 @@ export function waitMeetsMinHan(
  * before riichi is committed, so their `han` omits the riichi yaku and would show
  * one han too few. Yakuman waits are counted separately and are not affected.
  */
-export function displayHan(info: MappedTenpaiInfo, bonusYaku = 0): number {
+export function displayHan(
+  info: MappedTenpaiInfo,
+  bonusYaku = 0,
+  yakumanEnabled = true,
+): number {
+  // Under aotenjou the server keeps yakuman out of `han`, so fold it back in.
+  if (!yakumanEnabled) {
+    return info.han + totalYakuman(info) * YAKUMAN_HAN + bonusYaku;
+  }
   if (totalYakuman(info) > 0) return info.han;
   return info.han + bonusYaku;
 }
@@ -213,8 +226,14 @@ export function isDoubleRiichiOpportunity(
 }
 
 /** Han riichi guarantees: 2 for a double riichi, otherwise 1. */
-export function riichiBonusHan(players: readonly PlayerModel[]): number {
-  return isDoubleRiichiOpportunity(players) ? 2 : 1;
+export function riichiBonusHan(
+  players: readonly PlayerModel[],
+  allowedYakus?: readonly string[] | null,
+): number {
+  const doubleRiichi =
+    isDoubleRiichiOpportunity(players) &&
+    isYakuAllowed(allowedYakus, 'DoubleRiichi');
+  return doubleRiichi ? 2 : 1;
 }
 
 /**
@@ -227,10 +246,12 @@ export function riichiBonusHan(players: readonly PlayerModel[]): number {
 export function applyRiichiBonusToWaits(
   waits: MappedTenpaiInfo[],
   bonusHan = 1,
+  yakumanEnabled = true,
 ): MappedTenpaiInfo[] {
   // Bare `yakuman`: a bonus-yakuman wait still needs the riichi han to clear 番缚.
+  // Under aotenjou han is additive with no cap, so even a yakuman wait gains it.
   return waits.map((info) =>
-    info.yakuman > 0
+    info.yakuman > 0 && yakumanEnabled
       ? info
       : {
           ...info,
@@ -240,9 +261,6 @@ export function applyRiichiBonusToWaits(
         },
   );
 }
-
-/** Han the server reports per yakuman in `maxHan`. */
-const YAKUMAN_HAN = 13;
 
 export type YakumanOutlook = 'confirmed' | 'chance' | null;
 

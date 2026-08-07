@@ -31,7 +31,7 @@ import {
   getRoundStartIndices,
   jumpToRound,
 } from '../replay/replayDriver';
-import { filterYakuListForDisplay } from '../domain/yakus';
+import { filterYakuListForDisplay, isYakumanEnabled } from '../domain/yakus';
 import {
   getYakuVoiceLineId,
   getYakuhaiWindVoiceLineId,
@@ -275,13 +275,16 @@ export function ResultPanel(): React.JSX.Element | null {
         // 1b. Reveal the total and start its limit voice in the same frame.
         if (!isActive()) return;
         let limitVoiceId: string | null = null;
-        if (agari.scores?.result && !agari.isNagashi) {
+        // Aotenjou has no limit hands, so there is nothing to announce.
+        if (
+          agari.scores?.result &&
+          !agari.isNagashi &&
+          isYakumanEnabled(scoringOption)
+        ) {
           const result = agari.scores.result;
 
           if (result.finalYakuman && result.finalYakuman > 0) {
-            const isAotenjou =
-              scoringOption != null && (scoringOption & 2) === 0;
-            if (result.kazoeYakuman && result.kazoeYakuman > 0 && !isAotenjou) {
+            if (result.kazoeYakuman && result.kazoeYakuman > 0) {
               limitVoiceId = 'kazoeYakuman';
             } else {
               const count = result.finalYakuman;

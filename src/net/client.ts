@@ -1289,7 +1289,10 @@ export class RabiRiichiClient {
           action.type === 'riichi'
             ? applyRiichiBonusToWaits(
                 match.tenpaiInfos,
-                riichiBonusHan(this.room?.players ?? []),
+                riichiBonusHan(
+                  this.room?.players ?? [],
+                  this.room?.config?.allowedYakus,
+                ),
               )
             : match.tenpaiInfos;
         this.setLocalPlayerAwaitedTiles(waits);

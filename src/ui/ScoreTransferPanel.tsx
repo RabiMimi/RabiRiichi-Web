@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import { getPlayerDisplayName } from '../domain/model';
+import { DEFAULT_INITIAL_POINTS } from '../domain/constants';
 
 interface ScoreTransferPanelProps {
   resultPlayers: PlayerModel[];
@@ -43,7 +44,7 @@ export function ScoreTransferPanel({
           const currentPoints =
             p.gameState?.points ??
             room.config?.pointThreshold?.initialPoints ??
-            25000;
+            DEFAULT_INITIAL_POINTS;
           const prevPoints = currentPoints - delta;
 
           const isPositive = delta > 0;

@@ -405,6 +405,40 @@ describe('getAiTypeName', () => {
   });
 });
 
+describe('aotenjou waits', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 2,
+    yakuHan: 2,
+    fu: 30,
+    yakuman: 0,
+    bonusYakuman: 0,
+    points: 0,
+    maxHan: 2,
+    ...over,
+  });
+
+  it('folds a yakuman into the han count when yakuman is disabled', () => {
+    const yakumanWait = wait({ yakuman: 1 });
+    // Capped rules: the yakuman replaces the han entirely.
+    expect(displayHan(yakumanWait, 1, true)).toBe(2);
+    // Aotenjou: the server leaves yakuman out of `han`, so add 13 back.
+    expect(displayHan(yakumanWait, 1, false)).toBe(2 + 13 + 1);
+    expect(displayHan(wait({ bonusYakuman: 1 }), 0, false)).toBe(2 + 13);
+    // No yakuman at all: unchanged either way.
+    expect(displayHan(wait({}), 1, false)).toBe(3);
+  });
+
+  it('still adds the riichi han to a yakuman wait under aotenjou', () => {
+    const waits = [wait({ yakuman: 1 })];
+    // Capped rules: han is decorative for a yakuman, so it is left alone.
+    expect(applyRiichiBonusToWaits(waits, 1, true)[0]?.han).toBe(2);
+    // Aotenjou: han is additive with no cap, so riichi still counts.
+    expect(applyRiichiBonusToWaits(waits, 1, false)[0]?.han).toBe(3);
+  });
+});
+
 describe('bonus yakuman waits', () => {
   const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
     winningTile: 17,
@@ -451,6 +485,21 @@ describe('bonus yakuman waits', () => {
 
     const unwinnable = wait({ bonusYakuman: 1 });
     expect(yakumanOutlook([unwinnable], { minHan: 1 })).toBe(null);
+  });
+});
+
+describe('riichiBonusHan with allowedYakus', () => {
+  const firstJun: PlayerModel[] = [
+    { id: 0, seat: 0, gameState: { jun: 1, hand: { called: [] } } },
+    { id: 1, seat: 1, gameState: { jun: 1, hand: { called: [] } } },
+  ] as unknown as PlayerModel[];
+
+  it('does not promise 2 han when DoubleRiichi is disabled', () => {
+    expect(riichiBonusHan(firstJun)).toBe(2);
+    expect(riichiBonusHan(firstJun, ['Riichi', 'DoubleRiichi'])).toBe(2);
+    expect(riichiBonusHan(firstJun, ['Riichi'])).toBe(1);
+    // An empty list means the room did not restrict anything.
+    expect(riichiBonusHan(firstJun, [])).toBe(2);
   });
 });
 

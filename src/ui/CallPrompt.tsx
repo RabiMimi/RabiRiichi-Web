@@ -13,6 +13,7 @@ import { findNewMeldCallType, type MeldCallType } from './callPromptEvents';
 import { getRyuukyokuArtwork } from './ryuukyokuArtwork';
 import { getYakumanArtwork } from './yakumanArtwork';
 import type { IMenLikeMsg } from '../proto';
+import { DEFAULT_MIN_HAN } from '../domain/constants';
 
 type CallType =
   | 'chii'
@@ -149,7 +150,7 @@ export function CallPrompt(): React.JSX.Element | null {
       const waits = viewer?.gameState?.awaitedTiles;
       if (!waits || waits.length === 0) return null;
       return yakumanOutlook(waits, {
-        minHan: room.config?.minHan ?? 1,
+        minHan: room.config?.minHan ?? DEFAULT_MIN_HAN,
         yakumanEnabled: isYakumanEnabled(room.config?.scoringOption),
         kazoeEnabled: isKazoeYakumanEnabled(room.config?.scoringOption),
       });

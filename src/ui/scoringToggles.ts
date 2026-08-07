@@ -1,3 +1,5 @@
+import { ScoringOption } from '../proto';
+
 /**
  * Which scoring options are on, and what the bitfield becomes if each is
  * toggled. Kept pure and free of React so the interlocking rules can be tested.
@@ -22,48 +24,57 @@ export function scoringToggles(
   scoringOption: number,
   isLoading: boolean,
 ): ScoringToggle[] {
+  const KIRIAGE = ScoringOption.SCORING_OPTION_KIRIAGE_MANGAN;
+  const YAKUMAN = ScoringOption.SCORING_OPTION_YAKUMAN;
+  const MULTIPLE = ScoringOption.SCORING_OPTION_MULTIPLE_YAKUMAN;
+  const KAZOE = ScoringOption.SCORING_OPTION_KAZOE_YAKUMAN;
+
   const has = (bit: number): boolean => (scoringOption & bit) !== 0;
   // Turning yakuman off clears the options that depend on it, which is the same
   // field as turning aotenjou on.
-  const yakumanOff = scoringOption & ~2 & ~4 & ~8;
-  const needsYakuman = !has(2);
+  const yakumanOff = scoringOption & ~YAKUMAN & ~MULTIPLE & ~KAZOE;
+  const needsYakuman = !has(YAKUMAN);
 
   return [
     {
       key: 'kiriageMangan',
       labelKey: 'advanced.scoring.kiriageMangan',
-      checked: has(1),
+      checked: has(KIRIAGE),
       disabled: isLoading,
-      next: scoringOption ^ 1,
+      next: scoringOption ^ KIRIAGE,
     },
     {
       key: 'aotenjou',
       labelKey: 'advanced.scoring.aotenjou',
-      checked: !has(2),
+      checked: !has(YAKUMAN),
       disabled: isLoading,
-      next: has(2) ? yakumanOff : scoringOption | 2,
+      next: has(YAKUMAN) ? yakumanOff : scoringOption | YAKUMAN,
     },
     {
       key: 'yakuman',
       labelKey: 'advanced.scoring.yakuman',
-      checked: has(2),
+      checked: has(YAKUMAN),
       disabled: isLoading,
-      next: has(2) ? yakumanOff : scoringOption | 2,
+      next: has(YAKUMAN) ? yakumanOff : scoringOption | YAKUMAN,
     },
     {
       key: 'multipleYakuman',
       labelKey: 'advanced.scoring.multipleYakuman',
-      checked: has(4),
+      checked: has(MULTIPLE),
       disabled: isLoading || needsYakuman,
       // Enabling a dependent option implies yakuman scoring.
-      next: has(4) ? scoringOption & ~4 : scoringOption | 4 | 2,
+      next: has(MULTIPLE)
+        ? scoringOption & ~MULTIPLE
+        : scoringOption | MULTIPLE | YAKUMAN,
     },
     {
       key: 'kazoeYakuman',
       labelKey: 'advanced.scoring.kazoeYakuman',
-      checked: has(8),
+      checked: has(KAZOE),
       disabled: isLoading || needsYakuman,
-      next: has(8) ? scoringOption & ~8 : scoringOption | 8 | 2,
+      next: has(KAZOE)
+        ? scoringOption & ~KAZOE
+        : scoringOption | KAZOE | YAKUMAN,
     },
   ];
 }

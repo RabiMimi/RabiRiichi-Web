@@ -18,6 +18,8 @@ import { Button } from './Button';
 import { useHoverOrTouchHold } from './useHoverOrTouchHold';
 import { rabiriichi } from '../net/client';
 import { UserStatus, FuritenType } from '../proto';
+import { DEFAULT_MIN_HAN } from '../domain/constants';
+import { isYakumanEnabled } from '../domain/yakus';
 import { pollUntil } from '../lib';
 import { Tile, checkDiscardResultsInFuriten } from '../domain/tile';
 import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
@@ -107,6 +109,8 @@ interface TenpaiWaitPanelProps {
   className?: string;
   /** Minimum yaku han required to win (番缚), from game config. */
   minHan?: number;
+  /** Table scoring rules; without them aotenjou waits mislabel as 役満. */
+  scoringOption?: number | null;
   /**
    * Extra guaranteed yaku han for these waits, on top of the server-reported
    * yaku floor. Set to 1 for riichi-button candidates (declaring riichi adds a
@@ -119,11 +123,13 @@ interface TenpaiWaitPanelProps {
 export function TenpaiWaitPanel({
   awaitedTiles,
   className = '',
-  minHan = 1,
+  minHan = DEFAULT_MIN_HAN,
+  scoringOption = null,
   bonusYaku = 0,
   isFuriten = false,
 }: TenpaiWaitPanelProps): React.JSX.Element | null {
   const { t } = useTranslation();
+  const yakumanEnabled = isYakumanEnabled(scoringOption);
   if (awaitedTiles.length === 0) return null;
 
   return (
@@ -138,7 +144,7 @@ export function TenpaiWaitPanel({
       <div className="flex flex-row gap-1 sm:gap-1.5 max-w-[90vw] overflow-x-auto">
         {awaitedTiles.map((ti, idx) => {
           const tileStr = Tile.fromByte(ti.winningTile).toString();
-          const yakuBound = totalYakuman(ti) > 0;
+          const yakuBound = yakumanEnabled && totalYakuman(ti) > 0;
           const meetsMinHan = waitMeetsMinHan(ti, minHan, bonusYaku);
           return (
             <div
@@ -170,7 +176,7 @@ export function TenpaiWaitPanel({
                     </span>
                   ) : (
                     <span>
-                      {displayHan(ti, bonusYaku)}
+                      {displayHan(ti, bonusYaku, yakumanEnabled)}
                       {t('hud.han')}
                     </span>
                   )}
@@ -258,9 +264,13 @@ export function GamePlayHUD(): React.JSX.Element | null {
     );
   }, [activeDiscardCandidate, activeTraceId, room, selfPlayer]);
 
-  const minHan = room?.config?.minHan ?? 1;
+  const minHan = room?.config?.minHan ?? DEFAULT_MIN_HAN;
+  const scoringOption = room?.config?.scoringOption ?? null;
   // 2 on the first jun: declaring riichi there is a double riichi.
-  const riichiBonus = riichiBonusHan(room?.players ?? []);
+  const riichiBonus = riichiBonusHan(
+    room?.players ?? [],
+    room?.config?.allowedYakus,
+  );
 
   const permanentAwaitedTiles = useMemo(() => {
     return selfPlayer?.gameState?.awaitedTiles ?? [];
@@ -355,6 +365,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
           <TenpaiWaitPanel
             awaitedTiles={activeDiscardCandidate.candidate.tenpaiInfos}
             minHan={minHan}
+            scoringOption={scoringOption}
             bonusYaku={activeDiscardCandidate.isRiichi ? riichiBonus : 0}
             className={`absolute left-1/2 -translate-x-1/2 flex flex-col gap-1.5 ${
               hasActionButtons ? 'bottom-[30vh]' : 'bottom-[18vh]'
@@ -370,6 +381,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
           <TenpaiWaitPanel
             awaitedTiles={permanentAwaitedTiles}
             minHan={minHan}
+            scoringOption={scoringOption}
             className={`absolute left-1/2 -translate-x-1/2 flex flex-col gap-1.5 ${
               hasActionButtons ? 'bottom-[30vh]' : 'bottom-[18vh]'
             }`}

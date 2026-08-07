@@ -142,9 +142,10 @@ export function buildAllowedYakusPayload(
 export function isYakumanEnabled(
   scoringOption: number | null | undefined,
 ): boolean {
-  return scoringOption
-    ? Boolean(scoringOption & ScoringOption.SCORING_OPTION_YAKUMAN)
-    : true;
+  // 0 is a real value (ScoringOption.Aotenjou), not "unset" — only null means
+  // the config has not arrived yet.
+  if (scoringOption == null) return true;
+  return Boolean(scoringOption & ScoringOption.SCORING_OPTION_YAKUMAN);
 }
 
 /**
@@ -154,11 +155,28 @@ export function isYakumanEnabled(
 export function isKazoeYakumanEnabled(
   scoringOption: number | null | undefined,
 ): boolean {
-  if (!scoringOption) return true;
+  if (scoringOption == null) return true;
   const required =
     ScoringOption.SCORING_OPTION_YAKUMAN |
     ScoringOption.SCORING_OPTION_KAZOE_YAKUMAN;
   return (scoringOption & required) === required;
+}
+
+/** Whether 4 han 30 fu / 3 han 60 fu round up to mangan (切上满贯). */
+export function isKiriageManganEnabled(
+  scoringOption: number | null | undefined,
+): boolean {
+  if (scoringOption == null) return false;
+  return Boolean(scoringOption & ScoringOption.SCORING_OPTION_KIRIAGE_MANGAN);
+}
+
+/** Whether a room allows a yaku. An absent or empty list means every yaku. */
+export function isYakuAllowed(
+  allowedYakus: readonly string[] | null | undefined,
+  yakuName: string,
+): boolean {
+  if (allowedYakus == null || allowedYakus.length === 0) return true;
+  return allowedYakus.includes(yakuName);
 }
 
 /** Whether a scoring row is worth a yakuman, bonus yakuman (八連荘) included. */

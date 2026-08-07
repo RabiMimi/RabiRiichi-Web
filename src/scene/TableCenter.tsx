@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useRoom, useSelf } from '../state/store';
 import { getScreenPosition, getSeatRotation } from './seat';
 import { getTableMidTexturePath, getTableCenterFontPath } from './assets';
+import { DEFAULT_INITIAL_POINTS } from '../domain/constants';
 
 /** Text colours for the info panel at the centre of the table. */
 const TABLE_CENTER_COLORS = {
@@ -135,7 +136,7 @@ export function TableCenter(): React.JSX.Element | null {
         const points =
           p.gameState?.points ??
           room.config?.pointThreshold?.initialPoints ??
-          25000;
+          DEFAULT_INITIAL_POINTS;
 
         const isRiichi = p.gameState?.isRiichiConfirmed ?? false;
 
@@ -143,7 +144,7 @@ export function TableCenter(): React.JSX.Element | null {
         const selfPoints =
           selfPlayerObj?.gameState?.points ??
           room.config?.pointThreshold?.initialPoints ??
-          25000;
+          DEFAULT_INITIAL_POINTS;
 
         let displayText = points.toString();
         let displayColor: string = TABLE_CENTER_COLORS.score;

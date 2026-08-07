@@ -5,6 +5,10 @@ import {
   buildAllowedYakusPayload,
   defaultAllowedYakus,
   filterYakuListForDisplay,
+  isKazoeYakumanEnabled,
+  isKiriageManganEnabled,
+  isYakuAllowed,
+  isYakumanEnabled,
   isYakumanScoring,
   sortYakuList,
 } from './yakus';
@@ -156,6 +160,58 @@ describe('filterYakuListForDisplay', () => {
       daisangen,
       tsuuiisou,
     ]);
+  });
+});
+
+describe('scoring option helpers', () => {
+  const {
+    SCORING_OPTION_KIRIAGE_MANGAN: KIRIAGE,
+    SCORING_OPTION_YAKUMAN: YAKUMAN,
+  } = ScoringOption;
+
+  it('treats 0 as aotenjou, not as "unset"', () => {
+    // ScoringOption.Aotenjou === None === 0, so a broadcast 0 is a real table
+    // with no yakuman -- only null means the config has not arrived.
+    expect(isYakumanEnabled(0)).toBe(false);
+    expect(isKazoeYakumanEnabled(0)).toBe(false);
+    expect(isYakumanEnabled(null)).toBe(true);
+    expect(isKazoeYakumanEnabled(undefined)).toBe(true);
+  });
+
+  it('reads each flag off the bitfield', () => {
+    expect(isYakumanEnabled(YAKUMAN)).toBe(true);
+    expect(isYakumanEnabled(KIRIAGE)).toBe(false);
+    expect(isKiriageManganEnabled(KIRIAGE)).toBe(true);
+    expect(isKiriageManganEnabled(YAKUMAN)).toBe(false);
+    expect(isKiriageManganEnabled(null)).toBe(false);
+  });
+
+  it('keeps every yaku row on an aotenjou table', () => {
+    const daisangen = {
+      Type: ScoringType.SCORING_TYPE_YAKUMAN,
+      Val: 1,
+      Src: 'Daisangen',
+    } as IScoringMsg;
+    const riichi = {
+      Type: ScoringType.SCORING_TYPE_HAN,
+      Val: 1,
+      Src: 'Riichi',
+    } as IScoringMsg;
+    expect(filterYakuListForDisplay([daisangen, riichi], 0)).toEqual([
+      riichi,
+      daisangen,
+    ]);
+  });
+});
+
+describe('isYakuAllowed', () => {
+  it('treats an absent or empty list as "everything allowed"', () => {
+    expect(isYakuAllowed(null, 'DoubleRiichi')).toBe(true);
+    expect(isYakuAllowed([], 'DoubleRiichi')).toBe(true);
+    expect(isYakuAllowed(['Riichi'], 'DoubleRiichi')).toBe(false);
+    expect(isYakuAllowed(['Riichi', 'DoubleRiichi'], 'DoubleRiichi')).toBe(
+      true,
+    );
   });
 });
 

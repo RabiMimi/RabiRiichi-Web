@@ -1,4 +1,4 @@
-import { DoraOption } from '../proto/index.js';
+import { DoraOption, ScoringOption } from '../proto/index.js';
 
 export interface PolicyOption {
   value: number;
@@ -82,8 +82,20 @@ export const RYUUKYOKU_TRIGGERS: PolicyOption[] = [
 ];
 
 export const SCORING_OPTIONS: PolicyOption[] = [
-  { value: 1, labelKey: 'advanced.scoring.kiriageMangan' },
-  { value: 2, labelKey: 'advanced.scoring.yakuman' },
-  { value: 4, labelKey: 'advanced.scoring.multipleYakuman' },
-  { value: 8, labelKey: 'advanced.scoring.kazoeYakuman' },
+  {
+    value: ScoringOption.SCORING_OPTION_KIRIAGE_MANGAN,
+    labelKey: 'advanced.scoring.kiriageMangan',
+  },
+  {
+    value: ScoringOption.SCORING_OPTION_YAKUMAN,
+    labelKey: 'advanced.scoring.yakuman',
+  },
+  {
+    value: ScoringOption.SCORING_OPTION_MULTIPLE_YAKUMAN,
+    labelKey: 'advanced.scoring.multipleYakuman',
+  },
+  {
+    value: ScoringOption.SCORING_OPTION_KAZOE_YAKUMAN,
+    labelKey: 'advanced.scoring.kazoeYakuman',
+  },
 ];

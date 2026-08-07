@@ -1,6 +1,7 @@
 import { DiscardReason, TileSource } from '../proto';
 import type { IEventMsg } from '../proto';
 import { totalYakuman } from './model';
+import { isYakuAllowed } from './yakus';
 import type { MappedTenpaiInfo, RoomModel } from './model';
 import { checkIsDora, Tile } from './tile';
 
@@ -252,7 +253,12 @@ function isFirstJun(room: RoomModel): boolean {
 }
 
 function riichiVoice(room: RoomModel, playerId: number): string {
-  if (isFirstJun(room)) return 'doubleRiichi';
+  if (
+    isFirstJun(room) &&
+    isYakuAllowed(room.config?.allowedYakus, 'DoubleRiichi')
+  ) {
+    return 'doubleRiichi';
+  }
   const opponentAlreadyRiichi = room.players.some(
     (player) =>
       player.seat !== playerId && (player.gameState?.riichiTileId ?? 0) !== 0,

@@ -3,8 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
 import type { IScoringMsg } from '../proto';
 import type { PlayerModel, RoomModel } from '../domain/model';
-import { getPlayerDisplayName } from '../domain/model';
-import { filterYakuListForDisplay, isYakumanScoring } from '../domain/yakus';
+import { YAKUMAN_HAN, getPlayerDisplayName } from '../domain/model';
+import {
+  filterYakuListForDisplay,
+  isYakumanEnabled,
+  isYakumanScoring,
+} from '../domain/yakus';
 import { getLimitName } from '../domain/resultHelpers';
 import { UiTile } from './UiTile';
 import { getGameFontStack } from './gameFont';
@@ -35,7 +39,7 @@ export function WinnerDetailCard({
 
   const scoringOption =
     room.roundResult?.scoringOption ?? room.config?.scoringOption;
-  const isAotenjou = scoringOption != null && (scoringOption & 2) === 0;
+  const isAotenjou = !isYakumanEnabled(scoringOption);
 
   const isNagashi = agari.isNagashi ?? false;
   const isTenpai = agari.isTenpai ?? false;
@@ -51,7 +55,7 @@ export function WinnerDetailCard({
 
     const effectiveHan = isAotenjou
       ? (result.han ?? 0) +
-        ((result.yakuman ?? 0) + (result.bonusYakuman ?? 0)) * 13
+        ((result.yakuman ?? 0) + (result.bonusYakuman ?? 0)) * YAKUMAN_HAN
       : (result.han ?? 0);
 
     if (result.finalYakuman && result.finalYakuman > 0 && !isAotenjou) {
@@ -91,7 +95,7 @@ export function WinnerDetailCard({
       return t('result.yakuman');
     }
     return t('result.han', {
-      count: isYakuman ? (yaku.Val ?? 1) * 13 : (yaku.Val ?? 0),
+      count: isYakuman ? (yaku.Val ?? 1) * YAKUMAN_HAN : (yaku.Val ?? 0),
     });
   };
 

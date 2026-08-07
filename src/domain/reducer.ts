@@ -42,7 +42,14 @@ import type {
   PlayerAgariState,
   MappedTenpaiInfo,
 } from './model.js';
-import { isTsumoTile } from './model.js';
+import {
+  applyRiichiBonusToWaits,
+  isTsumoTile,
+  riichiBonusHan,
+} from './model.js';
+
+import { DEFAULT_INITIAL_POINTS, DEFAULT_RIICHI_POINTS } from './constants.js';
+import { isYakumanEnabled } from './yakus.js';
 import { Tile, isTileUnknown } from './tile.js';
 import {
   createEmptyTileRegistry,
@@ -252,9 +259,10 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     info.initialWall = ev.initialWall;
   }
 
-  const initialPoints = state.config?.pointThreshold?.initialPoints
-    ? Number(state.config.pointThreshold.initialPoints)
-    : 25000;
+  const initialPoints =
+    state.config?.pointThreshold?.initialPoints != null
+      ? Number(state.config.pointThreshold.initialPoints)
+      : DEFAULT_INITIAL_POINTS;
 
   // beginGameEvent starts a new round of the CURRENT game (points accumulate
   // across rounds) unless the previous game already ended, in which case this
@@ -427,25 +435,30 @@ function handleDiscardTile(
 
     const awaitedTiles =
       rawWaits !== undefined && rawWaits !== null
-        ? rawWaits.map((ti): MappedTenpaiInfo => {
-            const winningTile = ti.winningTile ?? 0;
-            const riichiBonus = ev.isRiichi && (ti.yakuman ?? 0) === 0 ? 1 : 0;
-            return {
-              winningTile,
-              remainingCount: countRemainingWinningTile(
+        ? applyRiichiBonusToWaits(
+            rawWaits.map((ti): MappedTenpaiInfo => {
+              const winningTile = ti.winningTile ?? 0;
+              return {
                 winningTile,
-                visibleKinds,
-                tileSetCounts,
-              ),
-              han: (ti.han ?? 0) + riichiBonus,
-              yakuHan: (ti.yakuHan ?? 0) + riichiBonus,
-              fu: ti.fu ?? 0,
-              yakuman: ti.yakuman ?? 0,
-              bonusYakuman: ti.bonusYakuman ?? 0,
-              points: ti.points ?? 0,
-              maxHan: (ti.maxHan ?? 0) + riichiBonus,
-            };
-          })
+                remainingCount: countRemainingWinningTile(
+                  winningTile,
+                  visibleKinds,
+                  tileSetCounts,
+                ),
+                han: ti.han ?? 0,
+                yakuHan: ti.yakuHan ?? 0,
+                fu: ti.fu ?? 0,
+                yakuman: ti.yakuman ?? 0,
+                bonusYakuman: ti.bonusYakuman ?? 0,
+                points: ti.points ?? 0,
+                maxHan: ti.maxHan ?? 0,
+              };
+            }),
+            ev.isRiichi
+              ? riichiBonusHan(state.players, state.config?.allowedYakus)
+              : 0,
+            isYakumanEnabled(state.config?.scoringOption),
+          )
         : rawWaits === null
           ? undefined
           : p.gameState.awaitedTiles;
@@ -726,9 +739,10 @@ function handleRevealDora(
 function handleSetRiichi(state: RoomModel, ev: ISetRiichiEventMsg): RoomModel {
   // A set-riichi event is a riichi declaration: deduct the riichi stick from
   // the declaring player and add it to the table pot.
-  const riichiPoints = state.config?.pointThreshold?.riichiPoints
-    ? Number(state.config.pointThreshold.riichiPoints)
-    : 1000;
+  const riichiPoints =
+    state.config?.pointThreshold?.riichiPoints != null
+      ? Number(state.config.pointThreshold.riichiPoints)
+      : DEFAULT_RIICHI_POINTS;
 
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (p.seat !== ev.playerId || !p.gameState) return p;
@@ -938,7 +952,7 @@ function handleApplyScore(
     roundResult: {
       players: updatedPlayers.map((p) => ({ ...p })),
       dealer: state.info?.dealer ?? 0,
-      scoringOption: state.config?.scoringOption ?? 0,
+      scoringOption: state.config?.scoringOption ?? null,
     },
   };
 }
@@ -1157,7 +1171,7 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
     roundResult: {
       players: updatedPlayers.map((p) => ({ ...p })),
       dealer: state.info?.dealer ?? 0,
-      scoringOption: state.config?.scoringOption ?? 0,
+      scoringOption: state.config?.scoringOption ?? null,
     },
   };
 }

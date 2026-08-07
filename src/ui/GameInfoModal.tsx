@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
-import { YAKUS, YAKU_GROUPS, defaultAllowedYakus } from '../domain/yakus';
+import {
+  YAKUS,
+  YAKU_GROUPS,
+  defaultAllowedYakus,
+  isYakumanEnabled,
+} from '../domain/yakus';
 import { getWindKey, type RoomModel } from '../domain/model';
 import { UserStatus } from '../proto';
 import { CopyGameIdButton } from './CopyGameIdButton';
@@ -41,8 +46,7 @@ function getActivePolicyLabels(
     }
   }
 
-  // Custom check for Aotenjou: if it is SCORING_OPTIONS and bit 2 (yakuman) is not set, then Aotenjou is active!
-  if (options === SCORING_OPTIONS && (value & 2) === 0) {
+  if (options === SCORING_OPTIONS && !isYakumanEnabled(value)) {
     active.push(t('advanced.scoring.aotenjou'));
   }
 

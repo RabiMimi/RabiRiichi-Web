@@ -1,3 +1,5 @@
+import { isKiriageManganEnabled } from './yakus';
+
 export const SILENT_WAV_URL =
   'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA';
 
@@ -170,7 +172,7 @@ export function getLimitName(
   if (han >= 6) return 'haneman';
   if (han >= 5) return 'mangan';
 
-  const hasKiriage = (scoringOption & 1) !== 0;
+  const hasKiriage = isKiriageManganEnabled(scoringOption);
   let score = fu * (1 << (han + 2));
   if (hasKiriage && score > 1900 && score < 2000) {
     score = 2000;
