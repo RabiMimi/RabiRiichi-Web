@@ -95,7 +95,11 @@ function decide(
   });
 }
 
-function wait(points: number, yakuman: number): MappedTenpaiInfo {
+function wait(
+  points: number,
+  yakuman: number,
+  bonusYakuman = 0,
+): MappedTenpaiInfo {
   return {
     winningTile: Tile.fromString('1m').toByte(),
     remainingCount: 1,
@@ -103,6 +107,7 @@ function wait(points: number, yakuman: number): MappedTenpaiInfo {
     yakuHan: 0,
     fu: 0,
     yakuman,
+    bonusYakuman,
     points,
     maxHan: 0,
   };
@@ -446,6 +451,10 @@ describe('game voice decisions', () => {
     expect(highestPointTenpaiIsYakuman([wait(32000, 0), wait(48000, 1)])).toBe(
       true,
     );
+    // 八連荘 announces like a real yakuman
+    expect(
+      highestPointTenpaiIsYakuman([wait(32000, 0), wait(48000, 0, 1)]),
+    ).toBe(true);
 
     const after = room(20, [wait(48000, 1)]);
     const decision = decide(

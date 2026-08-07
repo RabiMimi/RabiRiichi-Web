@@ -151,6 +151,7 @@ export function hydrateFromGameState(
         yakuHan: ti.yakuHan ?? 0,
         fu: ti.fu ?? 0,
         yakuman: ti.yakuman ?? 0,
+        bonusYakuman: ti.bonusYakuman ?? 0,
         points: ti.points ? Number(ti.points) : 0,
         maxHan: ti.maxHan ?? 0,
       };
@@ -440,6 +441,7 @@ function handleDiscardTile(
               yakuHan: (ti.yakuHan ?? 0) + riichiBonus,
               fu: ti.fu ?? 0,
               yakuman: ti.yakuman ?? 0,
+              bonusYakuman: ti.bonusYakuman ?? 0,
               points: ti.points ?? 0,
               maxHan: (ti.maxHan ?? 0) + riichiBonus,
             };
@@ -1119,6 +1121,7 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
         yakuHan: 0,
         fu: 0,
         yakuman: 0,
+        bonusYakuman: 0,
         points: 0,
         maxHan: 0,
       }));

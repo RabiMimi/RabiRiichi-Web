@@ -60,7 +60,10 @@ export interface MappedTenpaiInfo {
   han: number;
   yakuHan: number; // han counting only yaku (excludes dora); for the 番缚 check
   fu: number;
+  // Yakuman that can satisfy 番缚, bonus excluded (as `yakuHan` excludes dora).
   yakuman: number;
+  // Scores and announces like a yakuman, but cannot satisfy 番缚.
+  bonusYakuman: number;
   points: number;
   // Total han (dora included, luck excluded) if the wait completes the best
   // way, ron or tsumo; the fields above are the ron floor. A yakuman counts
@@ -168,6 +171,11 @@ export function shouldRevealHand(
  * winnable if it has a yakuman, or its guaranteed yaku han (excluding dora, plus
  * any `bonusYaku` such as +1 for declaring riichi) meets `minHan`.
  */
+/** Yakuman worth of the wait for display; `info.yakuman` alone is the 番缚 check. */
+export function totalYakuman(info: MappedTenpaiInfo): number {
+  return info.yakuman + info.bonusYakuman;
+}
+
 export function waitMeetsMinHan(
   info: MappedTenpaiInfo,
   minHan: number,
@@ -184,7 +192,7 @@ export function waitMeetsMinHan(
  * one han too few. Yakuman waits are counted separately and are not affected.
  */
 export function displayHan(info: MappedTenpaiInfo, bonusYaku = 0): number {
-  if (info.yakuman > 0) return info.han;
+  if (totalYakuman(info) > 0) return info.han;
   return info.han + bonusYaku;
 }
 
@@ -220,6 +228,7 @@ export function applyRiichiBonusToWaits(
   waits: MappedTenpaiInfo[],
   bonusHan = 1,
 ): MappedTenpaiInfo[] {
+  // Bare `yakuman`: a bonus-yakuman wait still needs the riichi han to clear 番缚.
   return waits.map((info) =>
     info.yakuman > 0
       ? info
@@ -279,7 +288,7 @@ export function yakumanOutlook(
 
   // Confirmed only when every wait guarantees one; a single cheap wait means
   // the player can still finish without a yakuman. `han` is the ron floor.
-  if (winnable.every((info) => info.yakuman > 0 || isKazoe(info.han))) {
+  if (winnable.every((info) => totalYakuman(info) > 0 || isKazoe(info.han))) {
     return 'confirmed';
   }
 

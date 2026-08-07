@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
-import { YAKUS } from '../domain/yakus';
+import { YAKUS, YAKU_GROUPS, defaultAllowedYakus } from '../domain/yakus';
 import { getWindKey, type RoomModel } from '../domain/model';
 import { UserStatus } from '../proto';
 import { CopyGameIdButton } from './CopyGameIdButton';
@@ -108,11 +108,12 @@ export function GameInfoModal({
 
   // Tab: Yaku & Yama
   const allowedYakus = config?.allowedYakus;
+  // A room that never sent a list runs the server defaults, which omit 古役.
   const allowedSet =
-    allowedYakus && allowedYakus.length > 0 ? new Set(allowedYakus) : null;
-  const activeYakus = YAKUS.filter(
-    (y) => !allowedSet || allowedSet.has(y.name),
-  );
+    allowedYakus && allowedYakus.length > 0
+      ? new Set(allowedYakus)
+      : defaultAllowedYakus();
+  const activeYakus = YAKUS.filter((y) => allowedSet.has(y.name));
 
   const tileBytes = config?.initialTiles ?? [];
   const counts: Record<number, number> = {};
@@ -522,34 +523,32 @@ export function GameInfoModal({
                   {t('hud.allowedYakus')} ({activeYakus.length})
                 </h4>
                 <div className="flex flex-col gap-2">
-                  {['1han', '2han', '3han', '6han', 'yakuman', 'other'].map(
-                    (group) => {
-                      const groupYakus = activeYakus.filter(
-                        (y) => y.group === group,
-                      );
-                      if (groupYakus.length === 0) return null;
-                      return (
-                        <div
-                          key={group}
-                          className="flex flex-wrap items-baseline gap-1.5 text-sm"
-                        >
-                          <span className="text-[#888] font-bold min-w-[70px] shrink-0">
-                            {t(`yakuGroup.${group}`)}:
-                          </span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {groupYakus.map((yaku) => (
-                              <span
-                                key={yaku.name}
-                                className="bg-[#1a1a1a] border border-[#333] rounded px-2 py-0.5 text-[#ccc] text-sm"
-                              >
-                                {t(`yaku.${yaku.name}`)}
-                              </span>
-                            ))}
-                          </div>
+                  {YAKU_GROUPS.map((group) => {
+                    const groupYakus = activeYakus.filter(
+                      (y) => y.group === group,
+                    );
+                    if (groupYakus.length === 0) return null;
+                    return (
+                      <div
+                        key={group}
+                        className="flex flex-wrap items-baseline gap-1.5 text-sm"
+                      >
+                        <span className="text-[#888] font-bold min-w-[70px] shrink-0">
+                          {t(`yakuGroup.${group}`)}:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {groupYakus.map((yaku) => (
+                            <span
+                              key={yaku.name}
+                              className="bg-[#1a1a1a] border border-[#333] rounded px-2 py-0.5 text-[#ccc] text-sm"
+                            >
+                              {t(`yaku.${yaku.name}`)}
+                            </span>
+                          ))}
                         </div>
-                      );
-                    },
-                  )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

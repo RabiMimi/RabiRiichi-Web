@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tile } from '../domain/tile';
-import { ScoringType } from '../proto';
+import type { IScoringMsg } from '../proto';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import { getPlayerDisplayName } from '../domain/model';
-import { filterYakuListForDisplay } from '../domain/yakus';
+import { filterYakuListForDisplay, isYakumanScoring } from '../domain/yakus';
 import { getLimitName } from '../domain/resultHelpers';
 import { UiTile } from './UiTile';
 import { getGameFontStack } from './gameFont';
@@ -50,7 +50,8 @@ export function WinnerDetailCard({
     const result = agari.scores.result;
 
     const effectiveHan = isAotenjou
-      ? (result.han ?? 0) + (result.yakuman ?? 0) * 13
+      ? (result.han ?? 0) +
+        ((result.yakuman ?? 0) + (result.bonusYakuman ?? 0)) * 13
       : (result.han ?? 0);
 
     if (result.finalYakuman && result.finalYakuman > 0 && !isAotenjou) {
@@ -79,6 +80,20 @@ export function WinnerDetailCard({
       }
     }
   }
+
+  /** Right-hand label on a yaku row. */
+  const yakuTypeLabel = (yaku: IScoringMsg): string => {
+    if (yaku.Src === 'NagashiMangan') {
+      return '';
+    }
+    const isYakuman = isYakumanScoring(yaku.Type);
+    if (isYakuman && !isAotenjou) {
+      return t('result.yakuman');
+    }
+    return t('result.han', {
+      count: isYakuman ? (yaku.Val ?? 1) * 13 : (yaku.Val ?? 0),
+    });
+  };
 
   const rawYakuList = agari.scores?.items ?? [];
   const yakuList = filterYakuListForDisplay(rawYakuList, scoringOption);
@@ -226,18 +241,7 @@ export function WinnerDetailCard({
               .slice(0, Math.ceil(yakuList.length / 2))
               .map((yaku, idx) => {
                 const globalIdx = idx;
-                const typeLabel =
-                  yaku.Src === 'NagashiMangan'
-                    ? ''
-                    : yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN &&
-                        !isAotenjou
-                      ? t('result.yakuman')
-                      : t('result.han', {
-                          count:
-                            yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
-                              ? (yaku.Val ?? 1) * 13
-                              : (yaku.Val ?? 0),
-                        });
+                const typeLabel = yakuTypeLabel(yaku);
                 const isRevealed = globalIdx < visibleYakuCount;
                 return (
                   <div
@@ -264,18 +268,7 @@ export function WinnerDetailCard({
             {yakuList.slice(Math.ceil(yakuList.length / 2)).map((yaku, idx) => {
               const half = Math.ceil(yakuList.length / 2);
               const globalIdx = half + idx;
-              const typeLabel =
-                yaku.Src === 'NagashiMangan'
-                  ? ''
-                  : yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN &&
-                      !isAotenjou
-                    ? t('result.yakuman')
-                    : t('result.han', {
-                        count:
-                          yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
-                            ? (yaku.Val ?? 1) * 13
-                            : (yaku.Val ?? 0),
-                      });
+              const typeLabel = yakuTypeLabel(yaku);
               const isRevealed = globalIdx < visibleYakuCount;
               return (
                 <div

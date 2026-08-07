@@ -14,6 +14,7 @@ import {
   applyRiichiBonusToWaits,
   riichiBonusHan,
   yakumanOutlook,
+  totalYakuman,
   deadWallRinshanCount,
   NUM_RINSHAN,
   type PlayerModel,
@@ -187,6 +188,7 @@ describe('waitMeetsMinHan', () => {
     yakuHan: 0,
     fu: 30,
     yakuman: 0,
+    bonusYakuman: 0,
     points: 0,
     maxHan: 0,
     ...over,
@@ -226,6 +228,7 @@ describe('displayHan', () => {
     yakuHan: 0,
     fu: 30,
     yakuman: 0,
+    bonusYakuman: 0,
     points: 0,
     maxHan: 0,
     ...over,
@@ -253,6 +256,7 @@ describe('applyRiichiBonusToWaits', () => {
     yakuHan: 0,
     fu: 30,
     yakuman: 0,
+    bonusYakuman: 0,
     points: 0,
     maxHan: 0,
     ...over,
@@ -401,6 +405,55 @@ describe('getAiTypeName', () => {
   });
 });
 
+describe('bonus yakuman waits', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 0,
+    yakuHan: 0,
+    fu: 30,
+    yakuman: 0,
+    bonusYakuman: 0,
+    points: 0,
+    maxHan: 0,
+    ...over,
+  });
+
+  it('does not let a bonus yakuman satisfy 番缚', () => {
+    expect(waitMeetsMinHan(wait({ bonusYakuman: 1 }), 1)).toBe(false);
+    expect(waitMeetsMinHan(wait({ bonusYakuman: 1, yakuHan: 1 }), 1)).toBe(
+      true,
+    );
+    expect(waitMeetsMinHan(wait({ yakuman: 1 }), 1)).toBe(true);
+  });
+
+  it('still adds the riichi han to a bonus yakuman wait', () => {
+    // A real yakuman ignores the bonus; 八連荘 does not, because the hand
+    // still needs the riichi han to clear 番缚.
+    const [bonus] = applyRiichiBonusToWaits([wait({ bonusYakuman: 1 })], 1);
+    expect(bonus?.yakuHan).toBe(1);
+    expect(waitMeetsMinHan(bonus!, 1)).toBe(true);
+
+    const [real] = applyRiichiBonusToWaits([wait({ yakuman: 1 })], 1);
+    expect(real?.yakuHan).toBe(0);
+  });
+
+  it('counts a bonus yakuman for display', () => {
+    expect(totalYakuman(wait({ bonusYakuman: 1 }))).toBe(1);
+    expect(totalYakuman(wait({ yakuman: 1, bonusYakuman: 1 }))).toBe(2);
+    expect(totalYakuman(wait({}))).toBe(0);
+    expect(displayHan(wait({ bonusYakuman: 1, han: 3 }), 1)).toBe(3);
+  });
+
+  it('announces a winnable bonus yakuman but ignores an unwinnable one', () => {
+    const winnable = wait({ bonusYakuman: 1, yakuHan: 1, han: 1, maxHan: 1 });
+    expect(yakumanOutlook([winnable], { minHan: 1 })).toBe('confirmed');
+
+    const unwinnable = wait({ bonusYakuman: 1 });
+    expect(yakumanOutlook([unwinnable], { minHan: 1 })).toBe(null);
+  });
+});
+
 describe('yakumanOutlook', () => {
   const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
     winningTile: 17,
@@ -409,6 +462,7 @@ describe('yakumanOutlook', () => {
     yakuHan: 1,
     fu: 30,
     yakuman: 0,
+    bonusYakuman: 0,
     points: 0,
     maxHan: 1,
     ...over,

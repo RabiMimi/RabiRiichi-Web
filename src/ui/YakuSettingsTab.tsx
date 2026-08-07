@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Toggle } from './Toggle';
-import type { YakuInfo } from '../domain/yakus';
+import { YAKU_GROUPS, type YakuInfo } from '../domain/yakus';
 
 interface YakuSettingsTabProps {
   allowedYakus: Set<string>;
@@ -18,7 +18,7 @@ export function YakuSettingsTab({
   return (
     <div className="flex flex-col flex-1">
       <div className="flex-1 max-h-[250px] overflow-y-auto pr-2 flex flex-col gap-4">
-        {['1han', '2han', '3han', '6han', 'yakuman', 'other'].map((group) => {
+        {YAKU_GROUPS.map((group) => {
           const groupYakus = availableYakus.filter((y) => y.group === group);
           if (groupYakus.length === 0) return null;
 

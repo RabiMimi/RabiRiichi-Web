@@ -37,7 +37,7 @@ import {
 } from '../domain/constants';
 import type { IGameConfigMsg } from '../proto';
 import { getTileSet, type TileSetPresetName } from '../domain/tilesets';
-import { buildAllowedYakusPayload } from '../domain/yakus';
+import { buildAllowedYakusPayload, defaultAllowedYakus } from '../domain/yakus';
 import { useAvailableYakus } from '../state/store';
 import { GameSettingsTab } from './GameSettingsTab';
 import { PointsSettingsTab } from './PointsSettingsTab';
@@ -173,7 +173,8 @@ export function RoomConfigPanel({
     if (savedConfig?.allowedYakus) {
       return new Set(savedConfig.allowedYakus);
     }
-    return new Set(availableYakus.map((y) => y.name));
+    // 古役 are opt-in: everything else starts enabled.
+    return defaultAllowedYakus(availableYakus);
   });
   // Advanced policy states (matching server defaults)
   const [renchanPolicy, setRenchanPolicy] = useState<number>(

@@ -134,6 +134,9 @@ export function getYakuVoiceLineId(
       return 'junseiChuuren';
     case 'HelloWorld':
       return 'helloWorld';
+    // Recorded voice id does not match the default camelCase derivation.
+    case 'ShiiaruRaotai':
+      return 'shiiaruraotai';
     case 'Dora':
     case 'Akadora':
     case 'Uradora':

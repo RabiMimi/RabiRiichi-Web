@@ -3,7 +3,7 @@ export type VoiceCategory =
   | 'yaku1'
   | 'yaku2'
   | 'yakuman'
-  | 'koten'
+  | 'koyaku'
   | 'dora'
   | 'points'
   | 'special';
@@ -14,7 +14,7 @@ export const VOICE_CATEGORIES: readonly VoiceCategory[] = [
   'yaku1',
   'yaku2',
   'yakuman',
-  'koten',
+  'koyaku',
   'dora',
   'points',
   'special',
@@ -112,34 +112,34 @@ const MIMI_VOICE_IDS: readonly { id: string; category: VoiceCategory }[] = [
   { id: 'junseiChuuren', category: 'yakuman' },
   { id: 'helloWorld', category: 'yakuman' },
 
-  // 古役 (classical / koten yaku)
-  { id: 'tsubameGaeshi', category: 'koten' },
-  { id: 'kanburi', category: 'koten' },
-  { id: 'shiiaruraotai', category: 'koten' },
-  { id: 'shousanfon', category: 'koten' },
-  { id: 'sanrenkou', category: 'koten' },
-  { id: 'sanfonkou', category: 'koten' },
-  { id: 'suurenkou', category: 'koten' },
-  { id: 'chaopaikou', category: 'koten' },
-  { id: 'chinpaikou', category: 'koten' },
-  { id: 'isshokuSandoujun', category: 'koten' },
-  { id: 'isshokuYondoujun', category: 'koten' },
-  { id: 'chinpeikou', category: 'koten' },
-  { id: 'ryanankan', category: 'koten' },
-  { id: 'sanankan', category: 'koten' },
-  { id: 'renhou', category: 'koten' },
-  { id: 'daisharin', category: 'koten' },
-  { id: 'daichikurin', category: 'koten' },
-  { id: 'daisuurin', category: 'koten' },
-  { id: 'shiisanputa', category: 'koten' },
-  { id: 'shiisuuputa', category: 'koten' },
-  { id: 'paarenchan', category: 'koten' },
-  { id: 'benikujaku', category: 'koten' },
-  { id: 'heiiisou', category: 'koten' },
-  { id: 'uumensai', category: 'koten' },
-  { id: 'daichiishin', category: 'koten' },
-  { id: 'ishiNoUeNiMoSannen', category: 'koten' },
-  { id: 'katengecchi', category: 'koten' },
+  // 古役 (koyaku / classical yaku)
+  { id: 'tsubameGaeshi', category: 'koyaku' },
+  { id: 'kanburi', category: 'koyaku' },
+  { id: 'shiiaruraotai', category: 'koyaku' },
+  { id: 'shousanfon', category: 'koyaku' },
+  { id: 'sanrenkou', category: 'koyaku' },
+  { id: 'sanfonkou', category: 'koyaku' },
+  { id: 'suurenkou', category: 'koyaku' },
+  { id: 'chaopaikou', category: 'koyaku' },
+  { id: 'chinpaikou', category: 'koyaku' },
+  { id: 'isshokuSandoujun', category: 'koyaku' },
+  { id: 'isshokuYondoujun', category: 'koyaku' },
+  { id: 'chinpeikou', category: 'koyaku' },
+  { id: 'ryanankan', category: 'koyaku' },
+  { id: 'sanankan', category: 'koyaku' },
+  { id: 'renhou', category: 'koyaku' },
+  { id: 'daisharin', category: 'koyaku' },
+  { id: 'daichikurin', category: 'koyaku' },
+  { id: 'daisuurin', category: 'koyaku' },
+  { id: 'shiisanputa', category: 'koyaku' },
+  { id: 'shiisuuputa', category: 'koyaku' },
+  { id: 'paarenchan', category: 'koyaku' },
+  { id: 'benikujaku', category: 'koyaku' },
+  { id: 'heiiisou', category: 'koyaku' },
+  { id: 'uumensai', category: 'koyaku' },
+  { id: 'daichiishin', category: 'koyaku' },
+  { id: 'ishiNoUeNiMoSannen', category: 'koyaku' },
+  { id: 'katengecchi', category: 'koyaku' },
 
   // ドラ (dora counts)
   { id: 'dora1', category: 'dora' },

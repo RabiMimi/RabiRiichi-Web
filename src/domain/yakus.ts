@@ -1,9 +1,26 @@
 import { type IScoringMsg, ScoringType, ScoringOption } from '../proto';
 
+export type YakuGroup =
+  '1han' | '2han' | '3han' | '6han' | 'yakuman' | 'koyaku' | 'other';
+
 export interface YakuInfo {
   name: string;
-  group: '1han' | '2han' | '3han' | '6han' | 'yakuman' | 'other';
+  group: YakuGroup;
 }
+
+/** Groups rendered in the room's yaku picker, in display order. */
+export const YAKU_GROUPS: readonly YakuGroup[] = [
+  '1han',
+  '2han',
+  '3han',
+  '6han',
+  'yakuman',
+  'koyaku',
+  'other',
+];
+
+/** Not standard riichi rules; opt-in per room. */
+export const KOYAKU_GROUP: YakuGroup = 'koyaku';
 
 export const YAKUS: YakuInfo[] = [
   // 1 Han
@@ -61,9 +78,47 @@ export const YAKUS: YakuInfo[] = [
   { name: 'ChuurenPoutou', group: 'yakuman' },
   { name: 'JunseiChuurenPoutou', group: 'yakuman' },
 
+  // 古役 (koyaku, off by default)
+  { name: 'TsubameGaeshi', group: 'koyaku' },
+  { name: 'Kanburi', group: 'koyaku' },
+  { name: 'ShiiaruRaotai', group: 'koyaku' },
+  { name: 'Shousanfon', group: 'koyaku' },
+  { name: 'Sanrenkou', group: 'koyaku' },
+  { name: 'Sanfonkou', group: 'koyaku' },
+  { name: 'Chaopaikou', group: 'koyaku' },
+  { name: 'Chinpaikou', group: 'koyaku' },
+  { name: 'Uumensai', group: 'koyaku' },
+  { name: 'Ryanankan', group: 'koyaku' },
+  { name: 'IsshokuSandoujun', group: 'koyaku' },
+  { name: 'Chinpeikou', group: 'koyaku' },
+  { name: 'Suurenkou', group: 'koyaku' },
+  { name: 'IsshokuYondoujun', group: 'koyaku' },
+  { name: 'Sanankan', group: 'koyaku' },
+  { name: 'Renhou', group: 'koyaku' },
+  { name: 'Katengecchi', group: 'koyaku' },
+  { name: 'IshiNoUeNiMoSannen', group: 'koyaku' },
+  { name: 'Heiiisou', group: 'koyaku' },
+  { name: 'Benikujaku', group: 'koyaku' },
+  { name: 'Daisharin', group: 'koyaku' },
+  { name: 'Daichikurin', group: 'koyaku' },
+  { name: 'Daisuurin', group: 'koyaku' },
+  { name: 'Shiisanputa', group: 'koyaku' },
+  { name: 'Shiisuuputa', group: 'koyaku' },
+  { name: 'Paarenchan', group: 'koyaku' },
+  { name: 'Daichiishin', group: 'koyaku' },
+
   // Other
   { name: 'HelloWorld', group: 'other' },
 ];
+
+/** The yaku a room starts with: everything except 古役, which are opt-in. */
+export function defaultAllowedYakus(
+  available: readonly YakuInfo[] = YAKUS,
+): Set<string> {
+  return new Set(
+    available.filter((y) => y.group !== KOYAKU_GROUP).map((y) => y.name),
+  );
+}
 
 /**
  * Builds the `allowedYakus` payload for a create-room request.
@@ -106,17 +161,25 @@ export function isKazoeYakumanEnabled(
   return (scoringOption & required) === required;
 }
 
+/** Whether a scoring row is worth a yakuman, bonus yakuman (八連荘) included. */
+export function isYakumanScoring(
+  type: ScoringType | null | undefined,
+): boolean {
+  return (
+    type === ScoringType.SCORING_TYPE_YAKUMAN ||
+    type === ScoringType.SCORING_TYPE_BONUS_YAKUMAN
+  );
+}
+
 export function filterYakuListForDisplay(
   rawYakuList: IScoringMsg[],
   scoringOption: number | null | undefined,
 ): IScoringMsg[] {
   const yakumanEnabled = isYakumanEnabled(scoringOption);
-  const hasYakuman = rawYakuList.some(
-    (y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN,
-  );
+  const hasYakuman = rawYakuList.some((y) => isYakumanScoring(y.Type));
   const filtered =
     yakumanEnabled && hasYakuman
-      ? rawYakuList.filter((y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN)
+      ? rawYakuList.filter((y) => isYakumanScoring(y.Type))
       : rawYakuList.filter((y) => y.Type !== ScoringType.SCORING_TYPE_FU);
   return sortYakuList(filtered);
 }

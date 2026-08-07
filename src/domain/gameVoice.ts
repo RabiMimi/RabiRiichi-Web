@@ -1,5 +1,6 @@
 import { DiscardReason, TileSource } from '../proto';
 import type { IEventMsg } from '../proto';
+import { totalYakuman } from './model';
 import type { MappedTenpaiInfo, RoomModel } from './model';
 import { checkIsDora, Tile } from './tile';
 
@@ -89,7 +90,7 @@ export function highestPointTenpaiIsYakuman(
   if (waits.length === 0) return false;
   const highestPoints = Math.max(...waits.map((wait) => wait.points));
   return waits.some(
-    (wait) => wait.points === highestPoints && wait.yakuman > 0,
+    (wait) => wait.points === highestPoints && totalYakuman(wait) > 0,
   );
 }
 

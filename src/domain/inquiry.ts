@@ -152,6 +152,7 @@ function mapDiscardCandidates(
         yakuHan: ti.yakuHan ?? 0,
         fu: ti.fu ?? 0,
         yakuman: ti.yakuman ?? 0,
+        bonusYakuman: ti.bonusYakuman ?? 0,
         points: safeToNumber(ti.points),
         maxHan: ti.maxHan ?? 0,
       };

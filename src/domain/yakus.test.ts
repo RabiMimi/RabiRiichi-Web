@@ -1,11 +1,78 @@
 import { describe, it, expect } from 'vitest';
 import {
   YAKUS,
+  YAKU_GROUPS,
   buildAllowedYakusPayload,
+  defaultAllowedYakus,
   filterYakuListForDisplay,
+  isYakumanScoring,
   sortYakuList,
 } from './yakus';
 import { ScoringType, ScoringOption, type IScoringMsg } from '../proto';
+import en from '../locales/en.json';
+import ja from '../locales/ja.json';
+import zhs from '../locales/zhs.json';
+import { getYakuVoiceLineId } from './resultHelpers';
+import { DEFAULT_CHARACTER } from './character';
+
+describe('YAKUS catalog', () => {
+  it('has no duplicate names and only known groups', () => {
+    const names = YAKUS.map((y) => y.name);
+    expect(new Set(names).size).toBe(names.length);
+    for (const yaku of YAKUS) {
+      expect(YAKU_GROUPS).toContain(yaku.group);
+    }
+  });
+
+  it('has a display name in every locale for every yaku', () => {
+    const locales = { en, ja, zhs } as Record<
+      string,
+      { yaku: Record<string, string> }
+    >;
+    for (const [name, bundle] of Object.entries(locales)) {
+      const missing = YAKUS.filter((y) => !bundle.yaku[y.name]).map(
+        (y) => y.name,
+      );
+      expect(missing, `missing yaku.* keys in ${name}`).toEqual([]);
+    }
+  });
+
+  it('has a label for every yaku group in every locale', () => {
+    const locales = { en, ja, zhs } as Record<
+      string,
+      { yakuGroup: Record<string, string> }
+    >;
+    for (const [name, bundle] of Object.entries(locales)) {
+      const missing = YAKU_GROUPS.filter((g) => !bundle.yakuGroup[g]);
+      expect(missing, `missing yakuGroup.* keys in ${name}`).toEqual([]);
+    }
+  });
+
+  it('maps every yaku to a recorded voice line', () => {
+    const recorded = new Set(DEFAULT_CHARACTER.voiceLines.map((v) => v.id));
+    const missing = YAKUS.map((y) => y.name).filter((name) => {
+      const voiceId = getYakuVoiceLineId(name, 1);
+      return voiceId === null || !recorded.has(voiceId);
+    });
+    expect(missing).toEqual([]);
+  });
+});
+
+describe('defaultAllowedYakus', () => {
+  it('enables everything except 古役', () => {
+    const defaults = defaultAllowedYakus();
+
+    expect(defaults.has('Riichi')).toBe(true);
+    expect(defaults.has('Daisangen')).toBe(true);
+    // 古役 are not standard riichi rules and must be opted into per room
+    expect(defaults.has('Renhou')).toBe(false);
+    expect(defaults.has('Daisharin')).toBe(false);
+    expect(defaults.has('ShiiaruRaotai')).toBe(false);
+    expect(defaults.size).toBe(
+      YAKUS.filter((y) => y.group !== 'koyaku').length,
+    );
+  });
+});
 
 describe('buildAllowedYakusPayload', () => {
   it('sends the full list when every yaku is enabled (not an empty array)', () => {
@@ -89,6 +156,58 @@ describe('filterYakuListForDisplay', () => {
       daisangen,
       tsuuiisou,
     ]);
+  });
+});
+
+describe('bonus yakuman display', () => {
+  const riichi = {
+    Type: ScoringType.SCORING_TYPE_HAN,
+    Val: 1,
+    Src: 'Riichi',
+  } as IScoringMsg;
+  const dora = {
+    Type: ScoringType.SCORING_TYPE_BONUS_HAN,
+    Val: 1,
+    Src: 'Dora',
+  } as IScoringMsg;
+  const daisangen = {
+    Type: ScoringType.SCORING_TYPE_YAKUMAN,
+    Val: 1,
+    Src: 'Daisangen',
+  } as IScoringMsg;
+  const paarenchan = {
+    Type: ScoringType.SCORING_TYPE_BONUS_YAKUMAN,
+    Val: 1,
+    Src: 'Paarenchan',
+  } as IScoringMsg;
+
+  it('treats a bonus yakuman as a yakuman', () => {
+    expect(isYakumanScoring(ScoringType.SCORING_TYPE_BONUS_YAKUMAN)).toBe(true);
+    expect(isYakumanScoring(ScoringType.SCORING_TYPE_YAKUMAN)).toBe(true);
+    expect(isYakumanScoring(ScoringType.SCORING_TYPE_BONUS_HAN)).toBe(false);
+    expect(isYakumanScoring(ScoringType.SCORING_TYPE_HAN)).toBe(false);
+    expect(isYakumanScoring(null)).toBe(false);
+  });
+
+  it('collapses to the yakuman rows when only a bonus yakuman is present', () => {
+    const option = ScoringOption.SCORING_OPTION_YAKUMAN;
+    expect(
+      filterYakuListForDisplay([riichi, dora, paarenchan], option),
+    ).toEqual([paarenchan]);
+  });
+
+  it('keeps a bonus yakuman alongside a real yakuman', () => {
+    const option = ScoringOption.SCORING_OPTION_YAKUMAN;
+    expect(
+      filterYakuListForDisplay([paarenchan, riichi, daisangen, dora], option),
+    ).toEqual([daisangen, paarenchan]);
+  });
+
+  it('keeps every row under aotenjou', () => {
+    const option = ScoringOption.SCORING_OPTION_KIRIAGE_MANGAN;
+    expect(
+      filterYakuListForDisplay([dora, paarenchan, riichi], option),
+    ).toEqual([riichi, paarenchan, dora]);
   });
 });
 

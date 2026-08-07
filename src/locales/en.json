@@ -131,6 +131,7 @@
     "3han": "3 Han",
     "6han": "6 Han",
     "yakuman": "Yakuman",
+    "koyaku": "Classical (Koyaku)",
     "other": "Other"
   },
   "hanOpt": {
@@ -405,9 +406,34 @@
     "Suukantsu": "Four Kans",
     "Tenhou": "Heavenly Hand",
     "Tsuuiisou": "All Honors",
-    "IshiueSannen": "Four Years on a Stone",
+    "IshiNoUeNiMoSannen": "Four Years on a Stone",
     "HelloWorld": "Hello World",
-    "NagashiMangan": "Nagashi Mangan"
+    "NagashiMangan": "Nagashi Mangan",
+    "TsubameGaeshi": "Swallow Return",
+    "Kanburi": "Kanburi",
+    "Shousanfon": "Little Three Winds",
+    "Sanrenkou": "Three Consecutive Pongs",
+    "Sanfonkou": "Three Wind Pongs",
+    "Chaopaikou": "Three Stepped Pongs",
+    "Chinpaikou": "Three Suji Pongs",
+    "Uumensai": "All Five Types",
+    "Ryanankan": "Two Concealed Kans",
+    "IsshokuSandoujun": "Triple Identical Chi",
+    "Chinpeikou": "Two-Suit Twice Pure Double Chi",
+    "Suurenkou": "Four Consecutive Pongs",
+    "IsshokuYondoujun": "Quadruple Identical Chi",
+    "Sanankan": "Three Concealed Kans",
+    "Renhou": "Hand of Man",
+    "Katengecchi": "Blossom and Moon",
+    "Heiiisou": "All Black",
+    "Benikujaku": "Red Peacock",
+    "Daisharin": "Big Wheels",
+    "Daichikurin": "Big Bamboo Forest",
+    "Daisuurin": "Big Numbers",
+    "Shiisanputa": "Thirteen Unrelated Tiles",
+    "Shiisuuputa": "Fourteen Unrelated Tiles",
+    "Paarenchan": "Eight Straight Wins",
+    "Daichiishin": "Big Seven Stars"
   },
   "ai": {
     "type": {
@@ -630,7 +656,7 @@
       "yaku1": "1-Han Yaku",
       "yaku2": "2+ Han Yaku",
       "yakuman": "Yakuman",
-      "koten": "Classical Yaku",
+      "koyaku": "Classical Yaku",
       "dora": "Dora",
       "points": "Limit / Point Calls",
       "special": "Special Situations"

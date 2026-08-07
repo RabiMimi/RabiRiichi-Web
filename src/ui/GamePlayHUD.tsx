@@ -31,6 +31,7 @@ import {
   riichiBonusHan,
   displayHan,
   type MappedTenpaiInfo,
+  totalYakuman,
 } from '../domain/model';
 import { findActiveDiscardCandidate } from '../domain/inquiry';
 import { GameInfoModal } from './GameInfoModal';
@@ -137,7 +138,7 @@ export function TenpaiWaitPanel({
       <div className="flex flex-row gap-1 sm:gap-1.5 max-w-[90vw] overflow-x-auto">
         {awaitedTiles.map((ti, idx) => {
           const tileStr = Tile.fromByte(ti.winningTile).toString();
-          const yakuBound = ti.yakuman > 0;
+          const yakuBound = totalYakuman(ti) > 0;
           const meetsMinHan = waitMeetsMinHan(ti, minHan, bonusYaku);
           return (
             <div
@@ -159,7 +160,7 @@ export function TenpaiWaitPanel({
                 <span className="text-[#aaa]">
                   {!meetsMinHan ? (
                     <span className="text-[#ff5555] font-bold">
-                      {ti.yakuman === 0 && ti.yakuHan + bonusYaku === 0
+                      {ti.yakuHan + bonusYaku === 0
                         ? t('hud.yakuRequired')
                         : t('hud.minHanRequired')}
                     </span>
