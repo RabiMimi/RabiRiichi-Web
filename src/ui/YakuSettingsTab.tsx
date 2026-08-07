@@ -30,7 +30,7 @@ export function YakuSettingsTab({
 
           return (
             <div key={group} className="flex flex-col gap-2">
-              <div className="flex items-center justify-between border-b border-[#333] pb-1">
+              <div className="flex items-center justify-between border-b border-white/10 pb-1">
                 <h4 className="m-0 text-[0.9rem] text-[#ff7a99] font-bold text-left">
                   {t(`yakuGroup.${group}`)}
                 </h4>

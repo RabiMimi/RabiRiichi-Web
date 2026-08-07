@@ -32,7 +32,7 @@ export function GameModalTab(): React.JSX.Element {
                 sliderIndexToSpeed(Number(e.target.value)),
               )
             }
-            className="flex-1 h-2 rounded-full appearance-none bg-[#333] cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#ff7a99]"
+            className="flex-1 h-2 rounded-full appearance-none bg-white/15 cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#ff7a99]"
           />
           <span className="text-sm text-white/80 w-10 text-right">
             {animationSpeed}x

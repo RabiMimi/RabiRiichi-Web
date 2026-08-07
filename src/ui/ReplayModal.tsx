@@ -4,6 +4,7 @@ import { rabiriichi } from '../net/client';
 import { startReplay } from '../replay/replayDriver';
 import { formatError } from '../lib';
 import { Button } from './Button';
+import { Input } from './Input';
 import { FORM, MODAL } from './styles';
 
 import { createPortal } from 'react-dom';
@@ -38,10 +39,10 @@ export function ReplayModal({ onClose }: ReplayModalProps): React.JSX.Element {
   return createPortal(
     <div className={MODAL.overlay} onClick={onClose}>
       <div
-        className={`${MODAL.card} !p-4 w-[90%] max-w-[360px] border border-[#ff7a99]/30 bg-[#121c32]/95`}
+        className={`${MODAL.card} !p-4 w-[90%] max-w-[360px] border border-[#ff7a99]/40 bg-[#1a1a1a]/95`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-[#444] pb-1.5 mb-3">
+        <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-3">
           <h3 className="m-0 text-base font-bold text-[#ff7a99]">
             {t('replay.modalTitle')}
           </h3>
@@ -72,14 +73,14 @@ export function ReplayModal({ onClose }: ReplayModalProps): React.JSX.Element {
               >
                 {t('replay.gameIdLabel')}
               </label>
-              <input
+              <Input
                 id="replay-game-id"
                 type="text"
                 value={gameId}
                 onChange={(e) => setGameId(e.target.value)}
                 disabled={isLoading}
                 placeholder={t('replay.gameIdPlaceholder')}
-                className="h-8 rounded-lg border border-[#555] bg-[#1a1a1a] px-2.5 py-1 text-[0.85rem] text-white outline-none transition-colors duration-200 focus:border-[#ff7a99] disabled:cursor-not-allowed disabled:opacity-50"
+                inputSize="inline"
                 autoFocus
               />
             </div>

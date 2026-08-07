@@ -179,7 +179,7 @@ export function CustomTileSetModal({
   };
 
   const renderGroup = (title: string, keys: readonly string[]) => (
-    <div className="flex flex-col gap-1.5 border border-white/5 bg-white/5 rounded-lg p-2.5">
+    <div className="flex flex-col gap-1.5 border border-white/10 bg-white/[0.04] rounded-xl p-2.5">
       <div className="text-xs text-[#aaa] font-bold uppercase tracking-wider mb-1">
         {title}
       </div>

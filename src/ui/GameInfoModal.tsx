@@ -14,7 +14,7 @@ import { CopyGameIdButton } from './CopyGameIdButton';
 import { Button } from './Button';
 import { UiTile } from './UiTile';
 import { TabButton } from './TabButton';
-import { MODAL } from './styles';
+import { MODAL, SUB_CARD } from './styles';
 import {
   RENCHAN_POLICIES,
   END_GAME_POLICIES,
@@ -180,7 +180,9 @@ export function GameInfoModal({
           {/* Tab: Live Info */}
           {activeTab === 'info' && (
             <div className="flex flex-col gap-4 text-left">
-              <div className="grid grid-cols-1 min-[481px]:grid-cols-2 gap-x-4 gap-y-2 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+              <div
+                className={`grid grid-cols-1 min-[481px]:grid-cols-2 gap-x-4 gap-y-2 ${SUB_CARD.default}`}
+              >
                 <div className="flex justify-between items-center text-sm py-0.5">
                   <span className="text-[#aaa]">{t('hud.roomId')}:</span>
                   <span className="text-white font-bold font-mono">
@@ -260,14 +262,14 @@ export function GameInfoModal({
               </div>
 
               <div className="flex flex-col gap-2.5">
-                <h4 className="m-0 text-base text-[#ff7a99] border-b border-[#333] pb-1.5">
+                <h4 className="m-0 text-base text-[#ff7a99] border-b border-white/10 pb-1.5">
                   {t('hud.playersCount', { count: players.length })}
                 </h4>
                 <div className="flex flex-col gap-2">
                   {players.map((p) => (
                     <div
                       key={p.id}
-                      className="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2.5 flex flex-col gap-1.5"
+                      className={`flex flex-col gap-1.5 ${SUB_CARD.default}`}
                     >
                       <div className="flex items-center gap-2 text-sm">
                         <span className="text-[#ff7a99] font-bold">
@@ -302,7 +304,9 @@ export function GameInfoModal({
           {/* Tab: Config */}
           {activeTab === 'config' && config && (
             <div className="flex flex-col gap-4 text-left">
-              <div className="grid grid-cols-1 min-[481px]:grid-cols-2 gap-x-4 gap-y-2 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+              <div
+                className={`grid grid-cols-1 min-[481px]:grid-cols-2 gap-x-4 gap-y-2 ${SUB_CARD.default}`}
+              >
                 <div className="flex justify-between items-center text-sm py-0.5">
                   <span className="text-[#aaa]">{t('lobby.players')}:</span>
                   <span className="text-white font-bold font-mono">
@@ -523,7 +527,7 @@ export function GameInfoModal({
           {activeTab === 'yaku' && (
             <div className="flex flex-col gap-4 text-left">
               <div className="flex flex-col gap-2.5 text-left">
-                <h4 className="m-0 text-base text-[#ff7a99] border-b border-[#333] pb-1.5">
+                <h4 className="m-0 text-base text-[#ff7a99] border-b border-white/10 pb-1.5">
                   {t('hud.allowedYakus')} ({activeYakus.length})
                 </h4>
                 <div className="flex flex-col gap-2">
@@ -544,7 +548,7 @@ export function GameInfoModal({
                           {groupYakus.map((yaku) => (
                             <span
                               key={yaku.name}
-                              className="bg-[#1a1a1a] border border-[#333] rounded px-2 py-0.5 text-[#ccc] text-sm"
+                              className="bg-white/[0.04] border border-white/10 rounded px-2 py-0.5 text-[#eee] text-sm"
                             >
                               {t(`yaku.${yaku.name}`)}
                             </span>
@@ -558,10 +562,10 @@ export function GameInfoModal({
 
               {tileBytes.length > 0 && (
                 <div className="flex flex-col gap-2.5 text-left mt-4">
-                  <h4 className="m-0 text-base text-[#ff7a99] border-b border-[#333] pb-1.5">
+                  <h4 className="m-0 text-base text-[#ff7a99] border-b border-white/10 pb-1.5">
                     {t('hud.startingYama')} ({tileBytes.length})
                   </h4>
-                  <div className="flex flex-wrap gap-2 bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+                  <div className={`flex flex-wrap gap-2 ${SUB_CARD.default}`}>
                     {sortedUniqueBytes.map((byte) => {
                       const tile = Tile.fromByte(byte);
                       const tileStr = tile.toString();

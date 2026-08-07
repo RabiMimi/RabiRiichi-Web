@@ -115,7 +115,7 @@ export function AddAiDropdown({
               onClick={() => setIsOpen(false)}
             />
             <div
-              className="fixed top-auto mt-0 max-w-[220px] bg-[#222] border border-[#444] rounded shadow-[0_4px_12px_rgba(0,0,0,0.5)] z-[101] min-w-[140px] flex flex-col overflow-hidden py-1"
+              className="fixed top-auto mt-0 max-w-[220px] bg-[#1a1a1a] border border-white/10 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.5)] z-[101] min-w-[140px] flex flex-col overflow-hidden py-1"
               style={{
                 right: position.right,
                 ...(position.top !== undefined ? { top: position.top } : {}),

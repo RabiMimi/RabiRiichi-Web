@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Input } from './Input';
 import { FORM } from './styles';
 
 interface PointsSettingsTabProps {
@@ -72,7 +73,7 @@ export function PointsSettingsTab({
           <label htmlFor="initial-points" className={FORM.labelInline}>
             {t('lobby.initialPoints')}
           </label>
-          <input
+          <Input
             id="initial-points"
             type="text"
             value={initialPointsInput}
@@ -83,7 +84,7 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="25000"
-            className={FORM.inputInline}
+            inputSize="inline"
           />
         </div>
         {initialPointsError && (
@@ -96,7 +97,7 @@ export function PointsSettingsTab({
           <label htmlFor="finish-points" className={FORM.labelInline}>
             {t('lobby.finishPoints')}
           </label>
-          <input
+          <Input
             id="finish-points"
             type="text"
             value={finishPointsInput}
@@ -107,7 +108,7 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="30000"
-            className={FORM.inputInline}
+            inputSize="inline"
           />
         </div>
         {finishPointsError && (
@@ -120,7 +121,7 @@ export function PointsSettingsTab({
           <label htmlFor="upper-points" className={FORM.labelInline}>
             {t('lobby.upperPoints')}
           </label>
-          <input
+          <Input
             id="upper-points"
             type="text"
             value={upperPointsInput}
@@ -131,7 +132,7 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="1000000"
-            className={FORM.inputInline}
+            inputSize="inline"
           />
         </div>
         {upperPointsError && (
@@ -144,7 +145,7 @@ export function PointsSettingsTab({
           <label htmlFor="riichi-points" className={FORM.labelInline}>
             {t('lobby.riichiPoints')}
           </label>
-          <input
+          <Input
             id="riichi-points"
             type="text"
             value={riichiPointsInput}
@@ -155,7 +156,7 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="1000"
-            className={FORM.inputInline}
+            inputSize="inline"
           />
         </div>
         {riichiPointsError && (
@@ -168,7 +169,7 @@ export function PointsSettingsTab({
           <label htmlFor="honba-points" className={FORM.labelInline}>
             {t('lobby.honbaPoints')}
           </label>
-          <input
+          <Input
             id="honba-points"
             type="text"
             value={honbaPointsInput}
@@ -179,7 +180,7 @@ export function PointsSettingsTab({
             }}
             disabled={isLoading}
             placeholder="300"
-            className={FORM.inputInline}
+            inputSize="inline"
           />
         </div>
         {honbaPointsError && (
@@ -193,7 +194,7 @@ export function PointsSettingsTab({
             {t('lobby.ryuukyokuPoints')}
           </label>
           <div className="flex items-center gap-1.5 flex-grow min-w-0">
-            <input
+            <Input
               id="ryuukyoku-points-0"
               type="text"
               value={ryuukyokuPoints0Input}
@@ -204,10 +205,10 @@ export function PointsSettingsTab({
               }}
               disabled={isLoading}
               placeholder="1000"
-              className={FORM.inputInline}
+              inputSize="inline"
             />
             <span className="text-[#666] font-bold">/</span>
-            <input
+            <Input
               id="ryuukyoku-points-1"
               type="text"
               value={ryuukyokuPoints1Input}
@@ -218,7 +219,7 @@ export function PointsSettingsTab({
               }}
               disabled={isLoading}
               placeholder="1500"
-              className={FORM.inputInline}
+              inputSize="inline"
             />
           </div>
         </div>

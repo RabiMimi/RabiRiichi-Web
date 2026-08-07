@@ -20,9 +20,9 @@ export const MODAL = {
     'shadow-[0_10px_30px_rgba(0,0,0,0.5),0_0_20px_rgba(255,122,153,0.05)] ' +
     'backdrop-blur-[16px] max-md:max-h-[95vh] max-md:px-4 max-md:py-3',
   cardDefaultLook:
-    'w-[90%] max-w-[650px] border-2 border-[#ff7a99] bg-[#121c32]/95',
+    'w-[90%] max-w-[650px] border-2 border-[#ff7a99] bg-[#1a1a1a]/95',
   header:
-    'mb-2.5 flex items-center justify-between border-b border-[#444] pb-1.5',
+    'mb-2.5 flex items-center justify-between border-b border-white/10 pb-1.5',
   title: 'm-0 text-xl text-[#ff7a99]',
   closeButton:
     'cursor-pointer border-none bg-transparent p-0 text-[1.5rem] ' +
@@ -43,8 +43,8 @@ export const SCREEN = {
     'max-h-[550px]:items-start',
   // Reusable card container (replaces `.ui-card`)
   card:
-    'm-auto box-border w-full max-w-[400px] rounded-2xl border border-[#82aaf0]/25 ' +
-    'bg-[#121c32]/82 p-8 shadow-[0_12px_40px_rgba(0,0,0,0.65),0_0_24px_rgba(255,122,153,0.04)] ' +
+    'm-auto box-border w-full max-w-[400px] rounded-2xl border border-white/10 ' +
+    'bg-[#1a1a1a]/90 p-8 shadow-[0_12px_40px_rgba(0,0,0,0.65),0_0_24px_rgba(255,122,153,0.04)] ' +
     'backdrop-blur-[16px]',
   // Screen title with linear gradient text (replaces `.ui-title`)
   title:
@@ -101,6 +101,25 @@ export const RESULT = {
   scoreFu: 'text-[clamp(0.7rem,1.9vh,1rem)]',
   /** Limit name (mangan, haneman, yakuman…). */
   limitLabel: 'text-[clamp(1rem,3.4vh,2rem)]',
+} as const;
+
+/**
+ * Shared panel and sub-card layout primitives.
+ */
+export const PANEL = {
+  // Container for sub-sections or lobby panels (replaces raw dark-gray borders)
+  base: 'bg-[#202020] border border-white/10 rounded-2xl p-6 shadow-lg',
+} as const;
+
+export const SUB_CARD = {
+  // Default inner card (lighter dark gray using relative opacity)
+  default:
+    'bg-white/[0.04] border border-white/10 rounded-xl p-4 transition-colors duration-200',
+  // Active/highlighted inner card (pink themed)
+  active:
+    'bg-[#ff7a99]/10 border border-[#ff7a99]/30 rounded-xl p-4 transition-colors duration-200',
+  // Empty/placeholder inner card (dashed)
+  empty: 'bg-white/[0.01] border border-dashed border-white/5 rounded-xl p-4',
 } as const;
 
 /**

@@ -21,7 +21,7 @@ import { ChatBubble } from './ChatBubble';
 import { Tooltip } from './Tooltip';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
-import { SCREEN, FORM } from './styles';
+import { SCREEN, FORM, SUB_CARD } from './styles';
 
 export function RoomScreen(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -210,11 +210,9 @@ export function RoomScreen(): React.JSX.Element | null {
               return (
                 <div
                   key={player.id}
-                  className={`relative flex items-center bg-[#1a1a1a] border ${
-                    isMe
-                      ? 'border-[#ff7a99] bg-[#ff7a99]/[0.08]'
-                      : 'border-[#444]'
-                  } rounded-lg p-3 gap-3 transition-colors duration-200`}
+                  className={`relative flex items-center gap-3 ${
+                    isMe ? SUB_CARD.active : SUB_CARD.default
+                  }`}
                 >
                   <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
                     {renderAvatar(player)}
@@ -259,13 +257,15 @@ export function RoomScreen(): React.JSX.Element | null {
                         : t('room.status.waiting')}
                     </div>
                     {isOwner && player.aiType !== AiType.AI_TYPE_NONE && (
-                      <button
-                        className="px-2 py-1 text-[0.8rem] bg-[#a33] text-white border-none rounded cursor-pointer whitespace-nowrap shrink-0 hover:not-disabled:bg-[#c44] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed outline-none"
+                      <Button
+                        variant="danger"
+                        size="compact"
+                        className="whitespace-nowrap shrink-0"
                         onClick={() => void handleRemovePlayer(player.id)}
                         disabled={isLoading}
                       >
                         {t('room.kickAi')}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -274,9 +274,9 @@ export function RoomScreen(): React.JSX.Element | null {
               return (
                 <div
                   key={`empty-${index}`}
-                  className="flex items-center border border-[#444] border-dashed bg-[#111] opacity-60 rounded-lg p-3 gap-3"
+                  className={`flex items-center gap-3 opacity-60 ${SUB_CARD.empty}`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-white/[0.05] border-2 border-[#444] flex justify-center items-center font-bold text-[#888] text-[1.1rem] shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.05] border-2 border-white/10 flex justify-center items-center font-bold text-[#888] text-[1.1rem] shrink-0">
                     ?
                   </div>
                   <div className="flex-grow">

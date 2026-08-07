@@ -46,6 +46,8 @@ import { AdvancedSettingsTab } from './AdvancedSettingsTab';
 import { Button } from './Button';
 import { TabButton } from './TabButton';
 
+import { PANEL } from './styles';
+
 interface SavedRoomConfig {
   playerCount?: number;
   totalRound?: number;
@@ -532,8 +534,8 @@ export function RoomConfigPanel({
     ryuukyokuPoints1Error !== null;
 
   return (
-    <div className="bg-[#202020] border border-[#444] rounded-lg p-4 mb-3 flex flex-col gap-3 box-border">
-      <div className="flex justify-between items-center border-b border-[#333] pb-1 mb-3">
+    <div className={`${PANEL.base} mb-3 flex flex-col gap-3 box-border`}>
+      <div className="flex justify-between items-center border-b border-white/10 pb-1 mb-3">
         <h3 className="m-0 text-lg text-[#ff7a99] font-bold text-left">
           {t('lobby.roomSettings')}
         </h3>

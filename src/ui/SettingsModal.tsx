@@ -24,7 +24,7 @@ export function SettingsModal({
   return createPortal(
     <div className={MODAL.overlay} onClick={onClose}>
       <div
-        className={`${MODAL.card} min-h-96 w-[95%] max-w-[900px] md:max-w-[1000px] lg:max-w-[1100px] xl:max-w-[1250px] max-h-[85vh] lg:max-h-[90vh] border border-[#ff7a99]/30 bg-[#121c32]/95`}
+        className={`${MODAL.card} min-h-96 w-[95%] max-w-[900px] md:max-w-[1000px] lg:max-w-[1100px] xl:max-w-[1250px] max-h-[85vh] lg:max-h-[90vh] border border-[#ff7a99]/40 bg-[#1a1a1a]/95`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

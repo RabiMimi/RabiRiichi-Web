@@ -138,7 +138,7 @@ export function PlayerTab(): React.JSX.Element {
           </div>
         )}
 
-        <div className="flex-grow bg-[#141414]/50 border border-white/5 rounded-lg overflow-hidden flex justify-center items-center relative aspect-[3/4]">
+        <div className="flex-grow bg-black/20 border border-white/10 rounded-xl overflow-hidden flex justify-center items-center relative aspect-[3/4]">
           <img
             src={activeCharacter.visualUrl}
             alt={t(`character.${activeCharacter.id}.name`)}
@@ -171,7 +171,7 @@ export function PlayerTab(): React.JSX.Element {
             {t('settings.voicelines', 'Voice Lines')}
           </div>
           <div
-            className="flex-grow flex flex-col gap-2.5 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg"
+            className="flex-grow flex flex-col gap-2.5 p-2 overflow-y-auto bg-black/15 border border-white/10 rounded-xl"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
@@ -216,7 +216,7 @@ export function PlayerTab(): React.JSX.Element {
             {t('settings.stickers', 'Stickers')}
           </div>
           <div
-            className="flex-grow grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-8 gap-1 p-2 overflow-y-auto bg-[#141414]/30 border border-white/5 rounded-lg content-start"
+            className="flex-grow grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-8 gap-1 p-2 overflow-y-auto bg-black/15 border border-white/10 rounded-xl content-start"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
@@ -224,7 +224,7 @@ export function PlayerTab(): React.JSX.Element {
             {activeCharacter.stickers.map((sName) => (
               <div
                 key={sName}
-                className="aspect-square bg-white/[0.02] border border-white/[0.04] rounded flex items-center justify-center p-0.5 hover:border-[#ff7a99]/40 hover:bg-white/[0.05] transition-all"
+                className="aspect-square bg-white/[0.01] border border-white/5 rounded-lg flex items-center justify-center p-0.5 hover:border-[#ff7a99]/40 hover:bg-white/[0.05] transition-all"
               >
                 <img
                   src={`${activeCharacter.stickersDir}/${sName}`}
