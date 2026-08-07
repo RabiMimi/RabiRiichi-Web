@@ -206,26 +206,26 @@ export function FinalResultPanel({
     switch (rank) {
       case 1:
         return {
-          card: 'bg-gradient-to-r from-[#ffd700]/20 via-[#1a2942]/90 to-[#121c32]/95 border-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.3)]',
+          card: 'bg-gradient-to-r from-[#ffd700]/20 via-[#252525]/90 to-[#1a1a1a]/95 border-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.3)]',
           number:
             'text-[#ffd700] drop-shadow-[0_2px_8px_rgba(255,215,0,0.5)] font-black',
           avatar: 'border-[#ffd700]',
         };
       case 2:
         return {
-          card: 'bg-gradient-to-r from-[#c0c0c0]/15 via-[#1a2942]/90 to-[#121c32]/95 border-[#c0c0c0] shadow-[0_0_12px_rgba(192,192,192,0.2)]',
+          card: 'bg-gradient-to-r from-[#c0c0c0]/15 via-[#252525]/90 to-[#1a1a1a]/95 border-[#c0c0c0] shadow-[0_0_12px_rgba(192,192,192,0.2)]',
           number: 'text-[#c0c0c0] font-bold',
           avatar: 'border-[#c0c0c0]',
         };
       case 3:
         return {
-          card: 'bg-gradient-to-r from-[#cd7f32]/15 via-[#1a2942]/90 to-[#121c32]/95 border-[#cd7f32] shadow-[0_0_12px_rgba(205,127,50,0.2)]',
+          card: 'bg-gradient-to-r from-[#cd7f32]/15 via-[#252525]/90 to-[#1a1a1a]/95 border-[#cd7f32] shadow-[0_0_12px_rgba(205,127,50,0.2)]',
           number: 'text-[#cd7f32] font-bold',
           avatar: 'border-[#cd7f32]',
         };
       default:
         return {
-          card: 'bg-[#121c32]/80 border-[#2a3a5e]',
+          card: 'bg-white/[0.04] border-white/10',
           number: 'text-[#888] font-semibold',
           avatar: 'border-[#444]',
         };
@@ -244,7 +244,7 @@ export function FinalResultPanel({
             className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none opacity-95"
           />
         </div>
-        <div className="flex-1 bg-[#121c32]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 lg:p-4 lg:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 lg:gap-2.5 relative box-border">
+        <div className="flex-1 bg-[#1a1a1a]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 lg:p-4 lg:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 lg:gap-2.5 relative box-border">
           <div className="flex flex-col gap-1 items-center">
             <h2 className="relative z-[1] text-lg lg:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider lg:tracking-widest">
               {t('result.finalTitle', 'Game Concluded')}

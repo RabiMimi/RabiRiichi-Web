@@ -48,13 +48,13 @@ export function StickerPanel(): React.JSX.Element | null {
       >
         <button
           type="button"
-          className="cursor-pointer rounded-l-lg border-[1.5px] border-r-0 border-[#ff7a99]/70 bg-[#121c32]/95 px-1.5 py-3 text-white shadow-[-4px_0_10px_rgba(0,0,0,0.4)] transition-colors duration-200 outline-none hover:bg-[#ff7a99]/20 hover:text-[#ff7a99]"
+          className="cursor-pointer rounded-l-lg border-[1.5px] border-r-0 border-[#ff7a99]/50 bg-[#1a1a1a]/95 px-1.5 py-3 text-white shadow-[-4px_0_10px_rgba(0,0,0,0.4)] transition-colors duration-200 outline-none hover:bg-[#ff7a99]/20 hover:text-[#ff7a99]"
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? '▶' : '◀'}
         </button>
       </Tooltip>
-      <div className="w-[170px] rounded-l-lg border-[1.5px] border-[#ff7a99]/70 bg-[#121c32]/95 p-3 shadow-[-4px_4px_15px_rgba(0,0,0,0.5)] backdrop-blur-lg">
+      <div className="w-[170px] rounded-l-lg border-[1.5px] border-[#ff7a99]/50 bg-[#1a1a1a]/95 p-3 shadow-[-4px_4px_15px_rgba(0,0,0,0.5)] backdrop-blur-lg">
         <div className="mb-2.5 border-b border-white/10 pb-1.5 text-center text-[0.9rem] font-bold text-[#ff7a99]">
           {t('sticker.title', 'Stickers')}
         </div>

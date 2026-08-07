@@ -54,7 +54,7 @@ export function ScoreTransferPanel({
             ? 'bg-gradient-to-br from-[#0a2e15]/95 to-[#051a0a]/95 border-[#00ff66]/40 shadow-[0_8px_24px_rgba(0,255,102,0.12)]'
             : isNegative
               ? 'bg-gradient-to-br from-[#3d1118]/95 to-[#1f0509]/95 border-[#ff3366]/40 shadow-[0_8px_24px_rgba(255,51,102,0.12)]'
-              : 'bg-gradient-to-br from-[#1c2438]/95 to-[#0f1424]/95 border-[#ffffff]/15 shadow-[0_8px_24px_rgba(0,0,0,0.4)]';
+              : 'bg-gradient-to-br from-[#252525]/95 to-[#1a1a1a]/95 border-white/15 shadow-[0_8px_24px_rgba(0,0,0,0.4)]';
 
           const textColor = isPositive
             ? 'text-[#00ff66]'
