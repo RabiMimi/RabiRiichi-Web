@@ -4,6 +4,11 @@ import {
   createInitialRoomFromReplay,
   replayAccountId,
 } from './replay';
+import {
+  EMPTY_REASONING_TRACK,
+  fetchReasoningTrack,
+  type ReasoningTrack,
+} from './reasoningTrack';
 import { UserStatus, AiType, type IEventMsg } from '../proto';
 import { Logger } from '../lib';
 import { applyEvent } from '../domain/reducer';
@@ -20,6 +25,56 @@ let currentEvents: IEventMsg[] = [];
 let currentInitialRoom: RoomModel | null = null;
 let eventIdx = 0;
 let roundStartEventIndices: number[] = [];
+let reasoningTrack: ReasoningTrack = EMPTY_REASONING_TRACK;
+
+/** How long an agent's rationale stays on screen (ms). */
+const REASONING_BUBBLE_MS = 8000;
+
+/**
+ * Surfaces any agent rationale anchored to the event about to be applied, as
+ * that player's chat bubble. Arena replays only: other servers serve no track,
+ * so this is a no-op lookup in an empty map.
+ */
+function showReasoningFor(index: number): void {
+  const entries = reasoningTrack.get(index);
+  if (!entries || !currentInitialRoom) return;
+  for (const entry of entries) {
+    const player = currentInitialRoom.players.find(
+      (p) => p.seat === entry.seat,
+    );
+    if (!player) continue;
+    rabiriichi.showChatTextLocally(
+      player.id,
+      entry.rationale,
+      REASONING_BUBBLE_MS,
+    );
+  }
+}
+
+/**
+ * Loads the rationale track for this replay in the background. It is optional
+ * decoration, so a slow or missing endpoint must never delay playback: the
+ * replay starts immediately and rationales appear once (if) the track lands.
+ *
+ * Opt-in only (see {@link StartReplayOptions.reasoning}). A plain game server
+ * speaks WebSocket and serves no REST API, so we must never probe it over HTTP
+ * on the chance that it might be an Arena.
+ */
+function loadReasoningTrack(
+  gameId: string | null | undefined,
+  enabled: boolean,
+): void {
+  const server = rabiriichi.wsurl;
+  if (!enabled || !gameId || !server) return;
+  const startedFor = currentInitialRoom;
+  void fetchReasoningTrack(server, gameId).then((track) => {
+    // Ignore a late response for a replay that has since been stopped/replaced.
+    if (track.size > 0 && currentInitialRoom === startedFor) {
+      reasoningTrack = track;
+      logger.info(`Loaded reasoning for ${track.size} decision points`);
+    }
+  });
+}
 
 const replayState: { running: boolean; paused: boolean; singleStep: boolean } =
   {
@@ -29,29 +84,6 @@ const replayState: { running: boolean; paused: boolean; singleStep: boolean } =
   };
 const isRunning = () => replayState.running;
 
-function getEventDelay(eventMsg: IEventMsg): number {
-  if (eventMsg.drawTileEvent || eventMsg.dealerFirstTurnEvent) {
-    return 600;
-  }
-  if (eventMsg.discardTileEvent) {
-    return 1000;
-  }
-  if (eventMsg.claimTileEvent || eventMsg.kanEvent) {
-    return 1200;
-  }
-  if (
-    eventMsg.agariEvent ||
-    eventMsg.ryuukyokuEvent ||
-    eventMsg.concludeGameEvent
-  ) {
-    return 3000;
-  }
-  if (eventMsg.dealHandEvent) {
-    return 80;
-  }
-  return 0;
-}
-
 export function proceedReplay(): void {
   if (resolveProceed) {
     const resolve = resolveProceed;
@@ -60,7 +92,21 @@ export function proceedReplay(): void {
   }
 }
 
-export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
+export interface StartReplayOptions {
+  /**
+   * Fetch and show the server's per-decision agent rationales. Only an Arena
+   * serves those, so this stays off unless the caller knows the replay came
+   * from one — otherwise we would fire a pointless HTTP request at a
+   * WebSocket-only game server.
+   */
+  reasoning?: boolean;
+}
+
+export function startReplay(
+  replayData: unknown,
+  perspectiveSeat = 0,
+  options: StartReplayOptions = {},
+): void {
   if (replayState.running) {
     stopReplay();
   }
@@ -70,6 +116,8 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
   currentEvents = getEventsFromReplay(replayData, perspectiveSeat);
   currentInitialRoom = createInitialRoomFromReplay(replayData);
   eventIdx = 0;
+  reasoningTrack = EMPTY_REASONING_TRACK;
+  loadReasoningTrack(currentInitialRoom.gameId, options.reasoning === true);
   roundStartEventIndices = [];
   for (let i = 0; i < currentEvents.length; i++) {
     if (currentEvents[i]?.beginGameEvent) {
@@ -79,6 +127,12 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
 
   rabiriichi.replay.setIsReplay(true);
   rabiriichi.replay.setReplayPaused(false);
+  // A previous replay session may have been stopped while its round-result
+  // screen was showing (isWaitingForProceed left true). Without resetting it
+  // here, the fresh room (no agari data yet) would immediately satisfy
+  // ResultPanel's showPanel condition and render a zeroed score-transfer
+  // panel before any events have replayed.
+  rabiriichi.replay.setWaitingForProceed(false);
   replayState.paused = false;
   replayState.singleStep = false;
   rabiriichi.replay.setConnectionStatus('connected');
@@ -121,11 +175,14 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
       if (!isRunning()) break;
 
       const eventMsg = currentEvents[eventIdx];
+      // Anchors point at the first event a decision produced, so the rationale
+      // goes up just before that event is applied.
+      showReasoningFor(eventIdx);
       eventIdx++;
       rabiriichi.replay.setReplayProgress(eventIdx);
 
       if (eventMsg) {
-        rabiriichi.replay.handleGameEvent(eventMsg);
+        await rabiriichi.replay.handleGameEvent(eventMsg);
 
         if (!isRunning()) break;
 
@@ -146,7 +203,7 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
               const nextEv = currentEvents[eventIdx];
               eventIdx++;
               if (nextEv) {
-                rabiriichi.replay.handleGameEvent(nextEv);
+                await rabiriichi.replay.handleGameEvent(nextEv, true);
               }
             }
             rabiriichi.replay.setReplayProgress(eventIdx);
@@ -169,20 +226,6 @@ export function startReplay(replayData: unknown, perspectiveSeat = 0): void {
           if (!isRunning()) break;
           // When auto-proceeding or manual next round, ensure we check paused state again
           continue;
-        }
-
-        if (!replayState.paused) {
-          const delay = getEventDelay(eventMsg);
-          if (delay > 0) {
-            const speed = rabiriichi.animationSpeed;
-            await new Promise<void>((resolve) => {
-              resolveDelay = resolve;
-              replayTimeout = setTimeout(() => {
-                resolveDelay = null;
-                resolve();
-              }, delay / speed);
-            });
-          }
         }
       }
     }
@@ -226,8 +269,6 @@ const isStepPoint = (ev: IEventMsg): boolean => {
     ev.discardTileEvent ??
     ev.drawTileEvent ??
     ev.claimTileEvent ??
-    ev.agariEvent ??
-    ev.ryuukyokuEvent ??
     ev.dealerFirstTurnEvent ??
     ev.concludeGameEvent,
   );
@@ -304,6 +345,7 @@ export function stopReplay(): void {
   }
   rabiriichi.replay.setIsReplay(false);
   rabiriichi.replay.setReplayPaused(false);
+  rabiriichi.replay.setWaitingForProceed(false);
   replayState.paused = false;
   replayState.singleStep = false;
   if (resolvePause) {
@@ -320,6 +362,7 @@ export function stopReplay(): void {
   currentEvents = [];
   currentInitialRoom = null;
   eventIdx = 0;
+  reasoningTrack = EMPTY_REASONING_TRACK;
 
   logger.info('Replay stopped');
   void initRabiRiichi();
@@ -377,7 +420,7 @@ export function seekToEvent(targetIdx: number): void {
   if (targetIdx > 0) {
     const lastEv = currentEvents[targetIdx - 1];
     if (lastEv) {
-      rabiriichi.replay.handleGameEvent(lastEv);
+      void rabiriichi.replay.handleGameEvent(lastEv, true);
     }
   }
 

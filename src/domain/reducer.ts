@@ -31,17 +31,26 @@ import type {
   IStopGameEventMsg,
   ISyncGameStateEventMsg,
   IServerRoomStateMsg,
+  ITenpaiInfoMsg,
 } from '../proto/index.js';
 import type {
   RoomModel,
   PlayerModel,
   GameInfo,
   PlayerGameState,
+  PlayerHandState,
   PlayerAgariState,
   MappedTenpaiInfo,
 } from './model.js';
-import { isTsumoTile } from './model.js';
-import { Tile } from './tile.js';
+import {
+  applyRiichiBonusToWaits,
+  isTsumoTile,
+  riichiBonusHan,
+} from './model.js';
+
+import { DEFAULT_INITIAL_POINTS, DEFAULT_RIICHI_POINTS } from './constants.js';
+import { isYakumanEnabled } from './yakus.js';
+import { Tile, isTileUnknown } from './tile.js';
 import {
   createEmptyTileRegistry,
   extractEventTiles,
@@ -69,9 +78,11 @@ function resolveTileFace(
   registry: TileRegistry,
   tile: IGameTileMsg,
 ): IGameTileMsg {
-  if (tile.tile && tile.tile > 0) return tile;
+  if (!isTileUnknown(tile.tile)) return tile;
   const known = getRegisteredTile(registry, tile.traceId);
-  return known?.tile ? { ...tile, tile: known.tile } : tile;
+  return known && typeof known.tile === 'number' && known.tile > 0
+    ? { ...tile, tile: known.tile }
+    : tile;
 }
 
 export function hydrateFromGameState(
@@ -89,6 +100,9 @@ export function hydrateFromGameState(
         currentPlayer: snapshot.info.currentPlayer ?? 0,
         doras: snapshot.wall?.doras ?? [],
         uradoras: [],
+        ...(state.info?.initialWall
+          ? { initialWall: state.info.initialWall }
+          : {}),
       }
     : null;
 
@@ -144,7 +158,9 @@ export function hydrateFromGameState(
         yakuHan: ti.yakuHan ?? 0,
         fu: ti.fu ?? 0,
         yakuman: ti.yakuman ?? 0,
+        bonusYakuman: ti.bonusYakuman ?? 0,
         points: ti.points ? Number(ti.points) : 0,
+        maxHan: ti.maxHan ?? 0,
       };
     });
 
@@ -152,6 +168,7 @@ export function hydrateFromGameState(
       jun: handState?.jun ?? 0,
       points: sp.points ? Number(sp.points) : 0,
       riichiTileId: handState?.riichiTile?.traceId ?? 0,
+      isRiichiConfirmed: (handState?.riichiTile?.traceId ?? 0) > 0,
       furiten: {
         [FuritenType.FURITEN_TYPE_DISCARD]:
           handState?.isDiscardFuriten ?? false,
@@ -159,11 +176,21 @@ export function hydrateFromGameState(
         [FuritenType.FURITEN_TYPE_TEMP]: handState?.isTempFuriten ?? false,
       },
       hand: {
-        freeTiles: (handState?.freeTiles ?? []).map((t) =>
-          resolveTileFace(tileRegistry, t),
+        // Sort on hydration to match the event path (every event handler sorts
+        // via sortGameTiles). Without this, a reconnect snapshot renders the
+        // hand in the server's raw order until the next event re-sorts it.
+        freeTiles: sortGameTiles(
+          (handState?.freeTiles ?? []).map((t) =>
+            resolveTileFace(tileRegistry, t),
+          ),
         ),
         called: handState?.called ?? [],
-        discarded: handState?.discarded ?? [],
+        discarded: (handState?.discarded ?? [])
+          .filter(
+            (t) =>
+              t.formTime === undefined || t.formTime === null || t.formTime < 0,
+          )
+          .map((t) => resolveTileFace(tileRegistry, t)),
         pendingTile: handState?.pendingTile ?? null,
         nukiDora: handState?.nukiDora ?? [],
       },
@@ -202,6 +229,20 @@ function sortGameTiles(tiles: IGameTileMsg[]): IGameTileMsg[] {
   });
 }
 
+// Folds a still-pending drawn tile into the sorted free tiles. This mirrors the
+// server's `Hand.AddPending`, which we defer visually (see handleAddTile). Call
+// this whenever a pending tile survives a turn (e.g. an ankan/nuki on other
+// tiles triggers a rinshan draw) so the drawn tile is not silently dropped when
+// the next pendingTile arrives.
+function mergePendingIntoFree(hand: PlayerHandState): PlayerHandState {
+  if (!hand.pendingTile) return hand;
+  return {
+    ...hand,
+    freeTiles: sortGameTiles([...hand.freeTiles, hand.pendingTile]),
+    pendingTile: null,
+  };
+}
+
 function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
   const eventGameId = ev.gameId === '' ? null : ev.gameId;
   const info: GameInfo = {
@@ -218,9 +259,10 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     info.initialWall = ev.initialWall;
   }
 
-  const initialPoints = state.config?.pointThreshold?.initialPoints
-    ? Number(state.config.pointThreshold.initialPoints)
-    : 25000;
+  const initialPoints =
+    state.config?.pointThreshold?.initialPoints != null
+      ? Number(state.config.pointThreshold.initialPoints)
+      : DEFAULT_INITIAL_POINTS;
 
   // beginGameEvent starts a new round of the CURRENT game (points accumulate
   // across rounds) unless the previous game already ended, in which case this
@@ -234,6 +276,7 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
         ? initialPoints
         : (p.gameState?.points ?? initialPoints),
       riichiTileId: 0,
+      isRiichiConfirmed: false,
       furiten: {
         [FuritenType.FURITEN_TYPE_DISCARD]: false,
         [FuritenType.FURITEN_TYPE_RIICHI]: false,
@@ -265,7 +308,7 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
     endGamePoints: null,
     concludedPlayers: null,
     // The previous round's frozen result is no longer relevant.
-    roundResultPlayers: null,
+    roundResult: null,
     gameId: eventGameId ?? state.gameId ?? null,
   };
 }
@@ -318,12 +361,16 @@ function handleDrawTile(state: RoomModel, ev: IDrawTileEventMsg): RoomModel {
 
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (p.seat !== ev.playerId || !p.gameState) return p;
+    // A leftover pendingTile means the previous draw survived the turn (e.g. an
+    // ankan/nuki on other tiles). Fold it into freeTiles before this new draw
+    // overwrites the slot, otherwise the earlier drawn tile is lost.
+    const hand = mergePendingIntoFree(p.gameState.hand);
     return {
       ...p,
       gameState: {
         ...p.gameState,
         hand: {
-          ...p.gameState.hand,
+          ...hand,
           pendingTile: ev.tile ?? null,
         },
       },
@@ -337,30 +384,18 @@ function handleDrawTile(state: RoomModel, ev: IDrawTileEventMsg): RoomModel {
   };
 }
 
-function handleAddTile(state: RoomModel, ev: IAddTileEventMsg): RoomModel {
-  const updatedPlayers = state.players.map((p): PlayerModel => {
-    if (p.seat !== ev.playerId || !p.gameState) return p;
-    const pending = p.gameState.hand.pendingTile;
-    if (!pending) return p;
+function handleAddTile(state: RoomModel, _ev: IAddTileEventMsg): RoomModel {
+  // Visual deferral: Do not merge the pending drawn tile into freeTiles
+  // immediately. The merge happens once the tile's fate is known: in
+  // handleDiscardTile (discard), handleKan/handleNukiDora (consumed by the
+  // meld/nuki), handleDrawTile (a follow-up rinshan draw for the same turn), or
+  // handleRyuukyoku (round exhausts). This keeps the drawn tile at the "just
+  // drawn" position until its outcome is resolved.
+  return state;
+}
 
-    const freeTiles = [...p.gameState.hand.freeTiles, pending];
-    return {
-      ...p,
-      gameState: {
-        ...p.gameState,
-        hand: {
-          ...p.gameState.hand,
-          freeTiles: sortGameTiles(freeTiles),
-          pendingTile: null,
-        },
-      },
-    };
-  });
-
-  return {
-    ...state,
-    players: updatedPlayers,
-  };
+interface ReplayDiscardTileEventMsg extends IDiscardTileEventMsg {
+  awaitedTiles?: ITenpaiInfoMsg[] | null;
 }
 
 function handleDiscardTile(
@@ -369,6 +404,8 @@ function handleDiscardTile(
 ): RoomModel {
   if (!state.info || !ev.discarded) return state;
   const discardedTile = ev.discarded;
+  const visibleKinds = collectVisibleTileKindsFromRoom(state);
+  const tileSetCounts = buildTileSetCounts(state.config);
 
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (p.seat !== ev.playerId || !p.gameState) return p;
@@ -391,12 +428,47 @@ function handleDiscardTile(
     const discarded = [...p.gameState.hand.discarded, discardedTile];
     const riichiTileId =
       (ev.isRiichi ? discardedTile.traceId : p.gameState.riichiTileId) ?? 0;
+    const rawWaits =
+      'awaitedTiles' in ev
+        ? (ev as ReplayDiscardTileEventMsg).awaitedTiles
+        : undefined;
+
+    const awaitedTiles =
+      rawWaits !== undefined && rawWaits !== null
+        ? applyRiichiBonusToWaits(
+            rawWaits.map((ti): MappedTenpaiInfo => {
+              const winningTile = ti.winningTile ?? 0;
+              return {
+                winningTile,
+                remainingCount: countRemainingWinningTile(
+                  winningTile,
+                  visibleKinds,
+                  tileSetCounts,
+                ),
+                han: ti.han ?? 0,
+                yakuHan: ti.yakuHan ?? 0,
+                fu: ti.fu ?? 0,
+                yakuman: ti.yakuman ?? 0,
+                bonusYakuman: ti.bonusYakuman ?? 0,
+                points: ti.points ?? 0,
+                maxHan: ti.maxHan ?? 0,
+              };
+            }),
+            ev.isRiichi
+              ? riichiBonusHan(state.players, state.config?.allowedYakus)
+              : 0,
+            isYakumanEnabled(state.config?.scoringOption),
+          )
+        : rawWaits === null
+          ? undefined
+          : p.gameState.awaitedTiles;
 
     return {
       ...p,
       gameState: {
         ...p.gameState,
         riichiTileId,
+        awaitedTiles,
         hand: {
           ...p.gameState.hand,
           freeTiles,
@@ -667,9 +739,10 @@ function handleRevealDora(
 function handleSetRiichi(state: RoomModel, ev: ISetRiichiEventMsg): RoomModel {
   // A set-riichi event is a riichi declaration: deduct the riichi stick from
   // the declaring player and add it to the table pot.
-  const riichiPoints = state.config?.pointThreshold?.riichiPoints
-    ? Number(state.config.pointThreshold.riichiPoints)
-    : 1000;
+  const riichiPoints =
+    state.config?.pointThreshold?.riichiPoints != null
+      ? Number(state.config.pointThreshold.riichiPoints)
+      : DEFAULT_RIICHI_POINTS;
 
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (p.seat !== ev.playerId || !p.gameState) return p;
@@ -678,6 +751,7 @@ function handleSetRiichi(state: RoomModel, ev: ISetRiichiEventMsg): RoomModel {
       gameState: {
         ...p.gameState,
         riichiTileId: ev.riichiTile?.traceId ?? 0,
+        isRiichiConfirmed: true,
         points: p.gameState.points - riichiPoints,
       },
     };
@@ -875,7 +949,11 @@ function handleApplyScore(
     players: updatedPlayers,
     // Freeze the settled result so the round-result panel stays static even if
     // a player leaves the room while it is displayed.
-    roundResultPlayers: updatedPlayers.map((p) => ({ ...p })),
+    roundResult: {
+      players: updatedPlayers.map((p) => ({ ...p })),
+      dealer: state.info?.dealer ?? 0,
+      scoringOption: state.config?.scoringOption ?? null,
+    },
   };
 }
 
@@ -1004,7 +1082,9 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       _ev.endGameRyuukyoku?.tenpaiPlayers?.includes(p.seat) ?? false;
 
     let agari = p.gameState.agari;
-    let hand = p.gameState.hand;
+    // The round is over: fold any still-pending drawn tile back into the hand
+    // for every player so no drawn tile is left dangling at the draw position.
+    let hand = mergePendingIntoFree(p.gameState.hand);
     const existingWaits = p.gameState.awaitedTiles;
     let awaitedTiles = existingWaits;
 
@@ -1036,6 +1116,7 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       };
       const pRevealed = revealedByPlayer.get(p.seat);
       if (pRevealed) {
+        // Authoritative revealed tenpai hand already includes the drawn tile.
         hand = {
           ...hand,
           freeTiles: sortGameTiles(pRevealed),
@@ -1049,11 +1130,14 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
           visibleKinds,
           tileSetCounts,
         ),
+        // A ryuukyoku reveal carries only the tiles, no scoring.
         han: 0,
         yakuHan: 0,
         fu: 0,
         yakuman: 0,
+        bonusYakuman: 0,
         points: 0,
+        maxHan: 0,
       }));
       awaitedTiles =
         existingWaits && existingWaits.length > 0 ? existingWaits : newWaits;
@@ -1084,7 +1168,11 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
     ryuukyokuReason: _ev.midGameRyuukyoku?.name ?? 'end_game_ryuukyoku',
     // Freeze the settled result so the round-result panel stays static even if
     // a player leaves the room while it is displayed.
-    roundResultPlayers: updatedPlayers.map((p) => ({ ...p })),
+    roundResult: {
+      players: updatedPlayers.map((p) => ({ ...p })),
+      dealer: state.info?.dealer ?? 0,
+      scoringOption: state.config?.scoringOption ?? null,
+    },
   };
 }
 
@@ -1127,8 +1215,12 @@ function updateTileRegistry(state: RoomModel, eventMsg: IEventMsg): RoomModel {
 }
 
 function applyEventToState(state: RoomModel, eventMsg: IEventMsg): RoomModel {
-  // Warn on unhandled event variants to catch gaps early (F3)
-  if (import.meta.env.DEV) {
+  // Warn on unhandled event variants to catch gaps early (F3). Read `env`
+  // through a widened local so non-Vite hosts (e.g. the Node CLI, where
+  // `import.meta.env` is undefined) don't throw, while keeping the check clean
+  // under the web app's `vite/client` types.
+  const meta = import.meta as { env?: { DEV?: boolean } };
+  if (meta.env?.DEV) {
     const activeKeys = Object.keys(eventMsg).filter(
       (k) =>
         !k.startsWith('$') &&
@@ -1255,7 +1347,7 @@ export function applyRoomState(
     concludedPlayers: state?.concludedPlayers ?? null,
     // Preserve the frozen round result so a player leaving mid-result (which
     // arrives as a shrunken room-state snapshot) cannot alter the settlement.
-    roundResultPlayers: state?.roundResultPlayers ?? null,
+    roundResult: state?.roundResult ?? null,
     gameId: state?.gameId ?? null,
   };
 }

@@ -119,6 +119,8 @@ export function defaultDoraOptionForPlayerCount(playerCount: number): number {
 // Storage Keys
 export const STORAGE_KEY_SERVER_SETTINGS = 'rabiriichi_server_settings';
 export const STORAGE_KEY_ROOM_CONFIG = 'rabiriichi_room_config';
+export const STORAGE_KEY_CLIENT_SETTINGS = 'rabiriichi_client_settings';
+export const STORAGE_KEY_CUSTOM_TILE_SETS = 'rabiriichi_custom_tilesets';
 
 export interface SavedServer {
   id: string;
@@ -131,4 +133,18 @@ export interface ServerSettings {
   customServers?: SavedServer[];
   lastUrl?: string;
   nickname?: string;
+}
+
+export interface ClientSettings {
+  animationSpeed?: number;
+  characterId?: string;
+  volumeSE?: number; // 0 to 1
+  volumeBGM?: number; // 0 to 1
+  volumeVoice?: number; // 0 to 1
+  muteSE?: boolean;
+  muteBGM?: boolean;
+  muteVoice?: boolean;
+  volumeAll?: number;
+  tooltipOnHandTiles?: boolean;
+  tooltipOnRiverTiles?: boolean;
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   startReplay,
   pauseReplay,
@@ -6,6 +6,7 @@ import {
   getRoundStartIndices,
   stopReplay,
   jumpToRound,
+  togglePause,
 } from './replayDriver';
 import { rabiriichi } from '../net/client';
 import { getEventsFromReplay } from './replay';
@@ -87,5 +88,66 @@ describe('ReplayDriver - Seek & Result State Integration', () => {
     // Verify isAwaitingNextRound is false (since currentPlayer is not -1 and game has started)
     // We can check our updated currentPlayer logic: it should be the dealer (e.g. 0 or 1, not -1)
     expect(room.info?.currentPlayer).not.toBe(-1);
+  });
+
+  it('should not leak isWaitingForProceed from a stopped session into a fresh replay', async () => {
+    // Play forward live so the loop naturally pauses at a round's concludeGameEvent
+    // (isWaitingForProceed becomes true), mirroring watching a result screen.
+    rabiriichi.setAnimationSpeed(200);
+    togglePause();
+    await vi.waitFor(
+      () => {
+        expect(rabiriichi.isWaitingForProceed).toBe(true);
+      },
+      { timeout: 15000, interval: 20 },
+    );
+
+    // Stop the session while the result screen is still showing (a very common
+    // user action: watch a result, then rewind/reload the replay).
+    stopReplay();
+    expect(rabiriichi.isWaitingForProceed).toBe(false);
+
+    // Restarting the same (or another) replay must not inherit the stale flag,
+    // otherwise ResultPanel would render immediately against the fresh room
+    // (no agari data yet) and show a zeroed score-transfer panel.
+    startReplay(replayData, 1);
+    expect(rabiriichi.isWaitingForProceed).toBe(false);
+  }, 20000);
+});
+
+describe('ReplayDriver - reasoning track opt-in', () => {
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    stopReplay();
+    globalThis.fetch = originalFetch;
+    rabiriichi.wsurl = null;
+  });
+
+  it('does not touch the network for an ordinary replay', () => {
+    const spy = vi.fn();
+    globalThis.fetch = spy;
+    rabiriichi.wsurl = 'ws://game.example.com';
+
+    // No options: a plain game server is WebSocket-only and serves no REST API.
+    startReplay(replayData, 1);
+    pauseReplay();
+
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('asks the server only when the replay opted in', () => {
+    const spy = vi.fn((_url: string) => Promise.reject(new Error('offline')));
+    globalThis.fetch = spy as unknown as typeof globalThis.fetch;
+    rabiriichi.wsurl = 'ws://arena.example.com';
+
+    startReplay(replayData, 1, { reasoning: true });
+    pauseReplay();
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0]?.[0]).toBe(
+      'http://arena.example.com/api/arena/matches/' +
+        'RABI-REPLAY-9999/reasoning-track',
+    );
   });
 });

@@ -7,6 +7,7 @@ import {
 } from './reducer';
 import type { RoomModel } from './model';
 import { createEmptyTileRegistry, getRegisteredTile } from './tileRegistry';
+import { deriveTileInfo } from './tileInfo';
 import { getRiichiSidewaysTraceId } from './river';
 import { GameLogMsg, type IServerRoomStateMsg } from '../proto';
 import type { IEventMsg } from '../proto';
@@ -118,6 +119,51 @@ describe('Reducer - Hydration', () => {
     expect(p1?.gameState?.hand.freeTiles).toHaveLength(1);
   });
 
+  it('sorts free tiles on hydration (unsorted snapshot after refresh)', () => {
+    // Regression: a reconnect snapshot may send the hand in an unsorted order.
+    // Hydration must sort it (like the event path) so the hand is not shown
+    // partially unsorted until the next event re-sorts it.
+    const initialState: RoomModel = {
+      id: 1,
+      config: null,
+      info: null,
+      players: [],
+      tileRegistry: createEmptyTileRegistry(),
+    };
+    const snapshot: IGameStateMsg = {
+      config: { playerCount: 2 },
+      info: { round: 0, dealer: 0, currentPlayer: 0 },
+      wall: { doras: [], remaining: 70, rinshanRemaining: 4 },
+      players: [
+        {
+          id: 0,
+          points: 25000,
+          hand: {
+            // Deliberately out of order: 5p(37), 1m(17), 9s(57), 3m(19).
+            freeTiles: [
+              { traceId: 1, tile: 37 },
+              { traceId: 2, tile: 17 },
+              { traceId: 3, tile: 57 },
+              { traceId: 4, tile: 19 },
+            ],
+            called: [],
+            discarded: [],
+            jun: 1,
+          },
+        },
+      ],
+      currentPlayer: 0,
+    };
+
+    const nextState = hydrateFromGameState(initialState, snapshot);
+    const faces = nextState.players
+      .find((p) => p.seat === 0)
+      ?.gameState?.hand.freeTiles.map((t) => t.tile);
+
+    // Man (1m,3m) before pin (5p) before sou (9s): 17, 19, 37, 57.
+    expect(faces).toEqual([17, 19, 37, 57]);
+  });
+
   it('should update existing players in room preserving nicknames', () => {
     const initialState: RoomModel = {
       id: 1234,
@@ -200,6 +246,104 @@ describe('Reducer - Hydration', () => {
     expect(p1?.status).toBe(UserStatus.USER_STATUS_PLAYING);
     expect(p1?.gameState).not.toBeNull();
   });
+
+  it('should filter out claimed tiles from river discards on hydration', () => {
+    const initialState: RoomModel = {
+      id: 1234,
+      config: null,
+      info: null,
+      players: [],
+      tileRegistry: createEmptyTileRegistry(),
+    };
+
+    const snapshot: IGameStateMsg = {
+      config: {
+        playerCount: 2,
+        pointThreshold: {
+          initialPoints: 25000,
+          riichiPoints: 1000,
+        },
+      },
+      info: {
+        round: 0,
+        dealer: 0,
+        honba: 0,
+        riichiStick: 0,
+        currentPlayer: 0,
+      },
+      wall: {
+        doras: [],
+        remaining: 70,
+        rinshanRemaining: 4,
+      },
+      players: [
+        {
+          id: 0,
+          points: 25000,
+          hand: {
+            freeTiles: [],
+            called: [],
+            // TraceId 103 was discarded, but it was claimed by Player 1 (PON)
+            discarded: [
+              {
+                traceId: 101,
+                tile: 17,
+                source: TileSource.TILE_SOURCE_DISCARD,
+                formTime: -1,
+              },
+              {
+                traceId: 103,
+                tile: 19,
+                source: TileSource.TILE_SOURCE_PON,
+                formTime: 1,
+              },
+            ],
+            jun: 1,
+          },
+        },
+        {
+          id: 1,
+          points: 25000,
+          hand: {
+            freeTiles: [
+              { traceId: 201, tile: 19 },
+              { traceId: 202, tile: 19 },
+            ],
+            called: [
+              {
+                tiles: [
+                  { traceId: 201, tile: 19 },
+                  { traceId: 202, tile: 19 },
+                  { traceId: 103, tile: 19 },
+                ],
+              },
+            ],
+            discarded: [],
+            jun: 1,
+          },
+        },
+      ],
+      currentPlayer: 0,
+    };
+
+    const nextState = hydrateFromGameState(initialState, snapshot);
+
+    expect(nextState.players).toHaveLength(2);
+    const p0 = nextState.players.find((p) => p.id === 0);
+    const p1 = nextState.players.find((p) => p.id === 1);
+
+    // Player 0's river should NOT contain the claimed tile (traceId 103)
+    const p0Discards = p0?.gameState?.hand.discarded ?? [];
+    expect(p0Discards).toHaveLength(1);
+    expect(p0Discards[0]?.traceId).toBe(101);
+
+    // Player 1's open melds should still contain it
+    const p1Called = p1?.gameState?.hand.called ?? [];
+    expect(p1Called).toHaveLength(1);
+    expect(p1Called[0]?.tiles).toBeDefined();
+    const p1CalledTiles = p1Called[0]?.tiles?.map((t) => t.traceId) ?? [];
+    expect(p1CalledTiles).toContain(103);
+  });
 });
 
 function createInitializedRoom(): RoomModel {
@@ -232,6 +376,7 @@ function createInitializedRoom(): RoomModel {
           jun: 0,
           points: 25000,
           riichiTileId: 0,
+          isRiichiConfirmed: false,
           furiten: {},
           hand: {
             freeTiles: [],
@@ -253,6 +398,7 @@ function createInitializedRoom(): RoomModel {
           jun: 0,
           points: 25000,
           riichiTileId: 0,
+          isRiichiConfirmed: false,
           furiten: {},
           hand: {
             freeTiles: [],
@@ -437,7 +583,7 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(50);
   });
 
-  it('should handle addTileEvent', () => {
+  it('should handle addTileEvent (doing nothing, visually deferred)', () => {
     const state = createInitializedRoom();
     // Pre-populate pending tile safely
     setPendingTile(state, 0, { traceId: 50, tile: 21 });
@@ -451,9 +597,9 @@ describe('Reducer - Events', () => {
     const nextState = applyEvent(state, eventMsg);
 
     const p0 = nextState.players.find((p) => p.seat === 0);
-    expect(p0?.gameState?.hand.pendingTile).toBeNull();
-    expect(p0?.gameState?.hand.freeTiles).toHaveLength(1);
-    expect(p0?.gameState?.hand.freeTiles[0]?.traceId).toBe(50);
+    expect(p0?.gameState?.hand.pendingTile).not.toBeNull();
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(50);
+    expect(p0?.gameState?.hand.freeTiles).toHaveLength(0);
   });
 
   it('should handle discardTileEvent (tsumogiri / discard pending)', () => {
@@ -583,6 +729,170 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.called[0]?.tiles).toHaveLength(4);
   });
 
+  it('keeps the claimed-from discarder on a daiminkan tile in the registry', () => {
+    // Regression: an open kan (daiminkan) claims another player's discard. Like
+    // a pon, the claimed tile must retain its discardInfo.from so the tooltip
+    // can show who it was claimed from. The server sequence is a claimTileEvent
+    // (group is the Kan) followed by kanEvent then addKanEvent.
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [
+      { traceId: 10, tile: 17 },
+      { traceId: 11, tile: 17 },
+      { traceId: 12, tile: 17 },
+    ]);
+    const discardedTile = {
+      traceId: 99,
+      tile: 17,
+      discardInfo: { from: 1, reason: 1, time: 5, jun: 3 },
+    };
+    setDiscardedTiles(state, 1, [discardedTile]);
+
+    const kanTiles = [
+      { traceId: 10, tile: 17 },
+      { traceId: 11, tile: 17 },
+      { traceId: 12, tile: 17 },
+      discardedTile,
+    ];
+
+    let next = applyEvent(state, {
+      claimTileEvent: {
+        playerId: 0,
+        tile: discardedTile,
+        group: { tiles: kanTiles },
+        reason: 4,
+      },
+    });
+    // The follow-up kanEvent re-mentions the meld; it must not wipe the
+    // claimed-from info off the registry record.
+    next = applyEvent(next, {
+      kanEvent: {
+        playerId: 0,
+        kan: { tiles: kanTiles },
+        incoming: discardedTile,
+        kanSource: TileSource.TILE_SOURCE_DAIMINKAN,
+      },
+    });
+    // AddKanEvent finalises the meld, stamping the DAIMINKAN source onto the
+    // tiles. This is what marks them as claimed.
+    const claimedKanTiles = kanTiles.map((t) => ({
+      ...t,
+      source: TileSource.TILE_SOURCE_DAIMINKAN,
+    }));
+    next = applyEvent(next, {
+      addKanEvent: {
+        playerId: 0,
+        kan: { tiles: claimedKanTiles },
+        incoming: {
+          ...discardedTile,
+          source: TileSource.TILE_SOURCE_DAIMINKAN,
+        },
+        kanSource: TileSource.TILE_SOURCE_DAIMINKAN,
+      },
+    });
+
+    const record = getRegisteredTile(next.tileRegistry, 99);
+    expect(record?.discardInfo?.from).toBe(1);
+    const facts = deriveTileInfo(record ?? {});
+    expect(facts.isClaimed).toBe(true);
+    expect(facts.discardedFrom).toBe(1);
+  });
+
+  it('keeps the claimed-from discarder on pon and chii tiles in the registry', () => {
+    // Pon and chii finalise synchronously, so the claimed tile already carries
+    // its meld source in the claimTileEvent. Confirm the tooltip facts resolve.
+    const cases = [
+      { reason: 4, source: TileSource.TILE_SOURCE_PON, tiles: [17, 17, 17] },
+      { reason: 3, source: TileSource.TILE_SOURCE_CHII, tiles: [17, 18, 19] },
+    ];
+    for (const { reason, source, tiles } of cases) {
+      const state = createInitializedRoom();
+      setFreeTiles(state, 0, [
+        { traceId: 10, tile: tiles[0]! },
+        { traceId: 11, tile: tiles[1]! },
+      ]);
+      const claimed = {
+        traceId: 99,
+        tile: tiles[2]!,
+        source,
+        discardInfo: { from: 1, reason: 1, time: 5, jun: 3 },
+      };
+      setDiscardedTiles(state, 1, [
+        { traceId: 99, tile: tiles[2]!, discardInfo: { from: 1, time: 5 } },
+      ]);
+
+      const next = applyEvent(state, {
+        claimTileEvent: {
+          playerId: 0,
+          tile: claimed,
+          group: {
+            tiles: [
+              { traceId: 10, tile: tiles[0]!, source },
+              { traceId: 11, tile: tiles[1]!, source },
+              claimed,
+            ],
+          },
+          reason,
+        },
+      });
+
+      const facts = deriveTileInfo(
+        getRegisteredTile(next.tileRegistry, 99) ?? {},
+      );
+      expect(facts.isClaimed).toBe(true);
+      expect(facts.discardedFrom).toBe(1);
+    }
+  });
+
+  it('should fold a surviving pending tile into the hand on the next (rinshan) draw', () => {
+    // Regression: draw X, ankan on four OTHER tiles (X stays pending), then draw
+    // the rinshan replacement Y. Because the ankan did not consume X, the merge
+    // is deferred; the rinshan draw must fold X into freeTiles before it
+    // overwrites the pending slot with Y, otherwise X is silently lost.
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [
+      { traceId: 10, tile: 17 },
+      { traceId: 11, tile: 17 },
+      { traceId: 12, tile: 17 },
+      { traceId: 13, tile: 17 },
+    ]);
+    // Drawn tile X (5m) that is NOT part of the kan.
+    setPendingTile(state, 0, { traceId: 50, tile: 21 });
+
+    const afterKan = applyEvent(state, {
+      kanEvent: {
+        playerId: 0,
+        kan: {
+          tiles: [
+            { traceId: 10, tile: 17 },
+            { traceId: 11, tile: 17 },
+            { traceId: 12, tile: 17 },
+            { traceId: 13, tile: 17 },
+          ],
+        },
+        incoming: { traceId: 13, tile: 17 },
+        kanSource: TileSource.TILE_SOURCE_ANKAN,
+      },
+    });
+
+    // Kan on other tiles leaves X pending (merge deferred).
+    const p0AfterKan = afterKan.players.find((p) => p.seat === 0);
+    expect(p0AfterKan?.gameState?.hand.pendingTile?.traceId).toBe(50);
+
+    // Rinshan replacement draw Y (6m).
+    const afterDraw = applyEvent(afterKan, {
+      drawTileEvent: {
+        playerId: 0,
+        source: TileSource.TILE_SOURCE_WANPAI,
+        tile: { traceId: 51, tile: 22 },
+      },
+    });
+
+    const p0 = afterDraw.players.find((p) => p.seat === 0);
+    // X must now live in the hand, Y is the new pending tile.
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(51);
+    expect(p0?.gameState?.hand.freeTiles.map((t) => t.traceId)).toContain(50);
+  });
+
   it('should handle kanEvent (Kakan)', () => {
     const state = createInitializedRoom();
     // Player 0 already has a Pon of 1m (original tiles carry a pon-era formTime)
@@ -677,6 +987,38 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.nukiDora.map((t) => t.traceId)).toEqual([61]);
   });
 
+  it('should preserve the pending drawn tile across a nuki on a hand tile', () => {
+    // Regression: draw X, nuki a North already in hand (X stays pending), then
+    // draw the rinshan replacement. X must survive into the hand.
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [
+      { traceId: 60, tile: 17 },
+      { traceId: 61, tile: NORTH },
+    ]);
+    setPendingTile(state, 0, { traceId: 50, tile: 21 }); // drawn X (5m)
+
+    const afterNuki = applyEvent(state, {
+      addNukiDoraEvent: { playerId: 0, incoming: { traceId: 61, tile: NORTH } },
+    });
+    // Nuki on a hand tile leaves X pending.
+    expect(
+      afterNuki.players.find((p) => p.seat === 0)?.gameState?.hand.pendingTile
+        ?.traceId,
+    ).toBe(50);
+
+    const afterDraw = applyEvent(afterNuki, {
+      drawTileEvent: {
+        playerId: 0,
+        source: TileSource.TILE_SOURCE_WANPAI,
+        tile: { traceId: 51, tile: 22 },
+      },
+    });
+
+    const p0 = afterDraw.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.pendingTile?.traceId).toBe(51);
+    expect(p0?.gameState?.hand.freeTiles.map((t) => t.traceId)).toContain(50);
+  });
+
   it('should accumulate multiple pulled North tiles', () => {
     const state = createInitializedRoom();
     setPendingTile(state, 0, { traceId: 70, tile: NORTH });
@@ -765,9 +1107,44 @@ describe('Reducer - Events', () => {
     const nextState = applyEvent(state, eventMsg);
 
     expect(nextState.players[0]?.gameState?.riichiTileId).toBe(50);
+    expect(nextState.players[0]?.gameState?.isRiichiConfirmed).toBe(true);
     // Declaring riichi deducts the 1000-point stick and adds it to the pot.
     expect(nextState.players[0]?.gameState?.points).toBe(24000);
     expect(nextState.info?.riichiStick).toBe(1);
+  });
+
+  it('does not confirm riichi when the declaration discard is ron', () => {
+    let state = createInitializedRoom();
+    const declarationTile = {
+      traceId: 50,
+      tile: 21,
+      discardInfo: { from: 0, reason: 1, time: 10 },
+    };
+
+    state = applyEvent(state, {
+      discardTileEvent: {
+        playerId: 0,
+        discarded: declarationTile,
+        isRiichi: true,
+      },
+    });
+
+    // The river needs the ID immediately so the declaration tile is sideways,
+    // but the stick must wait for the server's set-riichi confirmation.
+    expect(state.players[0]?.gameState?.riichiTileId).toBe(50);
+    expect(state.players[0]?.gameState?.isRiichiConfirmed).toBe(false);
+
+    state = applyEvent(state, {
+      agariEvent: {
+        agariInfos: [{ playerId: 1, freeTiles: [] }],
+        incoming: declarationTile,
+        isTsumo: false,
+      },
+    });
+
+    expect(state.players[0]?.gameState?.isRiichiConfirmed).toBe(false);
+    expect(state.players[0]?.gameState?.points).toBe(25000);
+    expect(state.info?.riichiStick).toBe(0);
   });
 
   it('keeps the riichi sideways tile after the declaration tile is called', () => {
@@ -1082,7 +1459,8 @@ describe('Reducer - Events', () => {
     });
 
     // Snapshot captured for both players at conclusion.
-    expect(settled.roundResultPlayers).toHaveLength(2);
+    expect(settled.roundResult?.players).toHaveLength(2);
+    expect(settled.roundResult?.dealer).toBe(0);
 
     // Bob (102) leaves: the server pushes a room state with only Alice.
     const afterLeave = applyRoomState(settled, {
@@ -1094,10 +1472,52 @@ describe('Reducer - Events', () => {
 
     // Live players shrank, but the frozen result still lists both.
     expect(afterLeave?.players).toHaveLength(1);
-    expect(afterLeave?.roundResultPlayers).toHaveLength(2);
-    expect(afterLeave?.roundResultPlayers?.map((p) => p.id)).toEqual([
+    expect(afterLeave?.roundResult?.players).toHaveLength(2);
+    expect(afterLeave?.roundResult?.dealer).toBe(0);
+    expect(afterLeave?.roundResult?.players.map((p) => p.id)).toEqual([
       101, 102,
     ]);
+
+    // The array reference must be preserved, not just its contents: the reveal
+    // animation keys off it, so a new array would restart it.
+    expect(afterLeave?.roundResult?.players).toBe(settled.roundResult?.players);
+  });
+
+  it('preserves the frozen result reference across repeated room-state pushes', () => {
+    // The reveal animation depends on these references, so every incidental
+    // room-state push must return the exact same arrays.
+    const state = createInitializedRoom();
+    const p0Raw = state.players[0];
+    if (p0Raw?.gameState) {
+      p0Raw.gameState.agari = { gainPoints: 0, losePoints: 0, scores: {} };
+    }
+
+    const settled = applyEvent(state, {
+      applyScoreEvent: {
+        scoreChange: [{ from: 102, to: 101, points: 3900, reason: 1 }],
+      },
+    });
+    settled.concludedPlayers = settled.players.map((p) => ({ ...p }));
+
+    const frozenResult = settled.roundResult?.players;
+    const frozenConcluded = settled.concludedPlayers;
+
+    let current = settled;
+    for (const players of [
+      [{ id: 101, status: UserStatus.USER_STATUS_READY }],
+      [
+        { id: 101, status: UserStatus.USER_STATUS_READY },
+        { id: 102, status: UserStatus.USER_STATUS_PLAYING },
+      ],
+      [{ id: 101, status: UserStatus.USER_STATUS_PLAYING }],
+    ]) {
+      const next = applyRoomState(current, { id: 1234, players });
+      expect(next).not.toBeNull();
+      if (!next) return;
+      expect(next.roundResult?.players).toBe(frozenResult);
+      expect(next.concludedPlayers).toBe(frozenConcluded);
+      current = next;
+    }
   });
 
   it('freezes a round-result snapshot on ryuukyoku', () => {
@@ -1105,13 +1525,35 @@ describe('Reducer - Events', () => {
     const nextState = applyEvent(state, {
       ryuukyokuEvent: { scoreChange: [] },
     });
-    expect(nextState.roundResultPlayers).toHaveLength(2);
+    expect(nextState.roundResult?.players).toHaveLength(2);
+    expect(nextState.roundResult?.dealer).toBe(0);
+  });
+
+  it('keeps the completed hand dealer after nextGame advances live metadata', () => {
+    const settled = applyEvent(createInitializedRoom(), {
+      applyScoreEvent: { scoreChange: [] },
+    });
+    const advanced = applyEvent(settled, {
+      nextGameEvent: {
+        nextRound: 1,
+        nextDealer: 1,
+        nextHonba: 0,
+        riichiStick: 0,
+      },
+    });
+
+    expect(advanced.info?.dealer).toBe(1);
+    expect(advanced.roundResult?.dealer).toBe(0);
   });
 
   it('clears the round-result snapshot when the next hand begins', () => {
     const state: RoomModel = {
       ...createInitializedRoom(),
-      roundResultPlayers: [...createInitializedRoom().players],
+      roundResult: {
+        players: [...createInitializedRoom().players],
+        dealer: 0,
+        scoringOption: 0,
+      },
     };
     const nextState = applyEvent(state, {
       beginGameEvent: {
@@ -1122,7 +1564,7 @@ describe('Reducer - Events', () => {
         remainingTiles: 100,
       },
     });
-    expect(nextState.roundResultPlayers).toBeNull();
+    expect(nextState.roundResult).toBeNull();
   });
 
   it('should handle concludeGameEvent', () => {
@@ -1335,6 +1777,7 @@ describe('Reducer - Events', () => {
     // The declaration tile is still rendered sideways.
     const p1 = state.players.find((p) => p.seat === 1);
     expect(p1?.gameState?.riichiTileId).toBe(50);
+    expect(p1?.gameState?.isRiichiConfirmed).toBe(true);
     expect(
       getRiichiSidewaysTraceId(
         p1?.gameState?.hand.discarded ?? [],
@@ -1367,6 +1810,41 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.remainingTiles).toBe(70);
   });
 
+  it('preserves the initial wall across a mid-round syncGameStateEvent', () => {
+    let state = createInitializedRoom();
+    state = applyEvent(state, {
+      beginGameEvent: {
+        round: 0,
+        dealer: 0,
+        honba: 0,
+        remainingTiles: 70,
+        initialWall: [
+          { traceId: 1, tile: 11 },
+          { traceId: 2, tile: 12 },
+        ],
+      },
+    });
+    expect(state.info?.initialWall).toHaveLength(2);
+
+    const synced = applyEvent(state, {
+      syncGameStateEvent: {
+        playerId: 0,
+        gameState: {
+          config: { playerCount: 2 },
+          info: { round: 0, dealer: 0 },
+          wall: { remaining: 65 },
+          players: [
+            { id: 0, points: 25000 },
+            { id: 1, points: 25000 },
+          ],
+        },
+      },
+    });
+
+    expect(synced.info?.initialWall).toHaveLength(2);
+    expect(synced.info?.initialWall?.map((t) => t.traceId)).toEqual([1, 2]);
+  });
+
   it('should handle syncGameStateEvent by hydrating tenpaiWaits', () => {
     const state = createInitializedRoom();
     const eventMsg = {
@@ -1391,7 +1869,9 @@ describe('Reducer - Events', () => {
                     yakuHan: 1,
                     fu: 30,
                     yakuman: 0,
+                    bonusYakuman: 0,
                     points: 1000,
+                    maxHan: 13,
                   },
                 ],
               },
@@ -1412,7 +1892,9 @@ describe('Reducer - Events', () => {
         yakuHan: 1,
         fu: 30,
         yakuman: 0,
+        bonusYakuman: 0,
         points: 1000,
+        maxHan: 13,
       },
     ]);
   });
@@ -1611,7 +2093,9 @@ describe('Reducer - Events', () => {
         yakuHan: 0,
         fu: 0,
         yakuman: 0,
+        bonusYakuman: 0,
         points: 0,
+        maxHan: 0,
       },
       {
         winningTile: 18,
@@ -1620,12 +2104,41 @@ describe('Reducer - Events', () => {
         yakuHan: 0,
         fu: 0,
         yakuman: 0,
+        bonusYakuman: 0,
         points: 0,
+        maxHan: 0,
       },
     ]);
 
     expect(p1.gameState?.agari?.isTenpai).toBeFalsy();
     expect(p1.gameState?.awaitedTiles).toBeUndefined();
+  });
+
+  it('should clear a pending drawn tile for a noten player on ryuukyoku', () => {
+    // Regression: the player who drew the last wall tile still holds a pending
+    // tile when the wall exhausts. A noten player never goes through the tenpai
+    // reveal branch, so the pending tile must still be folded into the hand and
+    // cleared, otherwise it lingers at the draw position.
+    const state = createInitializedRoom();
+    setFreeTiles(state, 0, [{ traceId: 10, tile: 17 }]);
+    setPendingTile(state, 0, { traceId: 50, tile: 21 });
+
+    const nextState = applyEvent(state, {
+      ryuukyokuEvent: {
+        scoreChange: [],
+        endGameRyuukyoku: {
+          remainingPlayers: [0, 1],
+          nagashiManganPlayers: [],
+          tenpaiPlayers: [1], // seat 0 is noten
+        },
+      },
+    });
+
+    const p0 = nextState.players.find((p) => p.seat === 0);
+    expect(p0?.gameState?.hand.pendingTile).toBeNull();
+    expect(p0?.gameState?.hand.freeTiles.map((t) => t.traceId)).toEqual([
+      10, 50,
+    ]);
   });
 
   it('should sort revealed tiles in ryuukyokuEvent even if dummy tiles were in different order', () => {

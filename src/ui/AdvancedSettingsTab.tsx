@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { PolicyCheckboxGroup } from './PolicyCheckboxGroup';
+import { Toggle } from './Toggle';
+import { Select } from './Select';
+import { scoringToggles } from './scoringToggles';
 import {
   RENCHAN_POLICIES,
   END_GAME_POLICIES,
@@ -45,176 +48,22 @@ function ScoringOptionGroup({
 }: ScoringOptionGroupProps) {
   const { t } = useTranslation();
   return (
-    <div className="policy-group" style={{ fontSize: '0.75rem' }}>
-      <h4
-        style={{
-          margin: '0 0 4px 0',
-          fontSize: '0.8rem',
-          color: '#ff7a99',
-        }}
-      >
+    <div className="flex flex-col gap-1 text-[0.75rem]">
+      <h4 className="m-0 mb-1 text-[0.8rem] text-[#ff7a99] font-bold">
         {t('advanced.scoringOption')}
       </h4>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '3px',
-        }}
-      >
-        {/* 切上满贯 */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={(scoringOption & 1) !== 0}
-            onChange={() => setScoringOption(scoringOption ^ 1)}
-            disabled={isLoading}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
+      <div className="flex flex-col gap-1">
+        {scoringToggles(scoringOption, isLoading).map((opt) => (
+          <Toggle
+            key={opt.key}
+            appearance="inline"
+            className="text-[0.72rem]"
+            checked={opt.checked}
+            disabled={opt.disabled}
+            label={t(opt.labelKey)}
+            onChange={() => setScoringOption(opt.next)}
           />
-          {t('advanced.scoring.kiriageMangan')}
-        </label>
-
-        {/* 青天井 (Virtual checkbox, checked when Yakuman bit 2 is 0) */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={(scoringOption & 2) === 0}
-            onChange={(e) => {
-              if (e.target.checked) {
-                // Enable Aotenjou: disables Yakuman and related
-                setScoringOption(scoringOption & ~2 & ~4 & ~8);
-              } else {
-                // Disable Aotenjou: forces Yakuman enabled
-                setScoringOption(scoringOption | 2);
-              }
-            }}
-            disabled={isLoading}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
-          />
-          {t('advanced.scoring.aotenjou')}
-        </label>
-
-        {/* 役满 (Bit 2) */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={(scoringOption & 2) !== 0}
-            onChange={(e) => {
-              if (e.target.checked) {
-                setScoringOption(scoringOption | 2);
-              } else {
-                // Disable Yakuman: clears Multiple & Kazoe, auto-enables Aotenjou
-                setScoringOption(scoringOption & ~2 & ~4 & ~8);
-              }
-            }}
-            disabled={isLoading}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
-          />
-          {t('advanced.scoring.yakuman')}
-        </label>
-
-        {/* 多倍役满 (Bit 4) */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={(scoringOption & 4) !== 0}
-            onChange={(e) => {
-              if (e.target.checked) {
-                // Enable Multiple: also forces Yakuman (2) enabled
-                setScoringOption(scoringOption | 4 | 2);
-              } else {
-                setScoringOption(scoringOption & ~4);
-              }
-            }}
-            disabled={isLoading || (scoringOption & 2) === 0}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
-          />
-          {t('advanced.scoring.multipleYakuman')}
-        </label>
-
-        {/* 累计役满 (Bit 8) */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '0.72rem',
-            cursor: 'pointer',
-            lineHeight: '1.2',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={(scoringOption & 8) !== 0}
-            onChange={(e) => {
-              if (e.target.checked) {
-                // Enable Kazoe: also forces Yakuman (2) enabled
-                setScoringOption(scoringOption | 8 | 2);
-              } else {
-                setScoringOption(scoringOption & ~8);
-              }
-            }}
-            disabled={isLoading || (scoringOption & 2) === 0}
-            style={{
-              margin: 0,
-              transform: 'scale(0.85)',
-              transformOrigin: 'left center',
-            }}
-          />
-          {t('advanced.scoring.kazoeYakuman')}
-        </label>
+        ))}
       </div>
     </div>
   );
@@ -243,7 +92,7 @@ export function AdvancedSettingsTab({
 }: AdvancedSettingsTabProps) {
   const { t } = useTranslation();
   return (
-    <div className="advanced-settings-section">
+    <div className="max-h-[250px] overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 text-left pr-1">
       <PolicyCheckboxGroup
         title={t('advanced.renchanPolicy')}
         options={RENCHAN_POLICIES}
@@ -314,43 +163,22 @@ export function AdvancedSettingsTab({
       />
 
       {/* Points Deduction Policy */}
-      <div
-        className="policy-group"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-        }}
-      >
-        <h4
-          style={{
-            margin: '0 0 4px 0',
-            fontSize: '0.8rem',
-            color: '#ff7a99',
-          }}
-        >
+      <div className="flex flex-col gap-1 text-[0.75rem]">
+        <h4 className="m-0 mb-1 text-[0.8rem] text-[#ff7a99] font-bold">
           {t('advanced.pointsDeductionPolicy')}
         </h4>
-        <select
+        <Select
+          selectSize="compact"
+          className="w-full cursor-pointer"
           value={pointsDeductionPolicy}
           onChange={(e) => setPointsDeductionPolicy(Number(e.target.value))}
           disabled={isLoading}
-          style={{
-            padding: '6px 8px',
-            backgroundColor: '#111',
-            color: '#ccc',
-            border: '1px solid #333',
-            borderRadius: '4px',
-            fontSize: '0.75rem',
-            width: '100%',
-            boxSizing: 'border-box',
-          }}
         >
           <option value={0}>{t('advanced.deduction.alwaysAllow')}</option>
           <option value={1}>{t('advanced.deduction.sufficientPoints')}</option>
           <option value={2}>{t('advanced.deduction.validPoints')}</option>
           <option value={3}>{t('advanced.deduction.alwaysBlock')}</option>
-        </select>
+        </Select>
       </div>
     </div>
   );

@@ -1,13 +1,31 @@
 import { type IScoringMsg, ScoringType, ScoringOption } from '../proto';
 
+export type YakuGroup =
+  '1han' | '2han' | '3han' | '6han' | 'yakuman' | 'koyaku' | 'other';
+
 export interface YakuInfo {
   name: string;
-  group: '1han' | '2han' | '3han' | '6han' | 'yakuman' | 'other';
+  group: YakuGroup;
 }
+
+/** Groups rendered in the room's yaku picker, in display order. */
+export const YAKU_GROUPS: readonly YakuGroup[] = [
+  '1han',
+  '2han',
+  '3han',
+  '6han',
+  'yakuman',
+  'koyaku',
+  'other',
+];
+
+/** Not standard riichi rules; opt-in per room. */
+export const KOYAKU_GROUP: YakuGroup = 'koyaku';
 
 export const YAKUS: YakuInfo[] = [
   // 1 Han
   { name: 'Riichi', group: '1han' },
+  { name: 'DoubleRiichi', group: '2han' },
   { name: 'Ippatsu', group: '1han' },
   { name: 'MenzenchinTsumohou', group: '1han' },
   { name: 'Tanyao', group: '1han' },
@@ -24,7 +42,6 @@ export const YAKUS: YakuInfo[] = [
   { name: 'HouteiRaoyui', group: '1han' },
 
   // 2 Han
-  { name: 'DoubleRiichi', group: '2han' },
   { name: 'SanshokuDoujun', group: '2han' },
   { name: 'Ittsu', group: '2han' },
   { name: 'Chantaiyao', group: '2han' },
@@ -61,9 +78,47 @@ export const YAKUS: YakuInfo[] = [
   { name: 'ChuurenPoutou', group: 'yakuman' },
   { name: 'JunseiChuurenPoutou', group: 'yakuman' },
 
+  // 古役 (koyaku, off by default)
+  { name: 'TsubameGaeshi', group: 'koyaku' },
+  { name: 'Kanburi', group: 'koyaku' },
+  { name: 'ShiiaruRaotai', group: 'koyaku' },
+  { name: 'Shousanfon', group: 'koyaku' },
+  { name: 'Sanrenkou', group: 'koyaku' },
+  { name: 'Sanfonkou', group: 'koyaku' },
+  { name: 'Chaopaikou', group: 'koyaku' },
+  { name: 'Chinpaikou', group: 'koyaku' },
+  { name: 'Uumensai', group: 'koyaku' },
+  { name: 'Ryanankan', group: 'koyaku' },
+  { name: 'IsshokuSandoujun', group: 'koyaku' },
+  { name: 'Chinpeikou', group: 'koyaku' },
+  { name: 'Suurenkou', group: 'koyaku' },
+  { name: 'IsshokuYondoujun', group: 'koyaku' },
+  { name: 'Sanankan', group: 'koyaku' },
+  { name: 'Renhou', group: 'koyaku' },
+  { name: 'Katengecchi', group: 'koyaku' },
+  { name: 'IshiNoUeNiMoSannen', group: 'koyaku' },
+  { name: 'Heiiisou', group: 'koyaku' },
+  { name: 'Benikujaku', group: 'koyaku' },
+  { name: 'Daisharin', group: 'koyaku' },
+  { name: 'Daichikurin', group: 'koyaku' },
+  { name: 'Daisuurin', group: 'koyaku' },
+  { name: 'Shiisanputa', group: 'koyaku' },
+  { name: 'Shiisuuputa', group: 'koyaku' },
+  { name: 'Paarenchan', group: 'koyaku' },
+  { name: 'Daichiishin', group: 'koyaku' },
+
   // Other
   { name: 'HelloWorld', group: 'other' },
 ];
+
+/** The yaku a room starts with: everything except 古役, which are opt-in. */
+export function defaultAllowedYakus(
+  available: readonly YakuInfo[] = YAKUS,
+): Set<string> {
+  return new Set(
+    available.filter((y) => y.group !== KOYAKU_GROUP).map((y) => y.name),
+  );
+}
 
 /**
  * Builds the `allowedYakus` payload for a create-room request.
@@ -80,17 +135,87 @@ export function buildAllowedYakusPayload(
   return Array.from(selected);
 }
 
+/**
+ * Whether yakuman are capped. With the flag off the table is aotenjou, where a
+ * yakuman is merely 13 extra han and the limit names do not apply.
+ */
+export function isYakumanEnabled(
+  scoringOption: number | null | undefined,
+): boolean {
+  // 0 is a real value (ScoringOption.Aotenjou), not "unset" — only null means
+  // the config has not arrived yet.
+  if (scoringOption == null) return true;
+  return Boolean(scoringOption & ScoringOption.SCORING_OPTION_YAKUMAN);
+}
+
+/**
+ * Whether 13+ han counts as a yakuman (累计役满). Mirrors the server, which
+ * requires both flags — see ScoreCalcResult.KazoeYakuman.
+ */
+export function isKazoeYakumanEnabled(
+  scoringOption: number | null | undefined,
+): boolean {
+  if (scoringOption == null) return true;
+  const required =
+    ScoringOption.SCORING_OPTION_YAKUMAN |
+    ScoringOption.SCORING_OPTION_KAZOE_YAKUMAN;
+  return (scoringOption & required) === required;
+}
+
+/** Whether 4 han 30 fu / 3 han 60 fu round up to mangan (切上满贯). */
+export function isKiriageManganEnabled(
+  scoringOption: number | null | undefined,
+): boolean {
+  if (scoringOption == null) return false;
+  return Boolean(scoringOption & ScoringOption.SCORING_OPTION_KIRIAGE_MANGAN);
+}
+
+/** Whether a room allows a yaku. An absent or empty list means every yaku. */
+export function isYakuAllowed(
+  allowedYakus: readonly string[] | null | undefined,
+  yakuName: string,
+): boolean {
+  if (allowedYakus == null || allowedYakus.length === 0) return true;
+  return allowedYakus.includes(yakuName);
+}
+
+/** Whether a scoring row is worth a yakuman, bonus yakuman (八連荘) included. */
+export function isYakumanScoring(
+  type: ScoringType | null | undefined,
+): boolean {
+  return (
+    type === ScoringType.SCORING_TYPE_YAKUMAN ||
+    type === ScoringType.SCORING_TYPE_BONUS_YAKUMAN
+  );
+}
+
 export function filterYakuListForDisplay(
   rawYakuList: IScoringMsg[],
   scoringOption: number | null | undefined,
 ): IScoringMsg[] {
-  const isYakumanEnabled = scoringOption
-    ? Boolean(scoringOption & ScoringOption.SCORING_OPTION_YAKUMAN)
-    : true;
-  const hasYakuman = rawYakuList.some(
-    (y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN,
-  );
-  return isYakumanEnabled && hasYakuman
-    ? rawYakuList.filter((y) => y.Type === ScoringType.SCORING_TYPE_YAKUMAN)
-    : rawYakuList;
+  const yakumanEnabled = isYakumanEnabled(scoringOption);
+  const hasYakuman = rawYakuList.some((y) => isYakumanScoring(y.Type));
+  const filtered =
+    yakumanEnabled && hasYakuman
+      ? rawYakuList.filter((y) => isYakumanScoring(y.Type))
+      : rawYakuList.filter((y) => y.Type !== ScoringType.SCORING_TYPE_FU);
+  return sortYakuList(filtered);
+}
+
+const YAKU_ORDER_MAP: Record<string, number> = {};
+YAKUS.forEach((yaku, idx) => {
+  YAKU_ORDER_MAP[yaku.name] = idx;
+});
+
+const DORA_ITEMS = ['Dora', 'Akadora', 'NukiDora', 'Uradora'];
+DORA_ITEMS.forEach((doraName, idx) => {
+  YAKU_ORDER_MAP[doraName] = 1000 + idx;
+});
+
+export function sortYakuList(yakuList: IScoringMsg[]): IScoringMsg[] {
+  return [...yakuList].sort((a, b) => {
+    const priorityA = YAKU_ORDER_MAP[a.Src ?? ''] ?? 999;
+    const priorityB = YAKU_ORDER_MAP[b.Src ?? ''] ?? 999;
+    return priorityA - priorityB;
+  });
 }

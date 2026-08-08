@@ -6,7 +6,9 @@ import { formatError } from '../lib';
 import type { IGameConfigMsg } from '../proto';
 import { RoomConfigPanel } from './RoomConfigPanel';
 import { ReplayModal } from './ReplayModal';
-import './ui.css';
+import { Button } from './Button';
+import { SCREEN, FORM } from './styles';
+import { Select } from './Select';
 
 export function LobbyScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
@@ -56,31 +58,23 @@ export function LobbyScreen(): React.JSX.Element {
     rabiriichi.logout();
   };
 
+  const handleDisconnect = () => {
+    rabiriichi.close();
+  };
+
   return (
-    <div className="ui-screen lobby-screen">
-      <div className="ui-card lobby-card">
+    <div className={SCREEN.base}>
+      <div
+        className={`${SCREEN.card} max-w-[960px] w-full h-full rounded-none border-none bg-transparent backdrop-blur-none shadow-none p-8`}
+      >
         {/* Header with Title and Language Switcher */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: '16px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <h2 className="ui-title" style={{ margin: 0 }}>
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-baseline gap-2">
+            <h2 className={SCREEN.title} style={{ margin: 0 }}>
               {t('lobby.title')}
             </h2>
             {rabiriichi.wsurl && (
-              <span
-                className="server-url-display"
-                style={{
-                  fontSize: '0.85rem',
-                  color: '#888',
-                  fontWeight: 'normal',
-                }}
-              >
+              <span className="text-sm text-[#888] font-normal">
                 (
                 {t('lobby.connectedServer', {
                   url: rabiriichi.wsurl.replace(/^wss?:\/\//, ''),
@@ -90,40 +84,19 @@ export function LobbyScreen(): React.JSX.Element {
             )}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-end',
-              gap: '4px',
-            }}
-          >
-            <select
+          <div className="flex flex-col items-end gap-1">
+            <Select
+              selectSize="compact"
+              className="cursor-pointer"
               value={i18n.language}
               onChange={(e) => void i18n.changeLanguage(e.target.value)}
-              className="language-selector"
-              style={{
-                padding: '4px 8px',
-                borderRadius: '4px',
-                backgroundColor: '#1a1a1a',
-                color: '#fff',
-                border: '1px solid #555',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-              }}
             >
               <option value="zhs">简体中文</option>
               <option value="en">English</option>
-            </select>
+              <option value="ja">日本語</option>
+            </Select>
             {currentUser && (
-              <span
-                className="user-welcome"
-                style={{
-                  fontSize: '0.8rem',
-                  color: 'white',
-                  textAlign: 'right',
-                }}
-              >
+              <span className="text-[0.8rem] text-white text-right">
                 {t('lobby.welcome', {
                   nickname: currentUser.nickname,
                   id: currentUser.id,
@@ -133,35 +106,24 @@ export function LobbyScreen(): React.JSX.Element {
           </div>
         </div>
 
-        {error && <div className="ui-error">{error}</div>}
+        {error && <div className={FORM.error}>{error}</div>}
 
-        <div className="lobby-buttons">
+        <div className="flex flex-col gap-3 mt-4">
           <RoomConfigPanel
             onCreateRoom={handleCreateRoom}
             isLoading={isLoading}
           />
 
-          <div className="lobby-bottom-row">
-            <form
-              onSubmit={onJoinRoom}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '6px',
-                flex: 1,
-              }}
-            >
-              <label
-                htmlFor="room-id"
-                style={{ fontSize: '0.9rem', color: '#ccc', fontWeight: 600 }}
-              >
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-4 border-t border-[#444] pt-4 mt-2">
+            <form onSubmit={onJoinRoom} className="flex flex-col gap-1.5">
+              <label htmlFor="room-id" className={FORM.label}>
                 {t('lobby.joinRoomLabel')}
               </label>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div className="flex gap-2.5">
                 <input
                   id="room-id"
                   type="text"
-                  className="room-id-input"
+                  className={`${FORM.input} w-[120px]`}
                   value={roomIdInput}
                   onChange={(e) =>
                     setRoomIdInput(
@@ -171,33 +133,43 @@ export function LobbyScreen(): React.JSX.Element {
                   disabled={isLoading}
                   placeholder="1234"
                   pattern="\d{4}"
-                  style={{ width: '120px' }}
                 />
-                <button
+                <Button
                   type="submit"
-                  className="ui-button primary-button"
                   disabled={isLoading || roomIdInput.length !== 4}
-                  style={{ whiteSpace: 'nowrap' }}
+                  className="whitespace-nowrap"
                 >
                   {t('lobby.joinRoom')}
-                </button>
+                </Button>
               </div>
             </form>
 
-            <button
-              onClick={() => setIsReplayModalOpen(true)}
-              className="ui-button secondary-button"
-              disabled={isLoading}
-            >
-              {t('lobby.viewReplay')}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="ui-button danger-button"
-              disabled={isLoading}
-            >
-              {t('lobby.logout')}
-            </button>
+            <div className="flex gap-3 flex-wrap ml-auto max-[540px]:ml-0">
+              <Button
+                variant="secondary"
+                onClick={() => setIsReplayModalOpen(true)}
+                disabled={isLoading}
+                className="whitespace-nowrap"
+              >
+                {t('lobby.viewReplay')}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleDisconnect}
+                disabled={isLoading}
+                className="whitespace-nowrap"
+              >
+                {t('lobby.disconnect')}
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleLogout}
+                disabled={isLoading}
+                className="whitespace-nowrap"
+              >
+                {t('lobby.logout')}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

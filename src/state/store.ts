@@ -1,10 +1,14 @@
 import { useSyncExternalStore, useMemo } from 'react';
 import { rabiriichi } from '../net/client';
-import type { ConnectionStatus, ActiveInquiry } from '../net/client';
+import type {
+  ConnectionStatus,
+  ActiveInquiry,
+  ChatHistoryEntry,
+} from '../net/client';
 import type { PlayerModel, RoomModel } from '../domain/model';
 import type { ActionOption } from '../domain/inquiry';
 import type { YakuInfo } from '../domain/yakus';
-import { Tile } from '../domain/tile';
+import { Tile, isTileUnknown } from '../domain/tile';
 
 // Note: GameState is folded into RoomModel (specifically via RoomModel.info and players[].gameState)
 export interface RabiRiichiState {
@@ -21,6 +25,7 @@ export interface RabiRiichiState {
   ping: number;
   selectedTileTraceId: number | null;
   hoveredTileTraceId: number | null;
+  callHighlightTileIds: Set<number> | null;
   isCameraLocked: boolean;
   resultAnimation: 'agari' | 'ryuukyoku' | null;
   isReplay: boolean;
@@ -33,6 +38,20 @@ export interface RabiRiichiState {
   autoDiscard: boolean;
   autoNuki: boolean;
   activeStickers: Record<string, string>;
+  activeChatTexts: Record<number, string>;
+  chatHistory: ChatHistoryEntry[];
+  characterId: string;
+  volumeSE: number;
+  volumeBGM: number;
+  volumeVoice: number;
+  muteSE: boolean;
+  muteBGM: boolean;
+  muteVoice: boolean;
+  volumeAll: number;
+  isSettingsOpen: boolean;
+  autoConnectError: string | null;
+  tooltipOnHandTiles: boolean;
+  tooltipOnRiverTiles: boolean;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -57,6 +76,7 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.ping !== rabiriichi.ping ||
     lastSnapshot.selectedTileTraceId !== rabiriichi.selectedTileTraceId ||
     lastSnapshot.hoveredTileTraceId !== rabiriichi.hoveredTileTraceId ||
+    lastSnapshot.callHighlightTileIds !== rabiriichi.callHighlightTileIds ||
     lastSnapshot.isCameraLocked !== rabiriichi.isCameraLocked ||
     lastSnapshot.resultAnimation !== rabiriichi.resultAnimation ||
     lastSnapshot.isReplay !== rabiriichi.isReplay ||
@@ -68,7 +88,22 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.noCalls !== rabiriichi.noCalls ||
     lastSnapshot.autoDiscard !== rabiriichi.autoDiscard ||
     lastSnapshot.autoNuki !== rabiriichi.autoNuki ||
-    lastSnapshot.activeStickers !== rabiriichi.activeStickers
+    lastSnapshot.activeStickers !== rabiriichi.activeStickers ||
+    lastSnapshot.activeChatTexts !== rabiriichi.activeChatTexts ||
+    lastSnapshot.chatHistory !== rabiriichi.chatHistory ||
+    lastSnapshot.characterId !== rabiriichi.visuals.characterId ||
+    lastSnapshot.tooltipOnHandTiles !== rabiriichi.visuals.tooltipOnHandTiles ||
+    lastSnapshot.tooltipOnRiverTiles !==
+      rabiriichi.visuals.tooltipOnRiverTiles ||
+    lastSnapshot.volumeSE !== rabiriichi.sounds.volumeSE ||
+    lastSnapshot.volumeBGM !== rabiriichi.sounds.volumeBGM ||
+    lastSnapshot.volumeVoice !== rabiriichi.sounds.volumeVoice ||
+    lastSnapshot.muteSE !== rabiriichi.sounds.muteSE ||
+    lastSnapshot.muteBGM !== rabiriichi.sounds.muteBGM ||
+    lastSnapshot.muteVoice !== rabiriichi.sounds.muteVoice ||
+    lastSnapshot.volumeAll !== rabiriichi.sounds.volumeAll ||
+    lastSnapshot.isSettingsOpen !== rabiriichi.isSettingsOpen ||
+    lastSnapshot.autoConnectError !== rabiriichi.autoConnectError
   ) {
     lastSnapshot = {
       connectionStatus: rabiriichi.connectionStatus,
@@ -84,6 +119,7 @@ function getSnapshot(): RabiRiichiState {
       ping: rabiriichi.ping,
       selectedTileTraceId: rabiriichi.selectedTileTraceId,
       hoveredTileTraceId: rabiriichi.hoveredTileTraceId,
+      callHighlightTileIds: rabiriichi.callHighlightTileIds,
       isCameraLocked: rabiriichi.isCameraLocked,
       resultAnimation: rabiriichi.resultAnimation,
       isReplay: rabiriichi.isReplay,
@@ -96,6 +132,20 @@ function getSnapshot(): RabiRiichiState {
       autoDiscard: rabiriichi.autoDiscard,
       autoNuki: rabiriichi.autoNuki,
       activeStickers: rabiriichi.activeStickers,
+      activeChatTexts: rabiriichi.activeChatTexts,
+      chatHistory: rabiriichi.chatHistory,
+      characterId: rabiriichi.visuals.characterId,
+      tooltipOnHandTiles: rabiriichi.visuals.tooltipOnHandTiles,
+      tooltipOnRiverTiles: rabiriichi.visuals.tooltipOnRiverTiles,
+      volumeSE: rabiriichi.sounds.volumeSE,
+      volumeBGM: rabiriichi.sounds.volumeBGM,
+      volumeVoice: rabiriichi.sounds.volumeVoice,
+      muteSE: rabiriichi.sounds.muteSE,
+      muteBGM: rabiriichi.sounds.muteBGM,
+      muteVoice: rabiriichi.sounds.muteVoice,
+      volumeAll: rabiriichi.sounds.volumeAll,
+      isSettingsOpen: rabiriichi.isSettingsOpen,
+      autoConnectError: rabiriichi.autoConnectError,
     };
   }
   return lastSnapshot;
@@ -103,6 +153,7 @@ function getSnapshot(): RabiRiichiState {
 
 const getConnectionStatus = () => rabiriichi.connectionStatus;
 const getSelf = () => rabiriichi.self;
+const getUsername = () => rabiriichi.username;
 const getRoom = () => rabiriichi.room;
 const getCurrentInquiry = () => rabiriichi.currentInquiry;
 const getIsRiichiSelectMode = () => rabiriichi.isRiichiSelectMode;
@@ -156,6 +207,10 @@ export function useConnectionStatus(): ConnectionStatus {
 
 export function useSelf(): PlayerModel | null {
   return useSyncExternalStore(subscribe, getSelf, getSelf);
+}
+
+export function useUsername(): string | null {
+  return useSyncExternalStore(subscribe, getUsername, getUsername);
 }
 
 export function useRoom(): RoomModel | null {
@@ -227,6 +282,16 @@ export function useHoveredTileTraceId(): number | null {
   );
 }
 
+const getCallHighlightTileIds = () => rabiriichi.callHighlightTileIds;
+
+export function useCallHighlightTileIds(): Set<number> | null {
+  return useSyncExternalStore(
+    subscribe,
+    getCallHighlightTileIds,
+    getCallHighlightTileIds,
+  );
+}
+
 export function useIsCameraLocked(): boolean {
   return useSyncExternalStore(subscribe, getIsCameraLocked, getIsCameraLocked);
 }
@@ -293,6 +358,22 @@ export function useActiveStickers(): Record<string, string> {
   );
 }
 
+export function useActiveChatTexts(): Record<number, string> {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.activeChatTexts,
+    () => rabiriichi.activeChatTexts,
+  );
+}
+
+export function useChatHistory(): ChatHistoryEntry[] {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.chatHistory,
+    () => rabiriichi.chatHistory,
+  );
+}
+
 const getActiveComparisonTile = (): string | null => {
   const room = rabiriichi.room;
   const hoveredTraceId = rabiriichi.hoveredTileTraceId;
@@ -300,7 +381,8 @@ const getActiveComparisonTile = (): string | null => {
   const traceId = hoveredTraceId ?? selectedTraceId;
   if (traceId == null || !room?.tileRegistry) return null;
   const tileMsg = room.tileRegistry.get(traceId);
-  if (tileMsg?.tile == null) return null;
+  // Unknown/face-down tiles have no identity to compare against.
+  if (tileMsg?.tile == null || isTileUnknown(tileMsg.tile)) return null;
   try {
     return Tile.fromByte(tileMsg.tile).toString();
   } catch {
@@ -331,6 +413,127 @@ export function useDoraIndicators(): Tile[] {
       })
       .filter((t): t is Tile => t !== null);
   }, [room]);
+}
+
+import { getClaimTargetTileId } from '../domain/inquiry';
+
+function getClaimTargetTileIdSelector(): number | null {
+  const state = getSnapshot();
+  return getClaimTargetTileId(state.currentInquiry?.mapped ?? null);
+}
+
+export function useClaimTargetTileId(): number | null {
+  return useSyncExternalStore(
+    subscribe,
+    getClaimTargetTileIdSelector,
+    getClaimTargetTileIdSelector,
+  );
+}
+
+import type { ClientSettings } from '../domain/constants';
+
+export function updateClientSettings(patch: Partial<ClientSettings>): void {
+  rabiriichi.updateClientSettings(patch);
+}
+
+export function useCharacterId(): string {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.visuals.characterId,
+    () => rabiriichi.visuals.characterId,
+  );
+}
+
+export function useTooltipOnHandTiles(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.visuals.tooltipOnHandTiles,
+    () => rabiriichi.visuals.tooltipOnHandTiles,
+  );
+}
+
+export function useTooltipOnRiverTiles(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.visuals.tooltipOnRiverTiles,
+    () => rabiriichi.visuals.tooltipOnRiverTiles,
+  );
+}
+
+export function useVolumeSE(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.volumeSE,
+    () => rabiriichi.sounds.volumeSE,
+  );
+}
+
+export function useVolumeBGM(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.volumeBGM,
+    () => rabiriichi.sounds.volumeBGM,
+  );
+}
+
+export function useVolumeVoice(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.volumeVoice,
+    () => rabiriichi.sounds.volumeVoice,
+  );
+}
+
+export function useMuteSE(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.muteSE,
+    () => rabiriichi.sounds.muteSE,
+  );
+}
+
+export function useMuteBGM(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.muteBGM,
+    () => rabiriichi.sounds.muteBGM,
+  );
+}
+
+export function useMuteVoice(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.muteVoice,
+    () => rabiriichi.sounds.muteVoice,
+  );
+}
+
+export function useVolumeAll(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.sounds.volumeAll,
+    () => rabiriichi.sounds.volumeAll,
+  );
+}
+
+export function setSettingsOpen(isOpen: boolean): void {
+  rabiriichi.setSettingsOpen(isOpen);
+}
+
+export function useIsSettingsOpen(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.isSettingsOpen,
+    () => rabiriichi.isSettingsOpen,
+  );
+}
+
+export function useAutoConnectError(): string | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.autoConnectError,
+    () => rabiriichi.autoConnectError,
+  );
 }
 
 function resetForTest(): void {

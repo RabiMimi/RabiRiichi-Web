@@ -4,12 +4,17 @@ import {
   prevPlayerSeat,
   getPlayerBySeat,
   getPlayerById,
+  getPlayerDisplayName,
+  getAiTypeName,
   getWindKey,
   isTsumoTile,
   shouldRevealHand,
   waitMeetsMinHan,
   displayHan,
   applyRiichiBonusToWaits,
+  riichiBonusHan,
+  yakumanOutlook,
+  totalYakuman,
   deadWallRinshanCount,
   NUM_RINSHAN,
   type PlayerModel,
@@ -183,7 +188,9 @@ describe('waitMeetsMinHan', () => {
     yakuHan: 0,
     fu: 30,
     yakuman: 0,
+    bonusYakuman: 0,
     points: 0,
+    maxHan: 0,
     ...over,
   });
 
@@ -221,7 +228,9 @@ describe('displayHan', () => {
     yakuHan: 0,
     fu: 30,
     yakuman: 0,
+    bonusYakuman: 0,
     points: 0,
+    maxHan: 0,
     ...over,
   });
 
@@ -247,7 +256,9 @@ describe('applyRiichiBonusToWaits', () => {
     yakuHan: 0,
     fu: 30,
     yakuman: 0,
+    bonusYakuman: 0,
     points: 0,
+    maxHan: 0,
     ...over,
   });
 
@@ -295,5 +306,350 @@ describe('deadWallRinshanCount', () => {
         initialTiles: [NORTH, NORTH, NORTH, NORTH, 17, 18],
       }),
     ).toBe(NUM_RINSHAN + 4);
+  });
+});
+
+describe('getPlayerDisplayName', () => {
+  const mockTranslate = (key: string) => {
+    const translations: Record<string, string> = {
+      'ai.type.1': 'Drooling Rabbit',
+      'ai.type.2': 'Nodocchi',
+      'ai.llm.gemini': 'Gemi狸',
+      'ai.llm.openai': 'AI',
+      'ai.llm.generic': 'LLM',
+    };
+    return translations[key] ?? key;
+  };
+
+  it('localizes LLM sentinel nicknames', () => {
+    const geminiPlayer: PlayerModel = {
+      id: 1,
+      nickname: '@llm:gemini',
+      status: UserStatus.USER_STATUS_PLAYING,
+      seat: 0,
+      gameState: null,
+      aiType: AiType.AI_TYPE_LLM,
+    };
+    expect(getPlayerDisplayName(geminiPlayer, mockTranslate)).toBe('Gemi狸');
+
+    const openaiPlayer: PlayerModel = {
+      ...geminiPlayer,
+      nickname: '@llm:openai',
+    };
+    expect(getPlayerDisplayName(openaiPlayer, mockTranslate)).toBe('AI');
+
+    const unknownPlayer: PlayerModel = {
+      ...geminiPlayer,
+      nickname: '@llm:unknown_provider',
+    };
+    expect(getPlayerDisplayName(unknownPlayer, mockTranslate)).toBe('LLM');
+  });
+
+  it('resolves from a minimal identity (nickname + aiType)', () => {
+    // The chat layer resolves the processed name from just these two fields.
+    expect(
+      getPlayerDisplayName(
+        { nickname: '@llm:gemini', aiType: AiType.AI_TYPE_LLM },
+        mockTranslate,
+      ),
+    ).toBe('Gemi狸');
+  });
+
+  it('returns custom display name verbatim for LLM AI', () => {
+    const customPlayer: PlayerModel = {
+      id: 1,
+      nickname: 'Custom Gemini Bot',
+      status: UserStatus.USER_STATUS_PLAYING,
+      seat: 0,
+      gameState: null,
+      aiType: AiType.AI_TYPE_LLM,
+    };
+    expect(getPlayerDisplayName(customPlayer, mockTranslate)).toBe(
+      'Custom Gemini Bot',
+    );
+  });
+
+  it('localizes built-in AI enum types when nickname matches enum name', () => {
+    const dummyPlayer: PlayerModel = {
+      id: 1,
+      nickname: 'DUMMY',
+      status: UserStatus.USER_STATUS_PLAYING,
+      seat: 0,
+      gameState: null,
+      aiType: AiType.AI_TYPE_DUMMY,
+    };
+    expect(getPlayerDisplayName(dummyPlayer, mockTranslate)).toBe(
+      'Drooling Rabbit',
+    );
+  });
+});
+
+describe('getAiTypeName', () => {
+  const mockTranslate = (key: string) => {
+    const translations: Record<string, string> = {
+      'ai.type.1': 'Drooling Rabbit',
+      'ai.type.2': 'Nodocchi',
+      'ai.type.3': 'LLM',
+    };
+    return translations[key] ?? key;
+  };
+
+  it('keys AI type labels by the numeric enum value', () => {
+    expect(getAiTypeName(AiType.AI_TYPE_DUMMY, mockTranslate)).toBe(
+      'Drooling Rabbit',
+    );
+    expect(getAiTypeName(AiType.AI_TYPE_RULE_BASED, mockTranslate)).toBe(
+      'Nodocchi',
+    );
+    expect(getAiTypeName(AiType.AI_TYPE_LLM, mockTranslate)).toBe('LLM');
+  });
+});
+
+describe('aotenjou waits', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 2,
+    yakuHan: 2,
+    fu: 30,
+    yakuman: 0,
+    bonusYakuman: 0,
+    points: 0,
+    maxHan: 2,
+    ...over,
+  });
+
+  it('folds a yakuman into the han count when yakuman is disabled', () => {
+    const yakumanWait = wait({ yakuman: 1 });
+    // Capped rules: the yakuman replaces the han entirely.
+    expect(displayHan(yakumanWait, 1, true)).toBe(2);
+    // Aotenjou: the server leaves yakuman out of `han`, so add 13 back.
+    expect(displayHan(yakumanWait, 1, false)).toBe(2 + 13 + 1);
+    expect(displayHan(wait({ bonusYakuman: 1 }), 0, false)).toBe(2 + 13);
+    // No yakuman at all: unchanged either way.
+    expect(displayHan(wait({}), 1, false)).toBe(3);
+  });
+
+  it('still adds the riichi han to a yakuman wait under aotenjou', () => {
+    const waits = [wait({ yakuman: 1 })];
+    // Capped rules: han is decorative for a yakuman, so it is left alone.
+    expect(applyRiichiBonusToWaits(waits, 1, true)[0]?.han).toBe(2);
+    // Aotenjou: han is additive with no cap, so riichi still counts.
+    expect(applyRiichiBonusToWaits(waits, 1, false)[0]?.han).toBe(3);
+  });
+});
+
+describe('bonus yakuman waits', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 0,
+    yakuHan: 0,
+    fu: 30,
+    yakuman: 0,
+    bonusYakuman: 0,
+    points: 0,
+    maxHan: 0,
+    ...over,
+  });
+
+  it('does not let a bonus yakuman satisfy 番缚', () => {
+    expect(waitMeetsMinHan(wait({ bonusYakuman: 1 }), 1)).toBe(false);
+    expect(waitMeetsMinHan(wait({ bonusYakuman: 1, yakuHan: 1 }), 1)).toBe(
+      true,
+    );
+    expect(waitMeetsMinHan(wait({ yakuman: 1 }), 1)).toBe(true);
+  });
+
+  it('still adds the riichi han to a bonus yakuman wait', () => {
+    // A real yakuman ignores the bonus; 八連荘 does not, because the hand
+    // still needs the riichi han to clear 番缚.
+    const [bonus] = applyRiichiBonusToWaits([wait({ bonusYakuman: 1 })], 1);
+    expect(bonus?.yakuHan).toBe(1);
+    expect(waitMeetsMinHan(bonus!, 1)).toBe(true);
+
+    const [real] = applyRiichiBonusToWaits([wait({ yakuman: 1 })], 1);
+    expect(real?.yakuHan).toBe(0);
+  });
+
+  it('counts a bonus yakuman for display', () => {
+    expect(totalYakuman(wait({ bonusYakuman: 1 }))).toBe(1);
+    expect(totalYakuman(wait({ yakuman: 1, bonusYakuman: 1 }))).toBe(2);
+    expect(totalYakuman(wait({}))).toBe(0);
+    expect(displayHan(wait({ bonusYakuman: 1, han: 3 }), 1)).toBe(3);
+  });
+
+  it('announces a winnable bonus yakuman but ignores an unwinnable one', () => {
+    const winnable = wait({ bonusYakuman: 1, yakuHan: 1, han: 1, maxHan: 1 });
+    expect(yakumanOutlook([winnable], { minHan: 1 })).toBe('confirmed');
+
+    const unwinnable = wait({ bonusYakuman: 1 });
+    expect(yakumanOutlook([unwinnable], { minHan: 1 })).toBe(null);
+  });
+});
+
+describe('riichiBonusHan with allowedYakus', () => {
+  const firstJun: PlayerModel[] = [
+    { id: 0, seat: 0, gameState: { jun: 1, hand: { called: [] } } },
+    { id: 1, seat: 1, gameState: { jun: 1, hand: { called: [] } } },
+  ] as unknown as PlayerModel[];
+
+  it('does not promise 2 han when DoubleRiichi is disabled', () => {
+    expect(riichiBonusHan(firstJun)).toBe(2);
+    expect(riichiBonusHan(firstJun, ['Riichi', 'DoubleRiichi'])).toBe(2);
+    expect(riichiBonusHan(firstJun, ['Riichi'])).toBe(1);
+    // An empty list means the room did not restrict anything.
+    expect(riichiBonusHan(firstJun, [])).toBe(2);
+  });
+});
+
+describe('yakumanOutlook', () => {
+  const wait = (over: Partial<MappedTenpaiInfo>): MappedTenpaiInfo => ({
+    winningTile: 17,
+    remainingCount: 4,
+    han: 1,
+    yakuHan: 1,
+    fu: 30,
+    yakuman: 0,
+    bonusYakuman: 0,
+    points: 0,
+    maxHan: 1,
+    ...over,
+  });
+
+  /** Shanpon on suuankou: sanankou on ron, yakuman on tsumo. */
+  const suuankouShanpon = wait({ han: 4, yakuHan: 4, maxHan: 13 });
+  const guaranteedYakuman = wait({ yakuman: 1, maxHan: 13 });
+
+  it('reports nothing for an ordinary hand', () => {
+    expect(yakumanOutlook([wait({})], { minHan: 1 })).toBeNull();
+  });
+
+  it('reports a chance when only the tsumo path is a yakuman', () => {
+    expect(yakumanOutlook([suuankouShanpon], { minHan: 1 })).toBe('chance');
+  });
+
+  it('reports confirmed when the wait guarantees a yakuman', () => {
+    expect(yakumanOutlook([guaranteedYakuman], { minHan: 1 })).toBe(
+      'confirmed',
+    );
+  });
+
+  it('treats a double yakuman as confirmed', () => {
+    const doubled = wait({ yakuman: 2, maxHan: 26 });
+    expect(yakumanOutlook([doubled], { minHan: 1 })).toBe('confirmed');
+  });
+
+  it('is only confirmed when every wait guarantees it', () => {
+    // One cheap wait means the player can still finish without a yakuman.
+    expect(yakumanOutlook([guaranteedYakuman, wait({})], { minHan: 1 })).toBe(
+      'chance',
+    );
+  });
+
+  it('ignores waits that cannot be won under the minimum-han rule', () => {
+    // Dora-only wait: 5 han but no yaku, so it fails 番缚 and must not be
+    // mistaken for a cheap wait that downgrades the confirmed yakuman.
+    const doraOnly = wait({ han: 5, yakuHan: 0, maxHan: 5 });
+    expect(yakumanOutlook([guaranteedYakuman, doraOnly], { minHan: 1 })).toBe(
+      'confirmed',
+    );
+  });
+
+  it('reports nothing when no wait is winnable at all', () => {
+    const noYaku = wait({ han: 0, yakuHan: 0, maxHan: 0 });
+    expect(yakumanOutlook([noYaku], { minHan: 1 })).toBeNull();
+    expect(yakumanOutlook([], { minHan: 1 })).toBeNull();
+  });
+
+  describe('counted yakuman (累计役满)', () => {
+    const twelveHan = wait({ han: 12, yakuHan: 12, maxHan: 12 });
+
+    it('confirms when riichi pushes the hand to 13 han', () => {
+      expect(yakumanOutlook([twelveHan], { minHan: 1, bonusYaku: 1 })).toBe(
+        'confirmed',
+      );
+    });
+
+    it('stays silent for the same hand on an ordinary discard', () => {
+      expect(yakumanOutlook([twelveHan], { minHan: 1 })).toBeNull();
+    });
+
+    it('confirms a hand already at 13 han without any bonus', () => {
+      const thirteenHan = wait({ han: 13, yakuHan: 13, maxHan: 13 });
+      expect(yakumanOutlook([thirteenHan], { minHan: 1 })).toBe('confirmed');
+    });
+
+    it('ignores the count when the rule is disabled', () => {
+      expect(
+        yakumanOutlook([twelveHan], {
+          minHan: 1,
+          bonusYaku: 1,
+          kazoeEnabled: false,
+        }),
+      ).toBeNull();
+    });
+
+    it('does not count a hand that stays short of 13', () => {
+      // 11 han + riichi is 12: not a yakuman by any route.
+      const elevenHan = wait({ han: 11, yakuHan: 11, maxHan: 11 });
+      expect(
+        yakumanOutlook([elevenHan], { minHan: 1, bonusYaku: 1 }),
+      ).toBeNull();
+      // ...but if tsumo would add the 13th han, it is reachable.
+      const withTsumo = wait({ han: 11, yakuHan: 11, maxHan: 12 });
+      expect(yakumanOutlook([withTsumo], { minHan: 1, bonusYaku: 1 })).toBe(
+        'chance',
+      );
+    });
+  });
+
+  it('lets a riichi bonus make an otherwise unwinnable wait count', () => {
+    // Yakuless on ron, so it fails 番缚 and is ignored; riichi supplies the
+    // missing yaku and the tsumo yakuman becomes reachable.
+    const yakuless = wait({ han: 0, yakuHan: 0, maxHan: 13 });
+    expect(yakumanOutlook([yakuless], { minHan: 1 })).toBeNull();
+    expect(yakumanOutlook([yakuless], { minHan: 1, bonusYaku: 1 })).toBe(
+      'chance',
+    );
+  });
+
+  it('announces nothing under aotenjou', () => {
+    // There a yakuman is merely 13 extra han, so maxHan >= 13 says nothing
+    // about one and there is no limit to announce.
+    expect(
+      yakumanOutlook([guaranteedYakuman], { minHan: 1, yakumanEnabled: false }),
+    ).toBeNull();
+    expect(
+      yakumanOutlook([suuankouShanpon], { minHan: 1, yakumanEnabled: false }),
+    ).toBeNull();
+  });
+});
+
+describe('riichiBonusHan', () => {
+  const player = (jun: number, calledCount = 0): PlayerModel =>
+    ({
+      gameState: {
+        jun,
+        hand: { called: Array.from({ length: calledCount }, () => ({})) },
+      },
+    }) as unknown as PlayerModel;
+
+  it('is 2 on the first jun, when riichi would be a double riichi', () => {
+    expect(riichiBonusHan([player(1), player(1), player(0), player(1)])).toBe(
+      2,
+    );
+  });
+
+  it('drops to 1 once anyone is past their first turn', () => {
+    expect(riichiBonusHan([player(1), player(2)])).toBe(1);
+  });
+
+  it('drops to 1 once a call has interrupted the first go-around', () => {
+    expect(riichiBonusHan([player(1), player(1, 1)])).toBe(1);
+  });
+
+  it('ignores players with no game state yet', () => {
+    expect(riichiBonusHan([player(1), {} as PlayerModel])).toBe(2);
   });
 });

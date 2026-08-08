@@ -81,6 +81,7 @@ describe('RabiRiichi Store', () => {
       ping: -1,
       selectedTileTraceId: null,
       hoveredTileTraceId: null,
+      callHighlightTileIds: null,
       isCameraLocked: true,
       resultAnimation: null,
       isReplay: false,
@@ -93,6 +94,20 @@ describe('RabiRiichi Store', () => {
       autoDiscard: false,
       autoNuki: false,
       activeStickers: {},
+      activeChatTexts: {},
+      chatHistory: [],
+      characterId: 'mimi',
+      tooltipOnHandTiles: true,
+      tooltipOnRiverTiles: true,
+      volumeSE: 1.0,
+      volumeBGM: 1.0,
+      volumeVoice: 1.0,
+      muteSE: false,
+      muteBGM: false,
+      muteVoice: false,
+      volumeAll: 1.0,
+      isSettingsOpen: false,
+      autoConnectError: null,
     });
   });
 
@@ -287,7 +302,7 @@ describe('RabiRiichi Store', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser', status: 1 },
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
       },
     });
     await vi.advanceTimersByTimeAsync(0);

@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { startReplay } from '../replay/replayDriver';
 import { formatError } from '../lib';
-import './ui.css';
+import { Button } from './Button';
+import { Input } from './Input';
+import { FORM, MODAL } from './styles';
+
+import { createPortal } from 'react-dom';
 
 interface ReplayModalProps {
   onClose: () => void;
@@ -32,64 +36,77 @@ export function ReplayModal({ onClose }: ReplayModalProps): React.JSX.Element {
     }
   };
 
-  return (
-    <div className="replay-modal-overlay">
-      <div className="replay-modal-content">
-        <div className="replay-modal-header">
-          <h3>{t('replay.modalTitle')}</h3>
+  return createPortal(
+    <div className={MODAL.overlay} onClick={onClose}>
+      <div
+        className={`${MODAL.card} !p-4 w-[90%] max-w-[360px] border border-[#ff7a99]/40 bg-[#1a1a1a]/95`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-white/10 pb-1.5 mb-3">
+          <h3 className="m-0 text-base font-bold text-[#ff7a99]">
+            {t('replay.modalTitle')}
+          </h3>
           <button
-            className="close-btn"
+            className={MODAL.closeButton}
             onClick={onClose}
             disabled={isLoading}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#888',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-            }}
           >
             &times;
           </button>
         </div>
 
-        {error && <div className="ui-error">{error}</div>}
+        {error && (
+          <div className={`${FORM.error} mb-2.5 !p-2 text-[0.85rem]`}>
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={(e) => void handleLoadReplay(e)} className="ui-form">
-          <div className="replay-modal-body">
-            <div className="form-group">
-              <label htmlFor="replay-game-id">{t('replay.gameIdLabel')}</label>
-              <input
+        <form
+          onSubmit={(e) => void handleLoadReplay(e)}
+          className="flex flex-col gap-3"
+        >
+          <div>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="replay-game-id"
+                className="text-[0.85rem] font-semibold text-[#ccc]"
+              >
+                {t('replay.gameIdLabel')}
+              </label>
+              <Input
                 id="replay-game-id"
                 type="text"
                 value={gameId}
                 onChange={(e) => setGameId(e.target.value)}
                 disabled={isLoading}
                 placeholder={t('replay.gameIdPlaceholder')}
+                inputSize="inline"
                 autoFocus
               />
             </div>
           </div>
 
-          <div className="replay-modal-actions">
-            <button
+          <div className="flex justify-end gap-2 mt-1">
+            <Button
               type="button"
-              className="ui-button secondary-button"
+              variant="secondary"
+              className="h-8 !py-0 text-[0.85rem]"
               onClick={onClose}
               disabled={isLoading}
             >
               {t('replay.cancel')}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="ui-button primary-button"
+              className="h-8 !py-0 text-[0.85rem]"
               disabled={isLoading || !gameId.trim()}
             >
               {isLoading ? t('connect.connecting') : t('replay.load')}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

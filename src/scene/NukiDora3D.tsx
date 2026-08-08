@@ -31,6 +31,7 @@ export function NukiDora3D({ nukiDora }: NukiDora3DProps): React.JSX.Element {
             displayState="face"
             position={[x, 0, ROW_Z]}
             traceId={getSafeTraceId(tileMsg.traceId)}
+            area="nuki"
           />
         );
       })}

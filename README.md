@@ -1,5 +1,9 @@
 # RabiRiichi-Web
 
+<p align="center">
+  <img src="public/assets/logo.png" alt="RabiRiichi Logo" width="200" />
+</p>
+
 [![100hun](https://100hun.rabimimi.com/provider/codecov/github/RabiMimi/RabiRiichi-Web/main/badge.png?size=128)](https://github.com/KCFindstr/100hun)
 [![build-test](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/build-test.yml/badge.svg)](https://github.com/RabiMimi/RabiRiichi-Web/actions/workflows/build-test.yml)
 [![codecov](https://codecov.io/gh/RabiMimi/RabiRiichi-Web/branch/main/graph/badge.svg)](https://codecov.io/gh/RabiMimi/RabiRiichi-Web)
@@ -9,10 +13,10 @@ a 3D browser game on top of the open-source gRPC server implementation.
 
 ## Servers
 
-| Environment | Address                                                    |
-| ----------- | ---------------------------------------------------------- |
-| Production  | [RabiRiichi 兔兔立直](https://riichi.rabimimi.com)         |
-| Development | [RabiRiichi-dev 兔兔开发](https://riichi-dev.rabimimi.com) |
+| Environment | Address                                                               |
+| ----------- | --------------------------------------------------------------------- |
+| Production  | [RabiRiichi 兔兔立直 / ラビリーチ](https://riichi.rabimimi.com)       |
+| Development | [RabiRiichi-dev 兔兔开发 / ミミ開発](https://riichi-dev.rabimimi.com) |
 
 ## Tech Stack
 
@@ -109,3 +113,12 @@ conflicting stylistic ESLint rules.
 ## Testing
 
 For details on local multiplayer testing and using the offline replay viewer, see [TESTING.md](./TESTING.md).
+
+## License
+
+This repository is licensed under the **GNU General Public License v3** (see [LICENSE](./LICENSE)).
+
+> [!IMPORTANT]
+> The GNU GPLv3 license applies **only to the source code** of this project.
+>
+> All game assets—including but not limited to 3D models (such as tile meshes), textures, images (such as characters, buttons, and graphics), and audio files are **NOT** licensed under the GNU GPLv3, and may not be redistributed or reused for commercial purposes without explicit permission.

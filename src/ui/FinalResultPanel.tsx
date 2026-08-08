@@ -1,13 +1,129 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useRoom } from '../state/store';
+import {
+  useRoom,
+  useCharacterId,
+  useSelf,
+  useIsReplay,
+  useActiveStickers,
+  useActiveChatTexts,
+} from '../state/store';
 import { getPlayerDisplayName } from '../domain/model';
 import { AiType } from '../proto';
-import { MIMI_PATH } from '../scene/assets';
+import { getCharacterOrDefault } from '../domain/character';
+import { Button } from './Button';
 import { CopyGameIdButton } from './CopyGameIdButton';
+import { Tooltip } from './Tooltip';
+import { rabiriichi } from '../net/client';
+import { soundManager } from '../lib/sound';
+import { getFinalPlacementVoiceLineId } from '../domain/resultHelpers';
+import { StickerBubble } from './StickerBubble';
+import { ChatBubble } from './ChatBubble';
+import { stickerPortalTarget } from './portal';
 
 interface FinalResultPanelProps {
   onReturnToRoom: () => void;
+}
+
+interface ResultPlayerAvatarProps {
+  initials: string;
+  avatarClass: string;
+  sticker: string | null | undefined;
+  text: string | null | undefined;
+  placement: 'top' | 'bottom';
+}
+
+function ResultPlayerAvatar({
+  initials,
+  avatarClass,
+  sticker,
+  text,
+  placement,
+}: ResultPlayerAvatarProps): React.JSX.Element {
+  const anchorRef = React.useRef<HTMLDivElement>(null);
+  const [anchorRect, setAnchorRect] = React.useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  const updateAnchorRect = React.useCallback(() => {
+    const anchor = anchorRef.current;
+    if (!anchor) return;
+    const next = anchor.getBoundingClientRect();
+    setAnchorRect((current) => {
+      if (
+        current?.left === next.left &&
+        current.top === next.top &&
+        current.width === next.width &&
+        current.height === next.height
+      ) {
+        return current;
+      }
+      return {
+        left: next.left,
+        top: next.top,
+        width: next.width,
+        height: next.height,
+      };
+    });
+  }, []);
+
+  React.useLayoutEffect(() => {
+    updateAnchorRect();
+    const anchor = anchorRef.current;
+    if (!anchor) return;
+    const observer = new ResizeObserver(updateAnchorRect);
+    observer.observe(anchor);
+    window.addEventListener('resize', updateAnchorRect);
+    window.addEventListener('scroll', updateAnchorRect, true);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateAnchorRect);
+      window.removeEventListener('scroll', updateAnchorRect, true);
+    };
+  }, [updateAnchorRect]);
+
+  const portalTarget = stickerPortalTarget.current;
+
+  return (
+    <div
+      ref={anchorRef}
+      className={`relative shrink-0 flex items-center justify-center w-7 h-7 lg:w-12 lg:h-12 bg-[#444] rounded-full text-xs lg:text-xl font-bold border-2 ${avatarClass}`}
+    >
+      {initials}
+      {portalTarget &&
+        anchorRect &&
+        createPortal(
+          <div
+            className="fixed pointer-events-none"
+            style={{
+              left: anchorRect.left,
+              top: anchorRect.top,
+              width: anchorRect.width,
+              height: anchorRect.height,
+            }}
+          >
+            <div className="relative h-full w-full">
+              <StickerBubble
+                sticker={sticker}
+                className="sticker-bubble-2d"
+                placement={placement}
+              />
+              <ChatBubble
+                text={text}
+                className="chat-bubble-2d"
+                placement={placement}
+                hasSticker={Boolean(sticker)}
+              />
+            </div>
+          </div>,
+          portalTarget,
+        )}
+    </div>
+  );
 }
 
 export function FinalResultPanel({
@@ -15,65 +131,167 @@ export function FinalResultPanel({
 }: FinalResultPanelProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const room = useRoom();
+  const characterId = useCharacterId();
+  const me = useSelf();
+  const isReplay = useIsReplay();
+  const activeStickers = useActiveStickers();
+  const activeChatTexts = useActiveChatTexts();
+  const [shareCopied, setShareCopied] = React.useState(false);
+
+  React.useEffect(() => {
+    // Play placement voice line when final result screen opens
+    if (isReplay || !me || !room) return;
+    const finalRank =
+      room.players
+        .slice()
+        .sort((a, b) => (b.gameState?.points ?? 0) - (a.gameState?.points ?? 0))
+        .findIndex((p) => p.id === me.id) + 1;
+    if (finalRank < 1 || finalRank > 4) return;
+    const voiceLineId = getFinalPlacementVoiceLineId(
+      finalRank,
+      room.players.length,
+    );
+    if (!voiceLineId) return;
+
+    const char = getCharacterOrDefault(characterId);
+    const voiceLine = char.voiceLines.find((l) => l.id === voiceLineId);
+    if (voiceLine) {
+      soundManager.playVoice(voiceLine.audioUrl);
+    }
+  }, [characterId, isReplay, room, me]);
+
+  React.useEffect(() => {
+    // Flush deferred chat messages with a 10s display duration for the final rankings screen
+    rabiriichi.flushDeferredChats(10000);
+  }, []);
+
+  const handleShareReplay = async () => {
+    if (!room?.gameId) return;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?gameId=${room.gameId}`;
+
+    try {
+      if (window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy share link:', err);
+    }
+  };
 
   const rankedPlayers = React.useMemo(() => {
     if (!room) return [];
-    const basePlayers = room.concludedPlayers ?? room.players;
-    const list = basePlayers.map((p) => {
-      const seat = p.seat ?? 0;
-      const points = room.endGamePoints?.[seat] ?? p.gameState?.points ?? 25000;
-      return { player: p, points };
-    });
-    return list.sort((a, b) => b.points - a.points);
+    return room.players
+      .map((player) => ({
+        player,
+        points: player.gameState?.points ?? 0,
+      }))
+      .sort((a, b) => b.points - a.points);
   }, [room]);
+
+  const activeCharacter = getCharacterOrDefault(characterId);
+
+  const rankStyles = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return {
+          card: 'bg-gradient-to-r from-[#ffd700]/20 via-[#252525]/90 to-[#1a1a1a]/95 border-[#ffd700] shadow-[0_0_20px_rgba(255,215,0,0.3)]',
+          number:
+            'text-[#ffd700] drop-shadow-[0_2px_8px_rgba(255,215,0,0.5)] font-black',
+          avatar: 'border-[#ffd700]',
+        };
+      case 2:
+        return {
+          card: 'bg-gradient-to-r from-[#c0c0c0]/15 via-[#252525]/90 to-[#1a1a1a]/95 border-[#c0c0c0] shadow-[0_0_12px_rgba(192,192,192,0.2)]',
+          number: 'text-[#c0c0c0] font-bold',
+          avatar: 'border-[#c0c0c0]',
+        };
+      case 3:
+        return {
+          card: 'bg-gradient-to-r from-[#cd7f32]/15 via-[#252525]/90 to-[#1a1a1a]/95 border-[#cd7f32] shadow-[0_0_12px_rgba(205,127,50,0.2)]',
+          number: 'text-[#cd7f32] font-bold',
+          avatar: 'border-[#cd7f32]',
+        };
+      default:
+        return {
+          card: 'bg-white/[0.04] border-white/10',
+          number: 'text-[#888] font-semibold',
+          avatar: 'border-[#444]',
+        };
+    }
+  };
 
   if (!room) return null;
 
   return (
-    <div className="result-overlay">
-      <div className="result-layout-container">
-        <div className="result-character-side">
+    <div className="absolute inset-0 bg-[#0a0a0a]/85 flex justify-center items-center z-[120] text-white font-sans backdrop-blur-md">
+      <div className="flex flex-row items-stretch gap-0 w-[95%] max-w-[1000px] max-h-[85vh] m-auto box-border z-[121] relative">
+        <div className="hidden md:block flex-[0_0_320px] relative z-[2] -mr-20 pointer-events-none">
           <img
-            src={MIMI_PATH}
-            alt="mimi-avatar"
-            className="result-mimi-side-art"
+            src={activeCharacter.visualUrl}
+            alt={`${activeCharacter.id}-avatar`}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none opacity-95"
           />
         </div>
-        <div className="result-panel final-results-panel">
-          <div
-            className="result-header"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-              alignItems: 'center',
-            }}
-          >
-            <h2 className="result-title" style={{ margin: 0 }}>
+        <div className="flex-1 bg-[#1a1a1a]/95 border-2 border-[#ff7a99] rounded-2xl p-2 pl-2 lg:p-4 lg:pl-16 shadow-[0_16px_48px_rgba(0,0,0,0.8),_0_0_32px_rgba(255,122,153,0.08)] backdrop-blur-[20px] flex flex-col gap-1.5 lg:gap-2.5 relative box-border">
+          <div className="flex flex-col gap-1 items-center">
+            <h2 className="relative z-[1] text-lg lg:text-4xl font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-center m-0 mb-0.5 tracking-wider lg:tracking-widest">
               {t('result.finalTitle', 'Game Concluded')}
             </h2>
             {room.gameId && (
-              <div
-                className="final-game-id"
-                style={{
-                  color: '#aaa',
-                  fontSize: '0.85rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                }}
-              >
+              <div className="text-[#aaa] text-xs flex items-center justify-center gap-2">
                 <span>
                   {t('hud.gameId')}: {room.gameId}
                 </span>
                 <CopyGameIdButton gameId={room.gameId} />
+                <Tooltip
+                  content={shareCopied ? t('common.copied') : t('common.share')}
+                  position="top"
+                  forceVisible={shareCopied ? true : undefined}
+                >
+                  <button
+                    type="button"
+                    className="bg-transparent border-none text-[#ff7a99] cursor-pointer p-0 flex items-center hover:scale-105 active:scale-95 transition-all duration-150"
+                    onClick={() => void handleShareReplay()}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="w-3.5 h-3.5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+                      />
+                    </svg>
+                  </button>
+                </Tooltip>
               </div>
             )}
           </div>
 
-          <div className="result-content-scrollable">
-            <div className="final-ranking-list">
+          <div
+            className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-1.5 lg:gap-2.5 px-2 py-8"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col gap-1 lg:gap-2 mt-1 lg:mt-2">
               {rankedPlayers.map((item, index) => {
                 const rank = index + 1;
                 const displayName = getPlayerDisplayName(item.player, t);
@@ -82,16 +300,32 @@ export function FinalResultPanel({
                     ? 'AI'
                     : displayName.slice(0, 2).toUpperCase();
 
+                const styles = rankStyles(rank);
+
                 return (
                   <div
                     key={item.player.id}
-                    className={`final-rank-card rank-${rank}`}
+                    className={`flex items-center gap-1.5 lg:gap-4 rounded-lg px-2 py-1.5 lg:px-4 lg:py-3 border transition-all duration-200 relative ${styles.card}`}
                   >
-                    <div className="rank-number">#{rank}</div>
-                    <div className="rank-avatar">{initials}</div>
-                    <div className="rank-details">
-                      <span className="rank-name">{displayName}</span>
-                      <span className="rank-points">{item.points}</span>
+                    <div
+                      className={`text-base lg:text-3xl font-bold w-5 lg:w-8 text-center ${styles.number}`}
+                    >
+                      #{rank}
+                    </div>
+                    <ResultPlayerAvatar
+                      initials={initials}
+                      avatarClass={styles.avatar}
+                      sticker={activeStickers[item.player.id]}
+                      text={activeChatTexts[item.player.id]}
+                      placement={index === 0 ? 'bottom' : 'top'}
+                    />
+                    <div className="flex-1 flex justify-between items-center">
+                      <span className="text-xs lg:text-xl font-medium">
+                        {displayName}
+                      </span>
+                      <span className="text-sm lg:text-2xl font-semibold text-[#ff7a99]">
+                        {item.points}
+                      </span>
                     </div>
                   </div>
                 );
@@ -99,17 +333,12 @@ export function FinalResultPanel({
             </div>
           </div>
 
-          <div
-            className="result-actions"
-            style={{ flexDirection: 'row', gap: '12px' }}
-          >
-            <button
-              className="ui-button primary-button"
-              onClick={onReturnToRoom}
-              style={{ width: '100%' }}
-            >
-              {t('result.returnToRoom', 'Return to Room')}
-            </button>
+          <div className="flex justify-end gap-3 mt-1 lg:mt-2 pt-2 border-t border-[#ff7a99]/20">
+            <Button variant="primary" onClick={onReturnToRoom}>
+              {isReplay
+                ? t('result.returnToReplay', 'Return to Replay')
+                : t('result.returnToRoom', 'Return to Room')}
+            </Button>
           </div>
         </div>
       </div>

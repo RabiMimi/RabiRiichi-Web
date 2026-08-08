@@ -1,12 +1,12 @@
 import type {
   IClientMessageDto,
-  ICreateUserResponse,
   IUserInfoResponse,
   IServerResponse,
   IServerRoomStateResponse,
   IGameConfigMsg,
   IGetInfoResponse,
   AiType,
+  ILlmAiConfig,
   IGameLogMsg,
 } from '../proto';
 import { RabiError, ServerError } from '../lib';
@@ -33,18 +33,83 @@ async function throwIfRespondError<T>(
 
 export function createUser(
   ws: RabiSocket,
+  username: string,
   nickname: string,
-): Promise<ICreateUserResponse> {
+  passwordHash: string,
+): Promise<IUserInfoResponse> {
   return throwIfRespondError(
     ws,
     {
       clientRequest: {
         createUser: {
-          nickname,
+          username,
+          userData: {
+            nickname,
+          },
+          passwordHash,
         },
       },
     },
-    (resp) => resp.createUser,
+    (resp) => resp.userInfo,
+  );
+}
+
+export function loginUser(
+  ws: RabiSocket,
+  username: string,
+  passwordHash: string,
+): Promise<IUserInfoResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        loginUser: {
+          username,
+          passwordHash,
+        },
+      },
+    },
+    (resp) => resp.userInfo,
+  );
+}
+
+export function updateProfile(
+  ws: RabiSocket,
+  nickname: string,
+): Promise<IUserInfoResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        updateProfile: {
+          userData: {
+            nickname,
+          },
+        },
+      },
+    },
+    (resp) => resp.userInfo,
+  );
+}
+
+export function changePassword(
+  ws: RabiSocket,
+  username: string,
+  oldPasswordHash: string,
+  newPasswordHash: string,
+): Promise<IUserInfoResponse> {
+  return throwIfRespondError(
+    ws,
+    {
+      clientRequest: {
+        changePassword: {
+          username,
+          oldPasswordHash,
+          newPasswordHash,
+        },
+      },
+    },
+    (resp) => resp.userInfo,
   );
 }
 
@@ -109,6 +174,7 @@ export function getInfo(ws: RabiSocket): Promise<IGetInfoResponse> {
 export function addAi(
   ws: RabiSocket,
   type: AiType,
+  llmConfig?: ILlmAiConfig,
 ): Promise<IServerRoomStateResponse> {
   return throwIfRespondError(
     ws,
@@ -116,6 +182,7 @@ export function addAi(
       clientRequest: {
         addAi: {
           type,
+          llmConfig: llmConfig ?? null,
         },
       },
     },

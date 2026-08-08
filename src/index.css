@@ -1,3 +1,48 @@
+/*
+ * Cascade layer order (earlier = lower priority). The legacy hand-written
+ * stylesheet lives in the `app` layer, which sits BEFORE `utilities` so Tailwind
+ * utility classes can override it as we migrate ui.css piece by piece. Without
+ * an explicit layer, ui.css would be "unlayered" and unconditionally beat every
+ * (layered) Tailwind utility, silently breaking converted components.
+ */
+@layer theme, base, app, utilities;
+
+html,
+body {
+  background: #000000;
+}
+
+/*
+ * Tailwind v4, imported WITH Preflight (the base reset) to normalize cross-browser styles.
+ */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* The legacy stylesheets, layered so utilities win on conflicts (see above). */
+@import './App.css' layer(app);
+@import './ui/ui.css' layer(app);
+
+/*
+ * Custom keyframe utilities migrated out of ui.css. Kept here (not as inline
+ * utilities) because custom @keyframes are not expressible as Tailwind classes.
+ */
+@keyframes rotate-device {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@utility animate-rotate-device {
+  animation: rotate-device 2s infinite ease-in-out;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -21,4 +66,30 @@ body {
   background-color: #1a1a1a;
   color: rgba(255, 255, 255, 0.87);
   overflow: hidden;
+}
+
+/* Explicitly restore text selection for form inputs so typing and copy/pasting still works */
+input,
+textarea,
+select,
+[contenteditable='true'] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Restore touch swipe/scroll gestures inside scrollable containers (like modals and settings lists) */
+.overflow-y-auto,
+[class*='overflow-y-scroll'] {
+  touch-action: pan-y !important;
+  overscroll-behavior: contain;
+}
+
+.overflow-x-auto,
+[class*='overflow-x-scroll'] {
+  touch-action: pan-x !important;
+}
+
+.overflow-auto,
+[class*='overflow-scroll'] {
+  touch-action: auto !important;
 }

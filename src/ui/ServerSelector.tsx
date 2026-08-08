@@ -6,6 +6,9 @@ import {
   type ServerSettings,
   type SavedServer,
 } from '../domain/constants';
+import { Button } from './Button';
+import { Select } from './Select';
+import { FORM } from './styles';
 
 interface ServerSelectorProps {
   onTargetUrlChange: (url: string) => void;
@@ -127,23 +130,14 @@ export function ServerSelector({
 
   return (
     <>
-      <select
+      <Select
         id="server-select"
         value={serverSelection}
         onChange={(e) => {
           handleSelectionChange(e.target.value);
         }}
         disabled={isConnecting}
-        style={{
-          width: '100%',
-          padding: '8px',
-          borderRadius: '4px',
-          backgroundColor: '#1a1a1a',
-          color: '#fff',
-          border: '1px solid #555',
-          boxSizing: 'border-box',
-          marginBottom: '0',
-        }}
+        className="w-full mb-0"
       >
         {DEFAULT_SERVERS.map((server) => (
           <option key={server.id} value={server.id}>
@@ -156,7 +150,7 @@ export function ServerSelector({
           </option>
         ))}
         <option value="custom">{t('connect.customServer')}</option>
-      </select>
+      </Select>
 
       {/* Read-only URL for default servers */}
       {selectedDefaultServer && (
@@ -164,29 +158,13 @@ export function ServerSelector({
           type="text"
           value={selectedDefaultServer.url}
           disabled={true}
-          style={{
-            width: '100%',
-            padding: '8px',
-            borderRadius: '4px',
-            backgroundColor: '#1a1a1a',
-            color: '#888',
-            border: '1px solid #333',
-            boxSizing: 'border-box',
-            marginTop: '4px',
-          }}
+          className={`${FORM.input} w-full text-[#888] border-[#333] mt-1`}
         />
       )}
 
       {/* Unified add/edit form for custom servers */}
       {showForm && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '6px',
-            marginTop: '4px',
-          }}
-        >
+        <div className="flex flex-col gap-1.5 mt-1">
           <input
             id="server-url"
             type="text"
@@ -194,57 +172,33 @@ export function ServerSelector({
             onChange={(e) => setFormUrl(e.target.value)}
             disabled={isConnecting}
             placeholder="ws://localhost:5150"
-            style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '4px',
-              backgroundColor: '#1a1a1a',
-              color: '#fff',
-              border: '1px solid #555',
-              boxSizing: 'border-box',
-            }}
+            className={`${FORM.input} w-full`}
           />
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="flex gap-2">
             <input
               type="text"
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
               disabled={isConnecting}
               placeholder={t('connect.serverNamePlaceholder')}
-              style={{
-                flexGrow: 1,
-                padding: '8px',
-                borderRadius: '4px',
-                backgroundColor: '#1a1a1a',
-                color: '#fff',
-                border: '1px solid #555',
-                boxSizing: 'border-box',
-              }}
+              className={`${FORM.input} flex-grow`}
             />
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={handleSaveServer}
               disabled={isConnecting || !formName.trim() || !formUrl.trim()}
-              className="ui-button secondary-button"
-              style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+              className="px-4 py-2 text-[0.9rem]"
             >
               {t('connect.saveServer')}
-            </button>
+            </Button>
           </div>
           {selectedCustomServer && (
             <button
               type="button"
               onClick={handleRemoveCustomServer}
               disabled={isConnecting}
-              className="ui-button secondary-button"
-              style={{
-                width: '100%',
-                padding: '8px',
-                fontSize: '0.9rem',
-                backgroundColor: '#551111',
-                borderColor: '#772222',
-                color: '#ff9999',
-              }}
+              className="w-full rounded-full border border-[#772222] bg-[#551111] px-5 py-2.5 text-[0.9rem] font-semibold text-[#ff9999] cursor-pointer transition-all duration-200 hover:not-disabled:bg-[#772222]/80 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed outline-none"
             >
               {t('connect.removeServer')}
             </button>

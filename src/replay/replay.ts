@@ -1,7 +1,17 @@
 import { GameLogMsg, UserStatus, AiType } from '../proto/index.js';
-import type { IEventMsg, IGameLogMsg } from '../proto/index.js';
+import type {
+  IEventMsg,
+  IGameLogMsg,
+  IDiscardCandidateMsg,
+  IDiscardTileEventMsg,
+  ITenpaiInfoMsg,
+} from '../proto/index.js';
 import type { RoomModel, PlayerModel } from '../domain/model.js';
 import { createEmptyTileRegistry } from '../domain/tileRegistry.js';
+
+interface ReplayDiscardTileEventMsg extends IDiscardTileEventMsg {
+  awaitedTiles?: ITenpaiInfoMsg[] | null;
+}
 
 /**
  * Offset that keeps replay account ids distinct from seat indices. Real account
@@ -28,10 +38,54 @@ export function getEventsFromReplay(
   const playerLog = logMsg.playerLogs[seat] ?? logMsg.playerLogs[0];
   if (!playerLog) return [];
 
+  // Pre-build a map of all waits by discarded tile trace ID across all player logs.
+  // This allows us to resolve tenpai waits for all players in replay.
+  const waitsByDiscardTraceId = new Map<number, ITenpaiInfoMsg[]>();
+  for (const pLog of logMsg.playerLogs) {
+    let pendingCandidates: IDiscardCandidateMsg[] = [];
+    for (const log of pLog.logs ?? []) {
+      if (log.inquiry) {
+        const playTileAction = log.inquiry.actions?.find(
+          (a) => a.playTileAction ?? a.riichiAction,
+        );
+        const action =
+          playTileAction?.playTileAction ?? playTileAction?.riichiAction;
+        if (action?.candidates) {
+          pendingCandidates = action.candidates;
+        }
+      } else if (log.event?.discardTileEvent) {
+        const discard = log.event.discardTileEvent.discarded;
+        if (discard?.traceId != null && pendingCandidates.length > 0) {
+          const match = pendingCandidates.find(
+            (c) => c.tile?.traceId === discard.traceId,
+          );
+          if (match?.tenpaiInfos && match.tenpaiInfos.length > 0) {
+            waitsByDiscardTraceId.set(discard.traceId, match.tenpaiInfos);
+          }
+          pendingCandidates = []; // clear once consumed
+        }
+      }
+    }
+  }
+
   const events: IEventMsg[] = [];
   for (const log of playerLog.logs ?? []) {
     if (log.event) {
-      events.push(log.event);
+      const ev = log.event;
+      if (ev.discardTileEvent) {
+        const discard = ev.discardTileEvent.discarded;
+        if (discard?.traceId != null) {
+          const waits = waitsByDiscardTraceId.get(discard.traceId);
+          if (waits) {
+            (ev.discardTileEvent as ReplayDiscardTileEventMsg).awaitedTiles =
+              waits;
+          } else {
+            (ev.discardTileEvent as ReplayDiscardTileEventMsg).awaitedTiles =
+              null;
+          }
+        }
+      }
+      events.push(ev);
     }
   }
   return events;

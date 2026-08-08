@@ -1,3 +1,5 @@
+import { DoraOption, ScoringOption } from '../proto/index.js';
+
 export interface PolicyOption {
   value: number;
   labelKey: string;
@@ -30,14 +32,38 @@ export const RIICHI_POLICIES: PolicyOption[] = [
 ];
 
 export const DORA_OPTIONS: PolicyOption[] = [
-  { value: 1, labelKey: 'advanced.dora.initialDora' },
-  { value: 2, labelKey: 'advanced.dora.initialUradora' },
-  { value: 4, labelKey: 'advanced.dora.kanDora' },
-  { value: 8, labelKey: 'advanced.dora.kanUradora' },
-  { value: 16, labelKey: 'advanced.dora.instantDaiMinKan' },
-  { value: 32, labelKey: 'advanced.dora.instantKaKan' },
-  { value: 64, labelKey: 'advanced.dora.instantAnKan' },
-  { value: 128, labelKey: 'advanced.dora.nukiDora' },
+  {
+    value: DoraOption.DORA_OPTION_INITIAL_DORA,
+    labelKey: 'advanced.dora.initialDora',
+  },
+  {
+    value: DoraOption.DORA_OPTION_INITIAL_URADORA,
+    labelKey: 'advanced.dora.initialUradora',
+  },
+  {
+    value: DoraOption.DORA_OPTION_KAN_DORA,
+    labelKey: 'advanced.dora.kanDora',
+  },
+  {
+    value: DoraOption.DORA_OPTION_KAN_URADORA,
+    labelKey: 'advanced.dora.kanUradora',
+  },
+  {
+    value: DoraOption.DORA_OPTION_INSTANT_REVEAL_AFTER_DAI_MIN_KAN,
+    labelKey: 'advanced.dora.instantDaiMinKan',
+  },
+  {
+    value: DoraOption.DORA_OPTION_INSTANT_REVEAL_AFTER_KA_KAN,
+    labelKey: 'advanced.dora.instantKaKan',
+  },
+  {
+    value: DoraOption.DORA_OPTION_INSTANT_REVEAL_AFTER_AN_KAN,
+    labelKey: 'advanced.dora.instantAnKan',
+  },
+  {
+    value: DoraOption.DORA_OPTION_NUKI_DORA,
+    labelKey: 'advanced.dora.nukiDora',
+  },
 ];
 
 export const AGARI_OPTIONS: PolicyOption[] = [
@@ -56,8 +82,20 @@ export const RYUUKYOKU_TRIGGERS: PolicyOption[] = [
 ];
 
 export const SCORING_OPTIONS: PolicyOption[] = [
-  { value: 1, labelKey: 'advanced.scoring.kiriageMangan' },
-  { value: 2, labelKey: 'advanced.scoring.yakuman' },
-  { value: 4, labelKey: 'advanced.scoring.multipleYakuman' },
-  { value: 8, labelKey: 'advanced.scoring.kazoeYakuman' },
+  {
+    value: ScoringOption.SCORING_OPTION_KIRIAGE_MANGAN,
+    labelKey: 'advanced.scoring.kiriageMangan',
+  },
+  {
+    value: ScoringOption.SCORING_OPTION_YAKUMAN,
+    labelKey: 'advanced.scoring.yakuman',
+  },
+  {
+    value: ScoringOption.SCORING_OPTION_MULTIPLE_YAKUMAN,
+    labelKey: 'advanced.scoring.multipleYakuman',
+  },
+  {
+    value: ScoringOption.SCORING_OPTION_KAZOE_YAKUMAN,
+    labelKey: 'advanced.scoring.kazoeYakuman',
+  },
 ];

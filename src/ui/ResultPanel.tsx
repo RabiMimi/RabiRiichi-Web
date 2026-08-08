@@ -1,4 +1,5 @@
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
   useRoom,
@@ -8,15 +9,20 @@ import {
   useResultAnimation,
   useHasInMemoryResult,
   useIsReplay,
+  useIsReplayPaused,
   useReplayProgress,
+  useCharacterId,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile } from '../domain/tile';
-import { getTileTexturePath, MIMI_PATH } from '../scene/assets';
+import { CHARACTERS } from '../domain/character';
+import { Button } from './Button';
 import { type ActionOption } from '../domain/inquiry';
-import { ScoringType } from '../proto';
 import type { IGameTileMsg } from '../proto';
 import { FinalResultPanel } from './FinalResultPanel';
+import { soundManager } from '../lib/sound';
+import { SOUND_EFFECTS } from '../lib/soundEffects';
+import { UiTile } from './UiTile';
 
 import { Logger } from '../lib/logger';
 import {
@@ -25,8 +31,14 @@ import {
   getRoundStartIndices,
   jumpToRound,
 } from '../replay/replayDriver';
-import { getPlayerDisplayName } from '../domain/model';
-import { filterYakuListForDisplay } from '../domain/yakus';
+import { filterYakuListForDisplay, isYakumanEnabled } from '../domain/yakus';
+import {
+  getYakuVoiceLineId,
+  getYakuhaiWindVoiceLineId,
+  getLimitName,
+} from '../domain/resultHelpers';
+import { WinnerDetailCard } from './WinnerDetailCard';
+import { ScoreTransferPanel } from './ScoreTransferPanel';
 
 /**
  * Renders a fixed 5-wide indicator row for the settlement screen: each tile the
@@ -40,48 +52,17 @@ function renderIndicatorTiles(
 ): React.JSX.Element[] {
   return Array.from({ length: 5 }).map((_, idx) => {
     const tileMsg = tiles[idx];
-    if (tileMsg) {
-      const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-      return (
-        <img
-          key={`${keyPrefix}-${idx}`}
-          src={getTileTexturePath(tileStr)}
-          alt={tileStr}
-          className="result-tile-img"
-        />
-      );
-    }
+    const tileStr = tileMsg
+      ? Tile.fromByte(tileMsg.tile ?? 0).toString()
+      : 'back';
     return (
-      <img
-        key={`${keyPrefix}-${idx}`}
-        src={getTileTexturePath('back')}
-        alt="back"
-        className="result-tile-img"
+      <UiTile
+        key={tileMsg?.traceId ? `${keyPrefix}-${idx}` : `locked-${idx}`}
+        tile={tileStr}
+        size="result"
       />
     );
   });
-}
-
-function getLimitName(
-  han: number,
-  fu: number,
-  scoringOption: number,
-): string | null {
-  if (han >= 11) return 'sanbaiman';
-  if (han >= 8) return 'baiman';
-  if (han >= 6) return 'haneman';
-  if (han >= 5) return 'mangan';
-
-  const hasKiriage = (scoringOption & 1) !== 0;
-  let score = fu * (1 << (han + 2));
-  if (hasKiriage && score > 1900 && score < 2000) {
-    score = 2000;
-  }
-  if (score >= 2000) {
-    return 'mangan';
-  }
-
-  return null;
 }
 
 const logger = new Logger('ResultPanel');
@@ -95,7 +76,18 @@ export function ResultPanel(): React.JSX.Element | null {
   const resultAnimation = useResultAnimation();
   const hasInMemoryResult = useHasInMemoryResult();
   const isReplay = useIsReplay();
+  const isPaused = useIsReplayPaused();
   const progress = useReplayProgress();
+  const characterId = useCharacterId();
+  const activeCharacter = React.useMemo(() => {
+    const found = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0];
+    if (!found) {
+      throw new Error(
+        `Character ${characterId} not found and no fallback available`,
+      );
+    }
+    return found;
+  }, [characterId]);
 
   const currentRoundIdx = React.useMemo(() => {
     void progress; // Reference to satisfy react-hooks/exhaustive-deps
@@ -106,13 +98,15 @@ export function ResultPanel(): React.JSX.Element | null {
     return isReplay ? getRoundStartIndices() : [];
   }, [isReplay]);
 
-  const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(8);
+  const [localSecondsLeft, setLocalSecondsLeft] = React.useState<number>(30);
   const [showFinalResults, setShowFinalResults] = React.useState(false);
 
   const handleReturnToRoom = React.useCallback(() => {
     setShowFinalResults(false);
-    rabiriichi.returnToRoom();
-  }, []);
+    if (!isReplay) {
+      rabiriichi.returnToRoom();
+    }
+  }, [isReplay]);
 
   const submitAction = React.useCallback(
     async (action: ActionOption, choice?: number) => {
@@ -125,22 +119,27 @@ export function ResultPanel(): React.JSX.Element | null {
     [],
   );
 
-  // The round result is a static snapshot: prefer the frozen players captured
-  // when the round concluded so the settlement never changes if someone leaves
-  // the room while it is shown. Falls back to live players before the freeze.
+  // Prefer the frozen snapshot captured at round conclusion, depending on the
+  // array refs (not the whole `room`) so room-state churn can't restart the
+  // reveal. The reducer preserves `roundResult` across room updates.
+  const frozenResultPlayers = room?.roundResult?.players ?? null;
+  const livePlayers = room?.players ?? null;
   const resultPlayers = React.useMemo(() => {
-    return room?.roundResultPlayers ?? room?.players ?? [];
-  }, [room]);
-
-  const playersWithResult = React.useMemo(() => {
-    return resultPlayers.filter(
-      (p) => p.gameState?.agari?.scores != null || p.gameState?.agari?.isTenpai,
-    );
-  }, [resultPlayers]);
+    return frozenResultPlayers ?? livePlayers ?? [];
+  }, [frozenResultPlayers, livePlayers]);
 
   const hasNagashiWinner = React.useMemo(() => {
     return resultPlayers.some((p) => p.gameState?.agari?.isNagashi);
   }, [resultPlayers]);
+
+  const playersWithResult = React.useMemo(() => {
+    if (hasNagashiWinner) {
+      return resultPlayers.filter((p) => p.gameState?.agari?.isNagashi);
+    }
+    return resultPlayers.filter(
+      (p) => p.gameState?.agari?.scores != null || p.gameState?.agari?.isTenpai,
+    );
+  }, [resultPlayers, hasNagashiWinner]);
 
   const hasNormalWinner = React.useMemo(() => {
     return resultPlayers.some(
@@ -148,7 +147,234 @@ export function ResultPanel(): React.JSX.Element | null {
     );
   }, [resultPlayers]);
 
-  const isDraw = !hasNormalWinner;
+  const isDraw = !hasNormalWinner && !hasNagashiWinner;
+
+  const scoringOption =
+    room?.roundResult?.scoringOption ?? room?.config?.scoringOption;
+  const resultRound = room?.info?.round ?? 0;
+  const resultDealer = room?.roundResult?.dealer ?? room?.info?.dealer ?? 0;
+
+  // Voice & Animation states
+  const [animatingPlayerIndex, setAnimatingPlayerIndex] =
+    React.useState<number>(0);
+  const [visibleYakuCounts, setVisibleYakuCounts] = React.useState<
+    Record<number, number>
+  >({});
+  const [showTotals, setShowTotals] = React.useState<Record<number, boolean>>(
+    {},
+  );
+  const [showScoreChanges, setShowScoreChanges] = React.useState(false);
+  const [animationFinished, setAnimationFinished] = React.useState(false);
+
+  const hasNextRound =
+    currentInquiry?.mapped.buttons.some((b) => b.type === 'next-round') ??
+    false;
+
+  const showPanel = React.useMemo(() => {
+    if (isReplay) {
+      return isWaitingForProceed && !resultAnimation;
+    }
+    return (
+      (playersWithResult.length > 0 || hasNextRound || isWaitingForProceed) &&
+      !resultAnimation
+    );
+  }, [
+    isReplay,
+    playersWithResult,
+    hasNextRound,
+    isWaitingForProceed,
+    resultAnimation,
+  ]);
+
+  React.useEffect(() => {
+    if (!showPanel) return;
+
+    const stateRef = { active: true };
+    const isActive = () => stateRef.active;
+
+    const runAnimation = async () => {
+      await Promise.resolve(); // Defer to avoid synchronous setState warnings
+
+      if (isDraw) {
+        if (isActive()) {
+          setAnimatingPlayerIndex(playersWithResult.length - 1);
+          setShowScoreChanges(true);
+          setAnimationFinished(true);
+        }
+        return;
+      }
+
+      // 1. Reset states
+      if (isActive()) {
+        setAnimatingPlayerIndex(0);
+        setVisibleYakuCounts({});
+        setShowTotals({});
+        setShowScoreChanges(false);
+        setAnimationFinished(false);
+      }
+
+      // Wait a brief moment before starting player animations
+      await new Promise((r) => setTimeout(r, 500));
+
+      for (let pIdx = 0; pIdx < playersWithResult.length; pIdx++) {
+        if (!isActive()) return;
+        setAnimatingPlayerIndex(pIdx);
+
+        // Pause slightly on card start
+        await new Promise((r) => setTimeout(r, 300));
+
+        const player = playersWithResult[pIdx];
+        if (!player) continue;
+        const agari = player.gameState?.agari;
+        if (!agari) continue;
+
+        const rawYakuList = agari.scores?.items ?? [];
+        const yakuList = filterYakuListForDisplay(rawYakuList, scoringOption);
+
+        // 1a. Show yaku one by one (Reveal yaku first, then play voice)
+        for (let yIdx = 0; yIdx < yakuList.length; yIdx++) {
+          if (!isActive()) return;
+
+          if (isActive()) {
+            flushSync(() => {
+              setVisibleYakuCounts((prev) => ({
+                ...prev,
+                [pIdx]: yIdx + 1,
+              }));
+            });
+          }
+
+          const yaku = yakuList[yIdx];
+          if (!yaku) continue;
+          const yakuSource = yaku.Src ?? '';
+          const windVoiceId = getYakuhaiWindVoiceLineId(
+            yakuSource,
+            resultRound,
+            resultDealer,
+            player.seat,
+            resultPlayers.length,
+          );
+          const voiceId = getYakuVoiceLineId(
+            yakuSource,
+            yaku.Val ?? 0,
+            windVoiceId,
+          );
+          if (!voiceId) {
+            // Keep the original one-second reveal cadence for silent rows such
+            // as Dora 0, without starting an audio playback.
+            await soundManager.playVoicePromise(undefined);
+            continue;
+          }
+          const voiceLine = activeCharacter.voiceLines.find(
+            (v) => v.id === voiceId,
+          );
+
+          await soundManager.playVoicePromise(voiceLine?.audioUrl);
+        }
+
+        // 1b. Reveal the total and start its limit voice in the same frame.
+        if (!isActive()) return;
+        let limitVoiceId: string | null = null;
+        // Aotenjou has no limit hands, so there is nothing to announce.
+        if (
+          agari.scores?.result &&
+          !agari.isNagashi &&
+          isYakumanEnabled(scoringOption)
+        ) {
+          const result = agari.scores.result;
+
+          if (result.finalYakuman && result.finalYakuman > 0) {
+            if (result.kazoeYakuman && result.kazoeYakuman > 0) {
+              limitVoiceId = 'kazoeYakuman';
+            } else {
+              const count = result.finalYakuman;
+              if (count === 1) limitVoiceId = 'yakuman';
+              else if (count === 2) limitVoiceId = 'doubleYakuman';
+              else if (count === 3) limitVoiceId = 'tripleYakuman';
+              else if (count === 4) limitVoiceId = 'quadrupleYakuman';
+              else if (count === 5) limitVoiceId = 'quintupleYakuman';
+              else if (count >= 6) limitVoiceId = 'miracleYakuman';
+            }
+          } else {
+            const limit = getLimitName(
+              result.han ?? 0,
+              result.fu ?? 0,
+              scoringOption ?? 0,
+            );
+            if (limit) {
+              limitVoiceId = limit;
+            }
+          }
+        }
+
+        const limitVoiceLine = limitVoiceId
+          ? activeCharacter.voiceLines.find((v) => v.id === limitVoiceId)
+          : undefined;
+        const revealDelay = soundManager.getVoiceDurationMs(
+          limitVoiceLine?.audioUrl,
+        );
+        await new Promise((resolve) => setTimeout(resolve, revealDelay));
+
+        if (!isActive()) return;
+        flushSync(() => {
+          setShowTotals((prev) => ({
+            ...prev,
+            [pIdx]: true,
+          }));
+        });
+        soundManager.playEffect(SOUND_EFFECTS.result.hanReveal);
+
+        if (limitVoiceLine) {
+          await soundManager.playVoicePromise(limitVoiceLine.audioUrl);
+        }
+
+        // Pause slightly before moving to the next winner
+        await new Promise((r) => setTimeout(r, 600));
+      }
+
+      // 2. Show score changes
+      if (!isActive()) return;
+      if (isActive()) {
+        setShowScoreChanges(true);
+      }
+
+      if (!isActive()) return;
+      if (isActive()) {
+        setAnimationFinished(true);
+      }
+    };
+
+    void runAnimation();
+
+    return () => {
+      stateRef.active = false;
+      soundManager.stopAllVoices();
+    };
+    // `room` is deliberately excluded: it changes on every room-state push and
+    // re-including it would restart the reveal. Everything the reveal needs is
+    // captured as stable values above.
+  }, [
+    showPanel,
+    isDraw,
+    playersWithResult,
+    activeCharacter,
+    scoringOption,
+    resultRound,
+    resultDealer,
+    resultPlayers.length,
+  ]);
+
+  React.useEffect(() => {
+    if (!showPanel) {
+      void Promise.resolve().then(() => {
+        setAnimatingPlayerIndex(0);
+        setVisibleYakuCounts({});
+        setShowTotals({});
+        setShowScoreChanges(false);
+        setAnimationFinished(false);
+      });
+    }
+  }, [showPanel]);
 
   const proceedAction = React.useMemo(() => {
     return currentInquiry?.mapped.buttons.find(
@@ -164,9 +390,14 @@ export function ResultPanel(): React.JSX.Element | null {
   const handleProceed = React.useCallback(() => {
     if (isReplay) {
       if (currentRoundIdx < roundStartIndices.length - 1) {
-        jumpToRound(currentRoundIdx + 1);
+        if (!isPaused) {
+          proceedReplay();
+        } else {
+          jumpToRound(currentRoundIdx + 1);
+        }
       } else {
         setShowFinalResults(true);
+        proceedReplay();
       }
       return;
     }
@@ -179,6 +410,7 @@ export function ResultPanel(): React.JSX.Element | null {
     }
   }, [
     isReplay,
+    isPaused,
     currentRoundIdx,
     roundStartIndices,
     proceedAction,
@@ -188,7 +420,7 @@ export function ResultPanel(): React.JSX.Element | null {
   ]);
 
   React.useEffect(() => {
-    if (!isWaitingForProceed) return;
+    if (!isWaitingForProceed || isPaused) return;
 
     const intervalId = setInterval(() => {
       setLocalSecondsLeft((prev) => {
@@ -203,26 +435,19 @@ export function ResultPanel(): React.JSX.Element | null {
 
     return () => {
       clearInterval(intervalId);
-      setLocalSecondsLeft(8);
+      setLocalSecondsLeft(30);
     };
-  }, [isWaitingForProceed, handleProceed]);
+  }, [isWaitingForProceed, isPaused, handleProceed]);
 
   const secondsLeft = currentInquiry
     ? Math.ceil(actionTimeout)
     : localSecondsLeft;
 
-  const hasNextRound =
-    currentInquiry?.mapped.buttons.some((b) => b.type === 'next-round') ??
-    false;
-
   const showUradoras = React.useMemo(() => {
-    return (
-      room?.players.some(
-        (p) =>
-          p.gameState?.agari?.scores != null && p.gameState.riichiTileId > 0,
-      ) ?? false
+    return resultPlayers.some(
+      (p) => p.gameState?.agari?.scores != null && p.gameState.riichiTileId > 0,
     );
-  }, [room?.players]);
+  }, [resultPlayers]);
 
   const renderDoraIndicators = () => {
     if (isDraw || !room?.info) return null;
@@ -235,20 +460,21 @@ export function ResultPanel(): React.JSX.Element | null {
     if (doras.length === 0) return null;
 
     return (
-      <div className="result-dora-indicators-section">
-        <div className="dora-indicator-row">
-          <span className="dora-row-label">{t('result.dora')}</span>
-          <div className="dora-indicator-tiles-container">
-            {/* Dora Indicators */}
-            <div className="dora-indicator-tiles">
+      <div className="relative z-[1] flex flex-col gap-1 lg:gap-2 p-2 lg:p-3">
+        <div className="flex flex-col items-start gap-1 lg:gap-2">
+          <span className="text-sm text-[#80deea] font-bold uppercase tracking-wider whitespace-nowrap">
+            {t('result.dora')}
+          </span>
+          <div className="flex flex-row items-center gap-1 lg:gap-2">
+            <div className="flex gap-0.5 lg:gap-1">
               {renderIndicatorTiles(doras, 'dora')}
             </div>
-
-            {/* Uradora Indicators */}
             {showUradoras && uradoras.length > 0 && (
               <>
-                <span className="dora-separator">/</span>
-                <div className="dora-indicator-tiles">
+                <span className="text-[#666] text-sm font-bold select-none">
+                  /
+                </span>
+                <div className="flex gap-0.5 lg:gap-1">
                   {renderIndicatorTiles(uradoras, 'uradora')}
                 </div>
               </>
@@ -267,7 +493,7 @@ export function ResultPanel(): React.JSX.Element | null {
 
   if (room && isAwaitingNextRound) {
     return (
-      <div className="next-round-waiting">
+      <div className="absolute right-6 bottom-6 z-[120] px-4 py-2.5 rounded-xl bg-[#0a0a0a]/75 text-white font-sans text-sm shadow-[0_4px_16px_rgba(0,0,0,0.6)] backdrop-blur-[4px]">
         {t('result.waitingForNextRound')}
       </div>
     );
@@ -277,306 +503,80 @@ export function ResultPanel(): React.JSX.Element | null {
     return <FinalResultPanel onReturnToRoom={handleReturnToRoom} />;
   }
 
-  const showPanel =
-    (playersWithResult.length > 0 || hasNextRound || isWaitingForProceed) &&
-    !resultAnimation;
-
   if (!room || !showPanel) return null;
 
-  const renderWinnerDetails = (player: (typeof room.players)[0]) => {
-    const agari = player.gameState?.agari;
-    if (!agari) return null;
-    if (!agari.scores && !agari.isTenpai) return null;
-
-    const isNagashi = agari.isNagashi ?? false;
-    const isTenpai = agari.isTenpai ?? false;
-
-    let badgeText = t('result.winnerBadge');
-    if (isNagashi) {
-      badgeText = t('yaku.NagashiMangan');
-    } else if (isTenpai) {
-      badgeText = t('result.tenpai');
-    }
-
-    let limitLabel: string | null = null;
-    let hanFuLabel = '';
-    let limitClass = '';
-
-    if (isNagashi) {
-      limitLabel = t('result.mangan');
-      limitClass = 'limit-mangan';
-    } else if (isTenpai) {
-      // nothing
-    } else if (agari.scores?.result) {
-      const result = agari.scores.result;
-      const isAotenjou =
-        room.config?.scoringOption != null &&
-        (room.config.scoringOption & 2) === 0;
-
-      if (result.yakuman && result.yakuman > 0) {
-        limitClass = 'limit-yakuman';
-        if (result.kazoeYakuman && result.kazoeYakuman > 0 && !isAotenjou) {
-          limitLabel = t('result.yakuman');
-          hanFuLabel = t('result.han', { count: result.han });
-        } else {
-          if (result.yakuman > 1) {
-            const key = `result.multipleYakuman_${result.yakuman}`;
-            limitLabel = t(key, {
-              defaultValue: t('result.multipleYakuman', {
-                count: result.yakuman,
-              }),
-            });
-          } else {
-            limitLabel = t('result.yakuman');
-          }
-        }
-      } else {
-        const limit = isAotenjou
-          ? null
-          : getLimitName(
-              result.han ?? 0,
-              result.fu ?? 0,
-              room.config?.scoringOption ?? 0,
-            );
-
-        if (limit) {
-          limitLabel = t(`result.${limit}`);
-          limitClass = `limit-${limit}`;
-          hanFuLabel = t('result.fuAndHan', {
-            fu: result.fu,
-            han: result.han,
-          });
-        } else {
-          hanFuLabel = t('result.fuAndHan', {
-            fu: result.fu,
-            han: result.han,
-          });
-        }
-      }
-    }
-
-    const rawYakuList = agari.scores?.items ?? [];
-    const yakuList = filterYakuListForDisplay(
-      rawYakuList,
-      room.config?.scoringOption,
-    );
-
-    const handTiles = player.gameState?.hand.freeTiles ?? [];
-    const calledMelds = player.gameState?.hand.called ?? [];
-
-    return (
-      <div
-        key={player.id}
-        className={`winner-details-card ${isNagashi ? 'nagashi-card' : ''}`}
-      >
-        <div className="winner-name-row">
-          <span className="winner-badge">{badgeText}</span>
-          <span className="winner-name">{getPlayerDisplayName(player, t)}</span>
-          {isTenpai ? (
-            player.gameState?.awaitedTiles &&
-            player.gameState.awaitedTiles.length > 0 && (
-              <div className="result-tenpai-waits-header">
-                <span className="tenpai-waits-label">
-                  {t('result.tenpaiWaits', 'Waits')}:
-                </span>
-                <div className="tenpai-waits-tiles">
-                  {player.gameState.awaitedTiles.map((ti, idx) => {
-                    const tileStr = Tile.fromByte(ti.winningTile).toString();
-                    return (
-                      <img
-                        key={idx}
-                        src={getTileTexturePath(tileStr)}
-                        alt={tileStr}
-                        className="result-tile-img-small"
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )
-          ) : (
-            <div className="winner-summary-row">
-              {limitLabel && (
-                <span className={`winner-limit-badge ${limitClass}`}>
-                  {limitLabel}
-                </span>
-              )}
-              {hanFuLabel && <span className="winner-hanfu">{hanFuLabel}</span>}
-            </div>
-          )}
-        </div>
-
-        {isNagashi ? (
-          <div className="winner-river-tiles">
-            <span className="river-label">{t('result.river')}</span>
-            <div className="river-tiles-grid">
-              {(player.gameState?.hand.discarded ?? []).map((tileMsg, idx) => {
-                const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-                return (
-                  <img
-                    key={tileMsg.traceId ?? idx}
-                    src={getTileTexturePath(tileStr)}
-                    alt={tileStr}
-                    className="result-tile-img"
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          /* Display final sorted hand tiles */
-          <div className="winner-hand-tiles">
-            <div className="closed-hand-tiles">
-              {handTiles.map((tileMsg, idx) => {
-                const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-                return (
-                  <img
-                    key={tileMsg.traceId ?? idx}
-                    src={getTileTexturePath(tileStr)}
-                    alt={tileStr}
-                    className="result-tile-img"
-                  />
-                );
-              })}
-            </div>
-            {/* Winning tile */}
-            {agari.incoming && (
-              <div className="winning-tile-group">
-                <span className="winning-tile-label">
-                  {t('result.winTile')}:
-                </span>
-                <img
-                  src={getTileTexturePath(
-                    Tile.fromByte(agari.incoming.tile ?? 0).toString(),
-                  )}
-                  alt="winning-tile"
-                  className="result-tile-img winning-tile"
-                />
-              </div>
-            )}
-            {/* Called melds */}
-            {calledMelds.map((meld, meldIdx) => {
-              const tiles = meld.tiles ?? [];
-              return (
-                <div key={meldIdx} className="result-meld-group">
-                  {tiles.map((tile, tileIdx) => {
-                    const tileStr = Tile.fromByte(tile.tile ?? 0).toString();
-                    return (
-                      <img
-                        key={tile.traceId ?? tileIdx}
-                        src={getTileTexturePath(tileStr)}
-                        alt={tileStr}
-                        className="result-tile-img"
-                      />
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* List of Yaku */}
-        {!isNagashi && !isTenpai && (
-          <div className="yaku-list">
-            {yakuList.map((yaku, idx) => {
-              if (yaku.Type === ScoringType.SCORING_TYPE_FU) return null; // Skip Fu entries in the list
-              const typeLabel =
-                yaku.Type === ScoringType.SCORING_TYPE_YAKUMAN
-                  ? t('result.yakuman')
-                  : t('result.han', { count: yaku.Val });
-              return (
-                <div key={idx} className="yaku-item">
-                  <span className="yaku-name">
-                    {t(`yaku.${yaku.Src ?? ''}`, {
-                      defaultValue: yaku.Src ?? '',
-                    })}
-                  </span>
-                  <span className="yaku-val">{typeLabel}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderScoreChanges = () => {
-    return (
-      <div className="result-score-changes">
-        <div className="score-changes-list">
-          {resultPlayers.map((p) => {
-            const agari = p.gameState?.agari;
-            const delta = (agari?.gainPoints ?? 0) - (agari?.losePoints ?? 0);
-            const deltaClass =
-              delta > 0 ? 'plus' : delta < 0 ? 'minus' : 'zero';
-            const deltaText = delta > 0 ? `+${delta}` : `${delta}`;
-            const currentPoints =
-              p.gameState?.points ??
-              room.config?.pointThreshold?.initialPoints ??
-              25000;
-            const prevPoints = currentPoints - delta;
-
-            return (
-              <div key={p.id} className="score-change-row">
-                <span className="player-name">
-                  {getPlayerDisplayName(p, t)}
-                </span>
-                <span className="points-transition">
-                  {prevPoints} → {currentPoints}
-                </span>
-                <span className={`points-delta ${deltaClass}`}>
-                  {deltaText}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="result-overlay">
-      <div className="result-layout-container">
-        <div className="result-character-side">
+    <div className="absolute inset-0 bg-[#0a0a0a]/85 flex justify-center items-center z-[120] text-white font-sans backdrop-blur-md overflow-x-hidden">
+      <div className="flex flex-row items-stretch gap-0 w-full h-full max-w-none max-h-none m-auto box-border z-[121] relative">
+        <div className="flex-none w-[30%] relative z-[2] pointer-events-none">
           <img
-            src={MIMI_PATH}
-            alt="mimi-avatar"
-            className="result-mimi-side-art"
+            src={activeCharacter.visualUrl}
+            alt={`${activeCharacter.id}-avatar`}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-[300%] object-contain object-bottom"
           />
         </div>
-        <div className="result-panel">
-          <h2 className="result-title">
-            {isDraw
-              ? hasNagashiWinner
-                ? t('yaku.NagashiMangan')
-                : room.ryuukyokuReason
+        <div className="flex-1 p-2 lg:p-4 flex flex-col gap-1.5 lg:gap-2.5 relative overflow-hidden">
+          <h2 className="relative z-[1] text-[clamp(1.25rem,5vh,3rem)] font-extrabold bg-gradient-to-br from-[#ff7a99] to-[#80deea] bg-clip-text text-transparent text-right m-0 mb-0.5 tracking-wider lg:tracking-widest">
+            {hasNagashiWinner
+              ? t('yaku.NagashiMangan')
+              : isDraw
+                ? room.ryuukyokuReason
                   ? t(`result.ryuukyoku.${room.ryuukyokuReason}`, {
                       defaultValue: t('result.draw'),
                     })
                   : t('result.draw')
-              : t('result.agari')}
+                : t('result.agari')}
           </h2>
 
-          <div className="result-content-scrollable">
-            <div className="result-winners-container">
-              {playersWithResult.map((w) => renderWinnerDetails(w))}
+          <div
+            className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col gap-1.5 lg:gap-2.5 pr-1"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
+            <div className="relative z-[1] flex flex-col gap-1.5 lg:gap-2.5">
+              {playersWithResult.map((w, pIdx) => (
+                <WinnerDetailCard
+                  key={w.id}
+                  player={w}
+                  visibleYakuCount={visibleYakuCounts[pIdx] ?? 0}
+                  showTotal={showTotals[pIdx] ?? false}
+                  isCardStarted={pIdx <= animatingPlayerIndex}
+                  room={room}
+                />
+              ))}
             </div>
 
             {renderDoraIndicators()}
 
             {/* Score changes panel */}
-            {renderScoreChanges()}
+            <div
+              className={`transition-all duration-1000 ease-out transform ${
+                showScoreChanges
+                  ? 'opacity-100 translate-y-0'
+                  : 'opacity-0 translate-y-6 pointer-events-none'
+              }`}
+            >
+              <ScoreTransferPanel
+                resultPlayers={resultPlayers}
+                dealerSeat={room.roundResult?.dealer ?? room.info?.dealer}
+                room={room}
+              />
+            </div>
           </div>
 
           {/* Proceed button */}
-          <div className="result-actions">
-            <button
-              className="ui-button primary-button"
+          <div
+            className={`relative z-[1] flex justify-center transition-all duration-500 ease-out transform ${
+              animationFinished
+                ? 'opacity-100 scale-100'
+                : 'opacity-0 scale-95 pointer-events-none'
+            }`}
+          >
+            <Button
               onClick={handleProceed}
               disabled={!canProceed && !room.gameEnded}
+              className="absolute bottom-3 right-3 text-[clamp(0.875rem,2.6vh,1.5rem)] px-[clamp(1rem,3vh,2rem)] py-[clamp(0.4rem,1.4vh,1rem)]"
             >
               {room.gameEnded
                 ? t('result.showFinalResults', 'Show Game Results')
@@ -587,7 +587,7 @@ export function ResultPanel(): React.JSX.Element | null {
                   : canProceed
                     ? t('result.confirmWithTime', { seconds: secondsLeft })
                     : t('result.waitingForNext')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

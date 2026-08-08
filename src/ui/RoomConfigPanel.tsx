@@ -36,13 +36,17 @@ import {
   FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK,
 } from '../domain/constants';
 import type { IGameConfigMsg } from '../proto';
-import { TILE_SET_PRESETS, type TileSetPresetName } from '../domain/tilesets';
-import { buildAllowedYakusPayload } from '../domain/yakus';
+import { getTileSet, type TileSetPresetName } from '../domain/tilesets';
+import { buildAllowedYakusPayload, defaultAllowedYakus } from '../domain/yakus';
 import { useAvailableYakus } from '../state/store';
 import { GameSettingsTab } from './GameSettingsTab';
 import { PointsSettingsTab } from './PointsSettingsTab';
 import { YakuSettingsTab } from './YakuSettingsTab';
 import { AdvancedSettingsTab } from './AdvancedSettingsTab';
+import { Button } from './Button';
+import { TabButton } from './TabButton';
+
+import { PANEL } from './styles';
 
 interface SavedRoomConfig {
   playerCount?: number;
@@ -171,7 +175,8 @@ export function RoomConfigPanel({
     if (savedConfig?.allowedYakus) {
       return new Set(savedConfig.allowedYakus);
     }
-    return new Set(availableYakus.map((y) => y.name));
+    // 古役 are opt-in: everything else starts enabled.
+    return defaultAllowedYakus(availableYakus);
   });
   // Advanced policy states (matching server defaults)
   const [renchanPolicy, setRenchanPolicy] = useState<number>(
@@ -511,9 +516,7 @@ export function RoomConfigPanel({
         ryuukyokuPoints: [ryuukyokuPoints0, ryuukyokuPoints1],
         validPointsRange: [0, upperPoints],
       },
-      initialTiles: TILE_SET_PRESETS[tileSetPreset]().map((tile) =>
-        tile.toByte(),
-      ),
+      initialTiles: getTileSet(tileSetPreset).map((tile) => tile.toByte()),
       allowedYakus: buildAllowedYakusPayload(allowedYakus),
     });
   };
@@ -531,42 +534,40 @@ export function RoomConfigPanel({
     ryuukyokuPoints1Error !== null;
 
   return (
-    <div className="room-config-panel">
-      <div className="room-config-header">
-        <h3>{t('lobby.roomSettings')}</h3>
-        <div className="room-config-tabs">
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'game' ? 'active' : ''}`}
+    <div className={`${PANEL.base} mb-3 flex flex-col gap-3 box-border`}>
+      <div className="flex justify-between items-center border-b border-white/10 pb-1 mb-3">
+        <h3 className="m-0 text-lg text-[#ff7a99] font-bold text-left">
+          {t('lobby.roomSettings')}
+        </h3>
+        <div className="flex gap-1">
+          <TabButton
+            active={activeTab === 'game'}
             onClick={() => setActiveTab('game')}
           >
             {t('lobby.gameSettings')}
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'points' ? 'active' : ''}`}
+          </TabButton>
+          <TabButton
+            active={activeTab === 'points'}
             onClick={() => setActiveTab('points')}
           >
             {t('lobby.pointsSettings')}
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'yaku' ? 'active' : ''}`}
+          </TabButton>
+          <TabButton
+            active={activeTab === 'yaku'}
             onClick={() => setActiveTab('yaku')}
           >
             {t('lobby.configureYakus')}
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'advanced' ? 'active' : ''}`}
+          </TabButton>
+          <TabButton
+            active={activeTab === 'advanced'}
             onClick={() => setActiveTab('advanced')}
           >
             {t('lobby.advancedSettings')}
-          </button>
+          </TabButton>
         </div>
       </div>
 
-      <div className="room-config-tab-content">
+      <div className="flex-grow">
         {activeTab === 'game' && (
           <GameSettingsTab
             isLoading={isLoading}
@@ -658,18 +659,14 @@ export function RoomConfigPanel({
         )}
       </div>
 
-      <div
-        className="room-config-actions"
-        style={{ display: 'flex', gap: '12px', marginTop: '16px' }}
-      >
-        <button
+      <div className="flex gap-3 mt-4">
+        <Button
           onClick={handleCreateClick}
-          className="ui-button primary-button"
           disabled={isLoading || isFormInvalid}
-          style={{ flex: 1 }}
+          className="flex-grow"
         >
           {t('lobby.createRoom')}
-        </button>
+        </Button>
       </div>
     </div>
   );

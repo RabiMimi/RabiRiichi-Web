@@ -1,10 +1,25 @@
-import type { Tile } from '../domain/tile';
+import { type Tile, isTileUnknown } from '../domain/tile';
+import { preloadImages, _resetImagePreloadCache } from '../lib/imagePreload';
 import type { IMenLikeMsg } from '../proto';
 
 export const TILE_MODEL_PATH = '/assets/tile.glb';
 export const TABLE_DIFFUSE_PATH = '/assets/table_diffuse.webp';
-export const MIMI_PATH = '/assets/mimi.png';
 export const ROBOTO_FONT_PATH = '/assets/roboto.ttf';
+
+/**
+ * Font for the 3D table centre, matching the language's display face.
+ *
+ * These are tiny per-language cuts holding only the glyphs TableCenter draws.
+ * Two things rule out reusing the CSS webfont: troika cannot read woff2, and it
+ * has no fallback, so whatever it loads must contain every glyph outright.
+ * Regenerate with `tools/subset-font.py table`.
+ */
+export function getTableCenterFontPath(language: string | undefined): string {
+  const base = language?.toLowerCase().split('-')[0];
+  return base === 'ja'
+    ? '/assets/YujiSyuku-TableCenter.ttf'
+    : '/assets/AaShenYeShiTang-TableCenter.ttf';
+}
 
 // Valid tile face strings
 export const VALID_TILE_STRINGS = [
@@ -65,7 +80,7 @@ export function getTileTexturePath(tile: string | Tile | null): string {
   }
 
   // If it represents a back/invalid tile
-  if (tileStr === '0x' || tileStr.includes('x')) {
+  if (isTileUnknown(tileStr)) {
     return '/assets/hand_tiles/blank.jpg';
   }
 
@@ -135,6 +150,23 @@ export const TILE_LAYOUT = {
   /** Gap kept between the hand's right edge and the melds' left edge. */
   handMeldGap: 0.15,
 } as const;
+
+/**
+ * X offset of the i-th free hand tile, centred on the seat.
+ *
+ * Shared so the rendered hand and the pose bridge that stands in for the local
+ * one cannot drift apart.
+ */
+export function getHandTileX(index: number, tileCount: number): number {
+  return (index - (tileCount - 1) / 2) * TILE_LAYOUT.handSpacing;
+}
+
+/** X offset of the freshly drawn tile, held apart from the sorted hand. */
+export function getPendingTileX(tileCount: number): number {
+  return (
+    ((tileCount - 1) / 2 + 1) * TILE_LAYOUT.handSpacing + TILE_LAYOUT.pendingGap
+  );
+}
 
 /**
  * Calculates the left-most coordinate boundary of a player's called meld groups.
@@ -225,12 +257,6 @@ export function getHandShiftX(
   return Math.min(0, targetRightEdge - handRightEdge);
 }
 
-/**
- * Module-level cache that keeps the preloaded `Image` objects alive. Without
- * holding these references the browser may garbage-collect the in-flight
- * `Image` objects and abort their fetches, defeating the preload entirely.
- */
-const preloadedTileImages = new Map<string, HTMLImageElement>();
 let tileImagePreloadPromise: Promise<void> | null = null;
 
 /**
@@ -246,38 +272,12 @@ export function preloadAllTileImages(): Promise<void> {
   if (tileImagePreloadPromise) {
     return tileImagePreloadPromise;
   }
-  if (typeof window === 'undefined' || typeof window.Image === 'undefined') {
-    tileImagePreloadPromise = Promise.resolve();
-    return tileImagePreloadPromise;
-  }
 
-  const imagesToPreload = [
-    ...VALID_TILE_STRINGS,
-    'back',
-    'blank',
-    'front',
-  ] as const;
+  const paths = [...VALID_TILE_STRINGS, 'back', 'blank', 'front'].map(
+    getTileTexturePath,
+  );
 
-  const decodes = imagesToPreload.map((tile) => {
-    const path = getTileTexturePath(tile);
-    const img = new window.Image();
-    // Retain the reference so the fetch is not aborted by GC.
-    preloadedTileImages.set(path, img);
-    img.src = path;
-    // decode() forces the browser to fetch AND decode the JPEG off the render
-    // path. Fall back to onload if decode() is unavailable or rejects (e.g. the
-    // image is not yet fully fetched in some engines).
-    const ready =
-      typeof img.decode === 'function'
-        ? img.decode().catch(() => undefined)
-        : new Promise<void>((resolve) => {
-            img.onload = (): void => resolve();
-            img.onerror = (): void => resolve();
-          });
-    return ready;
-  });
-
-  tileImagePreloadPromise = Promise.all(decodes).then(() => undefined);
+  tileImagePreloadPromise = preloadImages(paths);
   return tileImagePreloadPromise;
 }
 
@@ -286,5 +286,5 @@ export function preloadAllTileImages(): Promise<void> {
  */
 export function _resetPreloadCache(): void {
   tileImagePreloadPromise = null;
-  preloadedTileImages.clear();
+  _resetImagePreloadCache();
 }

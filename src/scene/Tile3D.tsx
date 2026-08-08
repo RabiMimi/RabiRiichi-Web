@@ -1,21 +1,46 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { useGLTF, useTexture } from '@react-three/drei';
+import React, {
+  useMemo,
+  useRef,
+  useEffect,
+  useState,
+  useLayoutEffect,
+} from 'react';
+import { useGLTF, useTexture, Html } from '@react-three/drei';
+import { TileSpotlightParticles } from './TileSpotlightParticles';
+import {
+  createToonMaterial,
+  createToonSideMaterial,
+  createToonBackMaterial,
+} from './tileToonMaterial';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
+import { TileTooltip } from '../ui/TileTooltip';
+import { tooltipPortalTarget } from '../ui/portal';
 import {
   TILE_MODEL_PATH,
   getTileTexturePath,
   VALID_TILE_STRINGS,
 } from './assets';
 import {
+  saveTilePose,
+  getAndClearTilePose,
+  type TileArea,
+} from './tileTransitionRegistry';
+import { registerTileOutline } from './tileOutlineRegistry';
+import {
   useCurrentInquiry,
   useIsRiichiSelectMode,
   useAnimationSpeed,
   useSelectedTileTraceId,
+  useHoveredTileTraceId,
   useActiveComparisonTile,
   useDoraIndicators,
   useRoom,
   useSelf,
+  useClaimTargetTileId,
+  useCallHighlightTileIds,
+  useTooltipOnHandTiles,
+  useTooltipOnRiverTiles,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import type { ActionOption, DiscardCandidate } from '../domain/inquiry';
@@ -23,6 +48,7 @@ import {
   Tile,
   checkIsDora,
   checkDiscardResultsInFuriten,
+  isTileUnknown,
 } from '../domain/tile';
 import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
 import { FuritenType } from '../proto';
@@ -32,94 +58,52 @@ import {
   TILE_LIFT_HOVERED,
 } from '../domain/constants';
 import { Logger } from '../lib/logger';
+import { soundManager } from '../lib/sound';
+import { SOUND_EFFECTS } from '../lib/soundEffects';
 
 const logger = new Logger('Tile3D');
 
-// Adjust these constants to change the Dora sliding sheen appearance
-export const DORA_SHEEN_WIDTH = 0.2; // Width of the diagonal reflection sheen (increase for wider/softer look)
-export const DORA_SHEEN_SPEED = 2.0; // Speed of the sliding animation (increase for faster sliding)
-
 export type TileDisplayState =
-  | 'hand'
-  | 'opponent-hand'
-  | 'face'
-  | 'back'
-  | 'sideways';
+  'hand' | 'opponent-hand' | 'face' | 'back' | 'sideways';
 
 function createMappedMaterial(
   mat: THREE.Material,
   frontTexture: THREE.Texture,
   backTexture: THREE.Texture,
-  isDora: boolean,
+  sideTexture: THREE.Texture,
 ): THREE.Material {
   const matName = mat.name;
   if (matName === 'Front.001') {
-    const customMat = new THREE.MeshStandardMaterial({
-      map: frontTexture,
-      roughness: 0.15,
-      metalness: 0.05,
-    });
-
-    const userData = {
-      uTime: { value: 0 },
-      isDora: { value: isDora ? 1.0 : 0.0 },
-    };
-    customMat.userData = userData;
-
-    customMat.onBeforeCompile = (shader) => {
-      shader.uniforms.uTime = userData.uTime;
-      shader.uniforms.uIsDora = userData.isDora;
-      shader.uniforms.uSheenWidth = { value: DORA_SHEEN_WIDTH };
-      shader.uniforms.uSheenSpeed = { value: DORA_SHEEN_SPEED };
-
-      shader.fragmentShader =
-        `
-        uniform float uTime;
-        uniform float uIsDora;
-        uniform float uSheenWidth;
-        uniform float uSheenSpeed;
-      ` + shader.fragmentShader;
-
-      shader.fragmentShader = shader.fragmentShader.replace(
-        '#include <dithering_fragment>',
-        `
-        #include <dithering_fragment>
-        
-        if (uIsDora > 0.5) {
-          #ifdef USE_MAP
-            vec2 uv = vMapUv;
-          #else
-            vec2 uv = vec2(0.5);
-          #endif
-          
-          // Conan's glasses sliding sheen sweep (diagonal: x + y)
-          float progress = mod(uTime * uSheenSpeed, 2.5) - 0.7;
-          float d = abs(uv.x + uv.y - progress);
-          
-          // Specular white sheen band
-          float sheen = smoothstep(uSheenWidth, 0.0, d) * 0.75;
-          
-          gl_FragColor.rgb += vec3(sheen);
-        }
-        `,
-      );
-    };
-
-    return customMat;
-  } else if (matName === 'Back.001') {
-    return new THREE.MeshStandardMaterial({
-      map: backTexture,
-      roughness: 0.25,
-      metalness: 0.05,
-    });
-  } else if (matName === 'Side.001') {
-    return new THREE.MeshStandardMaterial({
-      color: '#f7f4eb', // Ivory/Bone white
-      roughness: 0.35,
-      metalness: 0.02,
-    });
+    return createToonMaterial(frontTexture);
+  }
+  if (matName === 'Back.001') {
+    return createToonBackMaterial(backTexture);
+  }
+  if (matName === 'Side.001') {
+    return createToonSideMaterial(sideTexture);
   }
   return mat;
+}
+
+// Pre-allocated temporary variables to avoid per-frame GC allocations
+const tempV3 = new THREE.Vector3();
+const tempQ = new THREE.Quaternion();
+const tempParentRot = new THREE.Quaternion();
+const tempTargetWorldPos = new THREE.Vector3();
+const tempTargetWorldRot = new THREE.Quaternion();
+const tempCurrentWorldPos = new THREE.Vector3();
+const tempCurrentWorldRot = new THREE.Quaternion();
+const tempLocalRot = new THREE.Quaternion();
+
+interface ActiveTransition {
+  startWorldPos: THREE.Vector3;
+  startWorldRot: THREE.Quaternion;
+  duration: number;
+  elapsed: number;
+}
+
+function easeInOutQuad(x: number): number {
+  return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
 }
 
 interface Tile3DProps {
@@ -129,6 +113,7 @@ interface Tile3DProps {
   onClick?: () => void;
   traceId?: number | undefined;
   isWinningTile?: boolean;
+  area?: TileArea;
 }
 
 export function Tile3D({
@@ -138,13 +123,35 @@ export function Tile3D({
   onClick,
   traceId,
   isWinningTile = false,
+  area = 'ui',
 }: Tile3DProps): React.JSX.Element {
   const currentInquiry = useCurrentInquiry();
   const isRiichiSelectMode = useIsRiichiSelectMode();
   const animationSpeed = useAnimationSpeed();
   const [isHovered, setIsHovered] = useState(false);
 
+  const room = useRoom();
   const doraIndicators = useDoraIndicators();
+  const claimTargetTileId = useClaimTargetTileId();
+  const isClaimTarget = useMemo(() => {
+    if (claimTargetTileId == null) return false;
+    if (traceId === claimTargetTileId) return true;
+
+    if (area === 'meld' && room) {
+      for (const player of room.players) {
+        const melds = player.gameState?.hand.called ?? [];
+        for (const meld of melds) {
+          const tiles = meld.tiles ?? [];
+          const hasTarget = tiles.some((t) => t.traceId === claimTargetTileId);
+          const hasSelf = tiles.some((t) => t.traceId === traceId);
+          if (hasTarget && hasSelf) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }, [claimTargetTileId, traceId, area, room]);
   const isDora = useMemo(() => {
     if (!tile) return false;
     try {
@@ -155,6 +162,8 @@ export function Tile3D({
     }
   }, [tile, doraIndicators]);
 
+  const activeTransition = useRef<ActiveTransition | null>(null);
+
   const isFaceVisible =
     displayState === 'face' ||
     displayState === 'hand' ||
@@ -164,7 +173,26 @@ export function Tile3D({
   const factorX = (threeViewport.width / size.width) * 0.5;
   const factorY = (threeViewport.height / size.height) * 0.5;
   const selectedTileTraceId = useSelectedTileTraceId();
+  const hoveredTileTraceId = useHoveredTileTraceId();
   const isSelected = selectedTileTraceId === traceId;
+
+  // A face-down / unknown tile (opponent's concealed hand, wall back, ...) has
+  // no identity to hover: it must not drive the tooltip or the same-tile
+  // comparison dim. Gate purely on whether the face is known, not on whose hand
+  // it is, so this holds for every face-down tile uniformly.
+  const isIdentifiable = !isTileUnknown(tile);
+
+  const tooltipOnHand = useTooltipOnHandTiles();
+  const tooltipOnRiver = useTooltipOnRiverTiles();
+  const isHandArea = area === 'hand' || displayState === 'hand';
+  const isTooltipAllowed = isHandArea ? tooltipOnHand : tooltipOnRiver;
+
+  const showTooltip =
+    isTooltipAllowed &&
+    isIdentifiable &&
+    traceId !== undefined &&
+    (hoveredTileTraceId === traceId ||
+      (hoveredTileTraceId === null && selectedTileTraceId === traceId));
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef<number>(0);
   const dragStartY = useRef<number>(0);
@@ -196,11 +224,21 @@ export function Tile3D({
   }, [activeComparisonTile, tile]);
 
   const isDimmed = Boolean(
-    activeComparisonTile && !isMatchingComparison && displayState !== 'hand',
+    activeComparisonTile &&
+    !isMatchingComparison &&
+    displayState !== 'hand' &&
+    !isTileUnknown(tile),
   );
   const isHighlighted = Boolean(activeComparisonTile && isMatchingComparison);
 
-  const room = useRoom();
+  // When hovering a call button, dim hand tiles NOT in the call
+  const callHighlightIds = useCallHighlightTileIds();
+  const isCallDimmed =
+    callHighlightIds != null &&
+    displayState === 'hand' &&
+    traceId != null &&
+    !callHighlightIds.has(traceId);
+
   const currentUser = useSelf();
   const selfPlayer = useMemo(() => {
     if (!room || !currentUser) return null;
@@ -269,27 +307,31 @@ export function Tile3D({
   // Always load the back face texture
   const backTexture = useTexture('/assets/hand_tiles/back.jpg');
 
+  // Side texture
+  const sideTexture = useTexture('/assets/hand_tiles/slide.jpg');
+
   // Clone the textures and configure them.
-  // This avoids mutating the raw hook return value which violates strict react-hooks rules.
   const clonedTexture = useMemo(() => {
     const tex = texture.clone();
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.flipY = false;
-    tex.needsUpdate = true;
+    tex.rotation = Math.PI;
+    tex.center.set(0.5, 0.5);
+    tex.repeat.x = -1;
+    tex.wrapS = THREE.MirroredRepeatWrapping;
     return tex;
   }, [texture]);
 
   const clonedBackTexture = useMemo(() => {
     const tex = backTexture.clone();
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.flipY = false;
-    tex.needsUpdate = true;
     return tex;
   }, [backTexture]);
+
+  const clonedSideTexture = useMemo(() => {
+    const tex = sideTexture.clone();
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [sideTexture]);
 
   // Clone the scene graph and apply materials so this tile has its own material instances
   const clone = useMemo(() => {
@@ -304,7 +346,7 @@ export function Tile3D({
               mat,
               clonedTexture,
               clonedBackTexture,
-              isDora,
+              clonedSideTexture,
             );
             if (mat.name === 'Front.001') frontMats.push(mapped);
             return mapped;
@@ -314,7 +356,7 @@ export function Tile3D({
             childMat,
             clonedTexture,
             clonedBackTexture,
-            isDora,
+            clonedSideTexture,
           );
           if (childMat.name === 'Front.001') frontMats.push(mapped);
           child.material = mapped;
@@ -327,7 +369,7 @@ export function Tile3D({
     });
     clonedScene.userData.frontMaterials = frontMats;
     return clonedScene;
-  }, [scene, clonedTexture, clonedBackTexture, isDora]);
+  }, [scene, clonedTexture, clonedBackTexture, clonedSideTexture]);
 
   // Determine rotation and Y-offset based on the display state
   const { rotation, yOffset } = useMemo(() => {
@@ -340,6 +382,12 @@ export function Tile3D({
   const groupRef = useRef<THREE.Group>(null);
   const tileRef = useRef<THREE.Object3D>(null);
 
+  useEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+    return registerTileOutline(group);
+  }, []);
+
   // Target position and rotation (stored in refs to avoid recreating vectors on every render)
   const targetPos = useMemo(() => new THREE.Vector3(), []);
   const targetRot = useMemo(() => new THREE.Quaternion(), []);
@@ -348,8 +396,13 @@ export function Tile3D({
     return isPlayable || displayState === 'hand';
   }, [isPlayable, displayState]);
 
-  // Set targets on prop changes (depend on numeric array elements to avoid ref comparison triggers)
-  useEffect(() => {
+  const isFirstFrame = useRef(true);
+
+  // Set targets and initial pose on mount before WebGL render
+  useLayoutEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+
     updateTargetPosition(
       targetPos,
       posX,
@@ -363,6 +416,49 @@ export function Tile3D({
       { dragOffsetX, dragOffsetY, dragOffsetZ },
     );
     targetRot.setFromEuler(new THREE.Euler(rotX, rotY, rotZ));
+
+    if (isFirstFrame.current) {
+      isFirstFrame.current = false;
+      if (traceId !== undefined) {
+        const lastPose = getAndClearTilePose(traceId);
+        const isAllowedTransition =
+          lastPose &&
+          ((lastPose.area === 'hand' && area === 'river') ||
+            (lastPose.area === 'river' && area === 'meld') ||
+            (lastPose.area === 'hand' && area === 'meld') ||
+            (lastPose.area === 'hand' && area === 'nuki'));
+
+        if (lastPose && isAllowedTransition && group.parent) {
+          activeTransition.current = {
+            startWorldPos: lastPose.worldPosition.clone(),
+            startWorldRot: lastPose.worldQuaternion.clone(),
+            duration: 0.4,
+            elapsed: 0,
+          };
+
+          group.parent.updateMatrixWorld(true);
+          tempTargetWorldPos.copy(lastPose.worldPosition);
+          group.parent.worldToLocal(tempTargetWorldPos);
+          group.position.copy(tempTargetWorldPos);
+
+          tempParentRot.setFromRotationMatrix(group.parent.matrixWorld);
+          tempLocalRot
+            .copy(tempParentRot)
+            .invert()
+            .multiply(lastPose.worldQuaternion);
+          group.quaternion.copy(tempLocalRot);
+          group.updateMatrixWorld(true);
+        } else {
+          group.position.copy(targetPos);
+          group.quaternion.copy(targetRot);
+          group.updateMatrixWorld(true);
+        }
+      } else {
+        group.position.copy(targetPos);
+        group.quaternion.copy(targetRot);
+        group.updateMatrixWorld(true);
+      }
+    }
   }, [
     posX,
     posY,
@@ -380,18 +476,20 @@ export function Tile3D({
     dragOffsetX,
     dragOffsetY,
     dragOffsetZ,
+    traceId,
+    area,
   ]);
-
-  const isFirstFrame = useRef(true);
 
   const prevPlayable = useRef(false);
   const prevHovered = useRef(false);
   const prevSelected = useRef(false);
   const prevHasSelection = useRef(false);
   const prevDimmed = useRef(false);
+  const prevCallDimmed = useRef(false);
   const prevHighlighted = useRef(false);
   const prevIsDora = useRef(false);
   const prevIsFuritenDiscard = useRef(false);
+  const prevShowGlow = useRef(false);
 
   // Animate position and rotation towards targets
   useFrame((state, delta) => {
@@ -410,41 +508,82 @@ export function Tile3D({
     });
 
     if (groupRef.current) {
-      // We make it frame-rate independent by incorporating delta:
-      // lerpFactor = 1 - Math.exp(-speed * delta)
-      const factor = isFirstFrame.current
-        ? 1
-        : 1 - Math.exp(-12 * animationSpeed * delta);
-      isFirstFrame.current = false;
+      const transition = activeTransition.current;
+      if (transition && groupRef.current.parent) {
+        const parentGroup = groupRef.current.parent;
+        parentGroup.updateMatrixWorld(true);
 
-      groupRef.current.position.lerp(targetPos, factor);
-      groupRef.current.quaternion.slerp(targetRot, factor);
+        transition.elapsed += delta * animationSpeed;
+        const progress = Math.min(1, transition.elapsed / transition.duration);
+        const easedT = easeInOutQuad(progress);
+
+        // 1. Calculate current target world position & rotation for this frame
+        tempTargetWorldPos.copy(targetPos);
+        parentGroup.localToWorld(tempTargetWorldPos);
+
+        parentGroup.getWorldQuaternion(tempParentRot);
+        tempTargetWorldRot.copy(tempParentRot).multiply(targetRot);
+
+        // 2. Interpolate world position
+        tempCurrentWorldPos.lerpVectors(
+          transition.startWorldPos,
+          tempTargetWorldPos,
+          easedT,
+        );
+
+        // 3. Interpolate world rotation
+        tempCurrentWorldRot.slerpQuaternions(
+          transition.startWorldRot,
+          tempTargetWorldRot,
+          easedT,
+        );
+
+        // 4. Convert back to local space and apply
+        parentGroup.worldToLocal(tempCurrentWorldPos);
+        groupRef.current.position.copy(tempCurrentWorldPos);
+
+        tempLocalRot.copy(tempParentRot).invert().multiply(tempCurrentWorldRot);
+        groupRef.current.quaternion.copy(tempLocalRot);
+
+        if (progress >= 1) {
+          activeTransition.current = null; // finished transition
+        }
+      } else {
+        const factor = 1 - Math.exp(-12 * animationSpeed * delta);
+        groupRef.current.position.lerp(targetPos, factor);
+        groupRef.current.quaternion.slerp(targetRot, factor);
+      }
     }
 
     if (tileRef.current) {
-      // Emissive glow for playable tiles and continuous pulse for winning tile
-      if (isWinningTile) {
+      const showGlow = isWinningTile || isClaimTarget;
+      const glowChanged = prevShowGlow.current !== showGlow;
+      prevShowGlow.current = showGlow;
+
+      if (showGlow) {
         const pulse = 0.3 + Math.sin(time * 6.0) * 0.3; // pulse between 0.0 and 0.6
+        const glowColor = isWinningTile ? 0xffaa00 : 0x33ffcc;
         tileRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             const childMat = child.material as
-              | THREE.Material
-              | THREE.Material[];
+              THREE.Material | THREE.Material[];
             const mats = Array.isArray(childMat) ? childMat : [childMat];
             mats.forEach((mat) => {
-              if (mat instanceof THREE.MeshStandardMaterial) {
-                mat.emissive.setHex(0xffaa00); // Gold glow
+              if (mat instanceof THREE.MeshPhongMaterial) {
+                mat.emissive.setHex(glowColor);
                 mat.emissiveIntensity = pulse;
               }
             });
           }
         });
       } else if (
+        glowChanged ||
         prevPlayable.current !== isPlayable ||
         prevHovered.current !== isHovered ||
         prevSelected.current !== isSelected ||
         prevHasSelection.current !== hasTileSelectionActive ||
         prevDimmed.current !== isDimmed ||
+        prevCallDimmed.current !== isCallDimmed ||
         prevHighlighted.current !== isHighlighted ||
         prevIsDora.current !== isDora ||
         prevIsFuritenDiscard.current !== isFuritenDiscard
@@ -454,6 +593,7 @@ export function Tile3D({
         prevSelected.current = isSelected;
         prevHasSelection.current = hasTileSelectionActive;
         prevDimmed.current = isDimmed;
+        prevCallDimmed.current = isCallDimmed;
         prevHighlighted.current = isHighlighted;
         prevIsDora.current = isDora;
         prevIsFuritenDiscard.current = isFuritenDiscard;
@@ -464,23 +604,37 @@ export function Tile3D({
           isPlayable,
           isSelected,
           isHovered,
-          isDimmed,
+          isDimmed || isCallDimmed,
           isHighlighted,
           isDora,
           isFuritenDiscard,
         );
       }
     }
+
+    // Save world pose at the end of the frame for future transitions (remounts)
+    if (groupRef.current && traceId !== undefined) {
+      groupRef.current.getWorldPosition(tempV3);
+      groupRef.current.getWorldQuaternion(tempQ);
+      saveTilePose(traceId, tempV3, tempQ, area);
+    }
   });
 
   return (
     <group
       ref={groupRef}
+      name={`tile-${traceId}`}
+      userData={{ traceId, area }}
       onPointerOver={(e: ThreeEvent<PointerEvent>) => {
         if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
+          if (isInteractive && !isHovered) {
+            soundManager.playEffect(SOUND_EFFECTS.tile.hover);
+          }
           setIsHovered(true);
-          if (traceId !== undefined && displayState === 'hand') {
+          // Do not report hover for face-down tiles: they have no identity, so
+          // hovering must not open a tooltip or trigger the same-tile dim.
+          if (traceId !== undefined && isIdentifiable) {
             rabiriichi.hoverTile(traceId);
           }
         }
@@ -489,7 +643,10 @@ export function Tile3D({
         if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
           setIsHovered(false);
-          if (traceId !== undefined && displayState === 'hand') {
+          if (
+            traceId !== undefined &&
+            rabiriichi.hoveredTileTraceId === traceId
+          ) {
             rabiriichi.hoverTile(null);
           }
         }
@@ -500,6 +657,10 @@ export function Tile3D({
         dragStartY.current = e.nativeEvent.clientY;
         lastClientY.current = e.nativeEvent.clientY;
         const isMouse = e.nativeEvent.pointerType === 'mouse';
+        if (!isMouse && traceId !== undefined && isIdentifiable) {
+          setIsHovered(true);
+          rabiriichi.hoverTile(traceId);
+        }
 
         const isDragInteract = isInteractive && traceId !== undefined;
 
@@ -606,169 +767,35 @@ export function Tile3D({
               onClick();
             }
           }
+
+          if (!isMouse) {
+            setIsHovered(false);
+            if (
+              traceId !== undefined &&
+              rabiriichi.hoveredTileTraceId === traceId
+            ) {
+              rabiriichi.hoverTile(null);
+            }
+          }
         };
 
         window.addEventListener('pointermove', handleGlobalMove);
         window.addEventListener('pointerup', handleGlobalUp);
       }}
     >
-      <primitive ref={tileRef} object={clone} scale={[0.18, 0.24, 0.14]} />
+      <group scale={[0.18, 0.24, 0.12]}>
+        <primitive ref={tileRef} object={clone} />
+      </group>
       {isWinningTile && <TileSpotlightParticles />}
-    </group>
-  );
-}
-
-const FOUNTAIN_COUNT = 80;
-const FOUNTAIN_NOZZLE_RADIUS = 0.05; // radius of the jet mouth
-const FOUNTAIN_GRAVITY = 4.5; // m/s^2 pulling motes back down
-const FOUNTAIN_LAUNCH_MIN = 1.6; // min upward launch speed (m/s)
-const FOUNTAIN_LAUNCH_MAX = 2.6; // max upward launch speed (m/s)
-const FOUNTAIN_OUTWARD = 0.5; // radial spray speed (m/s)
-
-/** Soft round sprite so motes read as droplets, not squares. */
-function createDropletTexture(): THREE.Texture | null {
-  if (typeof document === 'undefined') return null;
-  const size = 64;
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-  const g = ctx.createRadialGradient(
-    size / 2,
-    size / 2,
-    0,
-    size / 2,
-    size / 2,
-    size / 2,
-  );
-  g.addColorStop(0, 'rgba(255,255,255,1)');
-  g.addColorStop(0.4, 'rgba(255,255,255,0.85)');
-  g.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, size, size);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.needsUpdate = true;
-  return tex;
-}
-
-const dropletTexture = createDropletTexture();
-
-/**
- * Owns and simulates the fountain particle buffers.
- *
- * Kept as a plain class (outside React) so all per-frame mutation lives in its
- * methods, away from the React compiler's render-value analysis. `positions` is
- * shared directly with the geometry's position attribute.
- */
-class FountainSim {
-  readonly positions = new Float32Array(FOUNTAIN_COUNT * 3);
-  private readonly velocities = new Float32Array(FOUNTAIN_COUNT * 3);
-  private seed = 456;
-
-  constructor() {
-    for (let i = 0; i < FOUNTAIN_COUNT; i++) {
-      this.launch(i);
-      // Stagger initial heights so the jet is full immediately, not a pulse.
-      this.positions[i * 3 + 1] = this.rand() * 0.5;
-    }
-  }
-
-  /** Deterministic PRNG for the initial burst; runtime relaunches use Math.random. */
-  private rand(): number {
-    const x = Math.sin(this.seed++) * 10000;
-    return x - Math.floor(x);
-  }
-
-  private launch(i: number, rand: () => number = () => this.rand()): void {
-    const base = i * 3;
-    const angle = rand() * Math.PI * 2;
-    const r = rand() * FOUNTAIN_NOZZLE_RADIUS;
-    this.positions[base] = Math.cos(angle) * r;
-    this.positions[base + 1] = 0;
-    this.positions[base + 2] = Math.sin(angle) * r;
-
-    const outward = rand() * FOUNTAIN_OUTWARD;
-    this.velocities[base] = Math.cos(angle) * outward;
-    this.velocities[base + 1] =
-      FOUNTAIN_LAUNCH_MIN +
-      rand() * (FOUNTAIN_LAUNCH_MAX - FOUNTAIN_LAUNCH_MIN);
-    this.velocities[base + 2] = Math.sin(angle) * outward;
-  }
-
-  /** Advances all motes by `dt` seconds under gravity, relaunching fallen ones. */
-  step(dt: number): void {
-    const pos = this.positions;
-    const vel = this.velocities;
-    for (let i = 0; i < FOUNTAIN_COUNT; i++) {
-      const base = i * 3;
-      const vy = (vel[base + 1] ?? 0) - FOUNTAIN_GRAVITY * dt;
-      vel[base + 1] = vy;
-      pos[base] = (pos[base] ?? 0) + (vel[base] ?? 0) * dt;
-      const newY = (pos[base + 1] ?? 0) + vy * dt;
-      pos[base + 1] = newY;
-      pos[base + 2] = (pos[base + 2] ?? 0) + (vel[base + 2] ?? 0) * dt;
-
-      // Relaunch a mote once it falls back to (or below) the nozzle.
-      if (newY < 0 && vy < 0) {
-        this.launch(i, Math.random);
-      }
-    }
-  }
-}
-
-/**
- * A powerful upward fountain of glowing motes marking the winning tile.
- *
- * Motes shoot up fast from a small nozzle, decelerate under gravity, arc out,
- * and fall back — giving the classic fountain silhouette (see FountainSim).
- *
- * The tile's own group is rotated to lie the tile flat (or tilt it in hand), so
- * we can't emit "up" along a fixed local axis. The fountain group therefore
- * counter-rotates to the parent's inverse world rotation every frame, giving it
- * a world-aligned frame where +Y is always true up.
- */
-function TileSpotlightParticles(): React.JSX.Element {
-  const groupRef = useRef<THREE.Group>(null);
-  const pointsRef = useRef<THREE.Points>(null);
-  const [sim] = useState(() => new FountainSim());
-
-  useFrame((_state, delta) => {
-    // Cancel the tile group's rotation so +Y stays world-up for the jet.
-    if (groupRef.current?.parent) {
-      groupRef.current.parent.getWorldQuaternion(groupRef.current.quaternion);
-      groupRef.current.quaternion.invert();
-    }
-
-    const posAttr = pointsRef.current?.geometry.getAttribute('position') as
-      | THREE.BufferAttribute
-      | undefined;
-    if (!posAttr) return;
-
-    sim.step(Math.min(delta, 0.05));
-    posAttr.needsUpdate = true;
-  });
-
-  return (
-    <group ref={groupRef}>
-      <points ref={pointsRef} renderOrder={3} frustumCulled={false}>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            args={[sim.positions, 3]}
-          />
-        </bufferGeometry>
-        <pointsMaterial
-          color="#ff7a99"
-          size={0.09}
-          sizeAttenuation
-          transparent
-          opacity={0.95}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          {...(dropletTexture ? { map: dropletTexture } : {})}
-        />
-      </points>
+      {showTooltip && (
+        <Html
+          center
+          style={{ pointerEvents: 'none' }}
+          portal={tooltipPortalTarget as React.RefObject<HTMLElement>}
+        >
+          <TileTooltip />
+        </Html>
+      )}
     </group>
   );
 }
@@ -781,6 +808,7 @@ VALID_TILE_STRINGS.forEach((tileStr) => {
   useTexture.preload(getTileTexturePath(tileStr));
 });
 useTexture.preload('/assets/hand_tiles/back.jpg');
+useTexture.preload('/assets/hand_tiles/slide.jpg');
 useTexture.preload('/assets/hand_tiles/blank.jpg');
 useTexture.preload('/assets/hand_tiles/front.jpg');
 
@@ -932,15 +960,13 @@ function applyTileAppearance(
       const childMat = child.material as THREE.Material | THREE.Material[];
       const mats = Array.isArray(childMat) ? childMat : [childMat];
       mats.forEach((mat) => {
-        if (mat instanceof THREE.MeshStandardMaterial) {
+        if (mat instanceof THREE.MeshPhongMaterial) {
+          const isExcluded =
+            isDimmed ||
+            (displayState === 'hand' && hasTileSelectionActive && !isPlayable);
+
           // Dimming logic
-          if (isDimmed) {
-            mat.color.setHex(0x999999);
-          } else if (
-            displayState === 'hand' &&
-            hasTileSelectionActive &&
-            !isPlayable
-          ) {
+          if (isExcluded) {
             mat.color.setHex(0x999999);
           } else if (isFuritenDiscard) {
             mat.color.setHex(0xffcccc); // Slightly red tint for furiten discard

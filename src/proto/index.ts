@@ -8,6 +8,8 @@ import {
   AgariType,
   UserStatus,
   TileSource,
+  DiscardReason,
+  DiscardCandidateMsg,
   FuritenType,
   ScoringType,
   GameStateMsg,
@@ -18,6 +20,7 @@ import {
   ServerPlayerStateMsg,
   PlayerStateMsg,
   PlayerHandStateMsg,
+  PlayerActionMsg,
   WallStateMsg,
   MenLikeMsg,
   BeginGameEventMsg,
@@ -67,6 +70,9 @@ import {
   PointsDeductionPolicy,
   AiType,
   AddAiRequest,
+  LlmAiConfig,
+  LlmProvider,
+  LlmPromptTemplate,
   PlayerChatMessage,
 } from '../generated/protos.js';
 
@@ -80,6 +86,8 @@ export {
   AgariType,
   UserStatus,
   TileSource,
+  DiscardReason,
+  DiscardCandidateMsg,
   FuritenType,
   ScoringType,
   GameStateMsg,
@@ -90,6 +98,7 @@ export {
   ServerPlayerStateMsg,
   PlayerStateMsg,
   PlayerHandStateMsg,
+  PlayerActionMsg,
   WallStateMsg,
   MenLikeMsg,
   BeginGameEventMsg,
@@ -139,6 +148,9 @@ export {
   PointsDeductionPolicy,
   AiType,
   AddAiRequest,
+  LlmAiConfig,
+  LlmProvider,
+  LlmPromptTemplate,
   PlayerChatMessage,
 };
 
@@ -194,5 +206,8 @@ export type IServerRoomStateResponse = ServerRoomStateResponse.$Properties;
 export type ICreateRoomRequest = CreateRoomRequest.$Properties;
 export type IGetInfoResponse = GetInfoResponse.$Properties;
 export type IAddAiRequest = AddAiRequest.$Properties;
+export type ILlmAiConfig = LlmAiConfig.$Properties;
 export type IScoringMsg = ScoringMsg.$Properties;
 export type IPlayerChatMessage = PlayerChatMessage.$Properties;
+export type IPlayerActionMsg = PlayerActionMsg.$Properties;
+export type IDiscardCandidateMsg = DiscardCandidateMsg.$Properties;

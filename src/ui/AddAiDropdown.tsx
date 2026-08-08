@@ -1,11 +1,15 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { AiType } from '../proto';
+import { AiType, type ILlmAiConfig } from '../proto';
+import { getAiTypeName } from '../domain/model';
+import { Button } from './Button';
+import { LlmConfigDialog } from './LlmConfigDialog';
+import { ChevronDown } from './Select';
 
 interface AddAiDropdownProps {
   disabled: boolean;
-  onSelect: (aiType: AiType) => void;
+  onSelect: (aiType: AiType, llmConfig?: ILlmAiConfig) => Promise<void> | void;
 }
 
 interface MenuPosition {
@@ -21,7 +25,11 @@ const MENU_GAP = 4;
 const MENU_MAX_WIDTH = 220;
 const VIEWPORT_MARGIN = 8;
 
-const AI_OPTIONS: AiType[] = [AiType.AI_TYPE_DUMMY, AiType.AI_TYPE_RULE_BASED];
+const AI_OPTIONS: AiType[] = [
+  AiType.AI_TYPE_DUMMY,
+  AiType.AI_TYPE_RULE_BASED,
+  AiType.AI_TYPE_LLM,
+];
 
 /**
  * "Add AI" button whose option menu is rendered in a portal with fixed
@@ -75,31 +83,39 @@ export function AddAiDropdown({
     };
   }, [isOpen, updatePosition]);
 
+  const [isLlmDialogOpen, setIsLlmDialogOpen] = useState(false);
+
   const handleSelect = (aiType: AiType) => {
     setIsOpen(false);
-    onSelect(aiType);
+    if (aiType === AiType.AI_TYPE_LLM) {
+      setIsLlmDialogOpen(true);
+    } else {
+      void onSelect(aiType);
+    }
   };
 
   return (
-    <div className="add-ai-container">
-      <button
+    <div className="ml-auto relative">
+      <Button
         ref={buttonRef}
-        className="ui-button mini-button add-ai-btn"
+        size="compact"
+        className="flex items-center gap-1"
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={disabled}
       >
-        {t('room.addAi')} <span className="arrow">▼</span>
-      </button>
+        {t('room.addAi')}
+        <ChevronDown className="h-3 w-3 opacity-70" />
+      </Button>
       {isOpen &&
         position &&
         createPortal(
           <>
             <div
-              className="dropdown-backdrop"
+              className="fixed inset-0 z-[100] cursor-default"
               onClick={() => setIsOpen(false)}
             />
             <div
-              className="dropdown-menu portal"
+              className="fixed top-auto mt-0 max-w-[220px] bg-[#1a1a1a] border border-white/10 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.5)] z-[101] min-w-[140px] flex flex-col overflow-hidden py-1"
               style={{
                 right: position.right,
                 ...(position.top !== undefined ? { top: position.top } : {}),
@@ -111,16 +127,24 @@ export function AddAiDropdown({
               {AI_OPTIONS.map((aiType) => (
                 <button
                   key={aiType}
-                  className="dropdown-item"
+                  className="bg-transparent border-none px-3 py-2 text-[0.85rem] text-[#ccc] cursor-pointer whitespace-nowrap text-left w-full [font-family:inherit] transition-colors duration-200 hover:bg-[#ff7a99]/10 hover:text-[#ff7a99] disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handleSelect(aiType)}
                 >
-                  {t(`ai.type.${AiType[aiType]}`)}
+                  {getAiTypeName(aiType, t)}
                 </button>
               ))}
             </div>
           </>,
           document.body,
         )}
+      {isLlmDialogOpen && (
+        <LlmConfigDialog
+          onClose={() => setIsLlmDialogOpen(false)}
+          onSubmit={async (config) => {
+            await onSelect(AiType.AI_TYPE_LLM, config);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -23,10 +23,15 @@ import {
 } from '../transport/constants';
 import {
   STORAGE_KEY_SERVER_SETTINGS,
+  STORAGE_KEY_CLIENT_SETTINGS,
   type ServerSettings,
+  type ClientSettings,
 } from '../domain/constants';
 
+import type { ServerCredentials } from './credentialStore';
 import type { IServerMessageDto, ISinglePlayerInquiryMsg } from '../proto';
+import type { KeyValueStore } from '../platform/storage';
+import type { WebSocketFactory } from '../platform/socket';
 import type { RoomModel } from '../domain/model';
 import { createEmptyTileRegistry } from '../domain/tileRegistry';
 import { mapInquiry } from '../domain/inquiry';
@@ -49,6 +54,12 @@ describe('RabiRiichiClient', () => {
   beforeEach(() => {
     vi.stubGlobal('WebSocket', MockWebSocket);
     MockWebSocket.instances = [];
+
+    vi.stubGlobal('crypto', {
+      subtle: {
+        digest: vi.fn().mockResolvedValue(new Uint8Array(32)),
+      },
+    });
 
     mockLocalStorage = {};
     setItemMock = vi.fn((key: string, value: string) => {
@@ -76,6 +87,72 @@ describe('RabiRiichiClient', () => {
     ws.triggerMessage(
       bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
     );
+  }
+
+  /**
+   * Drives the server->client version handshake that every connection (public
+   * and authenticated) must pass before use.
+   */
+  function sendServerVersionCheck(ws: MockWebSocket, id = 10) {
+    sendServerMsg(ws, {
+      id,
+      serverMsg: {
+        versionCheckMsg: {
+          serverVersion: MIN_SERVER_VERSION,
+          minClientVersion: CLIENT_VERSION,
+        },
+      },
+    });
+  }
+
+  function findSend(
+    ws: MockWebSocket,
+    pred: (msg: ReturnType<typeof ClientMessageDto.decode>) => boolean,
+  ) {
+    for (const call of ws.send.mock.calls) {
+      const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+      if (pred(msg)) return msg;
+    }
+    return null;
+  }
+
+  const signedInSockets = new WeakSet<MockWebSocket>();
+  const versionCheckedSockets = new WeakSet<MockWebSocket>();
+
+  /**
+   * Fully drives a socket's handshake by responding to whatever it sent:
+   * a sign-in request (authenticated sockets) and/or the version check that
+   * every connection now performs. Idempotent and timing-robust: it flushes
+   * fake-timer microtasks a bounded number of times, answering each handshake
+   * step as it appears.
+   */
+  async function driveHandshake(ws: MockWebSocket, nickname = 'P') {
+    for (let i = 0; i < 12; i++) {
+      const signIn = findSend(ws, (m) => Boolean(m.clientRequest?.signIn));
+      if (signIn && !signedInSockets.has(ws)) {
+        signedInSockets.add(ws);
+        sendServerMsg(ws, {
+          id: -1,
+          respondTo: signIn.id,
+          serverResp: { userInfo: { id: 7, userData: { nickname } } },
+        });
+      }
+      if (!versionCheckedSockets.has(ws)) {
+        versionCheckedSockets.add(ws);
+        sendServerVersionCheck(ws);
+      }
+      await vi.advanceTimersByTimeAsync(0);
+    }
+  }
+
+  /**
+   * Drives the handshake, then responds to the getInfo the salt fetch sends.
+   */
+  async function flushGetInfo(ws: MockWebSocket) {
+    await driveHandshake(ws);
+    respondToGetInfo(ws);
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(0);
   }
 
   function respondToGetInfo(ws: MockWebSocket) {
@@ -120,7 +197,7 @@ describe('RabiRiichiClient', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser', status: 1 },
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
       },
     });
 
@@ -167,7 +244,7 @@ describe('RabiRiichiClient', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUser', status: 1 },
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
       },
     });
 
@@ -201,7 +278,16 @@ describe('RabiRiichiClient', () => {
       STORAGE_KEY_SERVER_SETTINGS,
       JSON.stringify({ lastUrl: 'ws://localhost:1234' }),
     );
-    expect(setItemMock).toHaveBeenCalledWith('rabiriichi_token', 'my-token');
+    expect(setItemMock).toHaveBeenCalledWith(
+      'rabiriichi_server_credentials',
+      JSON.stringify({
+        'ws://localhost:1234': {
+          token: 'my-token',
+          username: '',
+          nickname: 'TestUser',
+        },
+      }),
+    );
 
     vi.useRealTimers();
   });
@@ -260,23 +346,32 @@ describe('RabiRiichiClient', () => {
     const mockWS1 = MockWebSocket.instances[0]!;
     expect(mockWS1).toBeDefined();
 
-    // Since we don't have token, the handshake resolves immediately after open.
-    // So getWSClient should return the client, and then createUser is called.
-    // Wait for registerUser to send createUser message.
-    await vi.advanceTimersByTimeAsync(0);
+    // Even the public (no-token) socket must pass the version handshake first.
+    sendServerVersionCheck(mockWS1);
+    // Let the handshake resolve so getWSClient returns and registerUser proceeds
+    // to fetchServerSalt, which sends getInfo. Flush the multi-await chain, then
+    // respond to whichever getInfo appears.
+    await flushGetInfo(mockWS1);
 
-    expect(mockWS1.send).toHaveBeenCalledTimes(1);
-    const registerBytes = mockWS1.send.mock.calls[0]![0];
+    const registerCall = mockWS1.send.mock.calls.find((call) => {
+      const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+      return Boolean(msg.clientRequest?.createUser);
+    });
+    const registerBytes = registerCall![0];
     const registerMsg = ClientMessageDto.decode(new Uint8Array(registerBytes));
-    expect(registerMsg.clientRequest?.createUser?.nickname).toBe('NewPlayer');
+    expect(registerMsg.clientRequest?.createUser?.userData?.nickname).toBe(
+      'NewPlayer',
+    );
 
-    // Respond to createUser
+    // Respond to createUser (id<=0 so it invokes immediately regardless of the
+    // version-check message's positive id having advanced the ordered stream).
     sendServerMsg(mockWS1, {
-      id: 1,
+      id: 0,
       respondTo: registerMsg.id,
       serverResp: {
-        createUser: {
+        userInfo: {
           id: 456,
+          userData: { nickname: 'NewPlayer' },
           accessToken: 'new-token',
         },
       },
@@ -301,7 +396,7 @@ describe('RabiRiichiClient', () => {
       id: -1,
       respondTo: signInMsg.id,
       serverResp: {
-        userInfo: { id: 456, nickname: 'NewPlayer', status: 1 },
+        userInfo: { id: 456, userData: { nickname: 'NewPlayer' }, status: 1 },
       },
     });
 
@@ -347,7 +442,9 @@ describe('RabiRiichiClient', () => {
     sendServerMsg(mockWS, {
       id: -1,
       respondTo: signInMsg.id,
-      serverResp: { userInfo: { id: 123, nickname: 'TestUser', status: 1 } },
+      serverResp: {
+        userInfo: { id: 123, userData: { nickname: 'TestUser' }, status: 1 },
+      },
     });
     await vi.advanceTimersByTimeAsync(0);
     sendServerMsg(mockWS, {
@@ -381,7 +478,11 @@ describe('RabiRiichiClient', () => {
       id: 11,
       respondTo: reqMsg.id,
       serverResp: {
-        userInfo: { id: 123, nickname: 'TestUserUpdated', status: 2 },
+        userInfo: {
+          id: 123,
+          userData: { nickname: 'TestUserUpdated' },
+          status: 2,
+        },
       },
     });
 
@@ -414,6 +515,28 @@ describe('RabiRiichiClient', () => {
     vi.useRealTimers();
   });
 
+  it('should expose a failed auto-reconnect to the login screen', async () => {
+    mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+      lastUrl: 'ws://stored-url:5150',
+    });
+    mockLocalStorage.rabiriichi_token = 'expired-token';
+
+    const onChange = vi.fn();
+    rabiriichi.onChange.subscribe(onChange);
+    const connectSpy = vi
+      .spyOn(rabiriichi, 'connect')
+      .mockRejectedValue(new Error('Sign in failed'));
+
+    await initRabiRiichi();
+
+    expect(rabiriichi.autoConnectError).toBe('connect.error.autoConnectFailed');
+    expect(rabiriichi.autoConnectFailedUrl).toBe('ws://stored-url:5150');
+    expect(onChange).toHaveBeenCalled();
+
+    rabiriichi.onChange.unsubscribe(onChange);
+    connectSpy.mockRestore();
+  });
+
   it('should update room state and game state on socket messages', async () => {
     vi.useFakeTimers();
     mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
@@ -443,7 +566,7 @@ describe('RabiRiichiClient', () => {
       serverResp: {
         userInfo: {
           id: 123,
-          nickname: 'TestUser',
+          userData: { nickname: 'TestUser' },
           status: UserStatus.USER_STATUS_IN_ROOM,
         },
       },
@@ -852,6 +975,7 @@ describe('RabiRiichiClient', () => {
             jun: 0,
             points: 25000,
             riichiTileId: 0,
+            isRiichiConfirmed: false,
             furiten: {},
             hand: {
               freeTiles: [],
@@ -947,7 +1071,7 @@ describe('RabiRiichiClient', () => {
         },
       },
     });
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(3000);
 
     // Send ConcludeGameEvent
     sendServerMsg(mockWS, {
@@ -973,6 +1097,8 @@ describe('RabiRiichiClient', () => {
     });
     await vi.advanceTimersByTimeAsync(0);
 
+    mockWS.send.mockClear();
+
     // Send NextRoundAction inquiry
     sendNextRoundInquiry(mockWS, 11);
     await vi.advanceTimersByTimeAsync(0);
@@ -988,9 +1114,15 @@ describe('RabiRiichiClient', () => {
   it('should clear stored credentials and close connection on logout', async () => {
     vi.useFakeTimers();
     mockLocalStorage[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
-      lastUrl: 'ws://localhost:5150',
+      lastUrl: 'ws://localhost:1234',
     });
-    mockLocalStorage.rabiriichi_token = 'my-token';
+    mockLocalStorage.rabiriichi_server_credentials = JSON.stringify({
+      'ws://localhost:1234': {
+        token: 'my-token',
+        username: 'alice',
+        nickname: 'Alice',
+      },
+    });
 
     const client = new RabiRiichiClient();
     await setupConnectedClient(client);
@@ -1009,7 +1141,7 @@ describe('RabiRiichiClient', () => {
         ) as ServerSettings
       ).lastUrl,
     ).toBeUndefined();
-    expect(mockLocalStorage.rabiriichi_token).toBeUndefined();
+    expect(mockLocalStorage.rabiriichi_server_credentials).toBeUndefined();
     expect(client.connectionStatus).toBe('disconnected');
 
     vi.useRealTimers();
@@ -1210,6 +1342,326 @@ describe('RabiRiichiClient', () => {
 
       client.close();
       vi.useRealTimers();
+    });
+  });
+
+  describe('Client Settings Persistence', () => {
+    it('should load animation speed from localStorage on creation', () => {
+      mockLocalStorage[STORAGE_KEY_CLIENT_SETTINGS] = JSON.stringify({
+        animationSpeed: 1.5,
+      });
+
+      const client = new RabiRiichiClient();
+      expect(client.animationSpeed).toBe(1.5);
+    });
+
+    it('should save animation speed to localStorage when set', () => {
+      const client = new RabiRiichiClient();
+      expect(client.animationSpeed).toBe(1.0); // Default
+
+      client.setAnimationSpeed(2.5);
+      expect(client.animationSpeed).toBe(2.5);
+
+      const saved = JSON.parse(
+        mockLocalStorage[STORAGE_KEY_CLIENT_SETTINGS] ?? '{}',
+      ) as ClientSettings;
+      expect(saved.animationSpeed).toBe(2.5);
+    });
+  });
+
+  // Proves the client is host-agnostic: given an injected platform (custom
+  // socket factory, in-memory store, no-op sound, custom crypto) it never
+  // touches the browser globals stubbed in beforeEach. This is the seam a CLI
+  // host plugs into.
+  describe('Platform injection (CLI-ready)', () => {
+    function memoryStore(): {
+      store: KeyValueStore;
+      backing: Record<string, string>;
+    } {
+      const backing: Record<string, string> = {};
+      return {
+        backing,
+        store: {
+          getItem: (k) => backing[k] ?? null,
+          setItem: (k, v) => {
+            backing[k] = v;
+          },
+          removeItem: (k) => {
+            delete backing[k];
+          },
+        },
+      };
+    }
+
+    it('routes persistence through an injected store, not localStorage', () => {
+      const { store, backing } = memoryStore();
+      const client = new RabiRiichiClient({ store });
+
+      client.setAnimationSpeed(3);
+
+      // Persisted to the injected store...
+      expect(
+        JSON.parse(
+          backing[STORAGE_KEY_CLIENT_SETTINGS] ?? '{}',
+        ) as ClientSettings,
+      ).toEqual({ animationSpeed: 3 });
+      // ...and NOT to the (stubbed) browser localStorage.
+      expect(mockLocalStorage[STORAGE_KEY_CLIENT_SETTINGS]).toBeUndefined();
+      expect(setItemMock).not.toHaveBeenCalled();
+    });
+
+    it('connects via an injected socket factory and injected crypto', async () => {
+      vi.useFakeTimers();
+      const { store, backing } = memoryStore();
+      const created: MockWebSocket[] = [];
+      const sha256 = vi.fn().mockResolvedValue('deadbeef');
+
+      // MockWebSocket mimics the WebSocket surface; its send() mock signature
+      // is narrower than the interface's, so cast the factory.
+      const socketFactory = ((url: string | URL) => {
+        const ws = new MockWebSocket(String(url));
+        created.push(ws);
+        return ws;
+      }) as unknown as WebSocketFactory;
+
+      const client = new RabiRiichiClient({
+        store,
+        crypto: { sha256 },
+        socketFactory,
+      });
+
+      client.wsurl = 'ws://cli-host:5150';
+      const registerPromise = client.registerUser('CliPlayer');
+
+      await vi.advanceTimersByTimeAsync(15);
+      expect(created.length).toBe(1);
+      const ws = created[0]!;
+      // Public socket must pass the version handshake first.
+      sendServerVersionCheck(ws);
+      await flushGetInfo(ws);
+
+      // The password hash used the injected crypto provider.
+      expect(sha256).toHaveBeenCalled();
+
+      const registerCall = ws.send.mock.calls.find((call) => {
+        const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+        return Boolean(msg.clientRequest?.createUser);
+      });
+      const registerBytes = registerCall![0];
+      const registerMsg = ClientMessageDto.decode(
+        new Uint8Array(registerBytes),
+      );
+      expect(registerMsg.clientRequest?.createUser?.passwordHash).toBe(
+        'deadbeef',
+      );
+
+      sendServerMsg(ws, {
+        id: 0,
+        respondTo: registerMsg.id,
+        serverResp: {
+          userInfo: {
+            id: 7,
+            userData: { nickname: 'CliPlayer' },
+            accessToken: 'cli-token',
+          },
+        },
+      });
+      // createUser succeeds → reconnect with the new token (second socket).
+      await vi.advanceTimersByTimeAsync(15);
+      if (created[1]) {
+        await driveHandshake(created[1], 'CliPlayer');
+      }
+
+      const storedCreds = JSON.parse(
+        backing.rabiriichi_server_credentials ?? '{}',
+      ) as Record<string, ServerCredentials>;
+      expect(storedCreds['ws://cli-host:5150']).toEqual({
+        token: 'cli-token',
+        username: 'CliPlayer',
+        nickname: 'CliPlayer',
+      });
+      expect(mockLocalStorage.rabiriichi_server_credentials).toBeUndefined();
+
+      client.close();
+      await registerPromise.catch(() => undefined);
+      vi.useRealTimers();
+    });
+
+    it('changePassword sends the hashes and stores the rotated token', async () => {
+      vi.useFakeTimers();
+      const { store, backing } = memoryStore();
+      backing.rabiriichi_username = 'alice';
+      const sha256 = vi
+        .fn()
+        .mockResolvedValueOnce('oldhash')
+        .mockResolvedValueOnce('newhash');
+      const created: MockWebSocket[] = [];
+      const socketFactory = ((url: string | URL) => {
+        const ws = new MockWebSocket(String(url));
+        created.push(ws);
+        return ws;
+      }) as unknown as WebSocketFactory;
+
+      const client = new RabiRiichiClient({
+        store,
+        crypto: { sha256 },
+        socketFactory,
+      });
+      client.restoreStoredUsername();
+      client.wsurl = 'ws://host:5150';
+
+      const changePromise = client.changePassword('oldpw', 'newpw');
+      await vi.advanceTimersByTimeAsync(15);
+      const ws = created[0]!;
+      // Public socket must pass the version handshake first.
+      sendServerVersionCheck(ws);
+      await flushGetInfo(ws);
+
+      const changeCall = ws.send.mock.calls.find((call) => {
+        const msg = ClientMessageDto.decode(new Uint8Array(call[0]));
+        return msg.clientRequest?.req === 'changePassword';
+      });
+      const sentBytes = changeCall![0];
+      const sentMsg = ClientMessageDto.decode(new Uint8Array(sentBytes));
+      const clientRequest = sentMsg.clientRequest;
+      expect(clientRequest?.req).toBe('changePassword');
+      const req =
+        clientRequest?.req === 'changePassword'
+          ? clientRequest.changePassword
+          : null;
+      expect(req?.username).toBe('alice');
+      expect(req?.oldPasswordHash).toBe('oldhash');
+      expect(req?.newPasswordHash).toBe('newhash');
+
+      sendServerMsg(ws, {
+        id: 0,
+        respondTo: sentMsg.id,
+        serverResp: {
+          userInfo: { id: 7, accessToken: 'rotated-token' },
+        },
+      });
+      await vi.advanceTimersByTimeAsync(0);
+      await changePromise;
+
+      expect(client.accessToken).toBe('rotated-token');
+      const storedCreds = JSON.parse(
+        backing.rabiriichi_server_credentials ?? '{}',
+      ) as Record<string, ServerCredentials>;
+      expect(storedCreds['ws://host:5150']).toEqual({
+        token: 'rotated-token',
+        username: 'alice',
+        nickname: 'alice',
+      });
+
+      client.close();
+      vi.useRealTimers();
+    });
+
+    it('loadStoredCredentials reads from the injected store', () => {
+      const { store, backing } = memoryStore();
+      backing[STORAGE_KEY_SERVER_SETTINGS] = JSON.stringify({
+        lastUrl: 'ws://cli-host:5150',
+      });
+      backing.rabiriichi_token = 'cli-token';
+
+      const client = new RabiRiichiClient({ store });
+      expect(client.loadStoredCredentials()).toEqual({
+        url: 'ws://cli-host:5150',
+        token: 'cli-token',
+      });
+    });
+
+    it('returns null from loadStoredCredentials when nothing is stored', () => {
+      const { store } = memoryStore();
+      const client = new RabiRiichiClient({ store });
+      expect(client.loadStoredCredentials()).toBeNull();
+    });
+  });
+
+  describe('Delayed Chat Display', () => {
+    it('defers chat display during round results and flushes on next round or final result', async () => {
+      const client = new RabiRiichiClient();
+      client.room = {
+        id: 1,
+        config: null,
+        info: null,
+        players: [
+          {
+            id: 1,
+            nickname: 'Alice',
+            seat: 0,
+            aiType: AiType.AI_TYPE_NONE,
+            status: UserStatus.USER_STATUS_PLAYING,
+            gameState: null,
+          },
+          {
+            id: 2,
+            nickname: 'Bob',
+            seat: 1,
+            aiType: AiType.AI_TYPE_NONE,
+            status: UserStatus.USER_STATUS_PLAYING,
+            gameState: null,
+          },
+        ],
+        tileRegistry: createEmptyTileRegistry(),
+      };
+
+      const internalClient = client as unknown as {
+        handleChatMessage: (msg: {
+          senderId: number;
+          text?: string;
+          sticker?: string;
+        }) => void;
+      };
+
+      // 1. Normal mode: chats are displayed immediately
+      internalClient.handleChatMessage({
+        senderId: 1,
+        text: 'Hello!',
+        sticker: 'happy.png',
+      });
+      expect(client.activeChatTexts[1]).toBe('Hello!');
+      expect(client.activeStickers[1]).toBe('happy.png');
+
+      // 2. Enter round result screen: chats should be deferred
+      await client.replay.handleGameEvent(
+        {
+          agariEvent: {
+            agariInfos: [],
+          },
+        },
+        true,
+      );
+      expect(client.isShowingRoundResult).toBe(true);
+
+      // Processing stopGameEvent does not cancel isShowingRoundResult prematurely
+      await client.replay.handleGameEvent(
+        {
+          stopGameEvent: {},
+        },
+        true,
+      );
+      expect(client.isShowingRoundResult).toBe(true);
+      expect(client.isFinalResultScreen).toBe(true);
+
+      // Trigger chat during result screen
+      internalClient.handleChatMessage({
+        senderId: 2,
+        text: 'Nice game!',
+        sticker: 'gg.png',
+      });
+
+      // Active chat text/sticker for player 2 should not be set yet
+      expect(client.activeChatTexts[2]).toBeUndefined();
+      expect(client.activeStickers[2]).toBeUndefined();
+
+      // 3. Flush deferred chats when FinalResultPanel mounts
+      client.flushDeferredChats(10000);
+      expect(client.isShowingRoundResult).toBe(false);
+      expect(client.activeChatTexts[2]).toBe('Nice game!');
+      expect(client.activeStickers[2]).toBe('gg.png');
+
+      client.close();
     });
   });
 });

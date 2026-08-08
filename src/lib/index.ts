@@ -5,3 +5,4 @@ export * from './errors';
 export { RabiEvent, type RabiAction } from './event';
 export { sleep, waitTimeout, pollUntil, type PollOptions } from './promise';
 export { COMMIT_HASH } from './buildInfo';
+export { sha256 } from './crypto';

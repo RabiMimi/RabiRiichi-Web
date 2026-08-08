@@ -221,3 +221,23 @@ export function checkDiscardResultsInFuriten(
 
   return false;
 }
+
+/**
+ * Determines if a given tile value/representation is unknown (e.g. invalid suit or back/blank).
+ */
+export function isTileUnknown(
+  tile: Tile | string | number | null | undefined,
+): boolean {
+  if (tile === null || tile === undefined) {
+    return true;
+  }
+  if (typeof tile === 'number') {
+    return tile === 0;
+  }
+  if (typeof tile === 'string') {
+    return (
+      tile === '0x' || tile === 'back' || tile === 'blank' || tile.includes('x')
+    );
+  }
+  return tile.suit === TileSuit.Invalid;
+}

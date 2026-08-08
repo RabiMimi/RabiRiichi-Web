@@ -1,4 +1,5 @@
 import type { IEventMsg, IGameStateMsg, IGameTileMsg } from '../proto/index.js';
+import { isTileUnknown } from './tile.js';
 
 /**
  * A registry of every tile the server has mentioned, keyed by `traceId`.
@@ -73,7 +74,11 @@ function mergeTileRecords(
   if (incoming.discardInfo == null && existing.discardInfo != null) {
     merged.discardInfo = existing.discardInfo;
   }
-  if (!incoming.tile && existing.tile) {
+  if (
+    isTileUnknown(incoming.tile) &&
+    typeof existing.tile === 'number' &&
+    existing.tile > 0
+  ) {
     merged.tile = existing.tile;
   }
   return merged;
@@ -108,6 +113,13 @@ export function extractEventTiles(eventMsg: IEventMsg): IGameTileMsg[] {
     ...(eventMsg.claimTileEvent?.group?.tiles ?? []),
   );
   push(eventMsg.kanEvent?.incoming, ...(eventMsg.kanEvent?.kan?.tiles ?? []));
+  // AddKanEvent carries the finalised meld whose tiles now hold the resolved
+  // kan source (ankan/kakan/daiminkan); registering them keeps the tooltip's
+  // "claimed from" correct for open kans.
+  push(
+    eventMsg.addKanEvent?.incoming,
+    ...(eventMsg.addKanEvent?.kan?.tiles ?? []),
+  );
   push(eventMsg.nukiDoraEvent?.incoming);
   push(eventMsg.addNukiDoraEvent?.incoming);
   push(eventMsg.revealDoraEvent?.dora);
