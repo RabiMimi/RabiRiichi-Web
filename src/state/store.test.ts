@@ -97,6 +97,8 @@ describe('RabiRiichi Store', () => {
       activeChatTexts: {},
       chatHistory: [],
       characterId: 'mimi',
+      tooltipOnHandTiles: true,
+      tooltipOnRiverTiles: true,
       volumeSE: 1.0,
       volumeBGM: 1.0,
       volumeVoice: 1.0,

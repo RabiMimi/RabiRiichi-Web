@@ -1,16 +1,24 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
-import { useAnimationSpeed } from '../state/store';
+import {
+  useAnimationSpeed,
+  useTooltipOnHandTiles,
+  useTooltipOnRiverTiles,
+  updateClientSettings,
+} from '../state/store';
 import {
   ANIMATION_SPEEDS,
   sliderIndexToSpeed,
   speedToSliderIndex,
 } from './animationSpeedSlider';
+import { Toggle } from './Toggle';
 
 export function GameModalTab(): React.JSX.Element {
   const { t } = useTranslation();
   const animationSpeed = useAnimationSpeed();
+  const tooltipOnHand = useTooltipOnHandTiles();
+  const tooltipOnRiver = useTooltipOnRiverTiles();
 
   const speedIndex = speedToSliderIndex(animationSpeed);
 
@@ -37,6 +45,30 @@ export function GameModalTab(): React.JSX.Element {
           <span className="text-sm text-white/80 w-10 text-right">
             {animationSpeed}x
           </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-sm text-white/60">
+          {t('settings.tileTooltips', 'Tile Tooltips')}
+        </label>
+        <div className="flex flex-wrap gap-3">
+          <Toggle
+            checked={tooltipOnHand}
+            onChange={() =>
+              updateClientSettings({ tooltipOnHandTiles: !tooltipOnHand })
+            }
+            label={t('settings.tooltipOnHandTiles', 'Show on hand tiles')}
+            appearance="chip"
+          />
+          <Toggle
+            checked={tooltipOnRiver}
+            onChange={() =>
+              updateClientSettings({ tooltipOnRiverTiles: !tooltipOnRiver })
+            }
+            label={t('settings.tooltipOnRiverTiles', 'Show on river tiles')}
+            appearance="chip"
+          />
         </div>
       </div>
     </div>

@@ -54,7 +54,6 @@ export function useDragToDiscard({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent, traceId: number) => {
-      if (!canDrag(traceId)) return;
       suppressClick.current = false;
       movedBeyondDeadZone.current = false;
       startX.current = e.clientX;
@@ -63,7 +62,7 @@ export function useDragToDiscard({
       setOffset({ x: 0, y: 0 });
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [canDrag],
+    [],
   );
 
   const handlePointerMove = useCallback(
@@ -91,9 +90,9 @@ export function useDragToDiscard({
         movedBeyondDeadZone: movedBeyondDeadZone.current,
       });
       suppressClick.current = shouldSuppressClick;
-      if (shouldDiscard) onDiscard(traceId);
+      if (shouldDiscard && canDrag(traceId)) onDiscard(traceId);
     },
-    [dragTraceId, dragThreshold, onDiscard, reset],
+    [canDrag, dragTraceId, dragThreshold, onDiscard, reset],
   );
 
   const tileProps = useCallback(

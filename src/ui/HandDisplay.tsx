@@ -14,6 +14,7 @@ import {
   useDoraIndicators,
   useHoveredTileTraceId,
   useSelectedTileTraceId,
+  useTooltipOnHandTiles,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import { Tile, checkIsDora } from '../domain/tile';
@@ -176,6 +177,7 @@ export function HandDisplay(): React.JSX.Element | null {
   const doraIndicators = useDoraIndicators();
   const hoveredTraceId = useHoveredTileTraceId();
   const selectedTraceId = useSelectedTileTraceId();
+  const tooltipOnHand = useTooltipOnHandTiles();
 
   const isDoraTile = useCallback(
     (tile: number | null | undefined): boolean => {
@@ -300,7 +302,7 @@ export function HandDisplay(): React.JSX.Element | null {
           identically. Keeping it out of the tile buttons means it is not
           clipped by their stacking contexts and does not bob with the lift.
         */}
-        {tooltipAnchor && (
+        {tooltipOnHand && tooltipAnchor && (
           <div
             className="absolute z-[60] pointer-events-none"
             style={{ left: tooltipAnchor.left, bottom: tooltipAnchor.bottom }}

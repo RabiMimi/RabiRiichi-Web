@@ -2,22 +2,46 @@ import type { ClientSettings } from './constants';
 
 export class VisualsSettings {
   public characterId = 'mimi';
+  public tooltipOnHandTiles = true;
+  public tooltipOnRiverTiles = true;
 
   constructor(settings?: ClientSettings) {
     if (settings?.characterId) {
       this.characterId = settings.characterId;
     }
-  }
-
-  public update(patch: Pick<ClientSettings, 'characterId'>): void {
-    if (patch.characterId !== undefined) {
-      this.characterId = patch.characterId;
+    if (settings?.tooltipOnHandTiles !== undefined) {
+      this.tooltipOnHandTiles = settings.tooltipOnHandTiles;
+    }
+    if (settings?.tooltipOnRiverTiles !== undefined) {
+      this.tooltipOnRiverTiles = settings.tooltipOnRiverTiles;
     }
   }
 
-  public toJSON(): Pick<ClientSettings, 'characterId'> {
+  public update(
+    patch: Pick<
+      ClientSettings,
+      'characterId' | 'tooltipOnHandTiles' | 'tooltipOnRiverTiles'
+    >,
+  ): void {
+    if (patch.characterId !== undefined) {
+      this.characterId = patch.characterId;
+    }
+    if (patch.tooltipOnHandTiles !== undefined) {
+      this.tooltipOnHandTiles = patch.tooltipOnHandTiles;
+    }
+    if (patch.tooltipOnRiverTiles !== undefined) {
+      this.tooltipOnRiverTiles = patch.tooltipOnRiverTiles;
+    }
+  }
+
+  public toJSON(): Pick<
+    ClientSettings,
+    'characterId' | 'tooltipOnHandTiles' | 'tooltipOnRiverTiles'
+  > {
     return {
       characterId: this.characterId,
+      tooltipOnHandTiles: this.tooltipOnHandTiles,
+      tooltipOnRiverTiles: this.tooltipOnRiverTiles,
     };
   }
 }

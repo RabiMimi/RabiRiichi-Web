@@ -616,6 +616,9 @@
     "soundsTab": "サウンド",
     "animationSpeed": "アニメーション速度",
     "autoPlay": "自動打牌",
+    "tileTooltips": "牌ツールチップ",
+    "tooltipOnHandTiles": "手牌のツールチップを表示",
+    "tooltipOnRiverTiles": "河・副露のツールチップを表示",
     "profile": {
       "username": "ユーザー名",
       "nickname": "ニックネーム",

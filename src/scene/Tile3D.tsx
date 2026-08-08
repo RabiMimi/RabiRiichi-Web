@@ -33,6 +33,8 @@ import {
   useSelf,
   useClaimTargetTileId,
   useCallHighlightTileIds,
+  useTooltipOnHandTiles,
+  useTooltipOnRiverTiles,
 } from '../state/store';
 import { rabiriichi } from '../net/client';
 import type { ActionOption, DiscardCandidate } from '../domain/inquiry';
@@ -174,7 +176,13 @@ export function Tile3D({
   // it is, so this holds for every face-down tile uniformly.
   const isIdentifiable = !isTileUnknown(tile);
 
+  const tooltipOnHand = useTooltipOnHandTiles();
+  const tooltipOnRiver = useTooltipOnRiverTiles();
+  const isHandArea = area === 'hand' || displayState === 'hand';
+  const isTooltipAllowed = isHandArea ? tooltipOnHand : tooltipOnRiver;
+
   const showTooltip =
+    isTooltipAllowed &&
     isIdentifiable &&
     traceId !== undefined &&
     (hoveredTileTraceId === traceId ||

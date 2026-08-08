@@ -50,6 +50,8 @@ export interface RabiRiichiState {
   volumeAll: number;
   isSettingsOpen: boolean;
   autoConnectError: string | null;
+  tooltipOnHandTiles: boolean;
+  tooltipOnRiverTiles: boolean;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -90,6 +92,9 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.activeChatTexts !== rabiriichi.activeChatTexts ||
     lastSnapshot.chatHistory !== rabiriichi.chatHistory ||
     lastSnapshot.characterId !== rabiriichi.visuals.characterId ||
+    lastSnapshot.tooltipOnHandTiles !== rabiriichi.visuals.tooltipOnHandTiles ||
+    lastSnapshot.tooltipOnRiverTiles !==
+      rabiriichi.visuals.tooltipOnRiverTiles ||
     lastSnapshot.volumeSE !== rabiriichi.sounds.volumeSE ||
     lastSnapshot.volumeBGM !== rabiriichi.sounds.volumeBGM ||
     lastSnapshot.volumeVoice !== rabiriichi.sounds.volumeVoice ||
@@ -130,6 +135,8 @@ function getSnapshot(): RabiRiichiState {
       activeChatTexts: rabiriichi.activeChatTexts,
       chatHistory: rabiriichi.chatHistory,
       characterId: rabiriichi.visuals.characterId,
+      tooltipOnHandTiles: rabiriichi.visuals.tooltipOnHandTiles,
+      tooltipOnRiverTiles: rabiriichi.visuals.tooltipOnRiverTiles,
       volumeSE: rabiriichi.sounds.volumeSE,
       volumeBGM: rabiriichi.sounds.volumeBGM,
       volumeVoice: rabiriichi.sounds.volumeVoice,
@@ -434,6 +441,22 @@ export function useCharacterId(): string {
     subscribe,
     () => rabiriichi.visuals.characterId,
     () => rabiriichi.visuals.characterId,
+  );
+}
+
+export function useTooltipOnHandTiles(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.visuals.tooltipOnHandTiles,
+    () => rabiriichi.visuals.tooltipOnHandTiles,
+  );
+}
+
+export function useTooltipOnRiverTiles(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.visuals.tooltipOnRiverTiles,
+    () => rabiriichi.visuals.tooltipOnRiverTiles,
   );
 }
 

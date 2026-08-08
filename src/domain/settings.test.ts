@@ -20,7 +20,11 @@ describe('VisualsSettings', () => {
 
   it('should serialize correctly to JSON', () => {
     const s = new VisualsSettings({ characterId: 'mimi' });
-    expect(s.toJSON()).toEqual({ characterId: 'mimi' });
+    expect(s.toJSON()).toEqual({
+      characterId: 'mimi',
+      tooltipOnHandTiles: true,
+      tooltipOnRiverTiles: true,
+    });
   });
 });
 

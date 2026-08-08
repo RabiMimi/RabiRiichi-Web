@@ -616,6 +616,9 @@
     "soundsTab": "声音",
     "animationSpeed": "动画速度",
     "autoPlay": "托管",
+    "tileTooltips": "牌面提示",
+    "tooltipOnHandTiles": "手牌显示提示",
+    "tooltipOnRiverTiles": "河牌/副露显示提示",
     "profile": {
       "username": "用户名",
       "nickname": "昵称",

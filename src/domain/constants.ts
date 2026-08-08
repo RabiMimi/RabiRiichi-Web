@@ -145,4 +145,6 @@ export interface ClientSettings {
   muteBGM?: boolean;
   muteVoice?: boolean;
   volumeAll?: number;
+  tooltipOnHandTiles?: boolean;
+  tooltipOnRiverTiles?: boolean;
 }

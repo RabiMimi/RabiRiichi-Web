@@ -616,6 +616,9 @@
     "soundsTab": "Sounds",
     "animationSpeed": "Animation Speed",
     "autoPlay": "Auto Play",
+    "tileTooltips": "Tile Tooltips",
+    "tooltipOnHandTiles": "Show on hand tiles",
+    "tooltipOnRiverTiles": "Show on river tiles",
     "profile": {
       "username": "Username",
       "nickname": "Nickname",
