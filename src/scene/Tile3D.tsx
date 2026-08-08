@@ -508,7 +508,6 @@ export function Tile3D({
     });
 
     if (groupRef.current) {
-
       const transition = activeTransition.current;
       if (transition && groupRef.current.parent) {
         const parentGroup = groupRef.current.parent;
