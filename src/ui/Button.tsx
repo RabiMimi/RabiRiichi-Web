@@ -5,7 +5,7 @@ export type ButtonSize = 'normal' | 'compact';
 
 const BASE =
   'select-none border-none rounded-full font-semibold cursor-pointer transition-all duration-200 ' +
-  'active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed outline-none';
+  'whitespace-nowrap active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed outline-none';
 
 const VARIANT: Record<ButtonVariant, string> = {
   primary:

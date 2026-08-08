@@ -45,8 +45,14 @@ export function ServerSelector({
   });
 
   // Unified form state — pre-filled when a custom server is selected
-  const [formName, setFormName] = useState('');
-  const [formUrl, setFormUrl] = useState('ws://localhost:5150');
+  const [formName, setFormName] = useState(() => {
+    const custom = customServers.find((s) => s.id === serverSelection);
+    return custom ? custom.name : '';
+  });
+  const [formUrl, setFormUrl] = useState(() => {
+    const custom = customServers.find((s) => s.id === serverSelection);
+    return custom ? custom.url : 'ws://localhost:5150';
+  });
 
   const selectedDefaultServer = DEFAULT_SERVERS.find(
     (s) => s.id === serverSelection,
@@ -74,11 +80,9 @@ export function ServerSelector({
   useEffect(() => {
     const targetUrl = selectedDefaultServer
       ? selectedDefaultServer.url
-      : selectedCustomServer
-        ? selectedCustomServer.url
-        : formUrl;
+      : formUrl;
     onTargetUrlChange(targetUrl);
-  }, [selectedDefaultServer, selectedCustomServer, formUrl, onTargetUrlChange]);
+  }, [selectedDefaultServer, formUrl, onTargetUrlChange]);
 
   const handleSaveServer = () => {
     const serverName = formName.trim();
@@ -181,14 +185,14 @@ export function ServerSelector({
               onChange={(e) => setFormName(e.target.value)}
               disabled={isConnecting}
               placeholder={t('connect.serverNamePlaceholder')}
-              className={`${FORM.input} flex-grow`}
+              className={`${FORM.input} flex-grow min-w-0`}
             />
             <Button
               type="button"
               variant="secondary"
               onClick={handleSaveServer}
               disabled={isConnecting || !formName.trim() || !formUrl.trim()}
-              className="px-4 py-2 text-[0.9rem]"
+              className="px-4 py-2 text-[0.9rem] whitespace-nowrap shrink-0"
             >
               {t('connect.saveServer')}
             </Button>
