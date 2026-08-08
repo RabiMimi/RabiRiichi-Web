@@ -1,4 +1,10 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useEffect,
+  useState,
+  useLayoutEffect,
+} from 'react';
 import { useGLTF, useTexture, Html } from '@react-three/drei';
 import { TileSpotlightParticles } from './TileSpotlightParticles';
 import {
@@ -390,8 +396,13 @@ export function Tile3D({
     return isPlayable || displayState === 'hand';
   }, [isPlayable, displayState]);
 
-  // Set targets on prop changes (depend on numeric array elements to avoid ref comparison triggers)
-  useEffect(() => {
+  const isFirstFrame = useRef(true);
+
+  // Set targets and initial pose on mount before WebGL render
+  useLayoutEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+
     updateTargetPosition(
       targetPos,
       posX,
@@ -405,6 +416,49 @@ export function Tile3D({
       { dragOffsetX, dragOffsetY, dragOffsetZ },
     );
     targetRot.setFromEuler(new THREE.Euler(rotX, rotY, rotZ));
+
+    if (isFirstFrame.current) {
+      isFirstFrame.current = false;
+      if (traceId !== undefined) {
+        const lastPose = getAndClearTilePose(traceId);
+        const isAllowedTransition =
+          lastPose &&
+          ((lastPose.area === 'hand' && area === 'river') ||
+            (lastPose.area === 'river' && area === 'meld') ||
+            (lastPose.area === 'hand' && area === 'meld') ||
+            (lastPose.area === 'hand' && area === 'nuki'));
+
+        if (lastPose && isAllowedTransition && group.parent) {
+          activeTransition.current = {
+            startWorldPos: lastPose.worldPosition.clone(),
+            startWorldRot: lastPose.worldQuaternion.clone(),
+            duration: 0.4,
+            elapsed: 0,
+          };
+
+          group.parent.updateMatrixWorld(true);
+          tempTargetWorldPos.copy(lastPose.worldPosition);
+          group.parent.worldToLocal(tempTargetWorldPos);
+          group.position.copy(tempTargetWorldPos);
+
+          tempParentRot.setFromRotationMatrix(group.parent.matrixWorld);
+          tempLocalRot
+            .copy(tempParentRot)
+            .invert()
+            .multiply(lastPose.worldQuaternion);
+          group.quaternion.copy(tempLocalRot);
+          group.updateMatrixWorld(true);
+        } else {
+          group.position.copy(targetPos);
+          group.quaternion.copy(targetRot);
+          group.updateMatrixWorld(true);
+        }
+      } else {
+        group.position.copy(targetPos);
+        group.quaternion.copy(targetRot);
+        group.updateMatrixWorld(true);
+      }
+    }
   }, [
     posX,
     posY,
@@ -422,9 +476,9 @@ export function Tile3D({
     dragOffsetX,
     dragOffsetY,
     dragOffsetZ,
+    traceId,
+    area,
   ]);
-
-  const isFirstFrame = useRef(true);
 
   const prevPlayable = useRef(false);
   const prevHovered = useRef(false);
@@ -454,35 +508,6 @@ export function Tile3D({
     });
 
     if (groupRef.current) {
-      if (isFirstFrame.current) {
-        isFirstFrame.current = false;
-        if (traceId !== undefined) {
-          const lastPose = getAndClearTilePose(traceId);
-          const isAllowedTransition =
-            lastPose &&
-            ((lastPose.area === 'hand' && area === 'river') ||
-              (lastPose.area === 'river' && area === 'meld') ||
-              (lastPose.area === 'hand' && area === 'meld') ||
-              // Pulled North (拔北) flies from the hand to the nuki row, mirroring
-              // how a called meld animates from hand to meld.
-              (lastPose.area === 'hand' && area === 'nuki'));
-
-          if (lastPose && isAllowedTransition && groupRef.current.parent) {
-            activeTransition.current = {
-              startWorldPos: lastPose.worldPosition.clone(),
-              startWorldRot: lastPose.worldQuaternion.clone(),
-              duration: 0.4, // 0.4 seconds duration
-              elapsed: 0,
-            };
-          } else {
-            groupRef.current.position.copy(targetPos);
-            groupRef.current.quaternion.copy(targetRot);
-          }
-        } else {
-          groupRef.current.position.copy(targetPos);
-          groupRef.current.quaternion.copy(targetRot);
-        }
-      }
 
       const transition = activeTransition.current;
       if (transition && groupRef.current.parent) {
