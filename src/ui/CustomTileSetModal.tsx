@@ -322,7 +322,7 @@ export function CustomTileSetModal({
                   {customSets.map((set) => (
                     <div
                       key={set.id}
-                      className="flex items-center justify-between bg-[#121c32]/50 border border-white/10 rounded-lg px-4 py-3 hover:border-white/20 transition-colors"
+                      className="flex items-center justify-between bg-white/[0.04] border border-white/10 rounded-lg px-4 py-3 hover:border-white/20 transition-colors"
                     >
                       <div className="flex flex-col">
                         <span className="font-bold text-white text-base">

@@ -26,7 +26,7 @@ export function SoundsTab(): React.JSX.Element {
 
   return (
     <div
-      className="flex flex-col gap-2.5 sm:gap-4 p-3 sm:p-4 lg:p-6 max-w-[480px] lg:max-w-[600px] w-full mx-auto min-h-0 overflow-y-auto"
+      className="flex flex-col gap-1.5 p-4 sm:p-5 max-w-[500px] w-full mx-auto bg-white/[0.03] border border-white/10 rounded-2xl backdrop-blur-md shadow-lg"
       onTouchStart={(e) => e.stopPropagation()}
       onTouchMove={(e) => e.stopPropagation()}
       onTouchEnd={(e) => e.stopPropagation()}
@@ -48,6 +48,8 @@ export function SoundsTab(): React.JSX.Element {
         }
         highlightLabel
       />
+
+      <div className="w-full h-px bg-white/10 my-1" />
 
       <VolumeSlider
         label={t('settings.volumeBGM', 'BGM Volume')}
