@@ -12,18 +12,9 @@ import { type ActionOption, type InquiryOptionType } from '../domain/inquiry';
 import { Tile } from '../domain/tile';
 import { UiTile } from './UiTile';
 import { HUD } from './styles';
+import { getActionAssetKey } from './actionArtwork';
 
 const logger = new Logger('ActionHUD');
-
-const ACTION_ASSET_KEYS: Partial<Record<InquiryOptionType, string>> = {
-  chii: 'assets.ui.chii',
-  pon: 'assets.ui.pon',
-  kan: 'assets.ui.kan',
-  riichi: 'assets.ui.riichi',
-  agari: 'assets.ui.ron',
-  nukidora: 'assets.ui.nukidora',
-  skip: 'assets.ui.skip',
-};
 
 interface FlattenedOption {
   key: string;
@@ -264,7 +255,7 @@ export function ActionHUD(): React.JSX.Element | null {
         className={`flex flex-wrap justify-center ${HUD.actionRowGap} max-w-[95vw] items-center`}
       >
         {flatOptions.map((opt, i) => {
-          const assetKey = opt.assetKey ?? ACTION_ASSET_KEYS[opt.type];
+          const assetKey = getActionAssetKey(opt.type, opt.assetKey);
           const imgSrc = assetKey ? t(assetKey) : undefined;
           return (
             <button
