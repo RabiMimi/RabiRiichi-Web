@@ -15,6 +15,8 @@ import {
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TileTooltip } from '../ui/TileTooltip';
+import { useDragToDiscard } from '../ui/useDragToDiscard';
+import { resolveTileTap } from '../ui/discardGesture';
 import { tooltipPortalTarget } from '../ui/portal';
 import {
   TILE_MODEL_PATH,
@@ -57,11 +59,8 @@ import {
   TILE_LIFT_SELECTED,
   TILE_LIFT_HOVERED,
 } from '../domain/constants';
-import { Logger } from '../lib/logger';
 import { soundManager } from '../lib/sound';
 import { SOUND_EFFECTS } from '../lib/soundEffects';
-
-const logger = new Logger('Tile3D');
 
 export type TileDisplayState =
   'hand' | 'opponent-hand' | 'face' | 'back' | 'sideways';
@@ -128,7 +127,7 @@ export function Tile3D({
   const currentInquiry = useCurrentInquiry();
   const isRiichiSelectMode = useIsRiichiSelectMode();
   const animationSpeed = useAnimationSpeed();
-  const [isHovered, setIsHovered] = useState(false);
+  const [isMouseHovered, setIsMouseHovered] = useState(false);
 
   const room = useRoom();
   const doraIndicators = useDoraIndicators();
@@ -174,6 +173,8 @@ export function Tile3D({
   const factorY = (threeViewport.height / size.height) * 0.5;
   const selectedTileTraceId = useSelectedTileTraceId();
   const hoveredTileTraceId = useHoveredTileTraceId();
+  const isHovered =
+    isMouseHovered || (traceId !== undefined && hoveredTileTraceId === traceId);
   const isSelected = selectedTileTraceId === traceId;
 
   // A face-down / unknown tile (opponent's concealed hand, wall back, ...) has
@@ -191,15 +192,7 @@ export function Tile3D({
     isTooltipAllowed &&
     isIdentifiable &&
     traceId !== undefined &&
-    (hoveredTileTraceId === traceId ||
-      (hoveredTileTraceId === null && selectedTileTraceId === traceId));
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartX = useRef<number>(0);
-  const dragStartY = useRef<number>(0);
-  const lastClientY = useRef<number>(0);
-  const [dragOffsetX, setDragOffsetX] = useState(0);
-  const [dragOffsetY, setDragOffsetY] = useState(0);
-  const [dragOffsetZ, setDragOffsetZ] = useState(0);
+    hoveredTileTraceId === traceId;
 
   const hasTileSelectionActive = useMemo(() => {
     return Boolean(
@@ -210,6 +203,40 @@ export function Tile3D({
   const { isPlayable, activeActionOption } = useMemo(() => {
     return checkPlayableState(currentInquiry, isRiichiSelectMode, traceId);
   }, [currentInquiry, isRiichiSelectMode, traceId]);
+
+  const isInteractive = isPlayable || displayState === 'hand';
+  const discard = (id: number) => {
+    if (isPlayable && activeActionOption) {
+      void rabiriichi.submitInquiryResponse(activeActionOption, id);
+    }
+  };
+  const gesture = useDragToDiscard({
+    dragThreshold: 60,
+    canDiscard: () => isPlayable,
+    isDraggable: () => isInteractive,
+    onDiscard: discard,
+    onTap: (id, pointerType) => {
+      if (!isInteractive) {
+        onClick?.();
+      } else if (
+        resolveTileTap(
+          pointerType,
+          rabiriichi.selectedTileTraceId === id,
+          isPlayable,
+        ) === 'discard'
+      ) {
+        discard(id);
+      } else {
+        rabiriichi.selectTile(id);
+      }
+    },
+    contextKey: `${traceId ?? ''}:${tile}:${area}`,
+  });
+  const isDragging =
+    traceId !== undefined && gesture.position.traceId === traceId;
+  const dragOffsetX = gesture.position.x * factorX;
+  const dragOffsetY = -gesture.position.y * factorY * 0.78;
+  const dragOffsetZ = gesture.position.y * factorY * 0.62;
 
   const activeComparisonTile = useActiveComparisonTile();
   const isMatchingComparison = useMemo(() => {
@@ -391,10 +418,6 @@ export function Tile3D({
   // Target position and rotation (stored in refs to avoid recreating vectors on every render)
   const targetPos = useMemo(() => new THREE.Vector3(), []);
   const targetRot = useMemo(() => new THREE.Quaternion(), []);
-
-  const isInteractive = useMemo(() => {
-    return isPlayable || displayState === 'hand';
-  }, [isPlayable, displayState]);
 
   const isFirstFrame = useRef(true);
 
@@ -624,14 +647,14 @@ export function Tile3D({
     <group
       ref={groupRef}
       name={`tile-${traceId}`}
-      userData={{ traceId, area }}
+      userData={{ traceId, area, isIdentifiable }}
       onPointerOver={(e: ThreeEvent<PointerEvent>) => {
         if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
           if (isInteractive && !isHovered) {
             soundManager.playEffect(SOUND_EFFECTS.tile.hover);
           }
-          setIsHovered(true);
+          setIsMouseHovered(true);
           // Do not report hover for face-down tiles: they have no identity, so
           // hovering must not open a tooltip or trigger the same-tile dim.
           if (traceId !== undefined && isIdentifiable) {
@@ -642,7 +665,7 @@ export function Tile3D({
       onPointerOut={(e: ThreeEvent<PointerEvent>) => {
         if (e.nativeEvent.pointerType === 'mouse') {
           e.stopPropagation();
-          setIsHovered(false);
+          setIsMouseHovered(false);
           if (
             traceId !== undefined &&
             rabiriichi.hoveredTileTraceId === traceId
@@ -653,134 +676,9 @@ export function Tile3D({
       }}
       onPointerDown={(e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
-        dragStartX.current = e.nativeEvent.clientX;
-        dragStartY.current = e.nativeEvent.clientY;
-        lastClientY.current = e.nativeEvent.clientY;
-        const isMouse = e.nativeEvent.pointerType === 'mouse';
-        if (!isMouse && traceId !== undefined && isIdentifiable) {
-          setIsHovered(true);
-          rabiriichi.hoverTile(traceId);
+        if (traceId !== undefined) {
+          gesture.startGesture(e.nativeEvent, traceId);
         }
-
-        const isDragInteract = isInteractive && traceId !== undefined;
-
-        if (isDragInteract) {
-          setIsDragging(true);
-          setDragOffsetX(0);
-          setDragOffsetY(0);
-          setDragOffsetZ(0);
-          rabiriichi.selectTile(traceId); // Instantly select the tile when drag starts
-        }
-
-        const handleGlobalMove = (moveEvent: PointerEvent) => {
-          lastClientY.current = moveEvent.clientY;
-          if (isDragInteract) {
-            const deltaX = moveEvent.clientX - dragStartX.current;
-            const deltaY = moveEvent.clientY - dragStartY.current;
-
-            // Follow screen movement projected into 3D:
-            // X matches 3D X
-            setDragOffsetX(deltaX * factorX);
-
-            // Screen Y offset:
-            // - moving up (deltaY < 0) => lifts tile (+Y) and moves forward (-Z)
-            if (deltaY < 0) {
-              setDragOffsetY(-deltaY * factorY * 0.78);
-              setDragOffsetZ(deltaY * factorY * 0.62);
-            } else {
-              setDragOffsetY(0);
-              setDragOffsetZ(0);
-            }
-          }
-        };
-
-        const handleGlobalUp = () => {
-          window.removeEventListener('pointermove', handleGlobalMove);
-          window.removeEventListener('pointerup', handleGlobalUp);
-
-          const finalClientY = lastClientY.current;
-          const deltaY = finalClientY - dragStartY.current;
-
-          if (isDragInteract) {
-            setIsDragging(false);
-            setDragOffsetX(0);
-            setDragOffsetY(0);
-            setDragOffsetZ(0);
-
-            if (deltaY < -60) {
-              if (isPlayable && activeActionOption) {
-                try {
-                  void rabiriichi.submitInquiryResponse(
-                    activeActionOption,
-                    traceId,
-                  );
-                } catch (err) {
-                  logger.error(
-                    'Failed to submit tile discard choice via drag:',
-                    err,
-                  );
-                }
-              } else {
-                rabiriichi.selectTile(traceId);
-              }
-            } else {
-              // Tap behavior (using 15px threshold for drag vs tap)
-              if (Math.abs(deltaY) < 15) {
-                if (isMouse) {
-                  if (isPlayable && activeActionOption) {
-                    try {
-                      void rabiriichi.submitInquiryResponse(
-                        activeActionOption,
-                        traceId,
-                      );
-                    } catch (err) {
-                      logger.error(
-                        'Failed to submit tile discard choice via mouse click:',
-                        err,
-                      );
-                    }
-                  } else {
-                    rabiriichi.selectTile(traceId);
-                  }
-                } else {
-                  if (isSelected && isPlayable && activeActionOption) {
-                    try {
-                      void rabiriichi.submitInquiryResponse(
-                        activeActionOption,
-                        traceId,
-                      );
-                    } catch (err) {
-                      logger.error(
-                        'Failed to submit tile discard choice via double tap:',
-                        err,
-                      );
-                    }
-                  } else {
-                    rabiriichi.selectTile(traceId);
-                  }
-                }
-              }
-            }
-          } else {
-            // Non-playable tile clicks: trigger onClick if tap is close
-            if (Math.abs(deltaY) < 10 && onClick) {
-              onClick();
-            }
-          }
-
-          if (!isMouse) {
-            setIsHovered(false);
-            if (
-              traceId !== undefined &&
-              rabiriichi.hoveredTileTraceId === traceId
-            ) {
-              rabiriichi.hoverTile(null);
-            }
-          }
-        };
-
-        window.addEventListener('pointermove', handleGlobalMove);
-        window.addEventListener('pointerup', handleGlobalUp);
       }}
     >
       <group scale={[0.18, 0.24, 0.12]}>

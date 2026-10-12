@@ -28,6 +28,7 @@ import {
 import { TileTooltip } from './TileTooltip';
 import { useDragToDiscard, type DragToDiscard } from './useDragToDiscard';
 import { isTileDimmed } from './handTileState';
+import { resolveTileTap } from './discardGesture';
 import type { ActionOption } from '../domain/inquiry';
 
 /** Tracks the viewport so the hand can shrink on small or short screens. */
@@ -62,11 +63,15 @@ function useHoverSound(): (traceId: number | null) => void {
 
 interface HandTileProps {
   tile: number | null | undefined;
+  traceId: number | null | undefined;
   layout: HandLayout;
   /** Highlighted tiles read as selectable; dimmed ones as excluded. */
   isHighlighted: boolean;
   isDimmed: boolean;
   isClickable: boolean;
+  isSelected: boolean;
+  isHovered: boolean;
+  isDragging: boolean;
   /** Dora (or akadora) tiles get the same sweeping sheen as the 3D tiles. */
   isDora: boolean;
   style?: React.CSSProperties;
@@ -80,10 +85,14 @@ interface HandTileProps {
 
 function HandTile({
   tile,
+  traceId,
   layout,
   isHighlighted,
   isDimmed,
   isClickable,
+  isSelected,
+  isHovered,
+  isDragging,
   isDora,
   style,
   onClick,
@@ -95,12 +104,6 @@ function HandTile({
   const { tileWidth, tileHeight, bevelHeight, rowHeight, cornerRadius } =
     layout;
   const face = tile ? Tile.fromByte(tile).toString() : 'back';
-  const [isHovered, setIsHovered] = useState(false);
-
-  const setHover = (entering: boolean): void => {
-    setIsHovered(entering);
-    onHover(entering);
-  };
 
   return (
     // The button is the hit area and must never move. Lifting it instead --
@@ -111,25 +114,42 @@ function HandTile({
     // raised tile, so the vacated strip along the bottom keeps the hover alive.
     <button
       type="button"
+      data-hand-tile={traceId ?? ''}
+      data-identifiable={Boolean(tile)}
       className={`relative bg-transparent border-none p-0 flex items-end ${
         isClickable ? 'cursor-pointer' : 'cursor-default'
       }`}
       style={{
         width: tileWidth,
         height: rowHeight + hoverLift,
+        zIndex: isDragging ? 1 : undefined,
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
         ...style,
       }}
-      onClick={onClick}
+      aria-pressed={isSelected}
+      onClick={(e) => {
+        // Pointer presses act on release; only keyboard/assistive clicks remain.
+        if (e.detail === 0) onClick();
+      }}
       onDragStart={(e) => e.preventDefault()}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      onContextMenu={(e) => e.preventDefault()}
+      onPointerEnter={(e) => {
+        if (e.pointerType === 'mouse') onHover(true);
+      }}
+      onPointerLeave={(e) => {
+        if (e.pointerType === 'mouse' && isHovered) onHover(false);
+      }}
       {...drag}
     >
       <div
         className="relative w-full"
         style={{
           filter: 'drop-shadow(0 0 2px #000)',
-          transform: isHovered ? `translateY(-${hoverLift}px)` : undefined,
+          transform:
+            isHovered || isSelected ? `translateY(-${hoverLift}px)` : undefined,
           transition: 'transform 150ms ease-out',
           // A drag positions the tile directly and must override the lift.
           ...dragStyle,
@@ -229,47 +249,55 @@ export function HandDisplay(): React.JSX.Element | null {
     [currentInquiry, isRiichiSelectMode],
   );
 
-  const canDrag = useCallback(
+  const canDiscard = useCallback(
     (traceId: number) => playableIds.has(traceId),
     [playableIds],
   );
 
+  const tap = (traceId: number, pointerType: string) => {
+    const action = resolveTileTap(
+      pointerType,
+      rabiriichi.selectedTileTraceId === traceId,
+      playableIds.has(traceId),
+    );
+    if (action === 'discard') discard(traceId);
+    else rabiriichi.selectTile(traceId);
+  };
+
   const drag = useDragToDiscard({
     dragThreshold: layout.dragThreshold,
-    canDrag,
+    canDiscard,
     onDiscard: discard,
+    onTap: tap,
+    contextKey: `${hand?.freeTiles.map((tile) => tile.traceId).join(',') ?? ''}/${hand?.pendingTile?.traceId ?? ''}`,
   });
 
   if (!hand) return null;
 
   const { freeTiles, pendingTile } = hand;
-  const isInteractive = playableIds.size > 0;
 
-  // Mirrors Tile3D: the hovered tile wins, falling back to the selected one,
-  // and a tile with no readable face has no identity to describe.
-  const describedTraceId = hoveredTraceId ?? selectedTraceId;
+  const describedTraceId = hoveredTraceId;
   /** Where to anchor the tooltip: the described tile's centre, or null. */
   const tooltipAnchor = ((): { left: number; bottom: number } | null => {
     if (describedTraceId == null || describedTraceId <= 0) return null;
-    // Hovering raises the tile, so raise its anchor to match; a tile shown
-    // because it is merely selected has not moved.
-    const lift = describedTraceId === hoveredTraceId ? layout.hoverLift : 0;
+    const isDragged = drag.position.traceId === describedTraceId;
+    const dx = isDragged ? drag.position.x : 0;
+    const lift = isDragged ? -drag.position.y : layout.hoverLift;
     const centre = layout.rowHeight / 2;
 
     const idx = freeTiles.findIndex((t) => t.traceId === describedTraceId);
     if (idx >= 0) {
       if (!freeTiles[idx]?.tile) return null;
       return {
-        left: getHandTileLeft(layout, idx) + layout.tileWidth / 2,
+        left: getHandTileLeft(layout, idx) + layout.tileWidth / 2 + dx,
         bottom: centre + lift,
       };
     }
     if (pendingTile?.traceId === describedTraceId && pendingTile.tile) {
-      const pendingLift =
-        describedTraceId === hoveredTraceId ? layout.pendingHoverLift : 0;
       return {
-        left: layout.pendingLeft + layout.tileWidth / 2,
-        bottom: centre + pendingLift,
+        left: layout.pendingLeft + layout.tileWidth / 2 + dx,
+        bottom:
+          centre + (isDragged ? -drag.position.y : layout.pendingHoverLift),
       };
     }
     return null;
@@ -279,21 +307,17 @@ export function HandDisplay(): React.JSX.Element | null {
     isTileDimmed({ traceId, callHighlightIds, playableIds });
 
   const onTileClick = (traceId: number | null | undefined) => {
-    if (
-      drag.shouldIgnoreClick() ||
-      !isInteractive ||
-      traceId == null ||
-      !playableIds.has(traceId)
-    ) {
-      return;
-    }
-    discard(traceId);
+    if (traceId != null) tap(traceId, 'mouse');
   };
 
   return (
     <div
       className="absolute bottom-4 left-0 right-0 z-50 pointer-events-auto"
-      style={{ height: layout.rowHeight }}
+      style={{
+        height: layout.rowHeight,
+        touchAction: 'none',
+        zIndex: drag.position.traceId != null ? 100 : undefined,
+      }}
     >
       <div className="relative h-full">
         {/*
@@ -323,17 +347,23 @@ export function HandDisplay(): React.JSX.Element | null {
               <HandTile
                 key={traceId ?? idx}
                 tile={tileMsg.tile}
+                traceId={traceId}
                 layout={layout}
                 isHighlighted={isPlayable}
                 isDimmed={dimmed(traceId)}
-                isClickable={isPlayable}
+                isClickable={traceId != null && Boolean(tileMsg.tile)}
+                isSelected={traceId != null && selectedTraceId === traceId}
+                isHovered={traceId != null && hoveredTraceId === traceId}
+                isDragging={
+                  traceId != null && drag.position.traceId === traceId
+                }
                 isDora={isDoraTile(tileMsg.tile)}
                 hoverLift={layout.hoverLift}
                 onClick={() => onTileClick(traceId)}
                 onHover={(entering) =>
                   onHoverTile(entering ? (traceId ?? null) : null)
                 }
-                drag={drag.tileProps(traceId ?? null)}
+                drag={drag.tileProps(tileMsg.tile ? (traceId ?? null) : null)}
                 dragStyle={drag.dragStyle(traceId ?? null)}
               />
             );
@@ -350,10 +380,23 @@ export function HandDisplay(): React.JSX.Element | null {
             return (
               <HandTile
                 tile={pendingTile.tile}
+                traceId={pendingTraceId}
                 layout={layout}
                 isHighlighted={isPlayable}
                 isDimmed={dimmed(pendingTraceId)}
-                isClickable={isPlayable}
+                isClickable={
+                  pendingTraceId != null && Boolean(pendingTile.tile)
+                }
+                isSelected={
+                  pendingTraceId != null && selectedTraceId === pendingTraceId
+                }
+                isHovered={
+                  pendingTraceId != null && hoveredTraceId === pendingTraceId
+                }
+                isDragging={
+                  pendingTraceId != null &&
+                  drag.position.traceId === pendingTraceId
+                }
                 isDora={isDoraTile(pendingTile.tile)}
                 hoverLift={layout.pendingHoverLift}
                 style={{
@@ -365,7 +408,9 @@ export function HandDisplay(): React.JSX.Element | null {
                 onHover={(entering) =>
                   onHoverTile(entering ? (pendingTraceId ?? null) : null)
                 }
-                drag={drag.tileProps(pendingTraceId ?? null)}
+                drag={drag.tileProps(
+                  pendingTile.tile ? (pendingTraceId ?? null) : null,
+                )}
                 dragStyle={drag.dragStyle(pendingTraceId ?? null)}
               />
             );
