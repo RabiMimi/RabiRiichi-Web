@@ -77,6 +77,7 @@
     "honbaPoints": "本场棒点数",
     "ryuukyokuPoints": "不听罚符",
     "tileSet": "使用牌张",
+    "wildcardCount": "额外万能牌",
     "configureYakus": "配置役种",
     "allYakus": "全部",
     "yakus": "个役",
@@ -102,6 +103,7 @@
     "twoSets": "两副牌",
     "onlySZ": "仅条子与字牌",
     "tenchiSouzou": "天地创造",
+    "regularWildcards": "普通 + 4张万能牌",
     "customize": "自定义...",
     "labelWithCount": "{{name}} ({{count}}张)"
   },
@@ -504,6 +506,7 @@
       "honbaPoints": "本场棒点数必须在 0 到 1,000,000 之间。",
       "ryuukyokuPoints": "不听罚符必须包含 2 个数值，且每个数值必须在 0 到 1,000,000 之间。",
       "pointsRange": "点数上限必须在 0 到 1,000,000 之间。",
+      "wildcardCount": "额外万能牌数量必须在 {{min}} 到 {{max}} 之间。",
       "generic": "无效的游戏配置。",
       "llm": {
         "auth": "API Key 无效或权限不足。",

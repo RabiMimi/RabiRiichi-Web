@@ -49,6 +49,16 @@ describe('buildRoomConfig', () => {
   it('exposes the expected tile set options', () => {
     expect(TILE_SET_OPTIONS).toContain('Regular');
     expect(TILE_SET_OPTIONS).toContain('Sanma');
+    expect(TILE_SET_OPTIONS).toContain('RegularWildcards');
+  });
+
+  it('sends the wildcard preset with its 4 wildcards', () => {
+    const cfg = buildRoomConfig({
+      ...DEFAULT_ROOM_CONFIG,
+      tileSet: 'RegularWildcards',
+    });
+    expect(cfg.initialTiles).toHaveLength(140);
+    expect(cfg.initialTiles?.filter((b) => b === 0x51)).toHaveLength(4);
   });
 
   it('defaults to a 2-player Regular game', () => {

@@ -91,6 +91,24 @@ describe('colorForTile', () => {
   });
 });
 
+describe('wildcard glyph', () => {
+  const WILD = Tile.fromString('*');
+
+  it('renders as ** in ascii and the joker tile in unicode', () => {
+    expect(glyphForTile(WILD, 'ascii')).toEqual({
+      text: '**',
+      color: 'magenta',
+      isBack: false,
+    });
+    expect(glyphForTile(WILD, 'unicode').text).toBe('\u{1F02A}');
+  });
+
+  it('decodes from the wire byte', () => {
+    expect(glyphForByte(0x51, 'ascii').text).toBe('**');
+    expect(colorForTile(WILD)).toBe('magenta');
+  });
+});
+
 describe('glyphForByte', () => {
   it('decodes a packed byte then renders it', () => {
     const g = glyphForByte(P(5, true).toByte(), 'ascii');

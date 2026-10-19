@@ -14,6 +14,7 @@ import {
   DEFAULT_RYUUKYOKU_POINTS_0,
   DEFAULT_RYUUKYOKU_POINTS_1,
   DEFAULT_TILE_SET_PRESET,
+  DEFAULT_WILDCARD_COUNT,
   DEFAULT_RENCHAN_POLICY,
   DEFAULT_END_GAME_POLICY,
   DEFAULT_KUIKAE_POLICY,
@@ -32,11 +33,17 @@ import {
   MAX_MIN_HAN,
   MIN_POINTS,
   MAX_POINTS,
+  MIN_WILDCARD_COUNT,
+  MAX_WILDCARD_COUNT,
   STORAGE_KEY_ROOM_CONFIG,
   FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK,
 } from '../domain/constants';
 import type { IGameConfigMsg } from '../proto';
-import { getTileSet, type TileSetPresetName } from '../domain/tilesets';
+import {
+  buildInitialTiles,
+  parseWildcardCount,
+  type TileSetPresetName,
+} from '../domain/tilesets';
 import { buildAllowedYakusPayload, defaultAllowedYakus } from '../domain/yakus';
 import { useAvailableYakus } from '../state/store';
 import { GameSettingsTab } from './GameSettingsTab';
@@ -62,6 +69,7 @@ interface SavedRoomConfig {
   ryuukyokuPoints0Input?: string;
   ryuukyokuPoints1Input?: string;
   tileSetPreset?: TileSetPresetName;
+  wildcardCountInput?: string;
   renchanPolicy?: number;
   endGamePolicy?: number;
   kuikaePolicy?: number;
@@ -171,6 +179,12 @@ export function RoomConfigPanel({
   const [tileSetPreset, setTileSetPreset] = useState<TileSetPresetName>(
     () => savedConfig?.tileSetPreset ?? DEFAULT_TILE_SET_PRESET,
   );
+  const [wildcardCountInput, setWildcardCountInput] = useState<string>(
+    () => savedConfig?.wildcardCountInput ?? DEFAULT_WILDCARD_COUNT.toString(),
+  );
+  const [wildcardCountError, setWildcardCountError] = useState<string | null>(
+    null,
+  );
   const [allowedYakus, setAllowedYakus] = useState<Set<string>>(() => {
     if (savedConfig?.allowedYakus) {
       return new Set(savedConfig.allowedYakus);
@@ -251,6 +265,7 @@ export function RoomConfigPanel({
       ryuukyokuPoints0Input,
       ryuukyokuPoints1Input,
       tileSetPreset,
+      wildcardCountInput,
       renchanPolicy,
       endGamePolicy,
       kuikaePolicy,
@@ -277,6 +292,7 @@ export function RoomConfigPanel({
     ryuukyokuPoints0Input,
     ryuukyokuPoints1Input,
     tileSetPreset,
+    wildcardCountInput,
     renchanPolicy,
     endGamePolicy,
     kuikaePolicy,
@@ -334,6 +350,17 @@ export function RoomConfigPanel({
     } else {
       setMinHanError(null);
     }
+  };
+
+  const validateWildcardCount = (val: string) => {
+    setWildcardCountError(
+      parseWildcardCount(val) === null
+        ? t('error.lobby.wildcardCount', {
+            min: MIN_WILDCARD_COUNT,
+            max: MAX_WILDCARD_COUNT,
+          })
+        : null,
+    );
   };
 
   const validatePoints = (
@@ -400,7 +427,8 @@ export function RoomConfigPanel({
       riichiPointsError ||
       honbaPointsError ||
       ryuukyokuPoints0Error ||
-      ryuukyokuPoints1Error
+      ryuukyokuPoints1Error ||
+      wildcardCountError
     ) {
       return;
     }
@@ -516,7 +544,10 @@ export function RoomConfigPanel({
         ryuukyokuPoints: [ryuukyokuPoints0, ryuukyokuPoints1],
         validPointsRange: [0, upperPoints],
       },
-      initialTiles: getTileSet(tileSetPreset).map((tile) => tile.toByte()),
+      initialTiles: buildInitialTiles(
+        tileSetPreset,
+        parseWildcardCount(wildcardCountInput) ?? DEFAULT_WILDCARD_COUNT,
+      ),
       allowedYakus: buildAllowedYakusPayload(allowedYakus),
     });
   };
@@ -531,7 +562,8 @@ export function RoomConfigPanel({
     riichiPointsError !== null ||
     honbaPointsError !== null ||
     ryuukyokuPoints0Error !== null ||
-    ryuukyokuPoints1Error !== null;
+    ryuukyokuPoints1Error !== null ||
+    wildcardCountError !== null;
 
   return (
     <div className={`${PANEL.base} mb-3 flex flex-col gap-3 box-border`}>
@@ -589,6 +621,10 @@ export function RoomConfigPanel({
             validateNextRoundAckTimeout={validateNextRoundAckTimeout}
             tileSetPreset={tileSetPreset}
             setTileSetPreset={setTileSetPreset}
+            wildcardCountInput={wildcardCountInput}
+            setWildcardCountInput={setWildcardCountInput}
+            wildcardCountError={wildcardCountError}
+            validateWildcardCount={validateWildcardCount}
           />
         )}
 

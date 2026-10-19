@@ -129,6 +129,9 @@ export function TileTooltip(): React.JSX.Element | null {
         return '#10b981'; // Green for Bamboos
       case TileSuit.Z:
         return '#8b5cf6'; // Purple for Honors
+      case TileSuit.Wildcard:
+        // Rainbow, echoing the wildcard's prismatic face
+        return 'linear-gradient(90deg, #ff2e55, #ff8a1f, #22c96e, #1fb8f2, #8a45f5)';
       case TileSuit.Invalid:
       default:
         return '#6b7280';

@@ -68,6 +68,16 @@ Port `../RabiRiichi-Cocos/assets/Scripts/Rabi/Tile.ts` exactly:
 the stable per-instance id used to track a tile across events.
 **Unit-test the round-trip and edge cases (red fives, honors).**
 
+**Wildcards.** The server adds `TileSuit.Wildcard = 5`: one universal tile,
+byte `0x51` (suit 5, num 1), written `*`, never akadora, sorted after the
+honors. It stands for any natural tile when the server scores a hand, but the
+client only ever sees the physical `*`. It carries no dora and a wildcard
+indicator points at none. A wait list may contain `*` itself (any draw
+completes the hand); its remaining count comes from the deck's wildcards. A
+room gets wildcards by including `0x51` bytes in `GameConfig.initial_tiles`
+(`buildInitialTiles` in `domain/tilesets.ts`). Its face is
+`public/assets/hand_tiles/wildcard.svg`, drawn by `tools/wildcard-face.py`.
+
 ### 3.2 View-model (`domain/model.ts`)
 
 Plain data classes mirroring Cocos `Rabi/Info.ts`:

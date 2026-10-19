@@ -1,5 +1,9 @@
-import { Tile, TileSuit } from './tile';
-import { STORAGE_KEY_CUSTOM_TILE_SETS } from './constants';
+import { Tile, TileSuit, WILDCARD_TILE_BYTE } from './tile';
+import {
+  MAX_WILDCARD_COUNT,
+  MIN_WILDCARD_COUNT,
+  STORAGE_KEY_CUSTOM_TILE_SETS,
+} from './constants';
 
 export function getRegularTileSet(): Tile[] {
   const tiles: Tile[] = [];
@@ -68,12 +72,25 @@ export function getTenchiSouzouTileSet(): Tile[] {
   return tiles;
 }
 
+export function getWildcards(count: number): Tile[] {
+  return Array.from({ length: count }, () => Tile.fromByte(WILDCARD_TILE_BYTE));
+}
+
+/** Wildcards in the {@link getRegularWildcardTileSet} preset. */
+export const PRESET_WILDCARD_COUNT = 4;
+
+/** The regular 136 tiles plus a handful of wildcards, to try them quickly. */
+export function getRegularWildcardTileSet(): Tile[] {
+  return [...getRegularTileSet(), ...getWildcards(PRESET_WILDCARD_COUNT)];
+}
+
 export const TILE_SET_PRESETS = {
   Regular: getRegularTileSet,
   Sanma: getSanmaTileSet,
   TwoSets: getTwoSetsTileSet,
   OnlySZ: getOnlySZTileSet,
   TenchiSouzou: getTenchiSouzouTileSet,
+  RegularWildcards: getRegularWildcardTileSet,
 } as const;
 
 export type TileSetPresetName = string;
@@ -113,4 +130,31 @@ export function getTileSet(presetName: string): Tile[] {
     return found.tiles.map((t) => Tile.fromString(t));
   }
   return getRegularTileSet();
+}
+
+/**
+ * The wire `initialTiles` for a room: the chosen tile set with `wildcardCount`
+ * extra wildcards appended.
+ */
+export function buildInitialTiles(
+  presetName: string,
+  wildcardCount: number,
+): number[] {
+  return [...getTileSet(presetName), ...getWildcards(wildcardCount)].map(
+    (tile) => tile.toByte(),
+  );
+}
+
+/**
+ * Parses the host's extra-wildcard input. Empty means none; anything that is
+ * not a whole number within range is rejected with `null`.
+ */
+export function parseWildcardCount(input: string): number | null {
+  const trimmed = input.trim();
+  if (trimmed === '') return MIN_WILDCARD_COUNT;
+  if (!/^\d+$/.test(trimmed)) return null;
+  const count = Number(trimmed);
+  return count >= MIN_WILDCARD_COUNT && count <= MAX_WILDCARD_COUNT
+    ? count
+    : null;
 }

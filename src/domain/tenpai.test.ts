@@ -7,7 +7,8 @@ import {
   type TileKindCounts,
   type VisibleHand,
 } from './tenpai';
-import { Tile } from './tile';
+import { Tile, WILDCARD_TILE_BYTE } from './tile';
+import { TILE_SET_PRESETS } from './tilesets';
 
 const tile = (s: string): number => Tile.fromString(s).toByte();
 
@@ -177,5 +178,51 @@ describe('collectVisibleTileKindsFromSnapshot', () => {
     });
     // Three visible 5s (own hand, own discard, opponent discard) => 1 remains.
     expect(countRemainingWinningTile(tile('5s'), kinds, STD)).toBe(1);
+  });
+});
+
+describe('wildcards', () => {
+  const WILD = WILDCARD_TILE_BYTE;
+  const wildcardDeck = buildTileSetCounts({
+    initialTiles: TILE_SET_PRESETS.RegularWildcards().map((t) => t.toByte()),
+  });
+
+  it('counts the deck wildcards as their own kind', () => {
+    expect(wildcardDeck.get(WILD)).toBe(4);
+    // Natural kinds are untouched by the wildcards.
+    expect(wildcardDeck.get(tile('5m'))).toBe(4);
+  });
+
+  it('collects visible wildcards like any other tile', () => {
+    const kinds = collectVisibleTileKinds(
+      [
+        {
+          freeTiles: [
+            { traceId: 1, tile: WILD },
+            { traceId: 2, tile: tile('1m') },
+          ],
+          discarded: [{ traceId: 3, tile: WILD }],
+        },
+      ],
+      [{ traceId: 4, tile: WILD }],
+    );
+    expect(kinds.filter((k) => k === WILD)).toHaveLength(3);
+  });
+
+  it('derives the remaining count of a `*` wait from the deck wildcards', () => {
+    // The server lists `*` as a winning tile whenever any tile completes the
+    // hand; what remains is the deck's wildcards minus the visible ones.
+    const visible = [WILD, tile('1m')];
+    expect(countRemainingWinningTile(WILD, visible, wildcardDeck)).toBe(3);
+    expect(countRemainingWinningTile(tile('1m'), visible, wildcardDeck)).toBe(
+      3,
+    );
+  });
+
+  it('follows a custom wildcard count', () => {
+    const counts = buildTileSetCounts({
+      initialTiles: [...Array<number>(7).fill(WILD), tile('1m')],
+    });
+    expect(countRemainingWinningTile(WILD, [WILD, WILD], counts)).toBe(5);
   });
 });

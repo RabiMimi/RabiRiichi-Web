@@ -21,7 +21,7 @@ import { tooltipPortalTarget } from '../ui/portal';
 import {
   TILE_MODEL_PATH,
   getTileTexturePath,
-  VALID_TILE_STRINGS,
+  TILE_FACE_STRINGS,
 } from './assets';
 import {
   saveTilePose,
@@ -702,7 +702,7 @@ export function Tile3D({
 useGLTF.preload(TILE_MODEL_PATH);
 
 // Pre-load all tile face textures to prevent Suspense flashes at runtime
-VALID_TILE_STRINGS.forEach((tileStr) => {
+TILE_FACE_STRINGS.forEach((tileStr) => {
   useTexture.preload(getTileTexturePath(tileStr));
 });
 useTexture.preload('/assets/hand_tiles/back.jpg');

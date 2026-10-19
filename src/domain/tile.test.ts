@@ -7,6 +7,7 @@ import {
   checkIsDora,
   checkDiscardResultsInFuriten,
   isTileUnknown,
+  WILDCARD_TILE_BYTE,
 } from './tile';
 
 describe('Tile Model', () => {
@@ -217,6 +218,93 @@ describe('Tile Model', () => {
       expect(checkIsDora(Tile.fromString('1m'), indicators)).toBe(false);
       expect(checkIsDora(Tile.fromString('5m'), indicators)).toBe(false);
       expect(checkIsDora(Tile.fromString('7z'), indicators)).toBe(false);
+    });
+  });
+
+  describe('Wildcard', () => {
+    it('decodes the server byte 0x51 as the wildcard', () => {
+      const tile = Tile.fromByte(0x51);
+      expect(WILDCARD_TILE_BYTE).toBe(0x51);
+      expect(tile.suit).toBe(TileSuit.Wildcard);
+      expect(tile.num).toBe(1);
+      expect(tile.akadora).toBe(false);
+      expect(tile.isWildcard).toBe(true);
+      expect(tile.toString()).toBe('*');
+    });
+
+    it('round-trips through its string and byte forms', () => {
+      const tile = Tile.fromString('*');
+      expect(tile.isWildcard).toBe(true);
+      expect(tile.toString()).toBe('*');
+      expect(tile.toByte()).toBe(0x51);
+      expect(Tile.fromByte(tile.toByte()).toString()).toBe('*');
+    });
+
+    it('is not a wildcard for any natural tile', () => {
+      for (const str of ['1m', 'r5p', '9s', '4z', '7z']) {
+        expect(Tile.fromString(str).isWildcard).toBe(false);
+      }
+    });
+
+    it('sorts after the honors', () => {
+      const tiles = ['*', '7z', '1m', '*', '1z'].map((s) => Tile.fromString(s));
+      tiles.sort((a, b) => a.compareTo(b));
+      expect(tiles.map((t) => t.toString())).toEqual([
+        '1m',
+        '1z',
+        '7z',
+        '*',
+        '*',
+      ]);
+    });
+
+    it('parses standalone wildcards in group strings', () => {
+      expect(stringToTiles('12m*3p*').map((t) => t.toString())).toEqual([
+        '1m',
+        '2m',
+        '*',
+        '3p',
+        '*',
+      ]);
+    });
+
+    it('rejects a wildcard that interrupts a group or follows `r`', () => {
+      expect(() => stringToTiles('1*m')).toThrow('Invalid wildcard');
+      expect(() => stringToTiles('r*')).toThrow('Invalid wildcard');
+    });
+
+    it('carries no dora and indicates none', () => {
+      const wildcard = Tile.fromString('*');
+      // Like the server's empty NextDora: a wildcard indicator points at no
+      // tile, and a wildcard is never a dora itself.
+      expect(checkIsDora(wildcard, [wildcard])).toBe(false);
+      expect(checkIsDora(wildcard, [Tile.fromString('7z')])).toBe(false);
+      for (const str of ['1m', '2m', '9p', '1s', '1z', '5z']) {
+        expect(checkIsDora(Tile.fromString(str), [wildcard])).toBe(false);
+      }
+      // Akadora stays dora whatever the indicator.
+      expect(checkIsDora(Tile.fromString('r5m'), [wildcard])).toBe(true);
+    });
+
+    it('is a known tile', () => {
+      expect(isTileUnknown('*')).toBe(false);
+      expect(isTileUnknown(Tile.fromString('*'))).toBe(false);
+      expect(isTileUnknown(WILDCARD_TILE_BYTE)).toBe(false);
+    });
+
+    it('makes a wildcard discard furiten when `*` is a wait', () => {
+      const waits = [Tile.fromString('3m').toByte(), WILDCARD_TILE_BYTE];
+      expect(
+        checkDiscardResultsInFuriten(WILDCARD_TILE_BYTE, waits, [], false),
+      ).toBe(true);
+      expect(
+        checkDiscardResultsInFuriten(
+          Tile.fromString('9p').toByte(),
+          waits,
+          [],
+          false,
+        ),
+      ).toBe(false);
     });
   });
 

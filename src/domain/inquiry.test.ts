@@ -466,6 +466,45 @@ describe('Inquiry Mapping & Response Encoding', () => {
   });
 });
 
+describe('wildcard waits', () => {
+  const WILD = 0x51;
+
+  it('maps a `*` winning tile and counts it against the deck wildcards', () => {
+    const inquiry: ISinglePlayerInquiryMsg = {
+      actions: [
+        {
+          playTileAction: {
+            tiles: [{ traceId: 100, tile: 17 }],
+            candidates: [
+              {
+                tile: { traceId: 100, tile: 17 },
+                tenpaiInfos: [{ winningTile: 18 }, { winningTile: WILD }],
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    // Two of the deck's three wildcards are visible; 2m falls back to four.
+    const mapped = mapInquiry(inquiry, {
+      visibleKinds: [WILD, WILD],
+      tileSetCounts: new Map([[WILD, 3]]),
+    });
+
+    const waits = mapped.playTile?.candidates?.[0]?.tenpaiInfos ?? [];
+    expect(
+      waits.map(({ winningTile, remainingCount }) => ({
+        winningTile,
+        remainingCount,
+      })),
+    ).toEqual([
+      { winningTile: 18, remainingCount: 4 },
+      { winningTile: WILD, remainingCount: 1 },
+    ]);
+  });
+});
+
 describe('findActiveDiscardCandidate', () => {
   const playCandidate: DiscardCandidate = { tileId: 100, tenpaiInfos: [] };
   const riichiCandidate: DiscardCandidate = { tileId: 100, tenpaiInfos: [] };

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   DEFAULT_ACTION_TIMEOUT,
   DEFAULT_NEXT_ROUND_ACK_TIMEOUT,
+  DEFAULT_WILDCARD_COUNT,
 } from '../domain/constants';
 import {
   type TileSetPresetName,
@@ -14,6 +15,16 @@ import { CustomTileSetModal } from './CustomTileSetModal';
 import { Input } from './Input';
 import { Select } from './Select';
 import { FORM } from './styles';
+
+const BUILT_IN_TILE_SETS: readonly { value: TileSetPresetName; key: string }[] =
+  [
+    { value: 'Regular', key: 'tileSetOpt.regular' },
+    { value: 'Sanma', key: 'tileSetOpt.sanma' },
+    { value: 'TwoSets', key: 'tileSetOpt.twoSets' },
+    { value: 'OnlySZ', key: 'tileSetOpt.onlySZ' },
+    { value: 'TenchiSouzou', key: 'tileSetOpt.tenchiSouzou' },
+    { value: 'RegularWildcards', key: 'tileSetOpt.regularWildcards' },
+  ];
 
 interface GameSettingsTabProps {
   isLoading: boolean;
@@ -35,6 +46,10 @@ interface GameSettingsTabProps {
   validateNextRoundAckTimeout: (v: string) => void;
   tileSetPreset: TileSetPresetName;
   setTileSetPreset: (v: TileSetPresetName) => void;
+  wildcardCountInput: string;
+  setWildcardCountInput: (v: string) => void;
+  wildcardCountError: string | null;
+  validateWildcardCount: (v: string) => void;
 }
 
 export function GameSettingsTab({
@@ -57,6 +72,10 @@ export function GameSettingsTab({
   validateNextRoundAckTimeout,
   tileSetPreset,
   setTileSetPreset,
+  wildcardCountInput,
+  setWildcardCountInput,
+  wildcardCountError,
+  validateWildcardCount,
 }: GameSettingsTabProps) {
   const { t } = useTranslation();
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
@@ -191,36 +210,14 @@ export function GameSettingsTab({
           }}
           disabled={isLoading}
         >
-          <option value="Regular">
-            {t('tileSetOpt.labelWithCount', {
-              name: t('tileSetOpt.regular'),
-              count: getTileSet('Regular').length,
-            })}
-          </option>
-          <option value="Sanma">
-            {t('tileSetOpt.labelWithCount', {
-              name: t('tileSetOpt.sanma'),
-              count: getTileSet('Sanma').length,
-            })}
-          </option>
-          <option value="TwoSets">
-            {t('tileSetOpt.labelWithCount', {
-              name: t('tileSetOpt.twoSets'),
-              count: getTileSet('TwoSets').length,
-            })}
-          </option>
-          <option value="OnlySZ">
-            {t('tileSetOpt.labelWithCount', {
-              name: t('tileSetOpt.onlySZ'),
-              count: getTileSet('OnlySZ').length,
-            })}
-          </option>
-          <option value="TenchiSouzou">
-            {t('tileSetOpt.labelWithCount', {
-              name: t('tileSetOpt.tenchiSouzou'),
-              count: getTileSet('TenchiSouzou').length,
-            })}
-          </option>
+          {BUILT_IN_TILE_SETS.map(({ value, key }) => (
+            <option key={value} value={value}>
+              {t('tileSetOpt.labelWithCount', {
+                name: t(key),
+                count: getTileSet(value).length,
+              })}
+            </option>
+          ))}
           {customSets.length > 0 && (
             <optgroup label={t('customTileSet.title')}>
               {customSets.map((s) => (
@@ -244,6 +241,31 @@ export function GameSettingsTab({
               setTileSetPreset(newId);
             }}
           />
+        )}
+      </div>
+
+      <div className={FORM.groupInlineWrapper}>
+        <div className={FORM.groupInline}>
+          <label htmlFor="wildcard-count" className={FORM.labelInline}>
+            {t('lobby.wildcardCount')}
+          </label>
+          <Input
+            id="wildcard-count"
+            inputSize="inline"
+            type="text"
+            inputMode="numeric"
+            value={wildcardCountInput}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '');
+              setWildcardCountInput(val);
+              validateWildcardCount(val);
+            }}
+            disabled={isLoading}
+            placeholder={String(DEFAULT_WILDCARD_COUNT)}
+          />
+        </div>
+        {wildcardCountError && (
+          <span className={FORM.fieldError}>{wildcardCountError}</span>
         )}
       </div>
     </div>
