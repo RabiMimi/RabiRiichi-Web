@@ -273,12 +273,16 @@ describe('Tile Model', () => {
       expect(() => stringToTiles('r*')).toThrow('Invalid wildcard');
     });
 
-    it('carries no dora and indicates none', () => {
+    it('is dora exactly when a wildcard indicator is revealed', () => {
       const wildcard = Tile.fromString('*');
-      // Like the server's empty NextDora: a wildcard indicator points at no
-      // tile, and a wildcard is never a dora itself.
-      expect(checkIsDora(wildcard, [wildcard])).toBe(false);
+      // Like the server's NextDora: a wildcard indicator points at the
+      // wildcards themselves, and at no natural tile.
+      expect(checkIsDora(wildcard, [wildcard])).toBe(true);
+      expect(checkIsDora(wildcard, [Tile.fromString('7z'), wildcard])).toBe(
+        true,
+      );
       expect(checkIsDora(wildcard, [Tile.fromString('7z')])).toBe(false);
+      expect(checkIsDora(wildcard, [])).toBe(false);
       for (const str of ['1m', '2m', '9p', '1s', '1z', '5z']) {
         expect(checkIsDora(Tile.fromString(str), [wildcard])).toBe(false);
       }

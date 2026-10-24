@@ -383,3 +383,36 @@
 .animate-chat-msg-fade-in {
   animation: chat-msg-fade-in 0.2s ease-out forwards;
 }
+
+/* A result tile that a wildcard stood in for: a rainbow ring that keeps
+   flowing, echoing the wildcard's prismatic face. */
+@keyframes wildcard-ring-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.wildcard-ring {
+  background: linear-gradient(
+    90deg,
+    #ff2e55,
+    #ff8a1f,
+    #ffd21f,
+    #22c96e,
+    #1fb8f2,
+    #8a45f5,
+    #f23cc0,
+    #ff2e55
+  );
+  background-size: 200% 100%;
+  animation: wildcard-ring-flow 2.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wildcard-ring {
+    animation: none;
+  }
+}

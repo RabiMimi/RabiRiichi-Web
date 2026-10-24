@@ -41,6 +41,7 @@ import {
   DealerFirstTurnEventMsg,
   AddTileEventMsg,
   AgariEventMsg,
+  type WildcardAssignmentMsg,
   ApplyScoreEventMsg,
   ConcludeGameEventMsg,
   NextGameEventMsg,
@@ -187,6 +188,7 @@ export type IAddKanEventMsg = AddKanEventMsg.$Properties;
 export type IDealerFirstTurnEventMsg = DealerFirstTurnEventMsg.$Properties;
 export type IAddTileEventMsg = AddTileEventMsg.$Properties;
 export type IAgariEventMsg = AgariEventMsg.$Properties;
+export type IWildcardAssignmentMsg = WildcardAssignmentMsg.$Properties;
 export type IApplyScoreEventMsg = ApplyScoreEventMsg.$Properties;
 export type IConcludeGameEventMsg = ConcludeGameEventMsg.$Properties;
 export type INextGameEventMsg = NextGameEventMsg.$Properties;

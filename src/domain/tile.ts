@@ -205,11 +205,11 @@ export function getDoraTargetForIndicator(indicator: Tile): {
 /**
  * Checks if a given tile is a Dora, given a set of active Dora indicators.
  * A tile is Dora if it matches any indicator's target, or if it is an Akadora (red 5).
- * Wildcards carry no dora, and a wildcard indicator points at no tile.
+ * A wildcard indicator points at the wildcards themselves, as on the server.
  */
 export function checkIsDora(tile: Tile, indicators: readonly Tile[]): boolean {
   if (tile.isWildcard) {
-    return false;
+    return indicators.some((ind) => ind.isWildcard);
   }
   if (tile.akadora) {
     return true;

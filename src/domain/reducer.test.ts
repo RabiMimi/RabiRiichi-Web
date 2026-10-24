@@ -1304,6 +1304,30 @@ describe('Reducer - Events', () => {
     expect(p0?.gameState?.hand.freeTiles).toHaveLength(2);
   });
 
+  it('records which tile each wildcard stood for in the win', () => {
+    const state = createInitializedRoom();
+    const eventMsg = {
+      agariEvent: {
+        agariInfos: [
+          {
+            playerId: 0,
+            freeTiles: [
+              { traceId: 10, tile: 17 },
+              { traceId: 11, tile: 0x51 },
+            ],
+            wildcardAssignments: [{ traceId: 11, tile: 18 }],
+          },
+        ],
+        incoming: { traceId: 50, tile: 19 },
+      },
+    };
+
+    const agari = applyEvent(state, eventMsg).players.find((p) => p.seat === 0)
+      ?.gameState?.agari;
+
+    expect(agari?.wildcardAssignments).toEqual(new Map([[11, 18]]));
+  });
+
   it('records the server is_tsumo flag on a tsumo win', () => {
     const state = createInitializedRoom();
     // A self-drawn win: the incoming tile has no discardInfo and is_tsumo=true.
