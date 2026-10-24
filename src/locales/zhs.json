@@ -125,7 +125,8 @@
     "manzu": "万子 (Characters)",
     "pinzu": "筒子 (Dots)",
     "souzu": "条子 (Bamboos)",
-    "zihai": "字牌 (Honors)"
+    "zihai": "字牌 (Honors)",
+    "wildcard": "万能牌 (Wildcards)"
   },
   "yakuGroup": {
     "1han": "1番",

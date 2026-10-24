@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   DEFAULT_ACTION_TIMEOUT,
   DEFAULT_NEXT_ROUND_ACK_TIMEOUT,
+  DEFAULT_TILE_SET_PRESET,
   DEFAULT_WILDCARD_COUNT,
 } from '../domain/constants';
 import {
@@ -239,6 +240,12 @@ export function GameSettingsTab({
             onSaved={(newId) => {
               setCustomSets(loadCustomTileSets());
               setTileSetPreset(newId);
+            }}
+            onDeleted={(deletedId) => {
+              setCustomSets(loadCustomTileSets());
+              if (tileSetPreset === deletedId) {
+                setTileSetPreset(DEFAULT_TILE_SET_PRESET);
+              }
             }}
           />
         )}
