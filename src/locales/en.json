@@ -621,6 +621,9 @@
     "tileTooltips": "Tile Tooltips",
     "tooltipOnHandTiles": "Show on hand tiles",
     "tooltipOnRiverTiles": "Show on river tiles",
+    "controls": "Controls",
+    "doubleClickDiscard": "Double-click table to discard drawn tile",
+    "autoCloseChat": "Close chat after sending",
     "profile": {
       "username": "Username",
       "nickname": "Nickname",

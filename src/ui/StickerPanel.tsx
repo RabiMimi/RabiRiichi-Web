@@ -3,7 +3,7 @@ import { rabiriichi } from '../net/client';
 import { sendChatMessage } from '../net/messages';
 import { useTranslation } from 'react-i18next';
 import { CHARACTERS } from '../domain/character';
-import { useCharacterId } from '../state/store';
+import { useAutoCloseChat, useCharacterId } from '../state/store';
 
 import { Tooltip } from './Tooltip';
 
@@ -11,6 +11,7 @@ export function StickerPanel(): React.JSX.Element | null {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
   const characterId = useCharacterId();
+  const autoCloseChat = useAutoCloseChat();
 
   const character = useMemo(() => {
     const found = CHARACTERS.find((c) => c.id === characterId);
@@ -23,11 +24,12 @@ export function StickerPanel(): React.JSX.Element | null {
   }, [characterId]);
 
   const handleSelectSticker = (stickerName: string) => {
-    if (rabiriichi.ws) {
-      // The server expects characterId/stickerName (e.g. "mimi/angry.png")
-      const stickerPath = `${character.id}/${stickerName}`;
-      sendChatMessage(rabiriichi.ws, null, stickerPath);
-    }
+    if (!rabiriichi.ws) return;
+    // The server expects characterId/stickerName (e.g. "mimi/angry.png")
+    const stickerPath = `${character.id}/${stickerName}`;
+    sendChatMessage(rabiriichi.ws, null, stickerPath);
+    // Stickers are chat too: the tray follows the chat box's close-on-send.
+    if (autoCloseChat) setIsOpen(false);
   };
 
   return (

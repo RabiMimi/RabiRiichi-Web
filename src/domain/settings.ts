@@ -46,6 +46,37 @@ export class VisualsSettings {
   }
 }
 
+type ControlSettingsJSON = Pick<
+  ClientSettings,
+  'doubleClickDiscard' | 'autoCloseChat'
+>;
+
+/** How table input behaves; both default to the long-standing behaviour. */
+export class ControlSettings {
+  public doubleClickDiscard = true;
+  public autoCloseChat = true;
+
+  constructor(settings?: ClientSettings) {
+    if (settings) this.update(settings);
+  }
+
+  public update(patch: ControlSettingsJSON): void {
+    if (patch.doubleClickDiscard !== undefined) {
+      this.doubleClickDiscard = patch.doubleClickDiscard;
+    }
+    if (patch.autoCloseChat !== undefined) {
+      this.autoCloseChat = patch.autoCloseChat;
+    }
+  }
+
+  public toJSON(): Required<ControlSettingsJSON> {
+    return {
+      doubleClickDiscard: this.doubleClickDiscard,
+      autoCloseChat: this.autoCloseChat,
+    };
+  }
+}
+
 export class SoundsSettings {
   public volumeSE = 1.0;
   public volumeBGM = 1.0;

@@ -621,6 +621,9 @@
     "tileTooltips": "牌面提示",
     "tooltipOnHandTiles": "手牌显示提示",
     "tooltipOnRiverTiles": "河牌/副露显示提示",
+    "controls": "操作",
+    "doubleClickDiscard": "双击桌面打出摸到的牌",
+    "autoCloseChat": "发送后关闭聊天",
     "profile": {
       "username": "用户名",
       "nickname": "昵称",

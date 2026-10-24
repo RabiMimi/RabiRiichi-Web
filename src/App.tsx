@@ -141,8 +141,11 @@ function App(): React.JSX.Element {
     lastMissedRef.current = now;
 
     if (diff < 300) {
-      // Auto-discard drawn tile when it's our turn to play
-      tryDiscardPendingTile(room, currentUser);
+      // Auto-discard drawn tile when it's our turn to play, unless the player
+      // turned the shortcut off after misfiring it.
+      if (rabiriichi.controls.doubleClickDiscard) {
+        tryDiscardPendingTile(room, currentUser);
+      }
       // Skip when pon/chi/kan action buttons are shown (issue #90)
       trySkipAction();
     }
