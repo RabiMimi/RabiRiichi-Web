@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isHandheldDevice } from './handheldDevice';
 
 export function OrientationGuard(): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -7,11 +8,7 @@ export function OrientationGuard(): React.JSX.Element | null {
 
   useEffect(() => {
     const checkOrientation = () => {
-      const isMobile =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent,
-        );
-      if (isMobile) {
+      if (isHandheldDevice(navigator.userAgent, navigator.maxTouchPoints)) {
         setIsPortrait(window.innerHeight > window.innerWidth);
       } else {
         setIsPortrait(false);
