@@ -36,10 +36,6 @@ export const MIN_MIN_HAN = 1;
 export const MAX_MIN_HAN = 13;
 export const MIN_POINTS = 0;
 export const MAX_POINTS = 1000000;
-// Extra wildcards appended to the chosen tile set. The cap keeps them a spice
-// rather than a quarter of the wall.
-export const MIN_WILDCARD_COUNT = 0;
-export const MAX_WILDCARD_COUNT = 36;
 
 // Room Config Defaults
 export const DEFAULT_PLAYER_COUNT = 2;
@@ -53,7 +49,6 @@ export const DEFAULT_HONBA_POINTS = 300;
 export const DEFAULT_RYUUKYOKU_POINTS_0 = 1000;
 export const DEFAULT_RYUUKYOKU_POINTS_1 = 1500;
 export const DEFAULT_TILE_SET_PRESET = 'Regular';
-export const DEFAULT_WILDCARD_COUNT = 0;
 
 // Policy defaults (matching client initial states)
 export const DEFAULT_RENCHAN_POLICY =

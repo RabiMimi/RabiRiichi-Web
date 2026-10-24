@@ -4,7 +4,6 @@ import {
   DEFAULT_ACTION_TIMEOUT,
   DEFAULT_NEXT_ROUND_ACK_TIMEOUT,
   DEFAULT_TILE_SET_PRESET,
-  DEFAULT_WILDCARD_COUNT,
 } from '../domain/constants';
 import {
   type TileSetPresetName,
@@ -47,10 +46,6 @@ interface GameSettingsTabProps {
   validateNextRoundAckTimeout: (v: string) => void;
   tileSetPreset: TileSetPresetName;
   setTileSetPreset: (v: TileSetPresetName) => void;
-  wildcardCountInput: string;
-  setWildcardCountInput: (v: string) => void;
-  wildcardCountError: string | null;
-  validateWildcardCount: (v: string) => void;
 }
 
 export function GameSettingsTab({
@@ -73,10 +68,6 @@ export function GameSettingsTab({
   validateNextRoundAckTimeout,
   tileSetPreset,
   setTileSetPreset,
-  wildcardCountInput,
-  setWildcardCountInput,
-  wildcardCountError,
-  validateWildcardCount,
 }: GameSettingsTabProps) {
   const { t } = useTranslation();
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
@@ -248,31 +239,6 @@ export function GameSettingsTab({
               }
             }}
           />
-        )}
-      </div>
-
-      <div className={FORM.groupInlineWrapper}>
-        <div className={FORM.groupInline}>
-          <label htmlFor="wildcard-count" className={FORM.labelInline}>
-            {t('lobby.wildcardCount')}
-          </label>
-          <Input
-            id="wildcard-count"
-            inputSize="inline"
-            type="text"
-            inputMode="numeric"
-            value={wildcardCountInput}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '');
-              setWildcardCountInput(val);
-              validateWildcardCount(val);
-            }}
-            disabled={isLoading}
-            placeholder={String(DEFAULT_WILDCARD_COUNT)}
-          />
-        </div>
-        {wildcardCountError && (
-          <span className={FORM.fieldError}>{wildcardCountError}</span>
         )}
       </div>
     </div>

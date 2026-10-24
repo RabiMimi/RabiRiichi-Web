@@ -1,9 +1,5 @@
 import { Tile, TileSuit, WILDCARD_TILE_BYTE } from './tile';
-import {
-  MAX_WILDCARD_COUNT,
-  MIN_WILDCARD_COUNT,
-  STORAGE_KEY_CUSTOM_TILE_SETS,
-} from './constants';
+import { STORAGE_KEY_CUSTOM_TILE_SETS } from './constants';
 
 export function getRegularTileSet(): Tile[] {
   const tiles: Tile[] = [];
@@ -133,28 +129,8 @@ export function getTileSet(presetName: string): Tile[] {
 }
 
 /**
- * The wire `initialTiles` for a room: the chosen tile set with `wildcardCount`
- * extra wildcards appended.
+ * The wire `initialTiles` for a room: the tiles of the chosen tile set.
  */
-export function buildInitialTiles(
-  presetName: string,
-  wildcardCount: number,
-): number[] {
-  return [...getTileSet(presetName), ...getWildcards(wildcardCount)].map(
-    (tile) => tile.toByte(),
-  );
-}
-
-/**
- * Parses the host's extra-wildcard input. Empty means none; anything that is
- * not a whole number within range is rejected with `null`.
- */
-export function parseWildcardCount(input: string): number | null {
-  const trimmed = input.trim();
-  if (trimmed === '') return MIN_WILDCARD_COUNT;
-  if (!/^\d+$/.test(trimmed)) return null;
-  const count = Number(trimmed);
-  return count >= MIN_WILDCARD_COUNT && count <= MAX_WILDCARD_COUNT
-    ? count
-    : null;
+export function buildInitialTiles(presetName: string): number[] {
+  return getTileSet(presetName).map((tile) => tile.toByte());
 }

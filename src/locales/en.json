@@ -77,7 +77,6 @@
     "honbaPoints": "Honba Points",
     "ryuukyokuPoints": "Ryuukyoku Points",
     "tileSet": "Tile Set",
-    "wildcardCount": "Extra Wildcards",
     "configureYakus": "Configure Yakus",
     "allYakus": "All",
     "yakus": "Yakus",
@@ -507,7 +506,6 @@
       "honbaPoints": "Honba points must be between 0 and 1,000,000.",
       "ryuukyokuPoints": "Ryuukyoku points must contain 2 values, each between 0 and 1,000,000.",
       "pointsRange": "Points limit must be between 0 and 1,000,000.",
-      "wildcardCount": "Extra wildcards must be between {{min}} and {{max}}.",
       "generic": "Invalid game configuration.",
       "llm": {
         "auth": "Invalid API key or insufficient permission.",
