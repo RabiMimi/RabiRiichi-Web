@@ -47,26 +47,9 @@ function PlayerIndicator3D({
 
   const [showName, showNameBind] = useHoverOrTouchHold(300);
 
-  if (isLocal) {
-    return (
-      <Html
-        position={[0, 0.3, 0.1]}
-        portal={playerOverlayPortalTarget as React.RefObject<HTMLElement>}
-        style={{
-          pointerEvents: 'none',
-          userSelect: 'none',
-        }}
-      >
-        <div className="flex flex-col items-center justify-center -translate-x-1/2 -translate-y-full gap-1">
-          <StickerBubble
-            sticker={sticker}
-            className="sticker-bubble-3d local"
-          />
-          <ChatBubble text={chatText} className="chat-bubble-3d local" />
-        </div>
-      </Html>
-    );
-  }
+  // The local player's bubbles are DOM, anchored above the hand row by
+  // LocalPlayerBubbles; a scene anchor here landed on top of the tiles.
+  if (isLocal) return null;
 
   const placement = screenPos === 2 ? 'bottom' : 'top';
 

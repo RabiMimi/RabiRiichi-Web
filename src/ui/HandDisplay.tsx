@@ -29,7 +29,11 @@ import { TileTooltip } from './TileTooltip';
 import { useDragToDiscard, type DragToDiscard } from './useDragToDiscard';
 import { isTileDimmed } from './handTileState';
 import { resolveTileTap } from './discardGesture';
+import { LocalPlayerBubbles } from './LocalPlayerBubbles';
 import type { ActionOption } from '../domain/inquiry';
+
+/** Gap (px) between a raised hand tile and the local chat/sticker bubbles. */
+const BUBBLE_CLEARANCE = 8;
 
 /** Tracks the viewport so the hand can shrink on small or short screens. */
 function useViewportSize(): { width: number; height: number } {
@@ -334,6 +338,12 @@ export function HandDisplay(): React.JSX.Element | null {
             <TileTooltip />
           </div>
         )}
+
+        {/* Over the hand's left end and above a raised tile, never on it. */}
+        <LocalPlayerBubbles
+          left={layout.leftOffset + layout.tileWidth}
+          bottom={layout.rowHeight + layout.hoverLift + BUBBLE_CLEARANCE}
+        />
 
         <div
           className="flex items-end gap-0.5 absolute bottom-0"
