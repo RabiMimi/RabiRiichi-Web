@@ -9,7 +9,7 @@ import {
   isYakumanEnabled,
   isYakumanScoring,
 } from '../domain/yakus';
-import { getLimitName } from '../domain/resultHelpers';
+import { getDisplayHan, getLimitName } from '../domain/resultHelpers';
 import { UiTile } from './UiTile';
 import { resolveHandTiles, resolveTile } from '../domain/wildcardResolution';
 import { getGameFontStack } from './gameFont';
@@ -54,10 +54,7 @@ export function WinnerDetailCard({
   } else if (agari.scores?.result) {
     const result = agari.scores.result;
 
-    const effectiveHan = isAotenjou
-      ? (result.han ?? 0) +
-        ((result.yakuman ?? 0) + (result.bonusYakuman ?? 0)) * YAKUMAN_HAN
-      : (result.han ?? 0);
+    const effectiveHan = getDisplayHan(result, isAotenjou);
 
     if (result.finalYakuman && result.finalYakuman > 0 && !isAotenjou) {
       if (result.kazoeYakuman && result.kazoeYakuman > 0) {
@@ -319,7 +316,7 @@ export function WinnerDetailCard({
                 className={`${RESULT.scoreFigure} ${finalHanFuColor} whitespace-nowrap`}
                 style={{ fontFamily }}
               >
-                {scoreResult.han ?? 0}
+                {getDisplayHan(scoreResult, isAotenjou)}
                 {hanUnit}
               </span>
               {scoreResult.fu ? (
