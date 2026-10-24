@@ -69,8 +69,7 @@ the stable per-instance id used to track a tile across events.
 **Unit-test the round-trip and edge cases (red fives, honors).**
 
 **Wildcards.** The server adds `TileSuit.Wildcard = 5`: one universal tile,
-byte `0x51` (suit 5, num 1), written `*`, never akadora, sorted after the
-honors. It stands for any natural tile when the server scores a hand. A
+byte `0x51` (suit 5, num 1), written `*`, never akadora, sorted ahead of every suit. It stands for any natural tile when the server scores a hand. A
 wildcard dora indicator makes the wildcards themselves dora (and no natural
 tile); a wildcard standing in for a natural dora target earns nothing. A wait
 list may contain `*` itself (any draw completes the hand), so throwing a

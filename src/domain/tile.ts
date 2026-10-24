@@ -108,6 +108,10 @@ export class Tile {
   }
 
   public compareTo(other: Tile): number {
+    // Wildcards lead the hand, ahead of every suit.
+    if (this.isWildcard !== other.isWildcard) {
+      return this.isWildcard ? -1 : 1;
+    }
     if (this.suit !== other.suit) {
       return this.suit - other.suit;
     }

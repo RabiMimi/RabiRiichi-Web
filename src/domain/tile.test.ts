@@ -246,15 +246,15 @@ describe('Tile Model', () => {
       }
     });
 
-    it('sorts after the honors', () => {
-      const tiles = ['*', '7z', '1m', '*', '1z'].map((s) => Tile.fromString(s));
+    it('sorts ahead of every suit', () => {
+      const tiles = ['7z', '*', '1m', '*', '1z'].map((s) => Tile.fromString(s));
       tiles.sort((a, b) => a.compareTo(b));
       expect(tiles.map((t) => t.toString())).toEqual([
+        '*',
+        '*',
         '1m',
         '1z',
         '7z',
-        '*',
-        '*',
       ]);
     });
 
