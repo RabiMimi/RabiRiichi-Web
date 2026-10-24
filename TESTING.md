@@ -81,10 +81,12 @@ To test the full gameplay loop, you need two distinct user sessions. Open the cl
 1. On the Room Screen, both players must check the **Ready** checkbox.
 2. When all players are ready, the game will transition to the 3D game table.
 3. The GamePlay HUD displays player names, seats, and current points.
-4. When it is your turn, playable hand tiles lift slightly and glow yellow on hover. Click a tile to discard it.
+4. When it is your turn, click a legal hand tile with the mouse to discard it. On touch devices, tap once to select and raise a tile, then tap the same tile again to play it. Tapping a different tile changes the selection. Alternatively, drag a legal tile upward and release beyond the discard threshold.
 5. Action options (Chii, Pon, Kan, Riichi, Skip, etc.) appear as Majsoul-style HUD overlay buttons when applicable.
 6. Once the game ends, the translucent **Result Panel** displays yaku lists, fu/han/yakuman count, and per-player point changes.
 7. Click the proceed button on the Result Panel to return to the Lobby.
+
+For mobile interaction checks, touch a tile to show its info immediately (with tile tooltips enabled), then move your finger over other tiles to inspect them without lifting it. This also works when the touch starts on empty space and moves onto a tile. Info closes when the finger leaves the tiles or is released. A stationary inspection must not select or play the tile on release. Check both sorted hand tiles and the separate drawn tile. Drag a hand tile anywhere on the screen, including sideways and downward; it follows the finger in every direction. On release it returns to its original place unless its upward displacement exceeds the discard threshold and the current prompt allows that tile. Check outside your turn, illegal tiles after riichi, and a turn change during the drag. Cancelling a touch must also return the tile without submitting an action.
 
 ---
 

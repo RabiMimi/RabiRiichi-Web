@@ -9,8 +9,9 @@ import {
   isYakumanEnabled,
   isYakumanScoring,
 } from '../domain/yakus';
-import { getLimitName } from '../domain/resultHelpers';
+import { getDisplayHan, getLimitName } from '../domain/resultHelpers';
 import { UiTile } from './UiTile';
+import { resolveHandTiles, resolveTile } from '../domain/wildcardResolution';
 import { getGameFontStack } from './gameFont';
 import { getResultBadge } from './resultBadge';
 import { RESULT } from './styles';
@@ -53,10 +54,7 @@ export function WinnerDetailCard({
   } else if (agari.scores?.result) {
     const result = agari.scores.result;
 
-    const effectiveHan = isAotenjou
-      ? (result.han ?? 0) +
-        ((result.yakuman ?? 0) + (result.bonusYakuman ?? 0)) * YAKUMAN_HAN
-      : (result.han ?? 0);
+    const effectiveHan = getDisplayHan(result, isAotenjou);
 
     if (result.finalYakuman && result.finalYakuman > 0 && !isAotenjou) {
       if (result.kazoeYakuman && result.kazoeYakuman > 0) {
@@ -109,7 +107,15 @@ export function WinnerDetailCard({
       isAotenjou),
   );
 
-  const handTiles = player.gameState?.hand.freeTiles ?? [];
+  // Read the hand the way the server scored it: wildcards show the tile they
+  // stood for, marked as wild.
+  const handTiles = resolveHandTiles(
+    player.gameState?.hand.freeTiles ?? [],
+    agari.wildcardAssignments,
+  );
+  const winningTile = agari.incoming
+    ? resolveTile(agari.incoming, agari.wildcardAssignments)
+    : null;
   const calledMelds = player.gameState?.hand.called ?? [];
 
   const finalHanFuColor = isNagashi ? 'text-[#00e5ff]' : 'text-[#ff7a99]';
@@ -183,26 +189,25 @@ export function WinnerDetailCard({
       ) : (
         <div className="flex flex-wrap gap-0.5 lg:gap-1 bg-[#1a1a1a] p-1 lg:p-1.5 rounded-md items-center">
           <div className="flex gap-0.5 lg:gap-1">
-            {handTiles.map((tileMsg, idx) => {
-              const tileStr = Tile.fromByte(tileMsg.tile ?? 0).toString();
-              return (
-                <UiTile
-                  key={tileMsg.traceId ?? idx}
-                  tile={tileStr}
-                  size="result"
-                />
-              );
-            })}
+            {handTiles.map((resolved, idx) => (
+              <UiTile
+                key={resolved.traceId ?? idx}
+                tile={Tile.fromByte(resolved.tile).toString()}
+                fromWildcard={resolved.fromWildcard}
+                size="result"
+              />
+            ))}
           </div>
           {/* Winning tile */}
-          {agari.incoming && (
+          {winningTile && (
             <div className="ml-2 lg:ml-3 border-l-2 border-zinc-700 pl-2 lg:pl-3 flex items-center">
               <div className="relative flex">
                 <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#ff7a99] text-[#fff] text-xs font-black px-1.5 py-0.5 rounded-sm leading-none z-[2] select-none border border-[#ffccd5] whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
                   {t('result.winTile')}
                 </span>
                 <UiTile
-                  tile={Tile.fromByte(agari.incoming.tile ?? 0).toString()}
+                  tile={Tile.fromByte(winningTile.tile).toString()}
+                  fromWildcard={winningTile.fromWildcard}
                   isWinningTile
                   size="result"
                 />
@@ -311,7 +316,7 @@ export function WinnerDetailCard({
                 className={`${RESULT.scoreFigure} ${finalHanFuColor} whitespace-nowrap`}
                 style={{ fontFamily }}
               >
-                {scoreResult.han ?? 0}
+                {getDisplayHan(scoreResult, isAotenjou)}
                 {hanUnit}
               </span>
               {scoreResult.fu ? (

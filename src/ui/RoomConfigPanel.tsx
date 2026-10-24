@@ -36,7 +36,7 @@ import {
   FOUR_PLAYER_RYUUKYOKU_TRIGGERS_MASK,
 } from '../domain/constants';
 import type { IGameConfigMsg } from '../proto';
-import { getTileSet, type TileSetPresetName } from '../domain/tilesets';
+import { buildInitialTiles, type TileSetPresetName } from '../domain/tilesets';
 import { buildAllowedYakusPayload, defaultAllowedYakus } from '../domain/yakus';
 import { useAvailableYakus } from '../state/store';
 import { GameSettingsTab } from './GameSettingsTab';
@@ -516,7 +516,7 @@ export function RoomConfigPanel({
         ryuukyokuPoints: [ryuukyokuPoints0, ryuukyokuPoints1],
         validPointsRange: [0, upperPoints],
       },
-      initialTiles: getTileSet(tileSetPreset).map((tile) => tile.toByte()),
+      initialTiles: buildInitialTiles(tileSetPreset),
       allowedYakus: buildAllowedYakusPayload(allowedYakus),
     });
   };

@@ -13,7 +13,7 @@ export function LanguageSelector({
   return (
     <Select
       selectSize="compact"
-      className="cursor-pointer"
+      className="cursor-pointer w-28"
       value={language}
       onChange={(e) => onChange(e.target.value)}
     >

@@ -1,4 +1,4 @@
-import { type Tile, isTileUnknown } from '../domain/tile';
+import { type Tile, WILDCARD_TILE_STRING, isTileUnknown } from '../domain/tile';
 import { preloadImages, _resetImagePreloadCache } from '../lib/imagePreload';
 import type { IMenLikeMsg } from '../proto';
 
@@ -64,6 +64,16 @@ export const VALID_TILE_STRINGS = [
 
 export type ValidTileString = (typeof VALID_TILE_STRINGS)[number];
 
+// The wildcard has no counterpart in the copied JPG set; its face is vector art
+// sized like the JPGs (700x933) so it maps onto the tile mesh the same way.
+const WILDCARD_TEXTURE_PATH = '/assets/hand_tiles/wildcard.svg';
+
+/** Every tile string that has a face of its own, for preloading. */
+export const TILE_FACE_STRINGS = [
+  ...VALID_TILE_STRINGS,
+  WILDCARD_TILE_STRING,
+] as const;
+
 /**
  * Returns the texture path for a given tile or tile string.
  * Falls back to 'blank.jpg' if the tile is invalid or a back-face is requested.
@@ -86,6 +96,10 @@ export function getTileTexturePath(tile: string | Tile | null): string {
 
   if (tileStr === 'blank' || tileStr === 'front') {
     return `/assets/hand_tiles/${tileStr}.jpg`;
+  }
+
+  if (tileStr === WILDCARD_TILE_STRING) {
+    return WILDCARD_TEXTURE_PATH;
   }
 
   // Verify it is a valid tile face texture we have
@@ -273,7 +287,7 @@ export function preloadAllTileImages(): Promise<void> {
     return tileImagePreloadPromise;
   }
 
-  const paths = [...VALID_TILE_STRINGS, 'back', 'blank', 'front'].map(
+  const paths = [...TILE_FACE_STRINGS, 'back', 'blank', 'front'].map(
     getTileTexturePath,
   );
 

@@ -39,6 +39,13 @@ describe('scene assets registry', () => {
     expect(getTileTexturePath('10m')).toBe('/assets/hand_tiles/blank.jpg'); // invalid rank
   });
 
+  it('should map the wildcard to its vector face', () => {
+    expect(getTileTexturePath('*')).toBe('/assets/hand_tiles/wildcard.svg');
+    expect(getTileTexturePath(Tile.fromByte(0x51))).toBe(
+      '/assets/hand_tiles/wildcard.svg',
+    );
+  });
+
   it('should map front, blank and back special textures correctly', () => {
     expect(getTileTexturePath('front')).toBe('/assets/hand_tiles/front.jpg');
     expect(getTileTexturePath('blank')).toBe('/assets/hand_tiles/blank.jpg');
@@ -244,9 +251,10 @@ describe('preloadAllTileImages', () => {
     expect(preloadAllTileImages()).toBe(first);
     await first;
 
-    // 37 faces (red-fives included) + back/blank/front = 40 unique paths.
+    // 37 faces (red-fives included) + wildcard + back/blank/front = 41.
     const uniquePaths = new Set(created.map((img) => img.src));
-    expect(uniquePaths.size).toBe(40);
+    expect(uniquePaths.size).toBe(41);
+    expect(uniquePaths.has('/assets/hand_tiles/wildcard.svg')).toBe(true);
     expect(uniquePaths.has('/assets/hand_tiles/1m.jpg')).toBe(true);
     expect(uniquePaths.has('/assets/hand_tiles/back.jpg')).toBe(true);
     expect(uniquePaths.has('/assets/hand_tiles/blank.jpg')).toBe(true);

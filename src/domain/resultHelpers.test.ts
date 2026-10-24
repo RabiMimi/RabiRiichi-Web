@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getDisplayHan,
   getFinalPlacementVoiceLineId,
   getYakuhaiWindVoiceLineId,
   getYakuVoiceLineId,
@@ -42,5 +43,23 @@ describe('result voice helpers', () => {
     expect(getYakuVoiceLineId('Dora', 0)).toBeNull();
     expect(getYakuVoiceLineId('Akadora', 0)).toBeNull();
     expect(getYakuVoiceLineId('Dora', 1)).toBe('dora1');
+  });
+});
+
+describe('getDisplayHan', () => {
+  // The wildcard win from the bug report: 17 han of ordinary yaku and dora
+  // plus 8 yakuman (6 counted, 2 doubled), on an uncapped table.
+  const result = { han: 17, fu: 60, yakuman: 8, bonusYakuman: 0 };
+
+  it('folds yakuman into the total with uncapped scoring', () => {
+    expect(getDisplayHan(result, true)).toBe(17 + 8 * 13);
+    expect(getDisplayHan({ han: 2, yakuman: 1, bonusYakuman: 1 }, true)).toBe(
+      2 + 2 * 13,
+    );
+  });
+
+  it('reports plain han when yakuman are capped', () => {
+    expect(getDisplayHan(result, false)).toBe(17);
+    expect(getDisplayHan({}, true)).toBe(0);
   });
 });

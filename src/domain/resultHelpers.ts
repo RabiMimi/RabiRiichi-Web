@@ -1,3 +1,5 @@
+import type { IScoreStorageMsg } from '../proto/index.js';
+import { YAKUMAN_HAN } from './model';
 import { isKiriageManganEnabled } from './yakus';
 
 export const SILENT_WAV_URL =
@@ -182,4 +184,20 @@ export function getLimitName(
   }
 
   return null;
+}
+
+/**
+ * The han a result card reports. The server keeps yakuman out of `han`; with
+ * uncapped (aotenjou) scoring each yakuman is worth 13 han and belongs in the
+ * total, while capped scoring shows yakuman by name instead.
+ */
+export function getDisplayHan(
+  result: NonNullable<IScoreStorageMsg['result']>,
+  isAotenjou: boolean,
+): number {
+  const han = result.han ?? 0;
+  if (!isAotenjou) return han;
+  return (
+    han + ((result.yakuman ?? 0) + (result.bonusYakuman ?? 0)) * YAKUMAN_HAN
+  );
 }

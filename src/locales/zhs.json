@@ -102,6 +102,7 @@
     "twoSets": "两副牌",
     "onlySZ": "仅条子与字牌",
     "tenchiSouzou": "天地创造",
+    "regularWildcards": "万能牌",
     "customize": "自定义...",
     "labelWithCount": "{{name}} ({{count}}张)"
   },
@@ -123,7 +124,8 @@
     "manzu": "万子 (Characters)",
     "pinzu": "筒子 (Dots)",
     "souzu": "条子 (Bamboos)",
-    "zihai": "字牌 (Honors)"
+    "zihai": "字牌 (Honors)",
+    "wildcard": "万能牌 (Wildcards)"
   },
   "yakuGroup": {
     "1han": "1番",

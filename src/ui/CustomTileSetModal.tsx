@@ -13,6 +13,7 @@ import {
 interface CustomTileSetModalProps {
   onClose: () => void;
   onSaved?: (selectedId: string) => void;
+  onDeleted?: (deletedId: string) => void;
 }
 
 const ALL_TILE_KEYS = [
@@ -57,6 +58,8 @@ const ALL_TILE_KEYS = [
   '5z',
   '6z',
   '7z',
+  // Wildcard
+  '*',
 ] as const;
 
 function getDefaultCounts(): Record<string, number> {
@@ -66,6 +69,8 @@ function getDefaultCounts(): Record<string, number> {
       counts[key] = 3;
     } else if (key === 'r5m' || key === 'r5p' || key === 'r5s') {
       counts[key] = 1;
+    } else if (key === '*') {
+      counts[key] = 0;
     } else {
       counts[key] = 4;
     }
@@ -76,6 +81,7 @@ function getDefaultCounts(): Record<string, number> {
 export function CustomTileSetModal({
   onClose,
   onSaved,
+  onDeleted,
 }: CustomTileSetModalProps): React.JSX.Element {
   const { t } = useTranslation();
   const [customSets, setCustomSets] = useState<CustomTileSet[]>(() =>
@@ -119,6 +125,7 @@ export function CustomTileSetModal({
       const updated = customSets.filter((s) => s.id !== id);
       saveCustomTileSets(updated);
       setCustomSets(updated);
+      onDeleted?.(id);
     }
   };
 
@@ -276,6 +283,7 @@ export function CustomTileSetModal({
                   t('customTileSet.zihai'),
                   ALL_TILE_KEYS.filter((k) => k.endsWith('z')),
                 )}
+                {renderGroup(t('customTileSet.wildcard'), ['*'])}
               </div>
             </div>
 
@@ -322,7 +330,7 @@ export function CustomTileSetModal({
                   {customSets.map((set) => (
                     <div
                       key={set.id}
-                      className="flex items-center justify-between bg-[#121c32]/50 border border-white/10 rounded-lg px-4 py-3 hover:border-white/20 transition-colors"
+                      className="flex items-center justify-between bg-white/[0.04] border border-white/10 rounded-lg px-4 py-3 hover:border-white/20 transition-colors"
                     >
                       <div className="flex flex-col">
                         <span className="font-bold text-white text-base">

@@ -1,4 +1,5 @@
 import React from 'react';
+import { WILDCARD_TILE_STRING } from '../domain/tile';
 import { getTileTexturePath } from '../scene/assets';
 import { RESULT } from './styles';
 
@@ -10,6 +11,8 @@ interface UiTileProps {
   size?: UiTileSize;
   isWinningTile?: boolean;
   isHighlighted?: boolean;
+  /** The face shows what a wildcard stood for; mark it as such. */
+  fromWildcard?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -30,9 +33,21 @@ export function UiTile({
   size = 'result',
   isWinningTile = false,
   isHighlighted = false,
+  fromWildcard = false,
   className = '',
   style,
 }: UiTileProps): React.JSX.Element {
+  if (fromWildcard) {
+    return (
+      <WildcardFrame
+        tile={tile}
+        size={size}
+        isWinningTile={isWinningTile}
+        className={className}
+        style={style}
+      />
+    );
+  }
   const isBack = tile === 'back';
   const imgSrc = isBack
     ? '/assets/hand_tiles/back.jpg'
@@ -64,5 +79,44 @@ export function UiTile({
       className={`${defaultStyles} ${borderStyle} ${SIZE_CLASSES[size]} ${className}`}
       style={style}
     />
+  );
+}
+
+/**
+ * A tile a wildcard stood in for: the effective face inside a flowing rainbow
+ * ring, with the wildcard's own face pinned to the corner.
+ */
+function WildcardFrame({
+  tile,
+  size,
+  isWinningTile,
+  className,
+  style,
+}: {
+  tile: string;
+  size: UiTileSize;
+  isWinningTile: boolean;
+  className: string;
+  style: React.CSSProperties | undefined;
+}): React.JSX.Element {
+  return (
+    <span
+      className={`wildcard-ring relative inline-flex shrink-0 rounded-[3px] p-[2px] ${className}`}
+      style={style}
+      title={WILDCARD_TILE_STRING}
+    >
+      <UiTile
+        tile={tile}
+        size={size}
+        isWinningTile={isWinningTile}
+        className="!border-0 !shadow-none"
+      />
+      <img
+        src={getTileTexturePath(WILDCARD_TILE_STRING)}
+        alt={WILDCARD_TILE_STRING}
+        draggable={false}
+        className="absolute -right-1 -top-1 w-[42%] rounded-[2px] border border-white bg-white shadow-[0_1px_3px_rgba(0,0,0,0.6)]"
+      />
+    </span>
   );
 }

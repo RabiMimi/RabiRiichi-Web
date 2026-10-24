@@ -26,6 +26,7 @@ export const TILE_SET_OPTIONS = [
   'TwoSets',
   'OnlySZ',
   'TenchiSouzou',
+  'RegularWildcards',
 ] as const;
 
 export interface RoomConfigChoices {

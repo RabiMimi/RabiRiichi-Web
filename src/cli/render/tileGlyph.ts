@@ -5,7 +5,7 @@
  * - `unicode`: the dedicated Mahjong Tiles block (U+1F000–U+1F02B). Compact and
  *   pretty, but ambiguous-width in many terminals and with no distinct glyph
  *   for red fives (we append a marker + color instead).
- * - `ascii`: fixed-width two/three-char labels (`1m`, `5p`, `Ea`, `Wh`, …).
+ * - `ascii`: fixed-width two/three-char labels (`1m`, `5p`, `Ea`, `Wh`, `**`, …).
  *   Predictable alignment everywhere; the safe default for readability.
  *
  * Everything here is a pure function of the tile so it is trivially testable and
@@ -17,7 +17,8 @@ import { Tile, TileSuit } from '../../domain/tile';
 export type TileMode = 'unicode' | 'ascii';
 
 /** Ink color names used to distinguish suits and highlight red fives. */
-export type TileColor = 'red' | 'blue' | 'green' | 'white' | 'gray' | 'yellow';
+export type TileColor =
+  'red' | 'blue' | 'green' | 'white' | 'gray' | 'yellow' | 'magenta';
 
 /** A fully-resolved tile presentation: the glyph/label and its foreground. */
 export interface TileGlyph {
@@ -56,6 +57,9 @@ const SUITED_UNICODE_BASE: Partial<Record<TileSuit, number>> = {
   [TileSuit.P]: 0x1f019,
 };
 const TILE_BACK_UNICODE = 0x1f02b;
+// The block's joker tile stands in for the wildcard.
+const WILDCARD_UNICODE = 0x1f02a;
+const WILDCARD_ASCII = '**';
 
 const SUIT_LETTER: Partial<Record<TileSuit, string>> = {
   [TileSuit.M]: 'm',
@@ -80,6 +84,8 @@ export function colorForTile(tile: Tile): TileColor {
       return 'green';
     case TileSuit.Z:
       return 'white';
+    case TileSuit.Wildcard:
+      return 'magenta';
     case TileSuit.Invalid:
       return 'gray';
     default:
@@ -88,6 +94,7 @@ export function colorForTile(tile: Tile): TileColor {
 }
 
 function asciiLabel(tile: Tile): string {
+  if (tile.isWildcard) return WILDCARD_ASCII;
   if (tile.suit === TileSuit.Z) {
     return HONOR_ASCII[tile.num] ?? '??';
   }
@@ -98,6 +105,7 @@ function asciiLabel(tile: Tile): string {
 }
 
 function unicodeChar(tile: Tile): string {
+  if (tile.isWildcard) return String.fromCodePoint(WILDCARD_UNICODE);
   if (tile.suit === TileSuit.Z) {
     const wind = HONOR_WIND_UNICODE[tile.num - 1];
     if (tile.num >= 1 && tile.num <= 4 && wind !== undefined) {

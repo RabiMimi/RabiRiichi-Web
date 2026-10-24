@@ -68,6 +68,23 @@ Port `../RabiRiichi-Cocos/assets/Scripts/Rabi/Tile.ts` exactly:
 the stable per-instance id used to track a tile across events.
 **Unit-test the round-trip and edge cases (red fives, honors).**
 
+**Wildcards.** The server adds `TileSuit.Wildcard = 5`: one universal tile,
+byte `0x51` (suit 5, num 1), written `*`, never akadora, sorted ahead of every suit. It stands for any natural tile when the server scores a hand. A
+wildcard dora indicator makes the wildcards themselves dora (and no natural
+tile); a wildcard standing in for a natural dora target earns nothing. A wait
+list may contain `*` itself (any draw completes the hand), so throwing a
+wildcard away while tenpai is discard furiten; its remaining count comes from
+the deck's wildcards. A room gets wildcards by including `0x51` bytes in
+`GameConfig.initial_tiles` (`buildInitialTiles` in `domain/tilesets.ts`). Its
+face is `public/assets/hand_tiles/wildcard.svg`, drawn by
+`tools/wildcard-face.py`.
+
+On a win, `AgariInfoMsg.wildcard_assignments` lists one interpretation behind
+the score: each physical wildcard's `trace_id` and the natural `tile` it stood
+for. The reducer keeps it as `PlayerAgariState.wildcardAssignments`, and the
+result card shows those tiles in their effective form with a rainbow frame
+(`domain/wildcardResolution.ts`, `UiTile fromWildcard`).
+
 ### 3.2 View-model (`domain/model.ts`)
 
 Plain data classes mirroring Cocos `Rabi/Info.ts`:

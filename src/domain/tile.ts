@@ -4,9 +4,17 @@ export const TileSuit = {
   P: 2,
   S: 3,
   Z: 4,
+  /** A universal wildcard: any natural tile when scoring, written `*`. */
+  Wildcard: 5,
 } as const;
 
 export type TileSuit = (typeof TileSuit)[keyof typeof TileSuit];
+
+/** The single spelling of a wildcard in tile strings, matching the server. */
+export const WILDCARD_TILE_STRING = '*';
+
+/** Wire byte of a wildcard: suit 5 << 4 | num 1, the server's `Tile.Wildcard`. */
+export const WILDCARD_TILE_BYTE = 0x51;
 
 export function toTileSuit(c: string): TileSuit {
   switch (c.toLowerCase()) {
@@ -35,6 +43,8 @@ export function tileSuitToString(suit: TileSuit): string {
       return 's';
     case TileSuit.Z:
       return 'z';
+    case TileSuit.Wildcard:
+      return WILDCARD_TILE_STRING;
   }
 }
 
@@ -51,7 +61,14 @@ export class Tile {
     this.akadora = akadora;
   }
 
+  public get isWildcard(): boolean {
+    return this.suit === TileSuit.Wildcard;
+  }
+
   public static fromString(str: string): Tile {
+    if (str === WILDCARD_TILE_STRING) {
+      return Tile.fromByte(WILDCARD_TILE_BYTE);
+    }
     let akadora = false;
     if (str.startsWith('r')) {
       str = str.substring(1);
@@ -78,6 +95,9 @@ export class Tile {
   }
 
   public toString(): string {
+    if (this.isWildcard) {
+      return WILDCARD_TILE_STRING;
+    }
     // Red fives serialize with an `r` prefix (e.g. `r5m`); `fromString` also
     // accepts the alternate `0m` spelling.
     return `${this.akadora ? 'r' : ''}${this.num}${tileSuitToString(this.suit)}`;
@@ -88,6 +108,10 @@ export class Tile {
   }
 
   public compareTo(other: Tile): number {
+    // Wildcards lead the hand, ahead of every suit.
+    if (this.isWildcard !== other.isWildcard) {
+      return this.isWildcard ? -1 : 1;
+    }
     if (this.suit !== other.suit) {
       return this.suit - other.suit;
     }
@@ -104,6 +128,14 @@ export function stringToTiles(str: string): Tile[] {
   const tiles: Tile[] = [];
   for (let i = 0; i < str.length; i++) {
     const c = str[i];
+    if (c === WILDCARD_TILE_STRING) {
+      // A wildcard stands alone, so it cannot follow a pending rank or `r`.
+      if (isDora || tiles.at(-1)?.suit === TileSuit.Invalid) {
+        throw new Error(`Invalid wildcard in ${str} at ${i}`);
+      }
+      tiles.push(Tile.fromByte(WILDCARD_TILE_BYTE));
+      continue;
+    }
     if ((c && c >= '0' && c <= '9') || c === 'x') {
       if (c === '0') {
         num = 5;
@@ -163,7 +195,11 @@ export function getDoraTargetForIndicator(indicator: Tile): {
       // Dragons: White (5z) -> Green (6z) -> Red (7z) -> White (5z)
       num = num === 7 ? 5 : num + 1;
     }
-  } else if (suit !== TileSuit.Invalid) {
+  } else if (
+    suit === TileSuit.M ||
+    suit === TileSuit.P ||
+    suit === TileSuit.S
+  ) {
     // Numbered suits: 1 -> 2 -> ... -> 9 -> 1
     num = num === 9 ? 1 : num + 1;
   }
@@ -173,8 +209,12 @@ export function getDoraTargetForIndicator(indicator: Tile): {
 /**
  * Checks if a given tile is a Dora, given a set of active Dora indicators.
  * A tile is Dora if it matches any indicator's target, or if it is an Akadora (red 5).
+ * A wildcard indicator points at the wildcards themselves, as on the server.
  */
 export function checkIsDora(tile: Tile, indicators: readonly Tile[]): boolean {
+  if (tile.isWildcard) {
+    return indicators.some((ind) => ind.isWildcard);
+  }
   if (tile.akadora) {
     return true;
   }

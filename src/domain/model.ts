@@ -44,6 +44,9 @@ export interface PlayerAgariState {
   // over inferring from `incoming.discardInfo`, which is unreliable. Absent for
   // ryuukyoku/noten agari states.
   isTsumo?: boolean;
+  // The natural tile each physical wildcard (by trace id) stood for in the
+  // scoring interpretation the server reported. Empty without wildcards.
+  wildcardAssignments?: ReadonlyMap<number, number>;
 }
 
 export interface PlayerHandState {

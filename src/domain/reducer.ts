@@ -51,6 +51,7 @@ import {
 import { DEFAULT_INITIAL_POINTS, DEFAULT_RIICHI_POINTS } from './constants.js';
 import { isYakumanEnabled } from './yakus.js';
 import { Tile, isTileUnknown } from './tile.js';
+import { toWildcardAssignments } from './wildcardResolution.js';
 import {
   createEmptyTileRegistry,
   extractEventTiles,
@@ -860,6 +861,7 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
       isTsumo,
       gainPoints: p.gameState.agari?.gainPoints ?? 0,
       losePoints: p.gameState.agari?.losePoints ?? 0,
+      wildcardAssignments: toWildcardAssignments(agariInfo.wildcardAssignments),
     };
 
     return {
