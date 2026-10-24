@@ -6,23 +6,18 @@ import { getAiTypeName } from '../domain/model';
 import { Button } from './Button';
 import { LlmConfigDialog } from './LlmConfigDialog';
 import { ChevronDown } from './Select';
+import { computeMenuPlacement, type MenuPlacement } from './menuPlacement';
 
 interface AddAiDropdownProps {
   disabled: boolean;
   onSelect: (aiType: AiType, llmConfig?: ILlmAiConfig) => Promise<void> | void;
 }
 
-interface MenuPosition {
-  /** Distance from the viewport right edge to the menu's right edge. */
-  right: number;
-  /** Set for a downward menu (distance from viewport top to menu top). */
-  top?: number;
-  /** Set for an upward menu (distance from viewport bottom to menu bottom). */
-  bottom?: number;
-}
-
 const MENU_GAP = 4;
 const MENU_MAX_WIDTH = 220;
+const MENU_MAX_HEIGHT = 240;
+/** Flip upward only when the anchor sits in the last row near the bottom. */
+const MENU_MIN_HEIGHT = 120;
 const VIEWPORT_MARGIN = 8;
 
 const AI_OPTIONS: AiType[] = [
@@ -44,29 +39,27 @@ export function AddAiDropdown({
 }: AddAiDropdownProps): React.JSX.Element {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const [position, setPosition] = useState<MenuPosition | null>(null);
+  const [position, setPosition] = useState<MenuPlacement | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const updatePosition = useCallback(() => {
     const btn = buttonRef.current;
     if (!btn) return;
-    const rect = btn.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    // Flip upward only when there is little room below but more room above,
-    // i.e. the anchor is in the last row near the bottom edge.
-    const openUp = spaceBelow < 120 && spaceAbove > spaceBelow;
-    // Align the menu's right edge to the button (mirrors the original CSS
-    // `right: 0`), clamped so the menu never runs off the left viewport edge.
-    const maxRight = window.innerWidth - MENU_MAX_WIDTH - VIEWPORT_MARGIN;
-    const right = Math.max(
-      VIEWPORT_MARGIN,
-      Math.min(window.innerWidth - rect.right, maxRight),
-    );
+    // Right-aligned to the button (mirroring the original CSS `right: 0`) and
+    // clamped as if at its widest, so it never runs off the left edge either.
     setPosition(
-      openUp
-        ? { right, bottom: window.innerHeight - rect.top + MENU_GAP }
-        : { right, top: rect.bottom + MENU_GAP },
+      computeMenuPlacement(
+        btn.getBoundingClientRect(),
+        { width: window.innerWidth, height: window.innerHeight },
+        {
+          width: MENU_MAX_WIDTH,
+          maxHeight: MENU_MAX_HEIGHT,
+          minHeight: MENU_MIN_HEIGHT,
+          align: 'end',
+          gap: MENU_GAP,
+          margin: VIEWPORT_MARGIN,
+        },
+      ),
     );
   }, []);
 
@@ -115,9 +108,10 @@ export function AddAiDropdown({
               onClick={() => setIsOpen(false)}
             />
             <div
-              className="fixed top-auto mt-0 max-w-[220px] bg-[#1a1a1a] border border-white/10 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.5)] z-[101] min-w-[140px] flex flex-col overflow-hidden py-1"
+              className="fixed top-auto mt-0 max-w-[220px] bg-[#1a1a1a] border border-white/10 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.5)] z-[101] min-w-[140px] flex flex-col overflow-y-auto py-1"
               style={{
                 right: position.right,
+                maxHeight: position.maxHeight,
                 ...(position.top !== undefined ? { top: position.top } : {}),
                 ...(position.bottom !== undefined
                   ? { bottom: position.bottom }
