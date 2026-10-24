@@ -23,6 +23,7 @@ import { SOUND_EFFECTS } from '../lib/soundEffects';
 import {
   computeHandLayout,
   getHandTileLeft,
+  getRestingTileLeft,
   type HandLayout,
 } from './handLayout';
 import { TileTooltip } from './TileTooltip';
@@ -268,12 +269,23 @@ export function HandDisplay(): React.JSX.Element | null {
     else rabiriichi.selectTile(traceId);
   };
 
+  const getRestingLeft = useCallback(
+    (traceId: number) =>
+      getRestingTileLeft(
+        layout,
+        hand?.freeTiles.map((tile) => tile.traceId) ?? [],
+        hand?.pendingTile?.traceId,
+        traceId,
+      ),
+    [layout, hand],
+  );
+
   const drag = useDragToDiscard({
     dragThreshold: layout.dragThreshold,
     canDiscard,
     onDiscard: discard,
     onTap: tap,
-    contextKey: `${hand?.freeTiles.map((tile) => tile.traceId).join(',') ?? ''}/${hand?.pendingTile?.traceId ?? ''}`,
+    getRestingLeft,
   });
 
   if (!hand) return null;
@@ -284,9 +296,9 @@ export function HandDisplay(): React.JSX.Element | null {
   /** Where to anchor the tooltip: the described tile's centre, or null. */
   const tooltipAnchor = ((): { left: number; bottom: number } | null => {
     if (describedTraceId == null || describedTraceId <= 0) return null;
-    const isDragged = drag.position.traceId === describedTraceId;
-    const dx = isDragged ? drag.position.x : 0;
-    const lift = isDragged ? -drag.position.y : layout.hoverLift;
+    const dragOffset = drag.offset(describedTraceId);
+    const dx = dragOffset?.x ?? 0;
+    const lift = dragOffset ? -dragOffset.y : layout.hoverLift;
     const centre = layout.rowHeight / 2;
 
     const idx = freeTiles.findIndex((t) => t.traceId === describedTraceId);
@@ -300,8 +312,7 @@ export function HandDisplay(): React.JSX.Element | null {
     if (pendingTile?.traceId === describedTraceId && pendingTile.tile) {
       return {
         left: layout.pendingLeft + layout.tileWidth / 2 + dx,
-        bottom:
-          centre + (isDragged ? -drag.position.y : layout.pendingHoverLift),
+        bottom: centre + (dragOffset ? -dragOffset.y : layout.pendingHoverLift),
       };
     }
     return null;

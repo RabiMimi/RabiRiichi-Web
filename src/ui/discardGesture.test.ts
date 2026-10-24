@@ -6,6 +6,7 @@ import {
   resolveTileTap,
   TilePointerGesture,
   MAX_TILE_TAP_DURATION_MS,
+  slotAdjustedOffset,
 } from './discardGesture';
 
 const THRESHOLD = 164;
@@ -224,5 +225,22 @@ describe('resolveDragGesture', () => {
         movedBeyondDeadZone: true,
       }).shouldDiscard,
     ).toBe(false);
+  });
+});
+
+describe('slotAdjustedOffset', () => {
+  it('passes the pointer offset through while the slot stays put', () => {
+    expect(slotAdjustedOffset({ x: 30, y: -80 }, 400, 400)).toEqual({
+      x: 30,
+      y: -80,
+    });
+  });
+
+  it('keeps the tile under the pointer when its slot moves', () => {
+    // Picked up at 400; the row reflows and the slot now starts at 460. The
+    // pointer is 30px right of where it pressed, i.e. at 430 + grab point.
+    const offset = slotAdjustedOffset({ x: 30, y: -80 }, 400, 460);
+    expect(460 + offset.x).toBe(400 + 30);
+    expect(offset.y).toBe(-80);
   });
 });

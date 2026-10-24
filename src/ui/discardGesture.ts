@@ -124,6 +124,23 @@ export interface DragGestureOutcome {
   shouldSuppressClick: boolean;
 }
 
+/**
+ * The offset to draw a dragged tile at when its resting slot may have moved
+ * since it was picked up -- a draw arriving on your turn, the row reflowing.
+ * Subtracting the slot's travel keeps the tile under the pointer rather than
+ * letting it jump along with the slot.
+ */
+export function slotAdjustedOffset(
+  pointerOffset: { x: number; y: number },
+  pickedUpLeft: number,
+  currentLeft: number,
+): { x: number; y: number } {
+  return {
+    x: pointerOffset.x - (currentLeft - pickedUpLeft),
+    y: pointerOffset.y,
+  };
+}
+
 /** Returns true once the pointer has travelled far enough to count as a drag. */
 export function hasLeftDeadZone(dx: number, dy: number): boolean {
   return Math.hypot(dx, dy) > TAP_DEAD_ZONE_PX;
