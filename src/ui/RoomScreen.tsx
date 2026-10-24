@@ -164,7 +164,7 @@ export function RoomScreen(): React.JSX.Element | null {
   return (
     <div className={SCREEN.base}>
       <div className={`${SCREEN.card} max-w-[800px]`}>
-        <div className="relative w-full mb-6 max-h-[600px]:mb-3">
+        <div className="relative w-full mb-6 short:mb-3">
           <h2
             className={`${SCREEN.title} pr-12`}
             style={{ textAlign: 'center' }}
@@ -201,7 +201,7 @@ export function RoomScreen(): React.JSX.Element | null {
 
         {error && <div className={FORM.error}>{error}</div>}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 mb-6 max-h-[600px]:max-h-[180px] max-h-[600px]:overflow-y-auto max-h-[600px]:mb-3 max-h-[600px]:pr-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 mb-6 short:max-h-[180px] short:overflow-y-auto short:mb-3 short:pr-1">
           {seats.map((player, index) => {
             if (player) {
               const playerIsReady =

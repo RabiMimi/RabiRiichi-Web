@@ -26,11 +26,12 @@ const VARIANT: Record<IconButtonVariant, string> = {
 };
 
 // Padding differs: badge buttons (client/server) are fixed-size, no padding.
+// That size is in rem (38px at the desktop root) so it shrinks on a phone.
 const SIZING: Record<IconButtonVariant, string> = {
   default: 'w-fit p-2',
   exit: 'w-fit p-2',
-  client: 'relative h-[38px] w-[38px] p-0',
-  server: 'relative h-[38px] w-[38px] p-0',
+  client: 'relative h-9.5 w-9.5 p-0',
+  server: 'relative h-9.5 w-9.5 p-0',
 };
 
 interface CommonProps {

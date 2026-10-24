@@ -285,9 +285,10 @@ function App(): React.JSX.Element {
       {renderUI()}
       {!room?.info && (
         <>
-          <FullscreenButton className="absolute top-5 left-5 z-[150] pointer-events-auto" />
-          <div className="absolute top-5 right-5 z-[150] pointer-events-auto flex items-center gap-2">
-            <span className="self-center text-xs text-[#888] font-mono whitespace-nowrap select-text">
+          <FullscreenButton className="absolute top-5 left-5 z-[150] pointer-events-auto short:top-2 short:left-2" />
+          <div className="absolute top-5 right-5 z-[150] pointer-events-auto flex items-center gap-2 short:top-2 short:right-2 short:gap-1.5">
+            {/* No room for the build hash beside the corner buttons on a phone. */}
+            <span className="self-center text-xs text-[#888] font-mono whitespace-nowrap select-text short:hidden">
               {t('lobby.build', { commit: COMMIT_HASH })}
             </span>
             <Tooltip content={t('lobby.clientRepo')} position="bottom">

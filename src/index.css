@@ -43,10 +43,25 @@ body {
   animation: rotate-device 2s infinite ease-in-out;
 }
 
+/*
+ * Height-constrained layouts: a phone held in landscape (~320-430px tall) or a
+ * short window. Width breakpoints cannot see these -- a landscape phone is as
+ * wide as a small laptop -- so layouts that run out of height opt in here.
+ */
+@custom-variant short (@media (max-height: 540px));
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   color-scheme: dark;
+  /*
+   * The UI is sized in rem against desktop heights. Below 500px of height the
+   * root shrinks with the viewport (to 12px on a ~375px-tall phone) so every
+   * rem-sized panel, button and label scales down together instead of
+   * overflowing. `vh` rather than `dvh`: the value must not jump when a mobile
+   * browser's toolbar slides in and out.
+   */
+  font-size: clamp(12px, 3.2vh, 16px);
 }
 
 * {
