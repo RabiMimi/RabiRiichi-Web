@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isHandheldDevice } from './handheldDevice';
+import {
+  isAndroidDevice,
+  isHandheldDevice,
+  isIosDevice,
+  isStandaloneDisplay,
+} from './handheldDevice';
 
 const IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
@@ -28,5 +33,23 @@ describe('isHandheldDevice', () => {
   it('leaves desktop browsers alone, touch screen or not', () => {
     expect(isHandheldDevice(WINDOWS_CHROME, 0)).toBe(false);
     expect(isHandheldDevice(WINDOWS_CHROME, 10)).toBe(false);
+  });
+
+  it('identifies Android devices correctly', () => {
+    expect(isAndroidDevice(ANDROID_TABLET)).toBe(true);
+    expect(isAndroidDevice(IPHONE)).toBe(false);
+    expect(isAndroidDevice(WINDOWS_CHROME)).toBe(false);
+  });
+
+  it('identifies iOS devices correctly', () => {
+    expect(isIosDevice(IPHONE, 5)).toBe(true);
+    expect(isIosDevice(DESKTOP_SAFARI, 5)).toBe(true);
+    expect(isIosDevice(DESKTOP_SAFARI, 0)).toBe(false);
+    expect(isIosDevice(ANDROID_TABLET, 10)).toBe(false);
+    expect(isIosDevice(WINDOWS_CHROME, 0)).toBe(false);
+  });
+
+  it('checks standalone display mode safely', () => {
+    expect(typeof isStandaloneDisplay()).toBe('boolean');
   });
 });

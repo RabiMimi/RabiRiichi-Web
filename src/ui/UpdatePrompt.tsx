@@ -65,9 +65,11 @@ export function UpdatePrompt({
   return (
     <div
       role="status"
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 rounded-full border-[1.5px] border-[#ff7a99] bg-[#141414]/95 py-2 pl-4 pr-2 text-sm text-white shadow-[0_4px_16px_rgba(0,0,0,0.6)] pointer-events-auto"
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10000] flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full border-[1.5px] border-[#ff7a99] bg-[#141414]/95 py-2 pl-4 pr-2 text-sm text-white shadow-[0_4px_16px_rgba(0,0,0,0.6)] pointer-events-auto"
     >
-      <span>{t('update.available', 'A new version is available')}</span>
+      <span className="truncate">
+        {t('update.available', 'A new version is available')}
+      </span>
       <Button size="compact" onClick={applyUpdate} disabled={isApplying}>
         {t('update.reload', 'Reload')}
       </Button>

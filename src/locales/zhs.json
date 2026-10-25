@@ -497,7 +497,16 @@
     "close": "关闭聊天框"
   },
   "orientation": {
-    "rotatePrompt": "请将设备横屏以继续游戏！"
+    "rotatePrompt": "请将设备横屏以继续游戏！",
+    "landscapeHint": "RabiRiichi 专为横屏牌桌对局设计。",
+    "pwaTitle": "安装网页应用 (PWA)",
+    "pwaDesc": "添加到主屏幕可隐藏浏览器地址栏，享受沉浸式全屏对局。",
+    "pwaInstallButton": "立即安装应用",
+    "pwaIosHint": "在 Safari 中点击分享按钮，然后选择「添加到主屏幕」。",
+    "pwaBrowserHint": "在浏览器菜单（⋮）中选择「安装应用」或「添加到主屏幕」。",
+    "apkTitle": "Android 客户端",
+    "apkDesc": "下载安装专版 APK，获得自动全屏与横屏锁定体验。",
+    "apkButton": "下载 APK"
   },
   "error": {
     "lobby": {

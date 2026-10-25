@@ -17,3 +17,26 @@ export function isHandheldDevice(
     (userAgent.includes('Macintosh') && maxTouchPoints > 1)
   );
 }
+
+export function isAndroidDevice(userAgent: string): boolean {
+  return /Android/i.test(userAgent);
+}
+
+export function isIosDevice(
+  userAgent: string,
+  maxTouchPoints: number,
+): boolean {
+  return (
+    /iPhone|iPad|iPod/i.test(userAgent) ||
+    (userAgent.includes('Macintosh') && maxTouchPoints > 1)
+  );
+}
+
+export function isStandaloneDisplay(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true ||
+    document.referrer.startsWith('android-app://')
+  );
+}

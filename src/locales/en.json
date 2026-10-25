@@ -497,7 +497,16 @@
     "close": "Close chat"
   },
   "orientation": {
-    "rotatePrompt": "Please rotate your device to landscape to play!"
+    "rotatePrompt": "Please rotate your device to landscape to play!",
+    "landscapeHint": "RabiRiichi is optimized for widescreen landscape gameplay.",
+    "pwaTitle": "Install Web App (PWA)",
+    "pwaDesc": "Add to Home Screen for an immersive fullscreen experience without browser bars.",
+    "pwaInstallButton": "Install App",
+    "pwaIosHint": "Tap the Share button in Safari, then select 'Add to Home Screen'.",
+    "pwaBrowserHint": "Open browser menu (⋮) and select 'Install app' or 'Add to Home screen'.",
+    "apkTitle": "Android APK",
+    "apkDesc": "Download the dedicated client for locked landscape and fullscreen play.",
+    "apkButton": "Download APK"
   },
   "error": {
     "lobby": {

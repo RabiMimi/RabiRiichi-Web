@@ -497,7 +497,16 @@
     "close": "チャットを閉じる"
   },
   "orientation": {
-    "rotatePrompt": "プレイするには画面を横向きにしてください！"
+    "rotatePrompt": "プレイするには画面を横向きにしてください！",
+    "landscapeHint": "RabiRiichi は横画面での対局に最適化されています。",
+    "pwaTitle": "ウェブアプリ (PWA) をインストール",
+    "pwaDesc": "ホーム画面に追加すると、ブラウザのバーがなく全画面で快適にプレイできます。",
+    "pwaInstallButton": "アプリをインストール",
+    "pwaIosHint": "Safari の共有ボタンをタップし、「ホーム画面に追加」を選択してください。",
+    "pwaBrowserHint": "ブラウザのメニュー（⋮）から「アプリをインストール」または「ホーム画面に追加」を選択してください。",
+    "apkTitle": "Android APK 版",
+    "apkDesc": "全画面表示と横画面固定に最適化された専用クライアントをご利用いただけます。",
+    "apkButton": "APK をダウンロード"
   },
   "error": {
     "lobby": {

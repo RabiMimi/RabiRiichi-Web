@@ -10,29 +10,30 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 /** Keeps browser rendering and PWA updates intact; no native bridge is exposed to web content. */
 public class LauncherActivity extends com.google.androidbrowserhelper.trusted.LauncherActivity {
-    private Uri selectedUrl;
+    private static final String KEY_DEVELOPMENT = "development";
 
+    private SharedPreferences preferences() {
+        return getPreferences(MODE_PRIVATE);
+    }
+
+    /** The chooser is a one-time setup; later starts reuse it and the web UI switches clients. */
     @Override
     protected boolean shouldLaunchImmediately() {
-        return getIntent().getData() != null;
+        return getIntent().getData() != null || preferences().contains(KEY_DEVELOPMENT);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (isFinishing() || getIntent().getData() != null) return;
+        if (isFinishing() || shouldLaunchImmediately()) return;
 
         setContentView(R.layout.launcher);
-        SharedPreferences preferences = getPreferences(MODE_PRIVATE);
         RadioGroup environments = findViewById(R.id.environments);
-        environments.check(preferences.getBoolean("development", false)
-                ? R.id.development : R.id.production);
+        environments.check(R.id.production);
         findViewById(R.id.play).setOnClickListener(view -> {
             view.setEnabled(false);
             boolean development = environments.getCheckedRadioButtonId() == R.id.development;
-            preferences.edit().putBoolean("development", development).apply();
-            selectedUrl = Uri.parse(getString(development
-                    ? R.string.development_url : R.string.production_url));
+            preferences().edit().putBoolean(KEY_DEVELOPMENT, development).apply();
             launchTwa();
         });
     }
@@ -40,7 +41,11 @@ public class LauncherActivity extends com.google.androidbrowserhelper.trusted.La
     @Override
     protected Uri getLaunchingUrl() {
         // The helper validates incoming App Links against the declared trusted origins.
-        return selectedUrl != null ? selectedUrl : super.getLaunchingUrl();
+        if (getIntent().getData() != null || !preferences().contains(KEY_DEVELOPMENT)) {
+            return super.getLaunchingUrl();
+        }
+        return Uri.parse(getString(preferences().getBoolean(KEY_DEVELOPMENT, false)
+                ? R.string.development_url : R.string.production_url));
     }
 
     @Override
