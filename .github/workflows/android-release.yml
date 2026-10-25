@@ -32,10 +32,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Install Android SDK
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Build and lint Android wrapper
         run: bash gradlew --no-daemon lint assembleDebug
       - uses: actions/upload-artifact@v4
@@ -64,7 +64,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - uses: gradle/actions/setup-gradle@v4
       - name: Check signing configuration
         shell: bash
@@ -77,8 +79,6 @@ jobs:
           done
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/rabiriichi.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/rabiriichi.jks" >> "$GITHUB_ENV"
-      - name: Install Android SDK
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Build signed release
         run: bash gradlew --no-daemon assembleRelease
       - name: Verify APK signature and prepare downloads
