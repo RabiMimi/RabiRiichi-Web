@@ -17,41 +17,27 @@
  * Dora sheen for the DOM-rendered local hand.
  *
  * The 3D tiles get this from the toon shader (see tileToonMaterial.ts), which
- * sweeps an additive diagonal band across the full tile. The local hand is plain
- * DOM, so it reproduces the same cue in CSS with a slightly shorter period to
- * compensate for the smaller on-screen tile.
+ * sweeps an additive band along u + v of the tile face. `to top right` runs
+ * 0%..100% along that same diagonal, and useDoraSheen writes the band centre
+ * into --dora-sheen-pos from the shared timeline each frame. The 10% half-width
+ * matches DORA_SHEEN_WIDTH (0.2 of the 0..2 range).
  */
-@keyframes dora-sheen {
-  from {
-    transform: translate3d(-38%, -38%, 0);
-  }
-  to {
-    transform: translate3d(38%, 38%, 0);
-  }
-}
-
 .dora-sheen::after {
   content: '';
   position: absolute;
-  inset: -100%;
+  inset: 0;
   z-index: 1;
   pointer-events: none;
+  /* Off the face until useDoraSheen writes the first position. */
+  --dora-sheen-pos-or-off: var(--dora-sheen-pos, -100%);
   background-image: linear-gradient(
-    135deg,
-    transparent 44%,
-    rgba(255, 255, 255, 0.75) 50%,
-    transparent 56%
+    to top right,
+    transparent calc(var(--dora-sheen-pos-or-off) - 10%),
+    rgba(255, 255, 255, 0.75) var(--dora-sheen-pos-or-off),
+    transparent calc(var(--dora-sheen-pos-or-off) + 10%)
   );
   /* The shader adds the sheen to the face colour; approximate that here. */
   mix-blend-mode: plus-lighter;
-  animation: dora-sheen 0.9s linear infinite;
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dora-sheen::after {
-    animation: none;
-  }
 }
 
 /* Connection Status HUD Indicator */

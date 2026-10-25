@@ -1,9 +1,7 @@
 import * as THREE from 'three';
+import { DORA_SHEEN_INTENSITY, DORA_SHEEN_WIDTH } from '../lib/doraSheen';
 
-// Adjust these constants to change the Dora sliding sheen appearance.
-export const DORA_SHEEN_WIDTH = 0.2;
-export const DORA_SHEEN_SPEED = 2.0;
-
+// uSheenProgress comes from the shared timeline in lib/doraSheen.ts.
 const DORA_SHEEN = `
   if (uIsDora > 0.5) {
     #ifdef USE_MAP
@@ -11,9 +9,8 @@ const DORA_SHEEN = `
     #else
       vec2 uv = vec2(0.5);
     #endif
-    float progress = mod(uTime * uSheenSpeed, 2.5) - 0.7;
-    float d = abs(uv.x + uv.y - progress);
-    float sheen = smoothstep(uSheenWidth, 0.0, d) * 0.75;
+    float d = abs(uv.x + uv.y - uSheenProgress);
+    float sheen = smoothstep(uSheenWidth, 0.0, d) * uSheenIntensity;
     gl_FragColor.rgb += vec3(sheen);
   }
 `;
@@ -39,21 +36,21 @@ export function createToonMaterial(
   configureTileStencil(mat);
 
   mat.onBeforeCompile = (shader) => {
-    const uTime = { value: 0 };
+    const uSheenProgress = { value: 0 };
     const uIsDora = { value: 0 };
-    shader.uniforms.uTime = uTime;
+    shader.uniforms.uSheenProgress = uSheenProgress;
     shader.uniforms.uIsDora = uIsDora;
     shader.uniforms.uSheenWidth = { value: DORA_SHEEN_WIDTH };
-    shader.uniforms.uSheenSpeed = { value: DORA_SHEEN_SPEED };
-    mat.userData.uTime = uTime;
+    shader.uniforms.uSheenIntensity = { value: DORA_SHEEN_INTENSITY };
+    mat.userData.sheenProgress = uSheenProgress;
     mat.userData.isDora = uIsDora;
 
     shader.fragmentShader =
       `
-      uniform float uTime;
+      uniform float uSheenProgress;
       uniform float uIsDora;
       uniform float uSheenWidth;
-      uniform float uSheenSpeed;
+      uniform float uSheenIntensity;
     ` + shader.fragmentShader;
 
     shader.fragmentShader = shader.fragmentShader.replace(

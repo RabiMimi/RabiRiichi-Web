@@ -91,17 +91,18 @@ export const RESULT = {
    * gaps are counted, against the ~68% of viewport width the card leaves. That
    * breaks even around 60px at 1080p and 45px at 768p, so the cap sits below
    * both. The old 36px ceiling was reached on any screen taller than 1000px,
-   * which is what made the tiles look shrunken on a desktop.
+   * which is what made the tiles look shrunken on a desktop. Landscape phones
+   * sit on the floor, and 28px still fits that line on a ~850px-wide phone.
    */
-  tile: 'w-[clamp(1.5rem,5vh,3.25rem)] h-auto',
+  tile: 'w-[clamp(1.75rem,5vh,3.25rem)] h-auto',
   /** Yaku name + han count rows. */
-  yakuRow: 'text-[clamp(0.7rem,1.9vh,1rem)]',
+  yakuRow: 'text-[clamp(0.8125rem,1.9vh,1rem)]',
   /** The large han and points figures on the score line. */
-  scoreFigure: 'text-[clamp(1.25rem,4.2vh,2.5rem)]',
+  scoreFigure: 'text-[clamp(1.5rem,4.2vh,2.5rem)]',
   /** The fu figure, a secondary number beside the han. */
-  scoreFu: 'text-[clamp(0.7rem,1.9vh,1rem)]',
+  scoreFu: 'text-[clamp(0.8125rem,1.9vh,1rem)]',
   /** Limit name (mangan, haneman, yakuman…). */
-  limitLabel: 'text-[clamp(1rem,3.4vh,2rem)]',
+  limitLabel: 'text-[clamp(1.125rem,3.4vh,2rem)]',
 } as const;
 
 /**
