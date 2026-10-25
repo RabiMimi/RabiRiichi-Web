@@ -31,6 +31,7 @@ import { useDragToDiscard, type DragToDiscard } from './useDragToDiscard';
 import { isTileDimmed } from './handTileState';
 import { resolveTileTap } from './discardGesture';
 import { LocalPlayerBubbles } from './LocalPlayerBubbles';
+import { useDoraSheen } from './useDoraSheen';
 import type { ActionOption } from '../domain/inquiry';
 
 /** Gap (px) between a raised hand tile and the local chat/sticker bubbles. */
@@ -109,6 +110,8 @@ function HandTile({
   const { tileWidth, tileHeight, bevelHeight, rowHeight, cornerRadius } =
     layout;
   const face = tile ? Tile.fromByte(tile).toString() : 'back';
+  const sheenRef = useRef<HTMLDivElement>(null);
+  useDoraSheen(sheenRef, isDora);
 
   return (
     // The button is the hit area and must never move. Lifting it instead --
@@ -161,9 +164,7 @@ function HandTile({
         }}
       >
         <div
-          className={`relative overflow-hidden ${
-            isDora ? 'dora-sheen' : ''
-          } ${isDimmed ? 'brightness-50' : ''}`}
+          className={`relative overflow-hidden ${isDimmed ? 'brightness-50' : ''}`}
           style={{ borderRadius: cornerRadius }}
         >
           <img
@@ -173,7 +174,11 @@ function HandTile({
             style={{ width: tileWidth, height: bevelHeight }}
             className="object-cover brightness-90 block"
           />
-          <div>
+          {/* The sheen covers the face only, like the 3D tiles' front material. */}
+          <div
+            ref={sheenRef}
+            className={`relative ${isDora ? 'dora-sheen' : ''}`}
+          >
             <UiTile
               tile={face}
               size="custom"

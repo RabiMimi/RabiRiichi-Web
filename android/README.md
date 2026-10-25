@@ -2,10 +2,10 @@
 
 This small Trusted Web Activity (TWA) uses Google's Android Browser Helper, the
 same library used by Bubblewrap. The game still runs from the hosted PWA. The
-launcher requests landscape and immersive sticky fullscreen, and asks for
-Production or Development only on first start. Later starts open the saved
-client directly; switch clients with the links on the login and lobby screens,
-which navigate between the two trusted client origins. Each origin keeps its
+launcher requests landscape and immersive sticky fullscreen and opens
+Production directly (or the incoming App Link). There is no native screen;
+switch clients with the links on the login and lobby screens, which navigate
+between the two trusted client origins. Each origin keeps its
 own accounts, settings, caches and service-worker updates.
 
 The wrapper needs a compatible TWA browser such as Chrome. Without a compatible

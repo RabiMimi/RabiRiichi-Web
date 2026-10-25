@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="production">正式版</string>
-    <string name="development">開発版</string>
-    <string name="play">プレイ</string>
-</resources>

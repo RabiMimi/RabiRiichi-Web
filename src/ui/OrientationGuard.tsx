@@ -70,17 +70,52 @@ export function OrientationGuard(): React.JSX.Element | null {
   return (
     <div className="fixed inset-0 z-[9999] box-border flex h-screen w-screen flex-col items-center justify-center overflow-y-auto bg-gradient-to-b from-[#161a1f] to-[#0d1013] p-5 text-center text-white select-none">
       <div className="my-auto flex w-full max-w-sm flex-col items-center py-4 pb-20">
-        {/* Animated Material Design Screen Rotation Icon Badge */}
+        {/* Animated Smartphone Screen Rotation Icon Badge */}
         <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-[#ff7a99]/30 bg-[#ff7a99]/10 shadow-[0_0_24px_rgba(255,122,153,0.2)] backdrop-blur-md">
           <div className="animate-rotate-device text-[#ff7a99]">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              fill="currentColor"
-              className="h-10 w-10"
+              fill="none"
+              className="h-11 w-11"
               aria-hidden="true"
             >
-              <path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 5.39 19.35.84 14.12.08l1.63 2.83 1.73-.39zM8.91 1.76c-.78-.78-2.05-.78-2.83 0L1.76 6.08c-.78.78-.78 2.05 0 2.83l12.73 12.73c.78.78 2.05.78 2.83 0l4.32-4.32c.78-.78.78-2.05 0-2.83L8.91 1.76zM17.46 16.04L4.73 3.31l4.18-4.18L21.64 11.86l-4.18 4.18zM1.55 13c-.36 3.76 1.98 6.93 5.25 8.48l1.73-.39 1.63 2.83C5.03 23.16.94 18.61.47 13h1.5z" />
+              <rect
+                x="5"
+                y="2"
+                width="14"
+                height="20"
+                rx="3"
+                stroke="currentColor"
+                strokeWidth="1.75"
+              />
+              <rect
+                x="6.75"
+                y="4.5"
+                width="10.5"
+                height="13.5"
+                rx="1"
+                fill="currentColor"
+                fillOpacity="0.15"
+              />
+              <line
+                x1="10.5"
+                y1="3.25"
+                x2="13.5"
+                y2="3.25"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+              />
+              <line
+                x1="10"
+                y1="20"
+                x2="14"
+                y2="20"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
         </div>
@@ -177,8 +212,6 @@ export function OrientationGuard(): React.JSX.Element | null {
             </p>
             <a
               href={CLIENT_DOWNLOAD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
               className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#4ade80] py-1.5 text-xs font-bold text-[#111] shadow transition hover:bg-[#32c969] active:scale-[0.98]"
             >
               <svg

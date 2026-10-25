@@ -13,8 +13,6 @@ export function ClientDownloadButton(): React.JSX.Element {
         variant="client"
         href={CLIENT_DOWNLOAD_URL}
         aria-label={t('client.download')}
-        target="_blank"
-        rel="noopener noreferrer"
       >
         <svg
           aria-hidden="true"

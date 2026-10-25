@@ -53,6 +53,7 @@ import {
   isTileUnknown,
 } from '../domain/tile';
 import { getPlayerDiscardsFromRegistry } from '../domain/tileRegistry';
+import { getDoraSheenProgress } from '../lib/doraSheen';
 import { FuritenType } from '../proto';
 import {
   TILE_LIFT_IDLE,
@@ -518,14 +519,16 @@ export function Tile3D({
   useFrame((state, delta) => {
     const time = state.clock.getElapsedTime();
     const frontMats = clone.userData.frontMaterials as THREE.Material[];
+    // Wall clock, not the canvas clock, so the DOM hand shares this timeline.
+    const sheenProgress = getDoraSheenProgress(performance.now());
     frontMats.forEach((mat) => {
       interface CustomUserData {
-        uTime: { value: number };
+        sheenProgress: { value: number };
         isDora: { value: number };
       }
       const userData = mat.userData as Partial<CustomUserData>;
-      if (userData.uTime && userData.isDora) {
-        userData.uTime.value = time;
+      if (userData.sheenProgress && userData.isDora) {
+        userData.sheenProgress.value = sheenProgress;
         userData.isDora.value = isDora && isFaceVisible ? 1.0 : 0.0;
       }
     });
