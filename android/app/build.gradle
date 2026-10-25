@@ -24,7 +24,7 @@ android {
         targetSdk 36
         // The workflow uses its increasing run number. Web deployments do not change this.
         versionCode Integer.parseInt(System.getenv('ANDROID_VERSION_CODE') ?: client.versionCode.toString())
-        versionName client.versionName
+        versionName System.getenv('ANDROID_VERSION_NAME') ?: client.versionName
         manifestPlaceholders = [productionHost: new URI(client.origins.production).host,
                                 developmentHost: new URI(client.origins.development).host]
         resValue 'string', 'production_url', client.origins.production + '/'

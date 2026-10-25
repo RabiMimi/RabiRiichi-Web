@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { getClientEnvironment, getClientUrl } from './clientEnvironments';
+import {
+  CLIENT_DOWNLOAD_PAGE_URL,
+  getClientEnvironment,
+  getClientUrl,
+} from './clientEnvironments';
 
 describe('client environments', () => {
+  it('points download page URL to GitHub releases', () => {
+    expect(CLIENT_DOWNLOAD_PAGE_URL).toBe(
+      'https://github.com/RabiMimi/RabiRiichi-Web/releases',
+    );
+  });
   it.each(['production', 'development'] as const)(
     'recognizes the %s client origin',
     (environment) => {

@@ -6,7 +6,7 @@
     "production": "https://riichi.rabimimi.com",
     "development": "https://riichi-dev.rabimimi.com"
   },
-  "downloadPageUrl": "https://github.com/RabiMimi/RabiRiichi-Web/releases/tag/android-latest",
+  "downloadPageUrl": "https://github.com/RabiMimi/RabiRiichi-Web/releases",
   "sha256CertFingerprints": [
     "78:3D:0A:7F:CA:27:F0:72:4C:FE:61:D3:AD:23:01:B3:E0:B8:57:B7:CA:24:09:23:69:18:2D:B0:FB:22:16:CD"
   ]
