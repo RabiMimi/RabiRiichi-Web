@@ -129,7 +129,7 @@ jobs:
           cat > "$RUNNER_TEMP/android-release-notes.md" <<EOF
           Fullscreen landscape Android client for RabiRiichi.
 
-          Choose Production or Development at launch, on the login page, or in the lobby.
+          Choose Production or Development on first launch; switch later on the login page or in the lobby.
           Web client updates arrive through the existing in-app updater.
           APK build: ${ANDROID_VERSION_CODE}; source: ${GITHUB_SHA}.
           EOF
@@ -137,7 +137,10 @@ jobs:
             gh release create "$tag" --target "$GITHUB_SHA" --title "Android build ${ANDROID_VERSION_CODE}" --notes-file "$RUNNER_TEMP/android-release-notes.md" --latest=false
           fi
           gh release upload "$tag" release/* --clobber
-          if ! gh release view android-latest > /dev/null 2>&1; then
+          if gh release view android-latest > /dev/null 2>&1; then
+            # --target only applies on creation; move the existing tag to this build's commit.
+            gh api --method PATCH "repos/$GH_REPO/git/refs/tags/android-latest" -f sha="$GITHUB_SHA" -F force=true > /dev/null
+          else
             gh release create android-latest --target "$GITHUB_SHA" --title 'Android client download' --notes-file "$RUNNER_TEMP/android-release-notes.md" --latest=false
           fi
           gh release upload android-latest release/* --clobber
