@@ -1,4 +1,10 @@
 {
+  "client": {
+    "environment": "クライアント",
+    "production": "正式版",
+    "development": "開発版",
+    "download": "Android クライアントをダウンロード (APK)"
+  },
   "connect": {
     "subtitle": "オープンソース 3D ブラウザ麻雀クライアント",
     "serverAddress": "サーバーアドレス",
@@ -103,6 +109,7 @@
     "onlySZ": "索子と字牌のみ",
     "tenchiSouzou": "天地創造",
     "regularWildcards": "万能牌",
+    "twoSetsWildcards": "2セット万能牌",
     "customize": "カスタマイズ...",
     "labelWithCount": "{{name}} ({{count}}枚)"
   },
@@ -621,6 +628,9 @@
     "tileTooltips": "牌ツールチップ",
     "tooltipOnHandTiles": "手牌のツールチップを表示",
     "tooltipOnRiverTiles": "河・副露のツールチップを表示",
+    "controls": "操作",
+    "doubleClickDiscard": "卓をダブルクリックでツモ切り",
+    "autoCloseChat": "送信後にチャットを閉じる",
     "profile": {
       "username": "ユーザー名",
       "nickname": "ニックネーム",

@@ -39,8 +39,9 @@ export const SCREEN = {
   base:
     'fixed inset-0 z-[100] flex h-full w-full box-border items-center justify-center ' +
     'bg-[#141414]/85 p-5 text-[#f0f0f0] backdrop-blur-[4px] overflow-y-auto ' +
-    // Responsive: align items to start on short screens to support scrolling
-    'max-h-[550px]:items-start',
+    // Short (landscape phone) screens: start at the top so the content can
+    // scroll, and keep it below the corner buttons App floats over every screen.
+    'short:items-start short:px-3 short:pb-3 short:pt-14',
   // Reusable card container (replaces `.ui-card`)
   card:
     'm-auto box-border w-full max-w-[400px] rounded-2xl border border-white/10 ' +
@@ -108,7 +109,7 @@ export const RESULT = {
  */
 export const PANEL = {
   // Container for sub-sections or lobby panels (replaces raw dark-gray borders)
-  base: 'bg-[#202020] border border-white/10 rounded-2xl p-6 shadow-lg',
+  base: 'bg-[#202020] border border-white/10 rounded-2xl p-6 shadow-lg short:p-3',
 } as const;
 
 export const SUB_CARD = {
@@ -127,7 +128,7 @@ export const SUB_CARD = {
  */
 export const FORM = {
   // Vertically stacked form container
-  form: 'flex flex-col gap-4',
+  form: 'flex flex-col gap-4 short:gap-2',
   // Vertically stacked form group (label + input)
   group: 'flex flex-col gap-1.5',
   // Horizontal/inline form group (label on left, input on right)

@@ -5,6 +5,8 @@ import {
   useAnimationSpeed,
   useTooltipOnHandTiles,
   useTooltipOnRiverTiles,
+  useDoubleClickDiscard,
+  useAutoCloseChat,
   updateClientSettings,
 } from '../state/store';
 import {
@@ -19,6 +21,8 @@ export function GameModalTab(): React.JSX.Element {
   const animationSpeed = useAnimationSpeed();
   const tooltipOnHand = useTooltipOnHandTiles();
   const tooltipOnRiver = useTooltipOnRiverTiles();
+  const doubleClickDiscard = useDoubleClickDiscard();
+  const autoCloseChat = useAutoCloseChat();
 
   const speedIndex = speedToSliderIndex(animationSpeed);
 
@@ -67,6 +71,33 @@ export function GameModalTab(): React.JSX.Element {
               updateClientSettings({ tooltipOnRiverTiles: !tooltipOnRiver })
             }
             label={t('settings.tooltipOnRiverTiles', 'Show on river tiles')}
+            appearance="chip"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-sm text-white/60">
+          {t('settings.controls', 'Controls')}
+        </label>
+        <div className="flex flex-wrap gap-3">
+          <Toggle
+            checked={doubleClickDiscard}
+            onChange={() =>
+              updateClientSettings({ doubleClickDiscard: !doubleClickDiscard })
+            }
+            label={t(
+              'settings.doubleClickDiscard',
+              'Double-click table to discard drawn tile',
+            )}
+            appearance="chip"
+          />
+          <Toggle
+            checked={autoCloseChat}
+            onChange={() =>
+              updateClientSettings({ autoCloseChat: !autoCloseChat })
+            }
+            label={t('settings.autoCloseChat', 'Close chat after sending')}
             appearance="chip"
           />
         </div>

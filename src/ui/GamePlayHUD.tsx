@@ -61,8 +61,10 @@ export function GameInfoPanel(): React.JSX.Element | null {
     // and every sibling panel in the same column is already undimmed. The tab
     // stop went with the dimming: it existed solely so focus-within could
     // reveal the panel, and the panel is not interactive.
-    <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-2 px-3 flex flex-col gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)] min-w-[180px]">
-      <div className="flex justify-center items-center gap-4 border-b border-[#333] pb-[6px] text-sm font-bold">
+    // On a short (landscape phone) screen the round line and the dora sit side
+    // by side: stacked, the column reaches down over the left player's hand.
+    <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-2 px-3 flex flex-col gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)] min-w-[180px] short:flex-row short:items-center short:gap-3 short:py-1 short:px-2 short:min-w-0">
+      <div className="flex justify-center items-center gap-4 border-b border-[#333] pb-[6px] text-sm font-bold short:border-b-0 short:pb-0 short:gap-2.5">
         <span className="text-[#ccc] flex items-center">
           {windTranslated}
           {t('hud.windSpace')}
@@ -87,7 +89,7 @@ export function GameInfoPanel(): React.JSX.Element | null {
         )}
       </div>
       <div className="flex flex-col gap-1">
-        <div className="text-xs font-bold text-[#80deea] tracking-[2px]">
+        <div className="text-xs font-bold text-[#80deea] tracking-[2px] short:hidden">
           {t('hud.dora')}
         </div>
         <div className="flex gap-1">
@@ -332,7 +334,7 @@ export function GamePlayHUD(): React.JSX.Element | null {
   return (
     <div className="absolute inset-0 pointer-events-none z-[40] select-none">
       {/* Top Right HUD (Settings + Connection Status) */}
-      <div className="pointer-events-auto absolute top-5 right-5 z-[50] flex items-center gap-2">
+      <div className="pointer-events-auto absolute top-5 right-5 z-[50] flex items-center gap-2 short:top-2 short:right-2">
         <ConnectionStatusIndicator />
         <SettingsButton />
       </div>
@@ -449,23 +451,76 @@ function HUDLeftPanel({
   const { t } = useTranslation();
 
   return (
-    <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-none z-50">
+    <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-none z-50 short:top-2 short:left-2 short:gap-1.5">
       {/* Game Info Panel (Doras + Round Info) */}
       <GameInfoPanel />
 
-      {/* Settings Panel */}
-      <div className="flex flex-row gap-2">
-        <FullscreenButton />
+      {/* Tools and auto-play share one row on short screens. */}
+      <div className="flex flex-col gap-3 short:flex-row short:items-center short:gap-1.5">
+        {/* Settings Panel */}
+        <div className="flex flex-row gap-2 short:gap-1.5">
+          <FullscreenButton />
 
-        <Tooltip
-          content={isCameraLocked ? t('hud.unlockCamera') : t('hud.lockCamera')}
-          position="bottom"
-        >
-          <IconButton
-            type="button"
-            onClick={() => rabiriichi.toggleCameraLock()}
+          <Tooltip
+            content={
+              isCameraLocked ? t('hud.unlockCamera') : t('hud.lockCamera')
+            }
+            position="bottom"
           >
-            {isCameraLocked ? (
+            <IconButton
+              type="button"
+              onClick={() => rabiriichi.toggleCameraLock()}
+            >
+              {isCameraLocked ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect
+                    x="3"
+                    y="11"
+                    width="18"
+                    height="11"
+                    rx="2"
+                    ry="2"
+                  ></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect
+                    x="3"
+                    y="11"
+                    width="18"
+                    height="11"
+                    rx="2"
+                    ry="2"
+                  ></rect>
+                  <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                </svg>
+              )}
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip content={t('hud.gameInfo')} position="bottom">
+            <IconButton type="button" onClick={onInfoClick}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -477,10 +532,20 @@ function HUDLeftPanel({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
               </svg>
-            ) : (
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip content={t('hud.exitGame')} position="bottom">
+            <IconButton
+              type="button"
+              variant="exit"
+              onClick={onExitClick}
+              disabled={isExiting}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -492,61 +557,17 @@ function HUDLeftPanel({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
               </svg>
-            )}
-          </IconButton>
-        </Tooltip>
+            </IconButton>
+          </Tooltip>
+        </div>
 
-        <Tooltip content={t('hud.gameInfo')} position="bottom">
-          <IconButton type="button" onClick={onInfoClick}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip content={t('hud.exitGame')} position="bottom">
-          <IconButton
-            type="button"
-            variant="exit"
-            onClick={onExitClick}
-            disabled={isExiting}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-          </IconButton>
-        </Tooltip>
+        {/* Auto-play controls stay visible during play and highlight when active. */}
+        <AutoPlayControls />
       </div>
-
-      {/* Auto-play controls stay visible during play and highlight when active. */}
-      <AutoPlayControls />
     </div>
   );
 }

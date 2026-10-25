@@ -24,6 +24,7 @@ const BUILT_IN_TILE_SETS: readonly { value: TileSetPresetName; key: string }[] =
     { value: 'OnlySZ', key: 'tileSetOpt.onlySZ' },
     { value: 'TenchiSouzou', key: 'tileSetOpt.tenchiSouzou' },
     { value: 'RegularWildcards', key: 'tileSetOpt.regularWildcards' },
+    { value: 'TwoSetsWildcards', key: 'tileSetOpt.twoSetsWildcards' },
   ];
 
 interface GameSettingsTabProps {

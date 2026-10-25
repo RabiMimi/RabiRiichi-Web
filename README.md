@@ -20,6 +20,9 @@ a 3D browser game on top of the open-source gRPC server implementation.
 
 ## Tech Stack
 
+For the fullscreen landscape Android APK, signing setup, Cloudflare Digital Asset
+Links and automatic GitHub releases, see [Android client](android/README.md).
+
 - **[Vite](https://vite.dev/)** — dev server and bundler.
 - **[React](https://react.dev/) + TypeScript** — UI and application shell.
 - **[three.js](https://threejs.org/)** via

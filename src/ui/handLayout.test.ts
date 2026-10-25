@@ -4,7 +4,11 @@ import {
   TILE_WORLD_SIZE,
   getPixelsPerWorldUnit,
 } from '../scene/cameraPose';
-import { computeHandLayout } from './handLayout';
+import {
+  computeHandLayout,
+  getHandTileLeft,
+  getRestingTileLeft,
+} from './handLayout';
 
 const DESKTOP = { width: 1920, height: 1080 };
 /** Roughly a phone held in landscape: wide, but very short. */
@@ -169,5 +173,31 @@ describe('computeHandLayout', () => {
     expect(
       computeHandLayout(200, 120, FULL_HAND).tileWidth,
     ).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('getRestingTileLeft', () => {
+  const layout = layoutFor(DESKTOP);
+  const hand = [11, 12, 13];
+
+  it('finds a free tile by its trace id', () => {
+    expect(getRestingTileLeft(layout, hand, null, 13)).toBe(
+      getHandTileLeft(layout, 2),
+    );
+  });
+
+  it('finds the drawn tile in its separate slot', () => {
+    expect(getRestingTileLeft(layout, hand, 99, 99)).toBe(layout.pendingLeft);
+  });
+
+  it('follows a tile to its new slot when the row is rearranged', () => {
+    expect(getRestingTileLeft(layout, [13, 11, 12], 99, 13)).toBe(
+      getHandTileLeft(layout, 0),
+    );
+  });
+
+  it('reports a tile that has left the hand', () => {
+    expect(getRestingTileLeft(layout, hand, 99, 42)).toBeNull();
+    expect(getRestingTileLeft(layout, hand, null, 42)).toBeNull();
   });
 });

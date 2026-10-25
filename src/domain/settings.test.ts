@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { VisualsSettings, SoundsSettings } from './settings';
+import { VisualsSettings, SoundsSettings, ControlSettings } from './settings';
 
 describe('VisualsSettings', () => {
   it('should initialize with default value', () => {
@@ -80,5 +80,32 @@ describe('SoundsSettings', () => {
       muteVoice: true,
       volumeAll: 0.8,
     });
+  });
+});
+
+describe('ControlSettings', () => {
+  it('keeps both shortcuts on by default', () => {
+    expect(new ControlSettings().toJSON()).toEqual({
+      doubleClickDiscard: true,
+      autoCloseChat: true,
+    });
+  });
+
+  it('loads saved choices and ignores unrelated settings', () => {
+    const s = new ControlSettings({
+      doubleClickDiscard: false,
+      characterId: 'mimi',
+    });
+    expect(s.toJSON()).toEqual({
+      doubleClickDiscard: false,
+      autoCloseChat: true,
+    });
+  });
+
+  it('updates only the fields in the patch', () => {
+    const s = new ControlSettings();
+    s.update({ autoCloseChat: false });
+    expect(s.doubleClickDiscard).toBe(true);
+    expect(s.autoCloseChat).toBe(false);
   });
 });

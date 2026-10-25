@@ -9,6 +9,7 @@ import { ReplayModal } from './ReplayModal';
 import { Button } from './Button';
 import { SCREEN, FORM } from './styles';
 import { Select } from './Select';
+import { ClientEnvironmentSelector } from './ClientEnvironmentSelector';
 
 export function LobbyScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
@@ -65,10 +66,10 @@ export function LobbyScreen(): React.JSX.Element {
   return (
     <div className={SCREEN.base}>
       <div
-        className={`${SCREEN.card} max-w-[960px] w-full h-full rounded-none border-none bg-transparent backdrop-blur-none shadow-none p-8`}
+        className={`${SCREEN.card} max-w-[960px] w-full h-full rounded-none border-none bg-transparent backdrop-blur-none shadow-none p-8 short:p-2`}
       >
         {/* Header with Title and Language Switcher */}
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-4 short:mb-1">
           <div className="flex items-baseline gap-2">
             <h2 className={SCREEN.title} style={{ margin: 0 }}>
               {t('lobby.title')}
@@ -106,15 +107,20 @@ export function LobbyScreen(): React.JSX.Element {
           </div>
         </div>
 
+        <ClientEnvironmentSelector
+          disabled={isLoading}
+          onSwitch={handleDisconnect}
+        />
+
         {error && <div className={FORM.error}>{error}</div>}
 
-        <div className="flex flex-col gap-3 mt-4">
+        <div className="flex flex-col gap-3 mt-4 short:mt-1 short:gap-2">
           <RoomConfigPanel
             onCreateRoom={handleCreateRoom}
             isLoading={isLoading}
           />
 
-          <div className="flex flex-wrap items-end gap-x-6 gap-y-4 border-t border-[#444] pt-4 mt-2">
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-4 border-t border-[#444] pt-4 mt-2 short:pt-2 short:mt-0">
             <form onSubmit={onJoinRoom} className="flex flex-col gap-1.5">
               <label htmlFor="room-id" className={FORM.label}>
                 {t('lobby.joinRoomLabel')}

@@ -147,4 +147,8 @@ export interface ClientSettings {
   volumeAll?: number;
   tooltipOnHandTiles?: boolean;
   tooltipOnRiverTiles?: boolean;
+  /** Double-clicking the table discards the drawn tile on your turn. */
+  doubleClickDiscard?: boolean;
+  /** Close the chat box and sticker tray once something is sent. */
+  autoCloseChat?: boolean;
 }

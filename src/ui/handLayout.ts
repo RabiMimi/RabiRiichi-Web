@@ -149,3 +149,18 @@ export function computeHandLayout(
 export function getHandTileLeft(layout: HandLayout, index: number): number {
   return layout.leftOffset + index * (layout.tileWidth + layout.tileGap);
 }
+
+/**
+ * Left edge of the slot a tile currently rests in, or null when the tile is no
+ * longer in the hand (discarded, or taken into a meld).
+ */
+export function getRestingTileLeft(
+  layout: HandLayout,
+  freeTraceIds: readonly (number | null | undefined)[],
+  pendingTraceId: number | null | undefined,
+  traceId: number,
+): number | null {
+  const index = freeTraceIds.indexOf(traceId);
+  if (index >= 0) return getHandTileLeft(layout, index);
+  return pendingTraceId === traceId ? layout.pendingLeft : null;
+}

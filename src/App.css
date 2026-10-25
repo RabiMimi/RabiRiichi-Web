@@ -3,5 +3,12 @@
   width: 100%;
   height: 100dvh;
   overflow: hidden;
+  /*
+   * clip, unlike hidden, is not a scroll container. Panels parked off-screen
+   * (the collapsed sticker tray) widen the overflow area, and with `hidden` a
+   * focus or scrollIntoView could scroll the whole game sideways with no way
+   * for the player to scroll it back.
+   */
+  overflow: clip;
   background: #000000;
 }

@@ -52,6 +52,8 @@ export interface RabiRiichiState {
   autoConnectError: string | null;
   tooltipOnHandTiles: boolean;
   tooltipOnRiverTiles: boolean;
+  doubleClickDiscard: boolean;
+  autoCloseChat: boolean;
 }
 
 function subscribe(onStoreChange: () => void): () => void {
@@ -95,6 +97,9 @@ function getSnapshot(): RabiRiichiState {
     lastSnapshot.tooltipOnHandTiles !== rabiriichi.visuals.tooltipOnHandTiles ||
     lastSnapshot.tooltipOnRiverTiles !==
       rabiriichi.visuals.tooltipOnRiverTiles ||
+    lastSnapshot.doubleClickDiscard !==
+      rabiriichi.controls.doubleClickDiscard ||
+    lastSnapshot.autoCloseChat !== rabiriichi.controls.autoCloseChat ||
     lastSnapshot.volumeSE !== rabiriichi.sounds.volumeSE ||
     lastSnapshot.volumeBGM !== rabiriichi.sounds.volumeBGM ||
     lastSnapshot.volumeVoice !== rabiriichi.sounds.volumeVoice ||
@@ -137,6 +142,8 @@ function getSnapshot(): RabiRiichiState {
       characterId: rabiriichi.visuals.characterId,
       tooltipOnHandTiles: rabiriichi.visuals.tooltipOnHandTiles,
       tooltipOnRiverTiles: rabiriichi.visuals.tooltipOnRiverTiles,
+      doubleClickDiscard: rabiriichi.controls.doubleClickDiscard,
+      autoCloseChat: rabiriichi.controls.autoCloseChat,
       volumeSE: rabiriichi.sounds.volumeSE,
       volumeBGM: rabiriichi.sounds.volumeBGM,
       volumeVoice: rabiriichi.sounds.volumeVoice,
@@ -457,6 +464,22 @@ export function useTooltipOnRiverTiles(): boolean {
     subscribe,
     () => rabiriichi.visuals.tooltipOnRiverTiles,
     () => rabiriichi.visuals.tooltipOnRiverTiles,
+  );
+}
+
+export function useDoubleClickDiscard(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.controls.doubleClickDiscard,
+    () => rabiriichi.controls.doubleClickDiscard,
+  );
+}
+
+export function useAutoCloseChat(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => rabiriichi.controls.autoCloseChat,
+    () => rabiriichi.controls.autoCloseChat,
   );
 }
 

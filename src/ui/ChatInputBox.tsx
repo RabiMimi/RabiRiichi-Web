@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { rabiriichi } from '../net/client';
 import { sendChatMessage } from '../net/messages';
-import { useSelf, useChatHistory } from '../state/store';
+import { useSelf, useChatHistory, useAutoCloseChat } from '../state/store';
 
 function ChatIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -21,9 +21,10 @@ export function ChatInputBox(): React.JSX.Element | null {
   const { t } = useTranslation();
   const currentUser = useSelf();
   const chatHistory = useChatHistory();
+  const autoCloseChat = useAutoCloseChat();
   const [text, setText] = useState('');
-  // Collapsed by default so chat stays out of the way; opens on the icon and
-  // auto-collapses again after a message is sent.
+  // Collapsed by default so chat stays out of the way; opens on the icon and,
+  // unless the player opted out, collapses again after a message is sent.
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSend = (e: React.FormEvent) => {
@@ -32,7 +33,7 @@ export function ChatInputBox(): React.JSX.Element | null {
     if (!trimmed || !rabiriichi.ws) return;
     sendChatMessage(rabiriichi.ws, trimmed, null);
     setText('');
-    setIsOpen(false);
+    if (autoCloseChat) setIsOpen(false);
   };
 
   return (

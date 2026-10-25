@@ -32,6 +32,7 @@ import { SettingsButton } from './ui/SettingsButton';
 import { SettingsModal } from './ui/SettingsModal';
 import { preloadTimerDigits } from './ui/timerDigits';
 import { UpdatePrompt } from './ui/UpdatePrompt';
+import { ClientDownloadButton } from './ui/ClientDownloadButton';
 import {
   playerOverlayPortalTarget,
   stickerPortalTarget,
@@ -141,8 +142,11 @@ function App(): React.JSX.Element {
     lastMissedRef.current = now;
 
     if (diff < 300) {
-      // Auto-discard drawn tile when it's our turn to play
-      tryDiscardPendingTile(room, currentUser);
+      // Auto-discard drawn tile when it's our turn to play, unless the player
+      // turned the shortcut off after misfiring it.
+      if (rabiriichi.controls.doubleClickDiscard) {
+        tryDiscardPendingTile(room, currentUser);
+      }
       // Skip when pon/chi/kan action buttons are shown (issue #90)
       trySkipAction();
     }
@@ -282,9 +286,10 @@ function App(): React.JSX.Element {
       {renderUI()}
       {!room?.info && (
         <>
-          <FullscreenButton className="absolute top-5 left-5 z-[150] pointer-events-auto" />
-          <div className="absolute top-5 right-5 z-[150] pointer-events-auto flex items-center gap-2">
-            <span className="self-center text-xs text-[#888] font-mono whitespace-nowrap select-text">
+          <FullscreenButton className="absolute top-5 left-5 z-[150] pointer-events-auto short:top-2 short:left-2" />
+          <div className="absolute top-5 right-5 z-[150] pointer-events-auto flex items-center gap-2 short:top-2 short:right-2 short:gap-1.5">
+            {/* No room for the build hash beside the corner buttons on a phone. */}
+            <span className="self-center text-xs text-[#888] font-mono whitespace-nowrap select-text short:hidden">
               {t('lobby.build', { commit: COMMIT_HASH })}
             </span>
             <Tooltip content={t('lobby.clientRepo')} position="bottom">
@@ -350,6 +355,7 @@ function App(): React.JSX.Element {
               </IconButton>
             </Tooltip>
 
+            <ClientDownloadButton />
             <SettingsButton />
           </div>
         </>

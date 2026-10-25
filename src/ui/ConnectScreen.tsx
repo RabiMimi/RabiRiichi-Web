@@ -16,6 +16,7 @@ import { TabSelector } from './TabSelector';
 import { KickedModal } from './KickedModal';
 import { SavedAccountCard } from './SavedAccountCard';
 import { AuthForm } from './AuthForm';
+import { ClientEnvironmentSelector } from './ClientEnvironmentSelector';
 
 export function ConnectScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
@@ -246,9 +247,11 @@ export function ConnectScreen(): React.JSX.Element {
 
   return (
     <div className={SCREEN.base}>
-      <div className="w-full max-w-3xl mx-auto flex flex-col md:flex-row items-center md:items-stretch gap-8 md:gap-12 p-6 md:p-10">
+      {/* A landscape phone is narrower than `md` but has no height to stack
+          the logo over the form, so short screens keep the two columns. */}
+      <div className="w-full max-w-3xl mx-auto flex flex-col md:flex-row items-center md:items-stretch gap-8 md:gap-12 p-6 md:p-10 short:flex-row short:items-start short:gap-6 short:p-2">
         {/* Left column: Logo + subtitle */}
-        <div className="flex flex-col items-center justify-center gap-4 md:w-1/2">
+        <div className="flex flex-col items-center justify-center gap-4 md:w-1/2 short:w-2/5 short:self-center">
           <img
             src="/assets/logo.png"
             alt="RabiRiichi"
@@ -258,10 +261,14 @@ export function ConnectScreen(): React.JSX.Element {
             {t('connect.subtitle')}
           </p>
           <div className="text-[0.75rem] text-[#555]">v{CLIENT_VERSION}</div>
+          <ClientEnvironmentSelector
+            disabled={isConnecting}
+            onSwitch={() => rabiriichi.close()}
+          />
         </div>
 
         {/* Right column: Form */}
-        <div className="w-full md:w-1/2 flex flex-col gap-4">
+        <div className="w-full md:w-1/2 flex flex-col gap-4 short:w-3/5 short:gap-2">
           <div className="flex justify-between items-center">
             <LanguageSelector
               language={i18n.language}

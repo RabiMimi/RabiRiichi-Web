@@ -2,9 +2,12 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useCallback,
 } from 'react';
+import { createPortal } from 'react-dom';
+import { computeMenuPlacement, type MenuPlacement } from './menuPlacement';
 
 export type SelectSize = 'normal' | 'inline' | 'compact';
 
@@ -43,6 +46,11 @@ const noop = () => {
   /* noop */
 };
 
+/** Tallest the option list grows (px); it shrinks to the room on screen. */
+const MENU_MAX_HEIGHT = 224;
+/** Below this much room under the trigger, open upward if that is roomier. */
+const MENU_MIN_HEIGHT = 120;
+
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   (
     {
@@ -62,7 +70,10 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const [isOpen, setIsOpen] = useState(false);
     const [focusedIndex, setFocusedIndex] = useState(-1);
     const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
     const nativeSelectRef = useRef<HTMLSelectElement | null>(null);
+    const [placement, setPlacement] = useState<MenuPlacement | null>(null);
 
     // Combine external ref and internal ref
     const setRefs = useCallback(
@@ -168,14 +179,46 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       [disabled, id, nameAttr, onChange, onValueChange],
     );
 
+    // The menu is portalled and fixed to the viewport, so no scrolling or
+    // clipped ancestor can cut it off; follow the trigger while it is open.
+    const updatePlacement = useCallback(() => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      setPlacement(
+        computeMenuPlacement(
+          rect,
+          { width: window.innerWidth, height: window.innerHeight },
+          {
+            width: rect.width,
+            maxHeight: MENU_MAX_HEIGHT,
+            minHeight: MENU_MIN_HEIGHT,
+            align: 'start',
+          },
+        ),
+      );
+    }, []);
+
+    useLayoutEffect(() => {
+      if (!isOpen) return;
+      updatePlacement();
+      window.addEventListener('scroll', updatePlacement, true);
+      window.addEventListener('resize', updatePlacement);
+      return () => {
+        window.removeEventListener('scroll', updatePlacement, true);
+        window.removeEventListener('resize', updatePlacement);
+      };
+    }, [isOpen, updatePlacement]);
+
     // Close menu on click outside
     useEffect(() => {
       if (!isOpen) return;
 
       const handleClickOutside = (e: MouseEvent) => {
+        const target = e.target as Node;
         if (
-          containerRef.current &&
-          !containerRef.current.contains(e.target as Node)
+          !containerRef.current?.contains(target) &&
+          !menuRef.current?.contains(target)
         ) {
           setIsOpen(false);
         }
@@ -293,6 +336,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
         {/* Custom Trigger Button - Dark Gray / Glassmorphism Theme */}
         <button
+          ref={triggerRef}
           type="button"
           disabled={disabled}
           onClick={() => setIsOpen((prev) => !prev)}
@@ -311,76 +355,89 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         </button>
 
         {/* Floating Dropdown Popup - Dark Gray / Transparent Glass Theme */}
-        {isOpen && (
-          <div
-            className="absolute left-0 right-0 mt-1.5 z-[9999] rounded-xl border border-white/20 bg-[#1a1a1a]/95 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.85),0_0_15px_rgba(255,122,153,0.08)] py-1.5 overflow-y-auto max-h-56 animate-in fade-in slide-in-from-top-1 duration-150"
-            role="listbox"
-          >
-            {parsedOptions.length === 0 ? (
-              <div className="px-3 py-2 text-xs text-gray-400 text-center">
-                No options
-              </div>
-            ) : (
-              parsedOptions.map((opt, idx) => {
-                if (opt.isHeader) {
+        {isOpen &&
+          placement &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-[9999] rounded-xl border border-white/20 bg-[#1a1a1a]/95 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.85),0_0_15px_rgba(255,122,153,0.08)] py-1.5 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150"
+              style={{
+                ...(placement.top !== undefined ? { top: placement.top } : {}),
+                ...(placement.bottom !== undefined
+                  ? { bottom: placement.bottom }
+                  : {}),
+                left: placement.left,
+                width: placement.width,
+                maxHeight: placement.maxHeight,
+              }}
+              role="listbox"
+            >
+              {parsedOptions.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-gray-400 text-center">
+                  No options
+                </div>
+              ) : (
+                parsedOptions.map((opt, idx) => {
+                  if (opt.isHeader) {
+                    return (
+                      <div
+                        key={String(opt.value)}
+                        className="px-3.5 py-1.5 text-[0.7rem] font-bold text-[#ff7a99]/80 select-none uppercase tracking-wider border-t border-white/5 first:border-t-0 mt-1.5 first:mt-0"
+                      >
+                        {opt.label}
+                      </div>
+                    );
+                  }
+
+                  const isSelected = String(opt.value) === stringValue;
+                  const isFocused = idx === focusedIndex;
+
                   return (
                     <div
                       key={String(opt.value)}
-                      className="px-3.5 py-1.5 text-[0.7rem] font-bold text-[#ff7a99]/80 select-none uppercase tracking-wider border-t border-white/5 first:border-t-0 mt-1.5 first:mt-0"
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => {
+                        if (!opt.disabled) {
+                          handleSelectOption(opt.value);
+                        }
+                      }}
+                      onMouseEnter={() => setFocusedIndex(idx)}
+                      className={`cursor-pointer transition-colors duration-120 flex items-center justify-between gap-2 ${
+                        MENU_ITEM_SIZE_CLASS[selectSize]
+                      } ${
+                        opt.disabled
+                          ? 'opacity-40 cursor-not-allowed text-gray-500'
+                          : isSelected
+                            ? 'bg-white/[0.12] text-[#ff7a99] font-bold'
+                            : isFocused
+                              ? 'bg-white/10 text-white'
+                              : 'text-gray-200 hover:bg-white/10 hover:text-white'
+                      }`}
                     >
-                      {opt.label}
+                      <span className="truncate flex-1">{opt.label}</span>
+                      {isSelected && (
+                        <svg
+                          className="w-3.5 h-3.5 shrink-0 text-[#ff7a99]"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
                     </div>
                   );
-                }
-
-                const isSelected = String(opt.value) === stringValue;
-                const isFocused = idx === focusedIndex;
-
-                return (
-                  <div
-                    key={String(opt.value)}
-                    role="option"
-                    aria-selected={isSelected}
-                    onClick={() => {
-                      if (!opt.disabled) {
-                        handleSelectOption(opt.value);
-                      }
-                    }}
-                    onMouseEnter={() => setFocusedIndex(idx)}
-                    className={`cursor-pointer transition-colors duration-120 flex items-center justify-between gap-2 ${
-                      MENU_ITEM_SIZE_CLASS[selectSize]
-                    } ${
-                      opt.disabled
-                        ? 'opacity-40 cursor-not-allowed text-gray-500'
-                        : isSelected
-                          ? 'bg-white/[0.12] text-[#ff7a99] font-bold'
-                          : isFocused
-                            ? 'bg-white/10 text-white'
-                            : 'text-gray-200 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    <span className="truncate flex-1">{opt.label}</span>
-                    {isSelected && (
-                      <svg
-                        className="w-3.5 h-3.5 shrink-0 text-[#ff7a99]"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={3}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
+                })
+              )}
+            </div>,
+            document.body,
+          )}
       </div>
     );
   },

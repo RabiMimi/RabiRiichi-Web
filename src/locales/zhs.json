@@ -1,4 +1,10 @@
 {
+  "client": {
+    "environment": "客户端",
+    "production": "正式版",
+    "development": "开发版",
+    "download": "下载安卓客户端 (APK)"
+  },
   "connect": {
     "subtitle": "开源 3D 浏览器麻将客户端",
     "serverAddress": "服务器地址",
@@ -103,6 +109,7 @@
     "onlySZ": "仅条子与字牌",
     "tenchiSouzou": "天地创造",
     "regularWildcards": "万能牌",
+    "twoSetsWildcards": "两副万能牌",
     "customize": "自定义...",
     "labelWithCount": "{{name}} ({{count}}张)"
   },
@@ -621,6 +628,9 @@
     "tileTooltips": "牌面提示",
     "tooltipOnHandTiles": "手牌显示提示",
     "tooltipOnRiverTiles": "河牌/副露显示提示",
+    "controls": "操作",
+    "doubleClickDiscard": "双击桌面打出摸到的牌",
+    "autoCloseChat": "发送后关闭聊天",
     "profile": {
       "username": "用户名",
       "nickname": "昵称",

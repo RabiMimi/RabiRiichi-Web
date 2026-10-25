@@ -1,0 +1,66 @@
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+
+plugins {
+    id 'com.android.application'
+}
+
+def client = new JsonSlurper().parse(rootProject.file('client-config.json'))
+def signingVariables = ['ANDROID_KEYSTORE_PATH', 'ANDROID_KEYSTORE_PASSWORD',
+                        'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD']
+def signingReady = signingVariables.every { System.getenv(it) }
+if (signingVariables.any { System.getenv(it) } && !signingReady) {
+    throw new GradleException('All four ANDROID signing environment variables are required.')
+}
+
+android {
+    namespace 'com.rabimimi.riichi'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+
+    defaultConfig {
+        applicationId client.packageId
+        minSdk 24
+        targetSdk 36
+        // The workflow uses its increasing run number. Web deployments do not change this.
+        versionCode Integer.parseInt(System.getenv('ANDROID_VERSION_CODE') ?: client.versionCode.toString())
+        versionName client.versionName
+        manifestPlaceholders = [productionHost: new URI(client.origins.production).host,
+                                developmentHost: new URI(client.origins.development).host]
+        resValue 'string', 'production_url', client.origins.production + '/'
+        resValue 'string', 'development_url', client.origins.development + '/'
+        resValue 'string', 'production_origin', client.origins.production
+        resValue 'string', 'development_origin', client.origins.development
+        resValue 'string', 'asset_statements', JsonOutput.toJson(client.origins.values().collect { origin ->
+            [relation: ['delegate_permission/common.handle_all_urls'],
+             target: [namespace: 'web', site: origin]]
+        })
+    }
+
+    signingConfigs {
+        if (signingReady) {
+            release {
+                storeFile file(System.getenv('ANDROID_KEYSTORE_PATH'))
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (signingReady) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+    implementation 'androidx.core:core:1.17.0'
+}

@@ -97,49 +97,100 @@ export function ReplayHUD(): React.JSX.Element | null {
   return (
     <div className="absolute inset-0 pointer-events-none z-[40] select-none">
       {/* Left HUD Panel */}
-      <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-none z-50">
+      <div className="absolute top-5 left-5 flex flex-col gap-3 pointer-events-none z-50 short:top-2 short:left-2 short:gap-1.5">
         <GameInfoPanel />
 
-        {/* Speed Settings (copied from GamePlayHUD settings-panel) */}
-        <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-1.5 px-3 flex flex-row items-center gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-          <label
-            htmlFor="speed-select"
-            className="text-[0.8rem] font-bold text-[#aaa]"
-          >
-            {t('hud.speed')}
-          </label>
-          <Select
-            selectSize="compact"
-            className="cursor-pointer"
-            id="speed-select"
-            value={animationSpeed}
-            onChange={(e) =>
-              rabiriichi.setAnimationSpeed(Number(e.target.value))
-            }
-          >
-            <option value="0.25">x0.25</option>
-            <option value="0.5">x0.5</option>
-            <option value="1">x1.0</option>
-            <option value="2">x2.0</option>
-            <option value="4">x4.0</option>
-            <option value="8">x8.0</option>
-          </Select>
-        </div>
-
-        <div className="flex flex-row gap-2">
-          <FullscreenButton />
-
-          <Tooltip
-            content={
-              isCameraLocked ? t('hud.unlockCamera') : t('hud.lockCamera')
-            }
-            position="bottom"
-          >
-            <IconButton
-              type="button"
-              onClick={() => rabiriichi.toggleCameraLock()}
+        {/* Speed and tools share one row on short screens. */}
+        <div className="flex flex-col gap-3 short:flex-row short:items-center short:gap-1.5">
+          {/* Speed Settings (copied from GamePlayHUD settings-panel) */}
+          <div className="bg-[#141414]/85 border-[1.5px] border-[#444] rounded-lg py-1.5 px-3 flex flex-row items-center gap-2 text-white pointer-events-auto shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+            <label
+              htmlFor="speed-select"
+              className="text-[0.8rem] font-bold text-[#aaa]"
             >
-              {isCameraLocked ? (
+              {t('hud.speed')}
+            </label>
+            <Select
+              selectSize="compact"
+              className="cursor-pointer"
+              id="speed-select"
+              value={animationSpeed}
+              onChange={(e) =>
+                rabiriichi.setAnimationSpeed(Number(e.target.value))
+              }
+            >
+              <option value="0.25">x0.25</option>
+              <option value="0.5">x0.5</option>
+              <option value="1">x1.0</option>
+              <option value="2">x2.0</option>
+              <option value="4">x4.0</option>
+              <option value="8">x8.0</option>
+            </Select>
+          </div>
+
+          <div className="flex flex-row gap-2 short:gap-1.5">
+            <FullscreenButton />
+
+            <Tooltip
+              content={
+                isCameraLocked ? t('hud.unlockCamera') : t('hud.lockCamera')
+              }
+              position="bottom"
+            >
+              <IconButton
+                type="button"
+                onClick={() => rabiriichi.toggleCameraLock()}
+              >
+                {isCameraLocked ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect
+                      x="3"
+                      y="11"
+                      width="18"
+                      height="11"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect
+                      x="3"
+                      y="11"
+                      width="18"
+                      height="11"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                  </svg>
+                )}
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip content={t('hud.gameInfo')} position="bottom">
+              <IconButton type="button" onClick={() => setIsInfoOpen(true)}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -151,17 +202,18 @@ export function ReplayHUD(): React.JSX.Element | null {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <rect
-                    x="3"
-                    y="11"
-                    width="18"
-                    height="11"
-                    rx="2"
-                    ry="2"
-                  ></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
-              ) : (
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip
+              content={t('replay.initialWallTitle', 'Initial Wall & Doras')}
+              position="bottom"
+            >
+              <IconButton type="button" onClick={() => setIsWallOpen(true)}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
@@ -173,93 +225,44 @@ export function ReplayHUD(): React.JSX.Element | null {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <rect
-                    x="3"
-                    y="11"
-                    width="18"
-                    height="11"
-                    rx="2"
-                    ry="2"
-                  ></rect>
-                  <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="3" x2="9" y2="21"></line>
+                  <line x1="15" y1="3" x2="15" y2="21"></line>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="3" y1="15" x2="21" y2="15"></line>
                 </svg>
-              )}
-            </IconButton>
-          </Tooltip>
+              </IconButton>
+            </Tooltip>
 
-          <Tooltip content={t('hud.gameInfo')} position="bottom">
-            <IconButton type="button" onClick={() => setIsInfoOpen(true)}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <Tooltip content={t('hud.exitGame')} position="bottom">
+              <IconButton
+                type="button"
+                variant="exit"
+                onClick={() => stopReplay()}
               >
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip
-            content={t('replay.initialWallTitle', 'Initial Wall & Doras')}
-            position="bottom"
-          >
-            <IconButton type="button" onClick={() => setIsWallOpen(true)}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="9" y1="3" x2="9" y2="21"></line>
-                <line x1="15" y1="3" x2="15" y2="21"></line>
-                <line x1="3" y1="9" x2="21" y2="9"></line>
-                <line x1="3" y1="15" x2="21" y2="15"></line>
-              </svg>
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip content={t('hud.exitGame')} position="bottom">
-            <IconButton
-              type="button"
-              variant="exit"
-              onClick={() => stopReplay()}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-            </IconButton>
-          </Tooltip>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+              </IconButton>
+            </Tooltip>
+          </div>
         </div>
       </div>
 
       {/* Top Right HUD (Settings) */}
-      <div className="pointer-events-auto absolute top-5 right-5 z-[50]">
+      <div className="pointer-events-auto absolute top-5 right-5 z-[50] short:top-2 short:right-2">
         <SettingsButton />
       </div>
 

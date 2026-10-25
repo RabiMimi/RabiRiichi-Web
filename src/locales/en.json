@@ -1,4 +1,10 @@
 {
+  "client": {
+    "environment": "Client",
+    "production": "Production",
+    "development": "Development",
+    "download": "Download Android client (APK)"
+  },
   "connect": {
     "subtitle": "Open Source 3D Browser Riichi Mahjong Client",
     "serverAddress": "Server Address",
@@ -103,6 +109,7 @@
     "onlySZ": "Only Sou & Honor",
     "tenchiSouzou": "Tenchi Souzou",
     "regularWildcards": "Wildcards",
+    "twoSetsWildcards": "2 Sets Wildcards",
     "customize": "Customize...",
     "labelWithCount": "{{name}} ({{count}} tiles)"
   },
@@ -621,6 +628,9 @@
     "tileTooltips": "Tile Tooltips",
     "tooltipOnHandTiles": "Show on hand tiles",
     "tooltipOnRiverTiles": "Show on river tiles",
+    "controls": "Controls",
+    "doubleClickDiscard": "Double-click table to discard drawn tile",
+    "autoCloseChat": "Close chat after sending",
     "profile": {
       "username": "Username",
       "nickname": "Nickname",

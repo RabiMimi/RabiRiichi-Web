@@ -64,7 +64,11 @@ import {
   type ClientSettings,
   type ServerSettings,
 } from '../domain/constants';
-import { VisualsSettings, SoundsSettings } from '../domain/settings';
+import {
+  VisualsSettings,
+  SoundsSettings,
+  ControlSettings,
+} from '../domain/settings';
 import { applyEvent, applyRoomState } from '../domain/reducer';
 import {
   displayedSecondChanged,
@@ -154,6 +158,7 @@ export class RabiRiichiClient {
   public animationSpeed = 1.0;
   public visuals = new VisualsSettings();
   public sounds = new SoundsSettings();
+  public controls = new ControlSettings();
   public isWaitingForProceed = false;
 
   public autoAgari = false;
@@ -237,6 +242,7 @@ export class RabiRiichiClient {
     }
     this.visuals.update(patch);
     this.sounds.update(patch);
+    this.controls.update(patch);
     this.platform.sound.updateAllVolumes();
 
     this.onChange.emit();
@@ -335,6 +341,7 @@ export class RabiRiichiClient {
       const settings = this.credentials.loadClientSettings();
       this.visuals = new VisualsSettings(settings);
       this.sounds = new SoundsSettings(settings);
+      this.controls = new ControlSettings(settings);
       if (typeof settings.animationSpeed === 'number') {
         this.animationSpeed = settings.animationSpeed;
       }

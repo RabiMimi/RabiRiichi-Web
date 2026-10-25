@@ -99,6 +99,8 @@ describe('RabiRiichi Store', () => {
       characterId: 'mimi',
       tooltipOnHandTiles: true,
       tooltipOnRiverTiles: true,
+      doubleClickDiscard: true,
+      autoCloseChat: true,
       volumeSE: 1.0,
       volumeBGM: 1.0,
       volumeVoice: 1.0,

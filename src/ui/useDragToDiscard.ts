@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { TilePointerGesture } from './discardGesture';
+import { TilePointerGesture, slotAdjustedOffset } from './discardGesture';
 
 interface UseDragToDiscardOptions {
   /** Upward travel (px) that commits a discard; scales with the tile size. */
@@ -10,8 +10,15 @@ interface UseDragToDiscardOptions {
   isDraggable?: (traceId: number) => boolean;
   onDiscard: (traceId: number) => void;
   onTap: (traceId: number, pointerType: string) => void;
-  /** Cancel if the dragged tile leaves the hand or changes its layout. */
-  contextKey: string;
+  /**
+   * Left edge (px) of the slot the tile rests in now, or null once it has left
+   * the hand. A drag outlives changes around its tile -- players like to hold a
+   * tile while waiting and drop it the moment their draw arrives -- and ends
+   * only when that tile itself goes. Omit for a tile that never changes slot.
+   */
+  getRestingLeft?: (traceId: number) => number | null;
+  /** For a component holding a single tile: cancel when its identity changes. */
+  contextKey?: string;
 }
 
 type PointerStart = Pick<
@@ -27,8 +34,11 @@ type PointerStart = Pick<
 
 interface DragPosition {
   traceId: number | null;
+  /** Pointer travel since the press. */
   x: number;
   y: number;
+  /** Where the tile's slot started when it was picked up. */
+  pickedUpLeft: number;
 }
 
 export interface DragToDiscard {
@@ -38,10 +48,19 @@ export interface DragToDiscard {
   };
   startGesture: (e: PointerStart, traceId: number) => void;
   dragStyle: (traceId: number | null) => React.CSSProperties;
+  /** Where to draw a dragged tile relative to its slot, or null if not dragged. */
+  offset: (traceId: number | null) => { x: number; y: number } | null;
   position: DragPosition;
 }
 
-const RESTING_POSITION: DragPosition = { traceId: null, x: 0, y: 0 };
+const STATIONARY_SLOT = (): number => 0;
+
+const RESTING_POSITION: DragPosition = {
+  traceId: null,
+  x: 0,
+  y: 0,
+  pickedUpLeft: 0,
+};
 
 /** Tracks the picked-up tile independently of the tile under the pointer. */
 export function useDragToDiscard(
@@ -64,20 +83,24 @@ export function useDragToDiscard(
     setPosition(RESTING_POSITION);
   }, []);
 
-  useLayoutEffect(() => cancel, [cancel, options.contextKey]);
+  const getRestingLeft = options.getRestingLeft ?? STATIONARY_SLOT;
+
+  // Drop the drag once its tile is discarded or melded away (and on unmount).
+  const draggedTileGone =
+    position.traceId != null && getRestingLeft(position.traceId) == null;
+  useLayoutEffect(() => cancel, [cancel, draggedTileGone, options.contextKey]);
 
   const startGesture = useCallback(
     (e: PointerStart, traceId: number) => {
       if (!e.isPrimary || e.button !== 0 || gestureRef.current) return;
       const gesture = new TilePointerGesture(e);
       gestureRef.current = gesture;
+      const pickedUpLeft =
+        (optionsRef.current.getRestingLeft ?? STATIONARY_SLOT)(traceId) ?? 0;
       const move = (pointer: PointerEvent) => {
         if (!gesture.move(pointer) || !gesture.isDragging) return;
         if (optionsRef.current.isDraggable?.(traceId) !== false) {
-          setPosition({
-            traceId,
-            ...gesture.screenOffset,
-          });
+          setPosition({ traceId, ...gesture.screenOffset, pickedUpLeft });
         }
       };
 
@@ -124,19 +147,38 @@ export function useDragToDiscard(
         }
       },
       onLostPointerCapture: (e: React.PointerEvent) => {
-        if (gestureRef.current?.pointerId === e.pointerId) cancel();
+        if (gestureRef.current?.pointerId !== e.pointerId) return;
+        // Re-sorting the hand moves this keyed button in the DOM, which drops
+        // the capture mid-drag. The window listeners still follow the pointer,
+        // so the drag stands; take the capture back while the button remains.
+        const button = e.currentTarget;
+        if (!button.isConnected) return;
+        try {
+          button.setPointerCapture(e.pointerId);
+        } catch {
+          // The pointer ended in the meantime; its pointerup settles the drag.
+        }
       },
     }),
-    [cancel, startGesture],
+    [startGesture],
   );
 
-  const dragStyle = (traceId: number | null): React.CSSProperties =>
-    traceId != null && position.traceId === traceId
+  const offset = (traceId: number | null): { x: number; y: number } | null => {
+    if (traceId == null || position.traceId !== traceId) return null;
+    const currentLeft = getRestingLeft(traceId);
+    if (currentLeft == null) return null;
+    return slotAdjustedOffset(position, position.pickedUpLeft, currentLeft);
+  };
+
+  const dragStyle = (traceId: number | null): React.CSSProperties => {
+    const tileOffset = offset(traceId);
+    return tileOffset
       ? {
-          transform: `translate(${position.x}px, ${position.y}px)`,
+          transform: `translate(${tileOffset.x}px, ${tileOffset.y}px)`,
           transition: 'none',
         }
       : {};
+  };
 
-  return { tileProps, startGesture, dragStyle, position };
+  return { tileProps, startGesture, dragStyle, offset, position };
 }

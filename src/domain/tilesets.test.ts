@@ -3,9 +3,11 @@ import { WILDCARD_TILE_BYTE } from './tile';
 import {
   PRESET_WILDCARD_COUNT,
   TILE_SET_PRESETS,
+  TWO_SETS_PRESET_WILDCARD_COUNT,
   buildInitialTiles,
   getRegularTileSet,
   getTileSet,
+  getTwoSetsTileSet,
   getWildcards,
 } from './tilesets';
 
@@ -53,12 +55,31 @@ describe('RegularWildcards preset', () => {
   });
 });
 
+describe('TwoSetsWildcards preset', () => {
+  it('is the two-deck 272 tiles plus 8 wildcards', () => {
+    const bytes = TILE_SET_PRESETS.TwoSetsWildcards().map((t) => t.toByte());
+    expect(TWO_SETS_PRESET_WILDCARD_COUNT).toBe(8);
+    expect(bytes).toHaveLength(280);
+    expect(countWildcards(bytes)).toBe(8);
+    expect(bytes.slice(0, 272)).toEqual(
+      getTwoSetsTileSet().map((t) => t.toByte()),
+    );
+  });
+
+  it('is reachable by name', () => {
+    expect(countWildcards(toBytes('TwoSetsWildcards'))).toBe(8);
+  });
+});
+
 describe('buildInitialTiles', () => {
   it('returns the chosen tile set as bytes', () => {
     expect(buildInitialTiles('Sanma')).toEqual(toBytes('Sanma'));
     expect(buildInitialTiles('Regular')).toEqual(toBytes('Regular'));
     expect(buildInitialTiles('RegularWildcards')).toEqual(
       toBytes('RegularWildcards'),
+    );
+    expect(buildInitialTiles('TwoSetsWildcards')).toEqual(
+      toBytes('TwoSetsWildcards'),
     );
   });
 });
