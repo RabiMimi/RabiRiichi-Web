@@ -80,6 +80,17 @@ export function getRegularWildcardTileSet(): Tile[] {
   return [...getRegularTileSet(), ...getWildcards(PRESET_WILDCARD_COUNT)];
 }
 
+/** Wildcards in the {@link getTwoSetsWildcardTileSet} preset. */
+export const TWO_SETS_PRESET_WILDCARD_COUNT = 8;
+
+/** Two decks (272 tiles) plus 8 wildcards. */
+export function getTwoSetsWildcardTileSet(): Tile[] {
+  return [
+    ...getTwoSetsTileSet(),
+    ...getWildcards(TWO_SETS_PRESET_WILDCARD_COUNT),
+  ];
+}
+
 export const TILE_SET_PRESETS = {
   Regular: getRegularTileSet,
   Sanma: getSanmaTileSet,
@@ -87,6 +98,7 @@ export const TILE_SET_PRESETS = {
   OnlySZ: getOnlySZTileSet,
   TenchiSouzou: getTenchiSouzouTileSet,
   RegularWildcards: getRegularWildcardTileSet,
+  TwoSetsWildcards: getTwoSetsWildcardTileSet,
 } as const;
 
 export type TileSetPresetName = string;
