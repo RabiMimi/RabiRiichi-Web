@@ -19,3 +19,10 @@ export function canOfferUpdate({
 }: UpdateGateState): boolean {
   return !isReplay && !isInGame;
 }
+
+/**
+ * Z-index hierarchy ensuring floating update notifications sit above all UI overlays,
+ * specifically the fullscreen OrientationGuard (`z-[9999]`).
+ */
+export const ORIENTATION_GUARD_Z_INDEX = 9999;
+export const UPDATE_PROMPT_Z_INDEX = 10000;

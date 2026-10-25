@@ -69,7 +69,7 @@ export function OrientationGuard(): React.JSX.Element | null {
 
   return (
     <div className="fixed inset-0 z-[9999] box-border flex h-screen w-screen flex-col items-center justify-center overflow-y-auto bg-gradient-to-b from-[#161a1f] to-[#0d1013] p-5 text-center text-white select-none">
-      <div className="my-auto flex w-full max-w-sm flex-col items-center py-4">
+      <div className="my-auto flex w-full max-w-sm flex-col items-center py-4 pb-20">
         {/* Animated Material Design Screen Rotation Icon Badge */}
         <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-[#ff7a99]/30 bg-[#ff7a99]/10 shadow-[0_0_24px_rgba(255,122,153,0.2)] backdrop-blur-md">
           <div className="animate-rotate-device text-[#ff7a99]">
