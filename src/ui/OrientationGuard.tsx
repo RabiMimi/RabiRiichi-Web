@@ -15,26 +15,33 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function OrientationGuard(): React.JSX.Element | null {
   const { t } = useTranslation();
-  const [isPortrait, setIsPortrait] = useState(false);
-  const [isAndroid, setIsAndroid] = useState(false);
-  const [isIos, setIsIos] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(() => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return false;
+    }
+    return (
+      isHandheldDevice(navigator.userAgent, navigator.maxTouchPoints) &&
+      window.innerHeight > window.innerWidth
+    );
+  });
+  const [isStandalone, setIsStandalone] = useState(() => isStandaloneDisplay());
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
 
-  useEffect(() => {
-    setIsAndroid(isAndroidDevice(navigator.userAgent));
-    setIsIos(isIosDevice(navigator.userAgent, navigator.maxTouchPoints));
-    setIsStandalone(isStandaloneDisplay());
+  const isAndroid =
+    typeof navigator !== 'undefined' && isAndroidDevice(navigator.userAgent);
+  const isIos =
+    typeof navigator !== 'undefined' &&
+    isIosDevice(navigator.userAgent, navigator.maxTouchPoints);
 
+  useEffect(() => {
     const checkOrientation = () => {
-      if (isHandheldDevice(navigator.userAgent, navigator.maxTouchPoints)) {
-        setIsPortrait(window.innerHeight > window.innerWidth);
-      } else {
-        setIsPortrait(false);
-      }
+      setIsPortrait(
+        isHandheldDevice(navigator.userAgent, navigator.maxTouchPoints) &&
+          window.innerHeight > window.innerWidth,
+      );
+      setIsStandalone(isStandaloneDisplay());
     };
-    checkOrientation();
     window.addEventListener('resize', checkOrientation);
 
     const handleInstallPrompt = (e: Event) => {
@@ -116,7 +123,9 @@ export function OrientationGuard(): React.JSX.Element | null {
             {installPrompt ? (
               <button
                 type="button"
-                onClick={handleInstallClick}
+                onClick={() => {
+                  void handleInstallClick();
+                }}
                 className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#80deea] py-1.5 text-xs font-bold text-[#111] shadow transition hover:bg-[#4dd0e1] active:scale-[0.98]"
               >
                 <svg
