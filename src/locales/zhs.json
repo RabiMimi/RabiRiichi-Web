@@ -576,6 +576,7 @@
       "Unauthenticated": {
         "userDoesNotExist": "用户不存在",
         "invalidCredentials": "用户名或密码错误",
+        "passwordMismatch": "密码错误",
         "generic": "未登录"
       },
       "AlreadyExists": {

@@ -576,6 +576,7 @@
       "Unauthenticated": {
         "userDoesNotExist": "User does not exist",
         "invalidCredentials": "Invalid username or password",
+        "passwordMismatch": "Password mismatch",
         "generic": "Unauthenticated"
       },
       "AlreadyExists": {
