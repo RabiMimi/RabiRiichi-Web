@@ -14,15 +14,15 @@ function tick(): void {
   frameId = sheenElements.size > 0 ? requestAnimationFrame(tick) : null;
 }
 
-function prefersReducedMotion(): boolean {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
 /**
  * Drives the `.dora-sheen` band on a DOM hand tile from the shared sheen
  * timeline. A per-element CSS animation would start whenever its tile mounted,
- * so tiles drifted apart, and it was seen to stall in the Android app; writing
- * the band's position each frame keeps every tile on one clock.
+ * so tiles drifted apart; writing the band's position each frame keeps every
+ * tile on one clock.
+ *
+ * This deliberately ignores `prefers-reduced-motion`, like the 3D tiles'
+ * shader: Android's "Remove animations" setting reports it, and honouring it
+ * here froze only the hand while the river kept shining.
  */
 export function useDoraSheen(
   ref: RefObject<HTMLElement | null>,
@@ -31,11 +31,6 @@ export function useDoraSheen(
   useEffect(() => {
     const element = ref.current;
     if (!enabled || !element) return;
-    if (prefersReducedMotion()) {
-      // Keep the Dora cue, but as a still band across the middle.
-      element.style.setProperty(SHEEN_POSITION_VAR, '50%');
-      return () => element.style.removeProperty(SHEEN_POSITION_VAR);
-    }
 
     sheenElements.add(element);
     frameId ??= requestAnimationFrame(tick);

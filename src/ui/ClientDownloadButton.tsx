@@ -1,18 +1,24 @@
 import { useTranslation } from 'react-i18next';
-import { CLIENT_DOWNLOAD_URL } from '../config/clientEnvironments';
+import { CLIENT_DOWNLOAD_PAGE_URL } from '../config/clientEnvironments';
+import { IS_NATIVE_APP } from '../config/nativeApp';
 import { IconButton } from './IconButton';
 import { Tooltip } from './Tooltip';
 
-export function ClientDownloadButton(): React.JSX.Element {
+export function ClientDownloadButton(): React.JSX.Element | null {
   const { t } = useTranslation();
+
+  // Already running the Android app: nothing to download.
+  if (IS_NATIVE_APP) return null;
 
   return (
     <Tooltip content={t('client.download')} position="bottom">
       <IconButton
         as="a"
         variant="client"
-        href={CLIENT_DOWNLOAD_URL}
+        href={CLIENT_DOWNLOAD_PAGE_URL}
         aria-label={t('client.download')}
+        target="_blank"
+        rel="noopener noreferrer"
       >
         <svg
           aria-hidden="true"

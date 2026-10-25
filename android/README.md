@@ -54,8 +54,9 @@ rabiriichi -keyalg RSA -keysize 2048 -validity 10000`. Keep the keystore and
    Its `certificate-fingerprint.txt` asset provides the public fingerprint to
    put into Cloudflare's build environment. It also publishes a ready-made
    `assetlinks.json` derived from the actual signed APK for cross-checking.
-   The download button targets the stable `android-latest`
-   release asset. Before the initial release, that URL has no APK to download.
+   The download buttons open the stable `android-latest` release page
+   (`downloadPageUrl`), where users download the APK by hand. They are hidden
+   inside the app itself. Before the initial release, that page does not exist.
 
 With no fingerprint configured the generated file is `[]`: web builds remain
 usable but APK trust is intentionally not claimed. Never publish dummy hashes.

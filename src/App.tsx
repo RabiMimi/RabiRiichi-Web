@@ -266,6 +266,9 @@ function App(): React.JSX.Element {
       <OrientationGuard />
       <Canvas
         camera={{ position: [0, 3.0, 3.4], fov: 50 }}
+        // R3F caps at 2 by default, which upscales the table on 3x phones and
+        // leaves it blurrier than the DOM hand drawn over it.
+        dpr={[1, 3]}
         gl={{ stencil: true }}
         flat
         style={{ zIndex: 1 }}
