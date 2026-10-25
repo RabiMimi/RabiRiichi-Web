@@ -1,4 +1,10 @@
 {
+  "client": {
+    "environment": "Client",
+    "production": "Production",
+    "development": "Development",
+    "download": "Download Android client (APK)"
+  },
   "connect": {
     "subtitle": "Open Source 3D Browser Riichi Mahjong Client",
     "serverAddress": "Server Address",

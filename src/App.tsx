@@ -32,6 +32,7 @@ import { SettingsButton } from './ui/SettingsButton';
 import { SettingsModal } from './ui/SettingsModal';
 import { preloadTimerDigits } from './ui/timerDigits';
 import { UpdatePrompt } from './ui/UpdatePrompt';
+import { ClientDownloadButton } from './ui/ClientDownloadButton';
 import {
   playerOverlayPortalTarget,
   stickerPortalTarget,
@@ -354,6 +355,7 @@ function App(): React.JSX.Element {
               </IconButton>
             </Tooltip>
 
+            <ClientDownloadButton />
             <SettingsButton />
           </div>
         </>

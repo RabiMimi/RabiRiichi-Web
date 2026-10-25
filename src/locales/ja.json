@@ -1,4 +1,10 @@
 {
+  "client": {
+    "environment": "クライアント",
+    "production": "正式版",
+    "development": "開発版",
+    "download": "Android クライアントをダウンロード (APK)"
+  },
   "connect": {
     "subtitle": "オープンソース 3D ブラウザ麻雀クライアント",
     "serverAddress": "サーバーアドレス",

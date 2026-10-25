@@ -16,6 +16,7 @@ import { TabSelector } from './TabSelector';
 import { KickedModal } from './KickedModal';
 import { SavedAccountCard } from './SavedAccountCard';
 import { AuthForm } from './AuthForm';
+import { ClientEnvironmentSelector } from './ClientEnvironmentSelector';
 
 export function ConnectScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
@@ -260,6 +261,10 @@ export function ConnectScreen(): React.JSX.Element {
             {t('connect.subtitle')}
           </p>
           <div className="text-[0.75rem] text-[#555]">v{CLIENT_VERSION}</div>
+          <ClientEnvironmentSelector
+            disabled={isConnecting}
+            onSwitch={() => rabiriichi.close()}
+          />
         </div>
 
         {/* Right column: Form */}

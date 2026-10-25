@@ -1,4 +1,10 @@
 {
+  "client": {
+    "environment": "客户端",
+    "production": "正式版",
+    "development": "开发版",
+    "download": "下载安卓客户端 (APK)"
+  },
   "connect": {
     "subtitle": "开源 3D 浏览器麻将客户端",
     "serverAddress": "服务器地址",

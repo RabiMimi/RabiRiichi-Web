@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="production">正式版</string>
+    <string name="development">开发版</string>
+    <string name="play">开始游戏</string>
+</resources>

@@ -9,6 +9,7 @@ import { ReplayModal } from './ReplayModal';
 import { Button } from './Button';
 import { SCREEN, FORM } from './styles';
 import { Select } from './Select';
+import { ClientEnvironmentSelector } from './ClientEnvironmentSelector';
 
 export function LobbyScreen(): React.JSX.Element {
   const { t, i18n } = useTranslation();
@@ -105,6 +106,11 @@ export function LobbyScreen(): React.JSX.Element {
             )}
           </div>
         </div>
+
+        <ClientEnvironmentSelector
+          disabled={isLoading}
+          onSwitch={handleDisconnect}
+        />
 
         {error && <div className={FORM.error}>{error}</div>}
 

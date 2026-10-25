@@ -6,3 +6,7 @@ protos
 package-lock.json
 src/dev/fixtures
 coverage
+android/.gradle
+android/**/build
+android/gradlew
+android/gradlew.bat
