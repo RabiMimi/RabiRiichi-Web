@@ -103,7 +103,7 @@
     "onlySZ": "索子と字牌のみ",
     "tenchiSouzou": "天地創造",
     "regularWildcards": "万能牌",
-    "twoSetsWildcards": "2セット + 万能牌",
+    "twoSetsWildcards": "2セット万能牌",
     "customize": "カスタマイズ...",
     "labelWithCount": "{{name}} ({{count}}枚)"
   },
