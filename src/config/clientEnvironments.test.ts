@@ -5,12 +5,18 @@ describe('client environments', () => {
   it.each(['production', 'development'] as const)(
     'recognizes the %s client origin',
     (environment) => {
-      const url = getClientUrl(environment);
+      const url = getClientUrl(environment, false);
       expect(getClientEnvironment(new URL(url).origin)).toBe(environment);
       expect(new URL(url).pathname).toBe('/');
       expect(new URL(url).search).toBe('');
     },
   );
+
+  it('carries only the Android-app flag across a switch from the app', () => {
+    const url = new URL(getClientUrl('development', true));
+    expect(getClientEnvironment(url.origin)).toBe('development');
+    expect([...url.searchParams]).toEqual([['client', 'android-app']]);
+  });
 
   it.each([
     'http://localhost:5173',

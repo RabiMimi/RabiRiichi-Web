@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CLIENT_DOWNLOAD_URL } from '../config/clientEnvironments';
+import { CLIENT_DOWNLOAD_PAGE_URL } from '../config/clientEnvironments';
+import { IS_NATIVE_APP } from '../config/nativeApp';
 import {
   isAndroidDevice,
   isHandheldDevice,
@@ -129,7 +130,7 @@ export function OrientationGuard(): React.JSX.Element | null {
         </p>
 
         {/* PWA Install Hint Card */}
-        {!isStandalone && (
+        {!isStandalone && !IS_NATIVE_APP && (
           <div className="mt-5 w-full rounded-xl border border-white/10 bg-[#1e2327]/80 p-3.5 text-left shadow-lg backdrop-blur-md">
             <div className="mb-1.5 flex items-center gap-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#80deea]/15 text-[#80deea]">
@@ -189,8 +190,8 @@ export function OrientationGuard(): React.JSX.Element | null {
           </div>
         )}
 
-        {/* Android APK Download Card (shown on Android) */}
-        {isAndroid && (
+        {/* Android APK Download Card (shown on Android, outside the app) */}
+        {isAndroid && !IS_NATIVE_APP && (
           <div className="mt-3 w-full rounded-xl border border-white/10 bg-[#1e2327]/80 p-3.5 text-left shadow-lg backdrop-blur-md">
             <div className="mb-1.5 flex items-center gap-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#4ade80]/15 text-[#4ade80]">
@@ -211,7 +212,9 @@ export function OrientationGuard(): React.JSX.Element | null {
               {t('orientation.apkDesc')}
             </p>
             <a
-              href={CLIENT_DOWNLOAD_URL}
+              href={CLIENT_DOWNLOAD_PAGE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#4ade80] py-1.5 text-xs font-bold text-[#111] shadow transition hover:bg-[#32c969] active:scale-[0.98]"
             >
               <svg
