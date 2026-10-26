@@ -119,8 +119,11 @@ export function PrecacheProgressBar({
     >
       <span className="truncate">
         {t('update.downloading', {
+          done: progress.done,
+          total: progress.total,
           percent,
-          defaultValue: 'Downloading game assets… {{percent}}%',
+          defaultValue:
+            'Downloading game assets… {{done}} / {{total}} files ({{percent}}%)',
         })}
       </span>
       <div className="h-1.5 overflow-hidden rounded-full bg-white/15">

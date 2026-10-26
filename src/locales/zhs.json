@@ -823,7 +823,7 @@
   "update": {
     "available": "有新版本可用",
     "reload": "重新加载",
-    "downloading": "正在下载游戏资源… {{percent}}%"
+    "downloading": "正在下载游戏资源… {{done}} / {{total}} 个文件（{{percent}}%）"
   },
   "assets": {
     "ui": {

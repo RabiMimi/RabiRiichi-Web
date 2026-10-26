@@ -823,7 +823,7 @@
   "update": {
     "available": "A new version is available",
     "reload": "Reload",
-    "downloading": "Downloading game assets… {{percent}}%"
+    "downloading": "Downloading game assets… {{done}} / {{total}} files ({{percent}}%)"
   },
   "assets": {
     "ui": {
