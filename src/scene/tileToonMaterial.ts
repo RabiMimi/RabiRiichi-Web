@@ -15,6 +15,18 @@ const DORA_SHEEN = `
   }
 `;
 
+/**
+ * Mip bias for the face artwork. The 700px art lands on ~50 device pixels, and
+ * plain trilinear filtering at that ratio reads like a lower-resolution image;
+ * sampling half a mip level sharper keeps pips and strokes legible on phones.
+ */
+const FACE_MIP_BIAS = -0.5;
+
+const SHARP_MAP_FRAGMENT = THREE.ShaderChunk.map_fragment.replace(
+  'texture2D( map, vMapUv )',
+  `texture2D( map, vMapUv, ${FACE_MIP_BIAS.toFixed(1)} )`,
+);
+
 function configureTileStencil(material: THREE.Material): void {
   material.stencilWrite = true;
   material.stencilRef = 1;
@@ -52,6 +64,11 @@ export function createToonMaterial(
       uniform float uSheenWidth;
       uniform float uSheenIntensity;
     ` + shader.fragmentShader;
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <map_fragment>',
+      SHARP_MAP_FRAGMENT,
+    );
 
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <dithering_fragment>',
