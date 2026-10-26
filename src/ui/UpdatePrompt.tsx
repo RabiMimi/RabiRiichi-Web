@@ -1,7 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { requestPersistentStorage } from '../lib/persistentStorage';
 import { Button } from './Button';
+import { PrecacheProgressBar } from './PrecacheProgressBar';
 import { canOfferUpdate } from './updateGate';
 
 /** How often a long-lived install re-checks for a new worker. */
@@ -30,14 +32,19 @@ export function UpdatePrompt({
 }: UpdatePromptProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const [isApplying, setIsApplying] = useState(false);
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration>();
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegisteredSW(_url, registration) {
-      if (!registration) return;
+    onRegisteredSW(_url, registered) {
+      if (!registered) return;
+      setRegistration(registered);
+      requestPersistentStorage().catch(() => {
+        // Best-effort storage is what the app had before; nothing to recover.
+      });
       setInterval(() => {
-        void registration.update();
+        void registered.update();
       }, UPDATE_CHECK_INTERVAL_MS);
     },
   });
@@ -60,19 +67,26 @@ export function UpdatePrompt({
     void updateServiceWorker(true);
   }, [isApplying, updateServiceWorker]);
 
-  if (!needRefresh || !canOfferUpdate({ isReplay, isInGame })) return null;
+  const mayOffer = canOfferUpdate({ isReplay, isInGame });
+  const progressBar = (
+    <PrecacheProgressBar registration={registration} mayShowUpdate={mayOffer} />
+  );
+  if (!needRefresh || !mayOffer) return progressBar;
 
   return (
-    <div
-      role="status"
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10000] flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full border-[1.5px] border-[#ff7a99] bg-[#141414]/95 py-2 pl-4 pr-2 text-sm text-white shadow-[0_4px_16px_rgba(0,0,0,0.6)] pointer-events-auto"
-    >
-      <span className="truncate">
-        {t('update.available', 'A new version is available')}
-      </span>
-      <Button size="compact" onClick={applyUpdate} disabled={isApplying}>
-        {t('update.reload', 'Reload')}
-      </Button>
-    </div>
+    <>
+      {progressBar}
+      <div
+        role="status"
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[10000] flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full border-[1.5px] border-[#ff7a99] bg-[#141414]/95 py-2 pl-4 pr-2 text-sm text-white shadow-[0_4px_16px_rgba(0,0,0,0.6)] pointer-events-auto"
+      >
+        <span className="truncate">
+          {t('update.available', 'A new version is available')}
+        </span>
+        <Button size="compact" onClick={applyUpdate} disabled={isApplying}>
+          {t('update.reload', 'Reload')}
+        </Button>
+      </div>
+    </>
   );
 }

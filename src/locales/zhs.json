@@ -822,7 +822,8 @@
   },
   "update": {
     "available": "有新版本可用",
-    "reload": "重新加载"
+    "reload": "重新加载",
+    "downloading": "正在下载游戏资源… {{percent}}%"
   },
   "assets": {
     "ui": {
