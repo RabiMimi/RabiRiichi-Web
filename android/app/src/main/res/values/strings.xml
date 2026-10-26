@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">RabiRiichi</string>
-    <string-array name="trusted_origins" translatable="false">
-        <item>@string/production_origin</item>
-        <item>@string/development_origin</item>
-    </string-array>
 </resources>

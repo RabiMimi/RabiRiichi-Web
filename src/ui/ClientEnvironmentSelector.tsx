@@ -28,7 +28,7 @@ export function ClientEnvironmentSelector({
         (environment) => (
           <a
             key={environment}
-            href={getClientUrl(environment)}
+            href={getClientUrl(environment, window.location.origin)}
             aria-current={current === environment ? 'page' : undefined}
             aria-disabled={disabled || current === environment}
             onClick={(clickEvent) => {
