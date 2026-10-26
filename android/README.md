@@ -54,9 +54,9 @@ rabiriichi -keyalg RSA -keysize 2048 -validity 10000`. Keep the keystore and
    Its `certificate-fingerprint.txt` asset provides the public fingerprint to
    put into Cloudflare's build environment. It also publishes a ready-made
    `assetlinks.json` derived from the actual signed APK for cross-checking.
-   The download buttons open the stable `android-latest` release page
+   The download buttons open the repository's GitHub Releases page
    (`downloadPageUrl`), where users download the APK by hand. They are hidden
-   inside the app itself. Before the initial release, that page does not exist.
+   inside the app itself.
 
 With no fingerprint configured the generated file is `[]`: web builds remain
 usable but APK trust is intentionally not claimed. Never publish dummy hashes.
@@ -66,10 +66,9 @@ fingerprint; it can differ from the sideloaded APK's certificate.
 ## Automatic APK releases
 
 `.github/workflows/android-release.yml` builds and lints Android changes on pull
-requests. A push to **main** affecting `android/**` or the workflow builds a signed
-APK, publishes a versioned `android-<run number>` GitHub release, and replaces
-`RabiRiichi.apk` on the `android-latest` release used by the download button.
-Manual dispatch can also publish from `main`; other branches never publish.
+requests and pushes to `main`. Creating and pushing a version tag (e.g. `v1.0.0` or
+`android-v1.0.0`), or triggering manual dispatch, builds a signed APK and publishes
+a standard GitHub Release with release notes and the APK assets attached.
 The workflow fails clearly if signing secrets have not been configured. Workflow
 run numbers provide increasing Android version codes; keep the workflow identity
 stable or ensure replacement workflows continue above the last published code.

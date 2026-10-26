@@ -6,12 +6,28 @@ plugins {
 }
 
 def client = new JsonSlurper().parse(rootProject.file('client-config.json'))
+// Regional mirrors (see client-config.json) serve the same build, and the web
+// redirects mainland players to them, so the TWA must trust them as well.
+def trustedOrigins = client.origins.values() + client.mirrors.collectMany { it.origins.values() }
 def signingVariables = ['ANDROID_KEYSTORE_PATH', 'ANDROID_KEYSTORE_PASSWORD',
                         'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD']
 def signingReady = signingVariables.every { System.getenv(it) }
 if (signingVariables.any { System.getenv(it) } && !signingReady) {
     throw new GradleException('All four ANDROID signing environment variables are required.')
 }
+
+def generatedResDir = layout.buildDirectory.dir('generated/res/clientOrigins').get().asFile
+def trustedOriginsXml = new File(generatedResDir, 'values/trusted_origins.xml')
+trustedOriginsXml.parentFile.mkdirs()
+trustedOriginsXml.text = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    '<resources>',
+    '    <string-array name="trusted_origins" translatable="false">',
+    *trustedOrigins.collect { "        <item>${it}</item>" },
+    '    </string-array>',
+    '</resources>',
+    '',
+].join('\n')
 
 android {
     namespace 'com.rabimimi.riichi'
@@ -24,14 +40,12 @@ android {
         targetSdk 36
         // The workflow uses its increasing run number. Web deployments do not change this.
         versionCode Integer.parseInt(System.getenv('ANDROID_VERSION_CODE') ?: client.versionCode.toString())
-        versionName client.versionName
+        versionName System.getenv('ANDROID_VERSION_NAME') ?: client.versionName
         manifestPlaceholders = [productionHost: new URI(client.origins.production).host,
                                 developmentHost: new URI(client.origins.development).host]
         resValue 'string', 'production_url', client.origins.production + '/'
         resValue 'string', 'development_url', client.origins.development + '/'
-        resValue 'string', 'production_origin', client.origins.production
-        resValue 'string', 'development_origin', client.origins.development
-        resValue 'string', 'asset_statements', JsonOutput.toJson(client.origins.values().collect { origin ->
+        resValue 'string', 'asset_statements', JsonOutput.toJson(trustedOrigins.collect { origin ->
             [relation: ['delegate_permission/common.handle_all_urls'],
              target: [namespace: 'web', site: origin]]
         })
@@ -53,6 +67,10 @@ android {
             if (signingReady) signingConfig signingConfigs.release
         }
     }
+
+    // resValue cannot declare an array, so the trusted origin list is written as
+    // a generated resource instead of being kept in step with the config by hand.
+    sourceSets.main.res.srcDir generatedResDir
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

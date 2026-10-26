@@ -169,7 +169,8 @@ export function Tile3D({
     displayState === 'hand' ||
     displayState === 'sideways';
 
-  const { viewport: threeViewport, size } = useThree();
+  const { viewport: threeViewport, size, gl } = useThree();
+  const maxAnisotropy = gl.capabilities.getMaxAnisotropy();
   const factorX = (threeViewport.width / size.width) * 0.5;
   const factorY = (threeViewport.height / size.height) * 0.5;
   const selectedTileTraceId = useSelectedTileTraceId();
@@ -346,8 +347,10 @@ export function Tile3D({
     tex.center.set(0.5, 0.5);
     tex.repeat.x = -1;
     tex.wrapS = THREE.MirroredRepeatWrapping;
+    // Rivers and melds are seen at a slant; without this the far ones blur.
+    tex.anisotropy = Math.min(8, maxAnisotropy);
     return tex;
-  }, [texture]);
+  }, [texture, maxAnisotropy]);
 
   const clonedBackTexture = useMemo(() => {
     const tex = backTexture.clone();
