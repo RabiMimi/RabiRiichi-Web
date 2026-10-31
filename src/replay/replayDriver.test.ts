@@ -9,7 +9,11 @@ import {
   togglePause,
 } from './replayDriver';
 import { rabiriichi } from '../net/client';
-import { getEventsFromReplay } from './replay';
+import {
+  getEventsFromReplay,
+  parseReplaySeatParam,
+  replayAccountId,
+} from './replay';
 import type { IGameLogMsg } from '../proto';
 import replayDataRaw from '../dev/fixtures/full_game.json';
 
@@ -149,5 +153,25 @@ describe('ReplayDriver - reasoning track opt-in', () => {
       'http://arena.example.com/api/arena/matches/' +
         'RABI-REPLAY-9999/reasoning-track',
     );
+  });
+
+  it('parses seat query parameters safely and clamps out-of-range replay seats to 0', () => {
+    expect(parseReplaySeatParam(null)).toBe(0);
+    expect(parseReplaySeatParam('')).toBe(0);
+    expect(parseReplaySeatParam('2')).toBe(2);
+    expect(parseReplaySeatParam('-1')).toBe(0);
+    expect(parseReplaySeatParam('4')).toBe(0);
+    expect(parseReplaySeatParam('1.5')).toBe(0);
+    expect(parseReplaySeatParam('abc')).toBe(0);
+    expect(parseReplaySeatParam('2', 2)).toBe(0);
+
+    // Fixture is a 4-player game (seats 0..3): seat 3 selects seat 3, while seat 5 clamps to 0.
+    startReplay(replayData, 3);
+    pauseReplay();
+    expect(rabiriichi.self?.id).toBe(replayAccountId(3));
+
+    startReplay(replayData, 5);
+    pauseReplay();
+    expect(rabiriichi.self?.id).toBe(replayAccountId(0));
   });
 });

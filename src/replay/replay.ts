@@ -27,6 +27,23 @@ export function replayAccountId(seat: number): number {
 }
 
 /**
+ * Parses an optional `seat` URL query parameter into a valid non-negative seat
+ * index within `[0, maxPlayers - 1]`, falling back to `0` on missing or
+ * out-of-range values.
+ */
+export function parseReplaySeatParam(
+  raw: string | null | undefined,
+  maxPlayers = 4,
+): number {
+  if (raw == null || raw.trim() === '') return 0;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed >= maxPlayers) {
+    return 0;
+  }
+  return parsed;
+}
+
+/**
  * Parses a JSON replay log and returns a list of events from the perspective of the given seat.
  */
 export function getEventsFromReplay(

@@ -113,8 +113,13 @@ export function startReplay(
   logger.info(`Starting replay for seat ${perspectiveSeat}`);
   rabiriichi.close();
 
-  currentEvents = getEventsFromReplay(replayData, perspectiveSeat);
   currentInitialRoom = createInitialRoomFromReplay(replayData);
+  const validSeat = currentInitialRoom.players.some(
+    (p) => p.seat === perspectiveSeat,
+  )
+    ? perspectiveSeat
+    : 0;
+  currentEvents = getEventsFromReplay(replayData, validSeat);
   eventIdx = 0;
   reasoningTrack = EMPTY_REASONING_TRACK;
   loadReasoningTrack(currentInitialRoom.gameId, options.reasoning === true);
@@ -137,10 +142,10 @@ export function startReplay(
   replayState.singleStep = false;
   rabiriichi.replay.setConnectionStatus('connected');
   const selfPlayer = currentInitialRoom.players.find(
-    (p) => p.seat === perspectiveSeat,
+    (p) => p.seat === validSeat,
   );
-  const selfId = selfPlayer?.id ?? replayAccountId(perspectiveSeat);
-  const selfNickname = selfPlayer?.nickname ?? `Player ${perspectiveSeat}`;
+  const selfId = selfPlayer?.id ?? replayAccountId(validSeat);
+  const selfNickname = selfPlayer?.nickname ?? `Player ${validSeat}`;
 
   rabiriichi.replay.setSelf({
     id: selfId,
