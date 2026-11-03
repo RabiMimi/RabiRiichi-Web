@@ -83,7 +83,7 @@ export function UiTile({
 }
 
 /**
- * A tile a wildcard stood in for: the effective face inside a flowing rainbow
+ * A tile a wildcard stood in for: the effective face inside a flowing four-colour
  * ring, with the wildcard's own face pinned to the corner.
  */
 function WildcardFrame({

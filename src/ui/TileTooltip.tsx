@@ -130,8 +130,8 @@ export function TileTooltip(): React.JSX.Element | null {
       case TileSuit.Z:
         return '#8b5cf6'; // Purple for Honors
       case TileSuit.Wildcard:
-        // Rainbow, echoing the wildcard's prismatic face
-        return 'linear-gradient(90deg, #ff2e55, #ff8a1f, #22c96e, #1fb8f2, #8a45f5)';
+        // Match the four colours of the wildcard face.
+        return 'linear-gradient(90deg, #ed1c24, #0878d1, #18a849, #ffcc00)';
       case TileSuit.Invalid:
       default:
         return '#6b7280';
