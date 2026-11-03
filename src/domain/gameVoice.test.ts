@@ -39,7 +39,7 @@ function room(
         aiType: 0,
         gameState: {
           jun: 0,
-          points: 25000,
+          points: 25000n,
           riichiTileId: 0,
           isRiichiConfirmed: false,
           furiten: {},
@@ -62,7 +62,7 @@ function room(
         aiType: 0,
         gameState: {
           jun: 0,
-          points: 25000,
+          points: 25000n,
           riichiTileId: 0,
           isRiichiConfirmed: false,
           furiten: {},
@@ -108,7 +108,7 @@ function wait(
     fu: 0,
     yakuman,
     bonusYakuman,
-    points,
+    points: BigInt(points),
     maxHan: 0,
   };
 }

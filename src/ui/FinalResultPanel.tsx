@@ -1,3 +1,4 @@
+import { compareScoresDescending } from '../domain/score';
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -144,7 +145,12 @@ export function FinalResultPanel({
     const finalRank =
       room.players
         .slice()
-        .sort((a, b) => (b.gameState?.points ?? 0) - (a.gameState?.points ?? 0))
+        .sort((a, b) =>
+          compareScoresDescending(
+            a.gameState?.points ?? 0n,
+            b.gameState?.points ?? 0n,
+          ),
+        )
         .findIndex((p) => p.id === me.id) + 1;
     if (finalRank < 1 || finalRank > 4) return;
     const voiceLineId = getFinalPlacementVoiceLineId(
@@ -195,9 +201,9 @@ export function FinalResultPanel({
     return room.players
       .map((player) => ({
         player,
-        points: player.gameState?.points ?? 0,
+        points: player.gameState?.points ?? 0n,
       }))
-      .sort((a, b) => b.points - a.points);
+      .sort((a, b) => compareScoresDescending(a.points, b.points));
   }, [room]);
 
   const activeCharacter = getCharacterOrDefault(characterId);
@@ -324,7 +330,7 @@ export function FinalResultPanel({
                         {displayName}
                       </span>
                       <span className="text-sm lg:text-2xl font-semibold text-[#ff7a99]">
-                        {item.points}
+                        {item.points.toString()}
                       </span>
                     </div>
                   </div>

@@ -9,7 +9,7 @@ function badge(agari: PlayerAgariState) {
   return getResultBadge({ agari, t });
 }
 
-const won: PlayerAgariState = { gainPoints: 8000, losePoints: 0 };
+const won: PlayerAgariState = { gainPoints: 8000n, losePoints: 0n };
 
 describe('getResultBadge', () => {
   it('trusts the server flag for a self-draw', () => {
@@ -38,7 +38,7 @@ describe('getResultBadge', () => {
 
   it('labels tenpai at an exhaustive draw', () => {
     expect(
-      badge({ gainPoints: 1000, losePoints: 0, isTenpai: true }).label,
+      badge({ gainPoints: 1000n, losePoints: 0n, isTenpai: true }).label,
     ).toBe('result.tenpai');
   });
 

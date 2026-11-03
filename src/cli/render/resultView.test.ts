@@ -17,7 +17,7 @@ function player(
     aiType: AiType.AI_TYPE_NONE,
     gameState: {
       jun: 0,
-      points: 25000,
+      points: 25000n,
       riichiTileId: 0,
       isRiichiConfirmed: false,
       furiten: {},
@@ -68,7 +68,7 @@ describe('hasNextRound', () => {
 describe('shouldShowResult', () => {
   it('shows when a player has an agari result', () => {
     const p = player(0, {
-      agari: { gainPoints: 8000, losePoints: 0, isTenpai: true, scores: {} },
+      agari: { gainPoints: 8000n, losePoints: 0n, isTenpai: true, scores: {} },
     });
     expect(shouldShowResult(room([p, player(1)]), undefined, false)).toBe(true);
   });
@@ -93,25 +93,27 @@ describe('shouldShowResult', () => {
 describe('buildResultView', () => {
   it('computes point deltas and classifies agari vs draw', () => {
     const winner = player(0, {
-      points: 33000,
-      agari: { gainPoints: 8000, losePoints: 0, scores: {} },
+      points: 33000n,
+      agari: { gainPoints: 8000n, losePoints: 0n, scores: {} },
     });
     const loser = player(1, {
-      points: 17000,
-      agari: { gainPoints: 0, losePoints: 8000 },
+      points: 17000n,
+      agari: { gainPoints: 0n, losePoints: 8000n },
     });
     const view = buildResultView(room([winner, loser]), (p) => p.nickname);
     expect(view.kind).toBe('agari');
     expect(view.rows).toEqual([
-      { id: 0, name: 'P0', delta: 8000, points: 33000 },
-      { id: 1, name: 'P1', delta: -8000, points: 17000 },
+      { id: 0, name: 'P0', delta: 8000n, points: 33000n },
+      { id: 1, name: 'P1', delta: -8000n, points: 17000n },
     ]);
   });
 
   it('classifies a draw when nobody has scores', () => {
     const view = buildResultView(
       room([
-        player(0, { agari: { gainPoints: 0, losePoints: 0, isTenpai: true } }),
+        player(0, {
+          agari: { gainPoints: 0n, losePoints: 0n, isTenpai: true },
+        }),
       ]),
       (p) => p.nickname,
     );

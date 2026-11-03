@@ -27,7 +27,7 @@ function makePlayer(
     aiType: AiType.AI_TYPE_NONE,
     gameState: {
       jun: 0,
-      points: 25000,
+      points: 25000n,
       riichiTileId: 0,
       isRiichiConfirmed: false,
       furiten: {},

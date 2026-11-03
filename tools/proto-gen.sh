@@ -38,9 +38,9 @@ for f in ${ALL_PROTOS}; do
   fi
 done
 
+# Keep int64 fields as Long; score consumers convert them to bigint exactly.
 "${PBJS}" \
   -t static-module \
-  --force-number \
   -w es6 \
   -r rabiriichi \
   -p "${PROTO_DIR}" \

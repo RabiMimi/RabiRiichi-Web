@@ -140,19 +140,19 @@ describe('isTsumoTile', () => {
 });
 
 describe('shouldRevealHand', () => {
-  const winner: PlayerAgariState = { gainPoints: 8000, losePoints: 0 };
+  const winner: PlayerAgariState = { gainPoints: 8000n, losePoints: 0n };
   const tenpai: PlayerAgariState = {
-    gainPoints: 1000,
-    losePoints: 0,
+    gainPoints: 1000n,
+    losePoints: 0n,
     isTenpai: true,
   };
   const scoredOnly: PlayerAgariState = {
-    gainPoints: 0,
-    losePoints: 0,
+    gainPoints: 0n,
+    losePoints: 0n,
     scores: { items: [] },
   };
   // A noten player at a draw: reducer still assigns an (empty) agari state.
-  const noten: PlayerAgariState = { gainPoints: 0, losePoints: 3000 };
+  const noten: PlayerAgariState = { gainPoints: 0n, losePoints: 3000n };
 
   it('reveals a winner', () => {
     expect(shouldRevealHand(winner, false)).toBe(true);
@@ -189,7 +189,7 @@ describe('waitMeetsMinHan', () => {
     fu: 30,
     yakuman: 0,
     bonusYakuman: 0,
-    points: 0,
+    points: 0n,
     maxHan: 0,
     ...over,
   });
@@ -229,7 +229,7 @@ describe('displayHan', () => {
     fu: 30,
     yakuman: 0,
     bonusYakuman: 0,
-    points: 0,
+    points: 0n,
     maxHan: 0,
     ...over,
   });
@@ -257,7 +257,7 @@ describe('applyRiichiBonusToWaits', () => {
     fu: 30,
     yakuman: 0,
     bonusYakuman: 0,
-    points: 0,
+    points: 0n,
     maxHan: 0,
     ...over,
   });
@@ -414,7 +414,7 @@ describe('aotenjou waits', () => {
     fu: 30,
     yakuman: 0,
     bonusYakuman: 0,
-    points: 0,
+    points: 0n,
     maxHan: 2,
     ...over,
   });
@@ -448,7 +448,7 @@ describe('bonus yakuman waits', () => {
     fu: 30,
     yakuman: 0,
     bonusYakuman: 0,
-    points: 0,
+    points: 0n,
     maxHan: 0,
     ...over,
   });
@@ -512,7 +512,7 @@ describe('yakumanOutlook', () => {
     fu: 30,
     yakuman: 0,
     bonusYakuman: 0,
-    points: 0,
+    points: 0n,
     maxHan: 1,
     ...over,
   });

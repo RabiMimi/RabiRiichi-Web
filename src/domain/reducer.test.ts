@@ -54,7 +54,7 @@ describe('Reducer - Hydration', () => {
       players: [
         {
           id: 0,
-          points: 24000,
+          points: '24000',
           hand: {
             freeTiles: [
               { traceId: 101, tile: 17 },
@@ -70,7 +70,7 @@ describe('Reducer - Hydration', () => {
         },
         {
           id: 1,
-          points: 26000,
+          points: '26000',
           hand: {
             freeTiles: [{ traceId: 201, tile: 33 }],
             called: [],
@@ -104,7 +104,7 @@ describe('Reducer - Hydration', () => {
     expect(p0).toBeDefined();
     expect(p0?.status).toBe(UserStatus.USER_STATUS_PLAYING);
     expect(p0?.gameState).not.toBeNull();
-    expect(p0?.gameState?.points).toBe(24000);
+    expect(p0?.gameState?.points).toBe(24000n);
     expect(p0?.gameState?.jun).toBe(3);
     expect(p0?.gameState?.furiten[FuritenType.FURITEN_TYPE_DISCARD]).toBe(true);
     expect(p0?.gameState?.furiten[FuritenType.FURITEN_TYPE_RIICHI]).toBe(false);
@@ -115,7 +115,7 @@ describe('Reducer - Hydration', () => {
 
     const p1 = nextState.players.find((p) => p.seat === 1);
     expect(p1).toBeDefined();
-    expect(p1?.gameState?.points).toBe(26000);
+    expect(p1?.gameState?.points).toBe(26000n);
     expect(p1?.gameState?.hand.freeTiles).toHaveLength(1);
   });
 
@@ -137,7 +137,7 @@ describe('Reducer - Hydration', () => {
       players: [
         {
           id: 0,
-          points: 25000,
+          points: '25000',
           hand: {
             // Deliberately out of order: 5p(37), 1m(17), 9s(57), 3m(19).
             freeTiles: [
@@ -207,7 +207,7 @@ describe('Reducer - Hydration', () => {
       players: [
         {
           id: 0,
-          points: 25000,
+          points: '25000',
           hand: {
             freeTiles: [],
             called: [],
@@ -217,7 +217,7 @@ describe('Reducer - Hydration', () => {
         },
         {
           id: 1,
-          points: 25000,
+          points: '25000',
           hand: {
             freeTiles: [],
             called: [],
@@ -279,7 +279,7 @@ describe('Reducer - Hydration', () => {
       players: [
         {
           id: 0,
-          points: 25000,
+          points: '25000',
           hand: {
             freeTiles: [],
             called: [],
@@ -303,7 +303,7 @@ describe('Reducer - Hydration', () => {
         },
         {
           id: 1,
-          points: 25000,
+          points: '25000',
           hand: {
             freeTiles: [
               { traceId: 201, tile: 19 },
@@ -374,7 +374,7 @@ function createInitializedRoom(): RoomModel {
         seat: 0,
         gameState: {
           jun: 0,
-          points: 25000,
+          points: 25000n,
           riichiTileId: 0,
           isRiichiConfirmed: false,
           furiten: {},
@@ -396,7 +396,7 @@ function createInitializedRoom(): RoomModel {
         seat: 1,
         gameState: {
           jun: 0,
-          points: 25000,
+          points: 25000n,
           riichiTileId: 0,
           isRiichiConfirmed: false,
           furiten: {},
@@ -478,7 +478,7 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.remainingTiles).toBe(122);
     expect(nextState.info?.currentPlayer).toBe(0);
 
-    expect(nextState.players[0]?.gameState?.points).toBe(25000);
+    expect(nextState.players[0]?.gameState?.points).toBe(25000n);
     expect(nextState.gameId).toBe('TEST-GAME-123');
   });
 
@@ -488,15 +488,15 @@ describe('Reducer - Events', () => {
     const state = createInitializedRoom();
     const p0 = state.players[0];
     const p1 = state.players[1];
-    if (p0?.gameState) p0.gameState.points = 32100;
-    if (p1?.gameState) p1.gameState.points = 17900;
+    if (p0?.gameState) p0.gameState.points = 32100n;
+    if (p1?.gameState) p1.gameState.points = 17900n;
 
     const nextState = applyEvent(state, {
       beginGameEvent: { round: 1, dealer: 1, honba: 0 },
     });
 
-    expect(nextState.players[0]?.gameState?.points).toBe(32100);
-    expect(nextState.players[1]?.gameState?.points).toBe(17900);
+    expect(nextState.players[0]?.gameState?.points).toBe(32100n);
+    expect(nextState.players[1]?.gameState?.points).toBe(17900n);
   });
 
   it('uses configured initialPoints for the first round (no prior state)', () => {
@@ -508,8 +508,8 @@ describe('Reducer - Events', () => {
       beginGameEvent: { round: 0, dealer: 0, honba: 0 },
     });
 
-    expect(nextState.players[0]?.gameState?.points).toBe(25000);
-    expect(nextState.players[1]?.gameState?.points).toBe(25000);
+    expect(nextState.players[0]?.gameState?.points).toBe(25000n);
+    expect(nextState.players[1]?.gameState?.points).toBe(25000n);
   });
 
   it('resets points and clears end state when a new game begins after one ended', () => {
@@ -518,11 +518,11 @@ describe('Reducer - Events', () => {
     const state = createInitializedRoom();
     const p0 = state.players[0];
     const p1 = state.players[1];
-    if (p0?.gameState) p0.gameState.points = 48000;
-    if (p1?.gameState) p1.gameState.points = 2000;
+    if (p0?.gameState) p0.gameState.points = 48000n;
+    if (p1?.gameState) p1.gameState.points = 2000n;
     // Simulate the previous game having ended.
     state.gameEnded = true;
-    state.endGamePoints = [48000, 2000];
+    state.endGamePoints = [48000n, 2000n];
     state.concludedPlayers = state.players.map((p) => ({ ...p }));
 
     // Simulate Return to Room action
@@ -535,8 +535,8 @@ describe('Reducer - Events', () => {
       beginGameEvent: { round: 0, dealer: 0, honba: 0 },
     });
 
-    expect(nextState.players[0]?.gameState?.points).toBe(25000);
-    expect(nextState.players[1]?.gameState?.points).toBe(25000);
+    expect(nextState.players[0]?.gameState?.points).toBe(25000n);
+    expect(nextState.players[1]?.gameState?.points).toBe(25000n);
     expect(nextState.gameEnded).toBe(false);
     expect(nextState.endGamePoints).toBeNull();
     expect(nextState.concludedPlayers).toBeNull();
@@ -1109,7 +1109,7 @@ describe('Reducer - Events', () => {
     expect(nextState.players[0]?.gameState?.riichiTileId).toBe(50);
     expect(nextState.players[0]?.gameState?.isRiichiConfirmed).toBe(true);
     // Declaring riichi deducts the 1000-point stick and adds it to the pot.
-    expect(nextState.players[0]?.gameState?.points).toBe(24000);
+    expect(nextState.players[0]?.gameState?.points).toBe(24000n);
     expect(nextState.info?.riichiStick).toBe(1);
   });
 
@@ -1143,7 +1143,7 @@ describe('Reducer - Events', () => {
     });
 
     expect(state.players[0]?.gameState?.isRiichiConfirmed).toBe(false);
-    expect(state.players[0]?.gameState?.points).toBe(25000);
+    expect(state.players[0]?.gameState?.points).toBe(25000n);
     expect(state.info?.riichiStick).toBe(0);
   });
 
@@ -1399,7 +1399,7 @@ describe('Reducer - Events', () => {
       players: [
         {
           id: 0,
-          points: 25000,
+          points: '25000',
           hand: {
             freeTiles: [
               { traceId: 10, tile: 0 },
@@ -1411,7 +1411,7 @@ describe('Reducer - Events', () => {
         },
         {
           id: 1,
-          points: 25000,
+          points: '25000',
           hand: { freeTiles: [], called: [], discarded: [] },
         },
       ],
@@ -1431,8 +1431,8 @@ describe('Reducer - Events', () => {
     const p0Raw = state.players[0];
     const p1Raw = state.players[1];
     if (p0Raw?.gameState && p1Raw?.gameState) {
-      p0Raw.gameState.agari = { gainPoints: 0, losePoints: 0 };
-      p1Raw.gameState.agari = { gainPoints: 0, losePoints: 0 };
+      p0Raw.gameState.agari = { gainPoints: 0n, losePoints: 0n };
+      p1Raw.gameState.agari = { gainPoints: 0n, losePoints: 0n };
     }
 
     const eventMsg = {
@@ -1441,7 +1441,7 @@ describe('Reducer - Events', () => {
           {
             from: 1,
             to: 0,
-            points: 3900,
+            points: '3900',
             reason: 1, // AGARI
           },
         ],
@@ -1453,11 +1453,11 @@ describe('Reducer - Events', () => {
     const p0 = nextState.players.find((p) => p.seat === 0);
     const p1 = nextState.players.find((p) => p.seat === 1);
 
-    expect(p0?.gameState?.points).toBe(28900); // 25000 + 3900
-    expect(p0?.gameState?.agari?.gainPoints).toBe(3900);
+    expect(p0?.gameState?.points).toBe(28900n); // 25000 + 3900
+    expect(p0?.gameState?.agari?.gainPoints).toBe(3900n);
 
-    expect(p1?.gameState?.points).toBe(21100); // 25000 - 3900
-    expect(p1?.gameState?.agari?.losePoints).toBe(3900);
+    expect(p1?.gameState?.points).toBe(21100n); // 25000 - 3900
+    expect(p1?.gameState?.agari?.losePoints).toBe(3900n);
   });
 
   it('freezes a round-result snapshot on applyScore and keeps it if a player leaves', () => {
@@ -1469,16 +1469,16 @@ describe('Reducer - Events', () => {
     const p1Raw = state.players[1];
     if (p0Raw?.gameState && p1Raw?.gameState) {
       p0Raw.gameState.agari = {
-        gainPoints: 0,
-        losePoints: 0,
+        gainPoints: 0n,
+        losePoints: 0n,
         scores: {},
       };
-      p1Raw.gameState.agari = { gainPoints: 0, losePoints: 0 };
+      p1Raw.gameState.agari = { gainPoints: 0n, losePoints: 0n };
     }
 
     const settled = applyEvent(state, {
       applyScoreEvent: {
-        scoreChange: [{ from: 102, to: 101, points: 3900, reason: 1 }],
+        scoreChange: [{ from: 102, to: 101, points: '3900', reason: 1 }],
       },
     });
 
@@ -1513,12 +1513,12 @@ describe('Reducer - Events', () => {
     const state = createInitializedRoom();
     const p0Raw = state.players[0];
     if (p0Raw?.gameState) {
-      p0Raw.gameState.agari = { gainPoints: 0, losePoints: 0, scores: {} };
+      p0Raw.gameState.agari = { gainPoints: 0n, losePoints: 0n, scores: {} };
     }
 
     const settled = applyEvent(state, {
       applyScoreEvent: {
-        scoreChange: [{ from: 102, to: 101, points: 3900, reason: 1 }],
+        scoreChange: [{ from: 102, to: 101, points: '3900', reason: 1 }],
       },
     });
     settled.concludedPlayers = settled.players.map((p) => ({ ...p }));
@@ -1646,11 +1646,11 @@ describe('Reducer - Events', () => {
     setPendingTile(state, 0, { traceId: 50, tile: 21 });
     const p0 = state.players[0];
     if (p0?.gameState) {
-      p0.gameState.points = 28900;
+      p0.gameState.points = 28900n;
       p0.gameState.agari = {
         scores: { result: { han: 3, fu: 40 } },
-        gainPoints: 3900,
-        losePoints: 0,
+        gainPoints: 3900n,
+        losePoints: 0n,
       };
     }
 
@@ -1670,7 +1670,7 @@ describe('Reducer - Events', () => {
     expect(nextState.info?.honba).toBe(1);
 
     const nextP0 = nextState.players.find((p) => p.seat === 0);
-    expect(nextP0?.gameState?.points).toBe(28900); // Points preserved
+    expect(nextP0?.gameState?.points).toBe(28900n); // Points preserved
     // Result and hand are preserved until beginGameEvent clears them.
     expect(nextP0?.gameState?.agari?.scores?.result?.han).toBe(3);
     expect(nextP0?.gameState?.hand.freeTiles).toHaveLength(1);
@@ -1685,8 +1685,8 @@ describe('Reducer - Events', () => {
     if (p0?.gameState) {
       p0.gameState.agari = {
         scores: { result: { han: 3, fu: 40 } },
-        gainPoints: 3900,
-        losePoints: 0,
+        gainPoints: 3900n,
+        losePoints: 0n,
       };
     }
 
@@ -1703,14 +1703,14 @@ describe('Reducer - Events', () => {
     const state = createInitializedRoom();
     const eventMsg = {
       stopGameEvent: {
-        endGamePoints: [28000, 22000],
+        endGamePoints: ['28000', '22000'],
       },
     };
 
     const nextState = applyEvent(state, eventMsg);
 
     expect(nextState.gameEnded).toBe(true);
-    expect(nextState.endGamePoints).toEqual([28000, 22000]);
+    expect(nextState.endGamePoints).toEqual([28000n, 22000n]);
     expect(nextState.info).not.toBeNull();
     expect(nextState.players[0]?.gameState).not.toBeNull();
     expect(nextState.concludedPlayers).toEqual(state.players);
@@ -1732,7 +1732,7 @@ describe('Reducer - Events', () => {
     expect(state.tileRegistry.size).toBeGreaterThan(0);
 
     state = applyEvent(state, {
-      stopGameEvent: { endGamePoints: [28000, 22000] },
+      stopGameEvent: { endGamePoints: ['28000', '22000'] },
     });
 
     expect(state.gameEnded).toBe(true);
@@ -1768,10 +1768,10 @@ describe('Reducer - Events', () => {
           info: { round: 0, dealer: 0, currentPlayer: 0 },
           wall: { remaining: 60 },
           players: [
-            { id: 0, points: 25000, hand: { freeTiles: [], discarded: [] } },
+            { id: 0, points: '25000', hand: { freeTiles: [], discarded: [] } },
             {
               id: 1,
-              points: 24000,
+              points: '24000',
               hand: {
                 freeTiles: [],
                 discarded: [
@@ -1795,7 +1795,7 @@ describe('Reducer - Events', () => {
 
     // The game ends.
     state = applyEvent(state, {
-      stopGameEvent: { endGamePoints: [26000, 24000] },
+      stopGameEvent: { endGamePoints: ['26000', '24000'] },
     });
 
     // The declaration tile is still rendered sideways.
@@ -1821,8 +1821,8 @@ describe('Reducer - Events', () => {
           info: { round: 2, dealer: 0 },
           wall: { remaining: 70 },
           players: [
-            { id: 0, points: 25000 },
-            { id: 1, points: 25000 },
+            { id: 0, points: '25000' },
+            { id: 1, points: '25000' },
           ],
         },
       },
@@ -1858,8 +1858,8 @@ describe('Reducer - Events', () => {
           info: { round: 0, dealer: 0 },
           wall: { remaining: 65 },
           players: [
-            { id: 0, points: 25000 },
-            { id: 1, points: 25000 },
+            { id: 0, points: '25000' },
+            { id: 1, points: '25000' },
           ],
         },
       },
@@ -1880,7 +1880,7 @@ describe('Reducer - Events', () => {
           players: [
             {
               id: 0,
-              points: 25000,
+              points: '25000',
               hand: {
                 jun: 1,
                 // One copy of the winning tile (23) is visible in this player's
@@ -1894,13 +1894,13 @@ describe('Reducer - Events', () => {
                     fu: 30,
                     yakuman: 0,
                     bonusYakuman: 0,
-                    points: 1000,
+                    points: '1000',
                     maxHan: 13,
                   },
                 ],
               },
             },
-            { id: 1, points: 25000 },
+            { id: 1, points: '25000' },
           ],
         },
       },
@@ -1917,7 +1917,7 @@ describe('Reducer - Events', () => {
         fu: 30,
         yakuman: 0,
         bonusYakuman: 0,
-        points: 1000,
+        points: 1000n,
         maxHan: 13,
       },
     ]);
@@ -2002,8 +2002,8 @@ describe('Reducer - Events', () => {
 
     for (const p of nextState.players) {
       expect(p.gameState?.agari).not.toBeNull();
-      expect(p.gameState?.agari?.gainPoints).toBe(0);
-      expect(p.gameState?.agari?.losePoints).toBe(0);
+      expect(p.gameState?.agari?.gainPoints).toBe(0n);
+      expect(p.gameState?.agari?.losePoints).toBe(0n);
       expect(p.gameState?.agari?.scores).toBeUndefined();
     }
   });
@@ -2118,7 +2118,7 @@ describe('Reducer - Events', () => {
         fu: 0,
         yakuman: 0,
         bonusYakuman: 0,
-        points: 0,
+        points: 0n,
         maxHan: 0,
       },
       {
@@ -2129,7 +2129,7 @@ describe('Reducer - Events', () => {
         fu: 0,
         yakuman: 0,
         bonusYakuman: 0,
-        points: 0,
+        points: 0n,
         maxHan: 0,
       },
     ]);
@@ -2223,7 +2223,7 @@ describe('Reducer - Events', () => {
       },
     });
     state = applyEvent(state, {
-      applyScoreEvent: { scoreChange: [{ from: 0, to: 1, points: 7700 }] },
+      applyScoreEvent: { scoreChange: [{ from: 0, to: 1, points: '7700' }] },
     });
     state = applyEvent(state, {
       concludeGameEvent: { doras: [], uradoras: [] },
@@ -2242,7 +2242,7 @@ describe('Reducer - Events', () => {
     );
     expect(winner?.seat).toBe(1);
     expect(winner?.gameState?.agari?.scores?.result?.han).toBe(5);
-    expect(winner?.gameState?.agari?.gainPoints).toBe(7700);
+    expect(winner?.gameState?.agari?.gainPoints).toBe(7700n);
 
     // beginGameEvent (after the ack) finally clears the result.
     state = applyEvent(state, { beginGameEvent: { round: 1, dealer: 1 } });
@@ -2309,7 +2309,7 @@ describe('Reducer - Room State', () => {
 
     expect(nextState?.players[0]?.nickname).toBe('AliceUpdated');
     expect(nextState?.players[0]?.gameState).not.toBeNull();
-    expect(nextState?.players[0]?.gameState?.points).toBe(25000);
+    expect(nextState?.players[0]?.gameState?.points).toBe(25000n);
   });
 
   it('should preserve gameEnded, endGamePoints and concludedPlayers flags when applying room state', () => {
@@ -2317,7 +2317,7 @@ describe('Reducer - Room State', () => {
     const initialState: RoomModel = {
       ...createInitializedRoom(),
       gameEnded: true,
-      endGamePoints: [30000, 20000],
+      endGamePoints: [30000n, 20000n],
       concludedPlayers,
     };
 
@@ -2336,7 +2336,7 @@ describe('Reducer - Room State', () => {
     const nextState = applyRoomState(initialState, roomState);
 
     expect(nextState?.gameEnded).toBe(true);
-    expect(nextState?.endGamePoints).toEqual([30000, 20000]);
+    expect(nextState?.endGamePoints).toEqual([30000n, 20000n]);
     expect(nextState?.concludedPlayers).toEqual(concludedPlayers);
   });
 

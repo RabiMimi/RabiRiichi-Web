@@ -286,7 +286,7 @@ export function GameInfoModal({
                         <span className="p-points">
                           {t('hud.pointsLabel')}:{' '}
                           {p.gameState?.points !== undefined
-                            ? t('result.points', { count: p.gameState.points })
+                            ? `${p.gameState.points} ${t('hud.points')}`
                             : 'N/A'}
                         </span>
                         <span className="p-status">

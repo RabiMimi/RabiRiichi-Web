@@ -49,9 +49,9 @@ export function ResultOverlay({ client }: { client: RabiRiichiClient }) {
             <Text>{row.name}: </Text>
             <Text {...optionalColors(color)}>
               {row.delta > 0 ? '+' : ''}
-              {row.delta}
+              {row.delta.toString()}
             </Text>
-            <Text dimColor> ({row.points})</Text>
+            <Text dimColor> ({row.points.toString()})</Text>
           </Box>
         );
       })}

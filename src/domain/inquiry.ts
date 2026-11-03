@@ -1,3 +1,4 @@
+import { toScore } from './score.js';
 import { AgariType } from '../proto/index.js';
 import type {
   ISinglePlayerInquiryMsg,
@@ -24,28 +25,6 @@ const EMPTY_WAIT_CONTEXT: WaitCountContext = {
   visibleKinds: [],
   tileSetCounts: new Map(),
 };
-
-interface LongLike {
-  toNumber(): number;
-}
-
-function isLongLike(val: unknown): val is LongLike {
-  return (
-    val != null &&
-    typeof val === 'object' &&
-    'toNumber' in val &&
-    typeof (val as Record<string, unknown>).toNumber === 'function'
-  );
-}
-
-function safeToNumber(val: unknown): number {
-  if (val == null) return 0;
-  if (typeof val === 'number') return val;
-  if (isLongLike(val)) {
-    return val.toNumber();
-  }
-  return Number(val);
-}
 
 export interface DiscardCandidate {
   tileId: number; // traceId of candidate tile to discard
@@ -153,7 +132,7 @@ function mapDiscardCandidates(
         fu: ti.fu ?? 0,
         yakuman: ti.yakuman ?? 0,
         bonusYakuman: ti.bonusYakuman ?? 0,
-        points: safeToNumber(ti.points),
+        points: toScore(ti.points),
         maxHan: ti.maxHan ?? 0,
       };
     }),

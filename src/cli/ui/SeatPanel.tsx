@@ -39,7 +39,7 @@ export function SeatPanel({ seat, handCursor = null }: SeatPanelProps) {
           {seat.name}
         </Text>
         {seat.isAi ? <Text color="magenta"> [AI]</Text> : null}
-        <Text dimColor> · {seat.points}</Text>
+        <Text dimColor> · {seat.points.toString()}</Text>
         {markers ? <Text color="yellow"> {markers}</Text> : null}
       </Box>
 
