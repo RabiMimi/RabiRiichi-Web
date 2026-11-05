@@ -335,7 +335,7 @@ export function WinnerDetailCard({
             className={`${RESULT.scoreFigure} ${finalHanFuColor} whitespace-nowrap`}
             style={{ fontFamily }}
           >
-            {agari.gainPoints - agari.losePoints}
+            {(agari.gainPoints - agari.losePoints).toString()}
             {pointsUnit}
           </span>
           {limitLabel && (

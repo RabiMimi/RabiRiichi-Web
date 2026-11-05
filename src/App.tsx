@@ -20,6 +20,7 @@ import { LobbyScreen } from './ui/LobbyScreen';
 import { RoomScreen } from './ui/RoomScreen';
 import { GamePlayHUD } from './ui/GamePlayHUD';
 import { ReplayHUD } from './ui/ReplayHUD';
+import { parseReplaySeatParam } from './replay/replay';
 import { startReplay, stopReplay } from './replay/replayDriver';
 import { ResultPanel } from './ui/ResultPanel';
 import { OrientationGuard } from './ui/OrientationGuard';
@@ -164,6 +165,7 @@ function App(): React.JSX.Element {
     // Arena links opt in to the per-decision rationales it serves over REST;
     // without this we would probe every plain game server over HTTP.
     const reasoningParam = params.get('reasoning') === '1';
+    const initialSeat = parseReplaySeatParam(params.get('seat'));
 
     if (serverParam && replayParam && replayParam !== '1') {
       loadServerReplay(serverParam, replayParam)
@@ -171,7 +173,7 @@ function App(): React.JSX.Element {
           if (active) {
             setLoadingReplay(false);
             stopReplayFn = stopReplay;
-            void startReplay(replayData, 0, { reasoning: reasoningParam });
+            startReplay(replayData, initialSeat, { reasoning: reasoningParam });
           }
         })
         .catch((err: unknown) => {
@@ -185,7 +187,7 @@ function App(): React.JSX.Element {
         .then(({ default: replayData }) => {
           if (active) {
             stopReplayFn = stopReplay;
-            void startReplay(replayData);
+            startReplay(replayData, initialSeat);
           }
         })
         .catch(console.error);

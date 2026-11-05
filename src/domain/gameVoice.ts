@@ -88,8 +88,12 @@ export function createGameVoiceState(): GameVoiceState {
 export function highestPointTenpaiIsYakuman(
   waits: readonly MappedTenpaiInfo[],
 ): boolean {
-  if (waits.length === 0) return false;
-  const highestPoints = Math.max(...waits.map((wait) => wait.points));
+  const firstWait = waits[0];
+  if (!firstWait) return false;
+  const highestPoints = waits.reduce(
+    (highest, wait) => (wait.points > highest ? wait.points : highest),
+    firstWait.points,
+  );
   return waits.some(
     (wait) => wait.points === highestPoints && totalYakuman(wait) > 0,
   );

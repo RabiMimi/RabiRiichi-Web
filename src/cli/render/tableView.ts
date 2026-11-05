@@ -32,7 +32,7 @@ export interface RiverTileView {
 export interface SeatView {
   seat: number;
   name: string;
-  points: number;
+  points: bigint;
   isDealer: boolean;
   isCurrent: boolean;
   isRiichi: boolean;
@@ -87,7 +87,7 @@ export function buildSeatView(
   return {
     seat: player.seat ?? 0,
     name: getPlayerDisplayName(player, t),
-    points: gs?.points ?? 0,
+    points: gs?.points ?? 0n,
     isDealer: info?.dealer === player.seat,
     isCurrent: info?.currentPlayer === player.seat,
     isRiichi: (gs?.riichiTileId ?? 0) > 0,

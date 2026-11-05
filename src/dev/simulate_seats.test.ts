@@ -105,7 +105,7 @@ test('simulate 2-player positioning', () => {
         status: UserStatus.USER_STATUS_PLAYING,
         seat: 1,
         gameState: {
-          points: 25000,
+          points: 25000n,
           hand: {
             freeTiles: [],
             called: [],
@@ -127,7 +127,7 @@ test('simulate 2-player positioning', () => {
         status: UserStatus.USER_STATUS_PLAYING,
         seat: 0,
         gameState: {
-          points: 25000,
+          points: 25000n,
           hand: {
             freeTiles: [],
             called: [],

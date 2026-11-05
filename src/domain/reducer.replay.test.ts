@@ -41,15 +41,15 @@ describe('Reducer Integration - Replay Log', () => {
     // Verify info and player gameState are preserved after stop
     expect(state.info).not.toBeNull();
 
-    let totalPoints = 0;
+    let totalPoints = 0n;
     for (let i = 0; i < expectedPlayersCount; i++) {
       const p = state.players.find((player) => player.seat === i);
       expect(p?.gameState).not.toBeNull();
-      totalPoints += p?.gameState?.points ?? 0;
+      totalPoints += p?.gameState?.points ?? 0n;
     }
 
     // In riichi mahjong, points are conserved (4 players starting with 25k -> total 100k)
-    expect(totalPoints).toBe(expectedPlayersCount * 25000);
+    expect(totalPoints).toBe(BigInt(expectedPlayersCount) * 25000n);
   });
 
   it('should replay the entire game for all seats without throwing', () => {
@@ -78,13 +78,13 @@ describe('Reducer Integration - Replay Log', () => {
       // Verify that the final state preserves active structures and points are conserved
       expect(state.gameEnded).toBe(true);
       expect(state.info).not.toBeNull();
-      let totalPoints = 0;
+      let totalPoints = 0n;
       for (let i = 0; i < numSeats; i++) {
         const p = state.players.find((player) => player.seat === i);
         expect(p?.gameState).not.toBeNull();
-        totalPoints += p?.gameState?.points ?? 0;
+        totalPoints += p?.gameState?.points ?? 0n;
       }
-      expect(totalPoints).toBe(numSeats * 25000);
+      expect(totalPoints).toBe(BigInt(numSeats) * 25000n);
     }
   });
 });

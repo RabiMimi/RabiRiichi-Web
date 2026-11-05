@@ -1,3 +1,4 @@
+import { toScore } from '../domain/score';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlayerModel, RoomModel } from '../domain/model';
@@ -14,9 +15,8 @@ interface ScoreTransferPanelProps {
  * Renders the round-result "Score Transfers" grid: one card per player showing
  * the +/- delta for this round and the before -> after point totals. `delta`
  * is derived from the frozen `agari.gainPoints`/`losePoints` on each player
- * (see `handleApplyScore` in domain/reducer.ts), and `prevPoints` is simply
- * `currentPoints - delta` since the server never sends the pre-round total
- * directly.
+ * (see `handleApplyScore` in domain/reducer.ts). The pre-settlement balance is
+ * saved alongside the exact point transfers.
  */
 export function ScoreTransferPanel({
   resultPlayers,
@@ -39,13 +39,14 @@ export function ScoreTransferPanel({
       <div className="grid grid-cols-4 gap-3">
         {resultPlayers.map((p) => {
           const agari = p.gameState?.agari;
-          const delta = (agari?.gainPoints ?? 0) - (agari?.losePoints ?? 0);
+          const delta = (agari?.gainPoints ?? 0n) - (agari?.losePoints ?? 0n);
           const isDealer = p.seat === dealerSeat;
-          const currentPoints =
+          const currentPoints = toScore(
             p.gameState?.points ??
-            room.config?.pointThreshold?.initialPoints ??
-            DEFAULT_INITIAL_POINTS;
-          const prevPoints = currentPoints - delta;
+              room.config?.pointThreshold?.initialPoints ??
+              DEFAULT_INITIAL_POINTS,
+          );
+          const prevPoints = agari?.previousPoints ?? currentPoints - delta;
 
           const isPositive = delta > 0;
           const isNegative = delta < 0;
@@ -102,7 +103,7 @@ export function ScoreTransferPanel({
 
               {/* Score Transition */}
               <div className="flex items-center gap-2 z-10 bg-black/50 px-2 py-1 rounded-md w-full justify-center border border-white/10 shadow-inner">
-                {delta !== 0 && (
+                {delta !== 0n && (
                   <span className="font-mono text-xs text-[#888] line-through decoration-[#ff7a99]/60 decoration-2">
                     {prevPoints.toString()}
                   </span>

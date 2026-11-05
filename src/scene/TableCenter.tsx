@@ -1,3 +1,4 @@
+import { toScore } from '../domain/score';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTexture, Text as DreiText } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
@@ -151,7 +152,7 @@ export function TableCenter(): React.JSX.Element | null {
         let displayColor: string = TABLE_CENTER_COLORS.score;
 
         if (isHovered && p.seat !== selfSeat) {
-          const diff = selfPoints - points;
+          const diff = toScore(selfPoints) - toScore(points);
           if (diff > 0) {
             displayText = `+${diff}`;
             displayColor = TABLE_CENTER_COLORS.scoreAhead;

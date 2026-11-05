@@ -973,7 +973,7 @@ describe('RabiRiichiClient', () => {
           seat: 0,
           gameState: {
             jun: 0,
-            points: 25000,
+            points: 25000n,
             riichiTileId: 0,
             isRiichiConfirmed: false,
             furiten: {},
@@ -986,8 +986,8 @@ describe('RabiRiichiClient', () => {
             },
             agari: hasAgari
               ? {
-                  gainPoints: 1000,
-                  losePoints: 0,
+                  gainPoints: 1000n,
+                  losePoints: 0n,
                   scores: null,
                   incoming: null,
                 }

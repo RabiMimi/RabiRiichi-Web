@@ -36,8 +36,10 @@ export function deadWallRinshanCount(config: IGameConfigMsg | null): number {
 export interface PlayerAgariState {
   scores?: IScoreStorageMsg | null;
   incoming?: IGameTileMsg | null;
-  gainPoints: number;
-  losePoints: number;
+  /** Balance before settlement. */
+  previousPoints?: bigint;
+  gainPoints: bigint;
+  losePoints: bigint;
   isNagashi?: boolean;
   isTenpai?: boolean;
   // Authoritative win type from the server (AgariEventMsg.is_tsumo). Preferred
@@ -68,7 +70,7 @@ export interface MappedTenpaiInfo {
   yakuman: number;
   // Scores and announces like a yakuman, but cannot satisfy 番缚.
   bonusYakuman: number;
-  points: number;
+  points: bigint;
   // Total han (dora included, luck excluded) if the wait completes the best
   // way, ron or tsumo; the fields above are the ron floor. A yakuman counts
   // as 13, so maxHan >= 13 with yakuman 0 means one is reachable.
@@ -77,7 +79,7 @@ export interface MappedTenpaiInfo {
 
 export interface PlayerGameState {
   jun: number;
-  points: number;
+  points: bigint;
   riichiTileId: number; // trace_id of the riichi tile, 0 if not riichi
   isRiichiConfirmed: boolean; // true only after setRiichiEvent confirms the declaration
   furiten: Partial<Record<FuritenType, boolean>>;
@@ -123,7 +125,7 @@ export interface RoomModel {
   tileRegistry: TileRegistry;
   ryuukyokuReason?: string | null;
   gameEnded?: boolean;
-  endGamePoints?: number[] | null;
+  endGamePoints?: bigint[] | null;
   concludedPlayers?: PlayerModel[] | null;
   roundResult?: RoundResultSnapshot | null;
   gameId?: string | null;

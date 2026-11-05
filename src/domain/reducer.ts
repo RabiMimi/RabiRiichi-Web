@@ -1,3 +1,4 @@
+import { toScore } from './score.js';
 import {
   UserStatus,
   FuritenType,
@@ -160,14 +161,14 @@ export function hydrateFromGameState(
         fu: ti.fu ?? 0,
         yakuman: ti.yakuman ?? 0,
         bonusYakuman: ti.bonusYakuman ?? 0,
-        points: ti.points ? Number(ti.points) : 0,
+        points: toScore(ti.points),
         maxHan: ti.maxHan ?? 0,
       };
     });
 
     const gameState: PlayerGameState = {
       jun: handState?.jun ?? 0,
-      points: sp.points ? Number(sp.points) : 0,
+      points: toScore(sp.points),
       riichiTileId: handState?.riichiTile?.traceId ?? 0,
       isRiichiConfirmed: (handState?.riichiTile?.traceId ?? 0) > 0,
       furiten: {
@@ -262,8 +263,8 @@ function handleBeginGame(state: RoomModel, ev: IBeginGameEventMsg): RoomModel {
 
   const initialPoints =
     state.config?.pointThreshold?.initialPoints != null
-      ? Number(state.config.pointThreshold.initialPoints)
-      : DEFAULT_INITIAL_POINTS;
+      ? toScore(state.config.pointThreshold.initialPoints)
+      : BigInt(DEFAULT_INITIAL_POINTS);
 
   // beginGameEvent starts a new round of the CURRENT game (points accumulate
   // across rounds) unless the previous game already ended, in which case this
@@ -451,7 +452,7 @@ function handleDiscardTile(
                 fu: ti.fu ?? 0,
                 yakuman: ti.yakuman ?? 0,
                 bonusYakuman: ti.bonusYakuman ?? 0,
-                points: ti.points ?? 0,
+                points: toScore(ti.points),
                 maxHan: ti.maxHan ?? 0,
               };
             }),
@@ -742,8 +743,8 @@ function handleSetRiichi(state: RoomModel, ev: ISetRiichiEventMsg): RoomModel {
   // the declaring player and add it to the table pot.
   const riichiPoints =
     state.config?.pointThreshold?.riichiPoints != null
-      ? Number(state.config.pointThreshold.riichiPoints)
-      : DEFAULT_RIICHI_POINTS;
+      ? toScore(state.config.pointThreshold.riichiPoints)
+      : BigInt(DEFAULT_RIICHI_POINTS);
 
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (p.seat !== ev.playerId || !p.gameState) return p;
@@ -859,8 +860,8 @@ function handleAgari(state: RoomModel, ev: IAgariEventMsg): RoomModel {
       scores: agariInfo.scores ?? null,
       incoming: incoming ?? null,
       isTsumo,
-      gainPoints: p.gameState.agari?.gainPoints ?? 0,
-      losePoints: p.gameState.agari?.losePoints ?? 0,
+      gainPoints: p.gameState.agari?.gainPoints ?? 0n,
+      losePoints: p.gameState.agari?.losePoints ?? 0n,
       wildcardAssignments: toWildcardAssignments(agariInfo.wildcardAssignments),
     };
 
@@ -894,9 +895,11 @@ function handleApplyScore(
   const updatedPlayers = state.players.map((p): PlayerModel => {
     if (!p.gameState || p.seat === undefined) return p;
 
+    const previousPoints =
+      p.gameState.agari?.previousPoints ?? p.gameState.points;
     let points = p.gameState.points;
-    let gainPoints = p.gameState.agari?.gainPoints ?? 0;
-    let losePoints = p.gameState.agari?.losePoints ?? 0;
+    let gainPoints = p.gameState.agari?.gainPoints ?? 0n;
+    let losePoints = p.gameState.agari?.losePoints ?? 0n;
 
     for (const transfer of scoreChanges) {
       if (
@@ -904,7 +907,7 @@ function handleApplyScore(
         transfer.from >= 0 &&
         transfer.from < playerCount
       ) {
-        const transferPoints = Number(transfer.points);
+        const transferPoints = toScore(transfer.points);
         points -= transferPoints;
         losePoints += transferPoints;
       }
@@ -913,7 +916,7 @@ function handleApplyScore(
         transfer.to >= 0 &&
         transfer.to < playerCount
       ) {
-        const transferPoints = Number(transfer.points);
+        const transferPoints = toScore(transfer.points);
         points += transferPoints;
         gainPoints += transferPoints;
       }
@@ -925,12 +928,14 @@ function handleApplyScore(
     );
     if (hasTransfer && !agari) {
       agari = {
+        previousPoints,
         gainPoints,
         losePoints,
       };
     } else if (agari) {
       agari = {
         ...agari,
+        previousPoints,
         gainPoints,
         losePoints,
       };
@@ -997,9 +1002,7 @@ function handleStopGame(state: RoomModel, ev: IStopGameEventMsg): RoomModel {
   return {
     ...state,
     gameEnded: true,
-    endGamePoints: ev.endGamePoints
-      ? ev.endGamePoints.map((num) => Number(num))
-      : null,
+    endGamePoints: ev.endGamePoints ? ev.endGamePoints.map(toScore) : null,
     concludedPlayers: state.players.map((p) => ({ ...p })),
   };
 }
@@ -1092,8 +1095,8 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
 
     if (isNagashi) {
       agari = {
-        gainPoints: agari?.gainPoints ?? 0,
-        losePoints: agari?.losePoints ?? 0,
+        gainPoints: agari?.gainPoints ?? 0n,
+        losePoints: agari?.losePoints ?? 0n,
         isNagashi: true,
         scores: {
           items: [
@@ -1112,8 +1115,8 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
       };
     } else if (isTenpai) {
       agari = {
-        gainPoints: agari?.gainPoints ?? 0,
-        losePoints: agari?.losePoints ?? 0,
+        gainPoints: agari?.gainPoints ?? 0n,
+        losePoints: agari?.losePoints ?? 0n,
         isTenpai: true,
       };
       const pRevealed = revealedByPlayer.get(p.seat);
@@ -1138,15 +1141,15 @@ function handleRyuukyoku(state: RoomModel, _ev: IRyuukyokuEventMsg): RoomModel {
         fu: 0,
         yakuman: 0,
         bonusYakuman: 0,
-        points: 0,
+        points: 0n,
         maxHan: 0,
       }));
       awaitedTiles =
         existingWaits && existingWaits.length > 0 ? existingWaits : newWaits;
     } else {
       agari = {
-        gainPoints: agari?.gainPoints ?? 0,
-        losePoints: agari?.losePoints ?? 0,
+        gainPoints: agari?.gainPoints ?? 0n,
+        losePoints: agari?.losePoints ?? 0n,
       };
     }
 

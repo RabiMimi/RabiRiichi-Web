@@ -9,8 +9,8 @@ import type { MappedInquiry } from '../../domain/inquiry';
 export interface ResultRow {
   id: number;
   name: string;
-  delta: number;
-  points: number;
+  delta: bigint;
+  points: bigint;
 }
 
 export type ResultKind = 'agari' | 'draw';
@@ -54,12 +54,12 @@ export function buildResultView(
   );
   const rows: ResultRow[] = room.players.map((p) => {
     const agari = p.gameState?.agari;
-    const delta = (agari?.gainPoints ?? 0) - (agari?.losePoints ?? 0);
+    const delta = (agari?.gainPoints ?? 0n) - (agari?.losePoints ?? 0n);
     return {
       id: p.id,
       name: displayName(p),
       delta,
-      points: p.gameState?.points ?? 0,
+      points: p.gameState?.points ?? 0n,
     };
   });
   return { kind: hasWinner ? 'agari' : 'draw', rows };
